@@ -1,0 +1,127 @@
+# ============================================================
+# Angular (Frontend)
+# ============================================================
+
+# Dependencies
+apps/frontend/node_modules/
+apps/frontend/.pnp
+apps/frontend/.pnp.js
+
+# Build output
+apps/frontend/dist/
+apps/frontend/.angular/
+
+# Environment files
+apps/frontend/src/environments/environment.local.ts
+
+# Testing
+apps/frontend/coverage/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln.bak
+
+# Misc
+apps/frontend/.DS_Store
+apps/frontend/npm-debug.log*
+apps/frontend/yarn-error.log*
+
+# ============================================================
+# .NET 10 (Backend)
+# ============================================================
+
+# Build output
+apps/api/bin/
+apps/api/obj/
+apps/api/out/
+apps/api/publish/
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.pidb
+
+# Mono auto generated files
+mono_crash.*
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Rider
+.idea/
+*.sln.iml
+
+# VS Code
+.vscode/
+
+# Visual Studio
+.vs/
+*.vcxproj.filters
+*.vcxproj.user
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+nuget.config
+
+# Entity Framework migrations (keep migrations, ignore snapshots if preferred)
+# apps/api/**/*Snapshot.cs
+
+# Secrets / Config overrides
+apps/api/**/appsettings.Development.json
+apps/api/**/appsettings.Local.json
+apps/api/**/*.pfx
+apps/api/**/*.p12
+
+# dotnet tool manifests (optional — uncomment to ignore)
+# .config/dotnet-tools.json
+
+# ============================================================
+# General
+# ============================================================
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Temp
+*.tmp
+*.temp
+*.swp
+*~
