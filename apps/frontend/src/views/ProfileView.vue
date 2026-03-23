@@ -60,7 +60,18 @@ const displayedRestaurants = computed(() => {
     .map((r, i) => ({ ...r, rank: i + 1 }))
 })
 
-const rankColors = ['#f9c74f', '#a8dadc', '#f4a261', '#90be6d', '#c77dff', '#4cc9f0', '#ff6b6b']
+function scoreColor(score: number): string {
+  if (score >= 85) return '#90be6d'
+  if (score >= 65) return '#f9c74f'
+  return '#ff6b6b'
+}
+
+function itemBackground(index: number): string {
+  if (index === 0) return '#ffffff'
+  if (index === 1) return 'rgba(255,255,255,0.14)'
+  if (index === 2) return 'rgba(255,255,255,0.07)'
+  return '#1a1a1a'
+}
 
 async function shareProfile() {
   await navigator.share({ title: `${displayUser.value?.name}'s FoodRank profile`, url: window.location.href })
@@ -106,6 +117,7 @@ async function shareProfile() {
           :to="`/restaurant/${restaurant.id}`"
           class="list-item"
           :class="{ 'list-item-first': index === 0 }"
+          :style="{ background: itemBackground(index) }"
         >
           <div class="item-avatar">
             <span class="item-emoji">{{ restaurant.emoji }}</span>
@@ -119,8 +131,8 @@ async function shareProfile() {
             :service="restaurant.scores.service"
             :decor="restaurant.scores.decor"
           />
-          <div class="item-rank" :style="{ backgroundColor: rankColors[index] }">
-            {{ restaurant.rank }}
+          <div class="item-avg" :style="{ backgroundColor: scoreColor(restaurant.scores.overall) }">
+            {{ Math.round(restaurant.scores.overall) }}
           </div>
         </RouterLink>
       </div>
@@ -303,12 +315,10 @@ async function shareProfile() {
   gap: 14px;
   padding: 12px 16px;
   border-radius: 16px;
-  background: #1a1a1a;
   text-decoration: none;
   color: inherit;
 }
 .list-item-first {
-  background: #ffffff;
   color: #0d0d0d;
 }
 .list-item-first .item-name {
@@ -346,15 +356,15 @@ async function shareProfile() {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.45);
 }
-.item-rank {
-  width: 30px;
-  height: 30px;
+.item-avg {
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 13px;
+  font-weight: 900;
+  font-size: 12px;
   color: #0d0d0d;
   flex-shrink: 0;
 }
