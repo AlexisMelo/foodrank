@@ -6,6 +6,7 @@ const router = createRouter({
   routes: [
     { path: '/', component: LeaderboardView },
     { path: '/restaurant/:id', component: () => import('@/views/RestaurantView.vue') },
+    { path: '/user/:id', component: () => import('@/views/LeaderboardView.vue') },
   ],
 })
 

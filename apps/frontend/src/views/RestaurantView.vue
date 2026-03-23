@@ -1,26 +1,22 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { Restaurant, Visit, CommunityVisit } from '@/types/restaurant'
-import {
-  fetchRestaurantById,
-  fetchVisitsByRestaurantId,
-  fetchCommunityVisitsByRestaurantId,
-} from '@/services/restaurantService'
+import type { Restaurant, CommunityVisit } from '@/types/restaurant'
+import { fetchRestaurantById, fetchCommunityVisitsByRestaurantId } from '@/services/restaurantService'
+
+const CURRENT_USER_ID = 'alex'
 
 const route = useRoute()
 const router = useRouter()
 const restaurant = ref<Restaurant | null>(null)
-const visits = ref<Visit[]>([])
-const communityVisits = ref<CommunityVisit[]>([])
+const allVisits = ref<CommunityVisit[]>([])
 const loading = ref(true)
 const activeTab = ref<'mine' | 'community'>('mine')
 
 onMounted(async () => {
   const id = route.params.id as string
-  const [found, foundVisits, foundCommunity] = await Promise.all([
+  const [found, visits] = await Promise.all([
     fetchRestaurantById(id),
-    fetchVisitsByRestaurantId(id),
     fetchCommunityVisitsByRestaurantId(id),
   ])
   if (!found) {
@@ -28,19 +24,24 @@ onMounted(async () => {
     return
   }
   restaurant.value = found
-  visits.value = foundVisits
-  communityVisits.value = foundCommunity
+  allVisits.value = visits
   loading.value = false
 })
 
-function visitAvg(visit: Visit): number {
+function visitAvg(visit: CommunityVisit): number {
   return Math.round((visit.food + visit.service + visit.decor) / 3)
 }
 
+const myVisits = computed(() => allVisits.value.filter((v) => v.user.id === CURRENT_USER_ID))
+
+const recentVisits = computed(() =>
+  allVisits.value.filter((v) => v.user.id !== CURRENT_USER_ID).slice(0, 5),
+)
+
 const overallAvg = computed(() => {
-  if (!visits.value.length) return null
-  const total = visits.value.reduce((sum, v) => sum + visitAvg(v), 0)
-  return Math.round(total / visits.value.length)
+  if (!allVisits.value.length) return null
+  const total = allVisits.value.reduce((sum, v) => sum + visitAvg(v), 0)
+  return Math.round(total / allVisits.value.length)
 })
 
 function formatDate(iso: string): string {
@@ -94,7 +95,7 @@ function scoreColor(score: number): string {
           <span class="stars">★</span>
           <span class="rating-value" :style="{ color: scoreColor(overallAvg) }">{{ overallAvg }}</span>
           <span class="rating-max">/100</span>
-          <span class="review-count">· {{ visits.length }} visit{{ visits.length > 1 ? 's' : '' }}</span>
+          <span class="review-count">· {{ allVisits.length }} visit{{ allVisits.length > 1 ? 's' : '' }}</span>
         </div>
 
         <p class="description">{{ restaurant.description }}</p>
@@ -126,8 +127,8 @@ function scoreColor(score: number): string {
 
           <!-- My Visits tab -->
           <template v-if="activeTab === 'mine'">
-            <div v-if="!visits.length" class="no-visits">No visits yet 🍽️</div>
-            <div v-for="visit in visits" :key="visit.id" class="visit-card">
+            <div v-if="!myVisits.length" class="no-visits">No visits yet 🍽️</div>
+            <div v-for="visit in myVisits" :key="visit.id" class="visit-card">
               <div class="visit-header">
                 <span class="visit-date">{{ formatDate(visit.date) }}</span>
                 <span class="visit-avg" :style="{ backgroundColor: scoreColor(visitAvg(visit)) }">
@@ -162,8 +163,8 @@ function scoreColor(score: number): string {
 
           <!-- Community tab -->
           <template v-else>
-            <div v-if="!communityVisits.length" class="no-visits">No recent visits 🍽️</div>
-            <div v-for="cv in communityVisits" :key="cv.id" class="community-card">
+            <div v-if="!recentVisits.length" class="no-visits">No recent visits 🍽️</div>
+            <RouterLink v-for="cv in recentVisits" :key="cv.id" :to="`/user/${cv.user.id}`" class="community-card">
               <div class="community-user">
                 <span class="community-avatar">{{ cv.user.avatar }}</span>
                 <div class="community-user-info">
@@ -188,7 +189,7 @@ function scoreColor(score: number): string {
                   {{ visitAvg(cv) }}
                 </span>
               </div>
-            </div>
+            </RouterLink>
           </template>
         </div>
       </div>
@@ -515,6 +516,8 @@ function scoreColor(score: number): string {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  text-decoration: none;
+  color: inherit;
 }
 .community-user {
   display: flex;

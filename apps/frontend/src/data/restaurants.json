@@ -2,7 +2,6 @@
   "data": [
     {
       "id": "bella-napoli",
-      "rank": 1,
       "name": "Bella Napoli",
       "cuisine": "Italian",
       "score": 100,
@@ -15,7 +14,6 @@
     },
     {
       "id": "tokyo-ramen-house",
-      "rank": 2,
       "name": "Tokyo Ramen House",
       "cuisine": "Japanese",
       "score": 94,
@@ -28,7 +26,6 @@
     },
     {
       "id": "le-petit-bistro",
-      "rank": 3,
       "name": "Le Petit Bistro",
       "cuisine": "French",
       "score": 91,
@@ -41,7 +38,6 @@
     },
     {
       "id": "taco-fiesta",
-      "rank": 4,
       "name": "Taco Fiesta",
       "cuisine": "Mexican",
       "score": 87,
@@ -54,7 +50,6 @@
     },
     {
       "id": "the-curry-palace",
-      "rank": 5,
       "name": "The Curry Palace",
       "cuisine": "Indian",
       "score": 83,
@@ -67,7 +62,6 @@
     },
     {
       "id": "dragon-garden",
-      "rank": 6,
       "name": "Dragon Garden",
       "cuisine": "Chinese",
       "score": 79,
@@ -80,7 +74,6 @@
     },
     {
       "id": "smoky-bbq-joint",
-      "rank": 7,
       "name": "Smoky BBQ Joint",
       "cuisine": "American",
       "score": 75,

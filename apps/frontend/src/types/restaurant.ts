@@ -1,6 +1,5 @@
 export interface Restaurant {
   id: string
-  rank: number
   name: string
   cuisine: string
   score: number
@@ -27,6 +26,13 @@ export interface CommunityVisit extends Visit {
     name: string
     avatar: string
   }
+}
+
+export interface User {
+  id: string
+  name: string
+  avatar: string
+  bio: string
 }
 
 export interface ApiResponse<T> {

@@ -1,7 +1,7 @@
-import type { Restaurant, Visit, CommunityVisit, ApiResponse } from '@/types/restaurant'
+import type { Restaurant, CommunityVisit, User, ApiResponse } from '@/types/restaurant'
 import mockRestaurants from '@/data/restaurants.json'
-import mockRatings from '@/data/ratings.json'
 import mockCommunityRatings from '@/data/community-ratings.json'
+import mockUsers from '@/data/users.json'
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -19,12 +19,10 @@ export async function fetchRestaurantById(id: string): Promise<Restaurant | unde
   return response.data.find((r) => r.id === id)
 }
 
-export async function fetchVisitsByRestaurantId(restaurantId: string): Promise<Visit[]> {
+export async function fetchAllCommunityVisits(): Promise<CommunityVisit[]> {
   await delay(200)
-  const response = mockRatings as ApiResponse<Visit[]>
+  const response = mockCommunityRatings as ApiResponse<CommunityVisit[]>
   return response.data
-    .filter((v) => v.restaurantId === restaurantId)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 }
 
 export async function fetchCommunityVisitsByRestaurantId(
@@ -35,5 +33,18 @@ export async function fetchCommunityVisitsByRestaurantId(
   return response.data
     .filter((v) => v.restaurantId === restaurantId)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5)
+}
+
+export async function fetchCommunityVisitsByUserId(userId: string): Promise<CommunityVisit[]> {
+  await delay(200)
+  const response = mockCommunityRatings as ApiResponse<CommunityVisit[]>
+  return response.data
+    .filter((v) => v.user.id === userId)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+}
+
+export async function fetchUserById(id: string): Promise<User | undefined> {
+  await delay(200)
+  const response = mockUsers as ApiResponse<User[]>
+  return response.data.find((u) => u.id === id)
 }

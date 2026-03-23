@@ -1,24 +1,73 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import type { Restaurant } from '@/types/restaurant'
-import { fetchRestaurants } from '@/services/restaurantService'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import type { Restaurant, CommunityVisit, User } from '@/types/restaurant'
+import {
+  fetchRestaurants,
+  fetchUserById,
+  fetchCommunityVisitsByUserId,
+  fetchAllCommunityVisits,
+} from '@/services/restaurantService'
 
-const user = {
-  name: 'Alex Dupont',
-  avatar: '🧑‍🍳',
-  visited: 47,
-}
+const CURRENT_USER_ID = 'alex'
 
-const restaurants = ref<Restaurant[]>([])
+const route = useRoute()
+const router = useRouter()
+
+const profileUserId = computed(() => (route.params.id as string) || CURRENT_USER_ID)
+const isOwnProfile = computed(() => !route.params.id)
+
+const displayUser = ref<User | null>(null)
+const allRestaurants = ref<Restaurant[]>([])
+const allCommunityVisits = ref<CommunityVisit[]>([])
+const userVisitedIds = ref<Set<string>>(new Set())
+const visitedCount = ref(0)
+const loading = ref(true)
+const sortAsc = ref(true)
 
 onMounted(async () => {
-  restaurants.value = await fetchRestaurants()
+  const [found, userVisits, restaurants, communityVisits] = await Promise.all([
+    fetchUserById(profileUserId.value),
+    fetchCommunityVisitsByUserId(profileUserId.value),
+    fetchRestaurants(),
+    fetchAllCommunityVisits(),
+  ])
+  if (!found) {
+    router.replace('/')
+    return
+  }
+  displayUser.value = found
+  allRestaurants.value = restaurants
+  allCommunityVisits.value = communityVisits
+  const ratedIds = new Set(userVisits.map((v) => v.restaurantId))
+  userVisitedIds.value = ratedIds
+  visitedCount.value = ratedIds.size
+  loading.value = false
 })
+
+// Average score across all users for a given restaurant
+function globalAvg(restaurantId: string): number {
+  const visits = allCommunityVisits.value.filter((v) => v.restaurantId === restaurantId)
+  if (!visits.length) return 0
+  return visits.reduce((s, v) => s + (v.food + v.service + v.decor) / 3, 0) / visits.length
+}
+
+// All restaurants ranked globally by average rating, filtered to user's visited ones
+const rankedRestaurants = computed(() => {
+  const sorted = [...allRestaurants.value].sort((a, b) => globalAvg(b.id) - globalAvg(a.id))
+  return sorted
+    .map((r, i) => ({ ...r, rank: i + 1 }))
+    .filter((r) => userVisitedIds.value.has(r.id))
+})
+
+const displayedRestaurants = computed(() =>
+  sortAsc.value ? rankedRestaurants.value : [...rankedRestaurants.value].reverse(),
+)
 
 const rankColors = ['#f9c74f', '#a8dadc', '#f4a261', '#90be6d', '#c77dff', '#4cc9f0', '#ff6b6b']
 
 async function shareProfile() {
-  await navigator.share({ title: `${user.name}'s FoodRank profile`, url: window.location.href })
+  await navigator.share({ title: `${displayUser.value?.name}'s FoodRank profile`, url: window.location.href })
 }
 </script>
 
@@ -34,43 +83,48 @@ async function shareProfile() {
 
     <!-- Header -->
     <div class="header">
-      <button class="back-btn">←</button>
+      <button v-if="!isOwnProfile" class="back-btn" @click="router.back()">←</button>
       <h1 class="title">Leaderboard 🏆</h1>
       <button class="share-btn" @click="shareProfile">⬆</button>
     </div>
 
-    <!-- User profile -->
-    <div class="winner-section">
-      <div class="winner-avatar-wrap">
-        <div class="winner-avatar">
-          <span class="winner-emoji">{{ user.avatar }}</span>
-        </div>
-      </div>
-      <h2 class="winner-name">{{ user.name }}</h2>
-      <div class="winner-tag">{{ user.visited }} ratings</div>
-    </div>
+    <!-- Loading (other user fetch) -->
+    <div v-if="loading" class="loading">👤</div>
 
-    <!-- Ranked list -->
-    <div class="list">
-      <RouterLink
-        v-for="(restaurant, index) in restaurants"
-        :key="restaurant.rank"
-        :to="`/restaurant/${restaurant.id}`"
-        class="list-item"
-        :class="{ 'list-item-first': index === 0 }"
-      >
-        <div class="item-avatar">
-          <span class="item-emoji">{{ restaurant.emoji }}</span>
+    <template v-else-if="displayUser !== null">
+      <!-- User profile -->
+      <div class="winner-section">
+        <div class="winner-avatar-wrap">
+          <div class="winner-avatar">
+            <span class="winner-emoji">{{ displayUser!.avatar }}</span>
+          </div>
         </div>
-        <div class="item-info">
-          <span class="item-name">{{ restaurant.name }}</span>
-          <span class="item-sub">{{ restaurant.cuisine }} · {{ restaurant.score }}% score</span>
-        </div>
-        <div class="item-rank" :style="{ backgroundColor: rankColors[index] }">
-          {{ restaurant.rank }}
-        </div>
-      </RouterLink>
-    </div>
+        <h2 class="winner-name">{{ displayUser!.name }}</h2>
+        <div class="winner-tag">{{ visitedCount }} ratings</div>
+      </div>
+
+      <!-- Ranked list -->
+      <div class="list">
+        <RouterLink
+          v-for="(restaurant, index) in displayedRestaurants"
+          :key="restaurant.rank"
+          :to="`/restaurant/${restaurant.id}`"
+          class="list-item"
+          :class="{ 'list-item-first': index === 0 }"
+        >
+          <div class="item-avatar">
+            <span class="item-emoji">{{ restaurant.emoji }}</span>
+          </div>
+          <div class="item-info">
+            <span class="item-name">{{ restaurant.name }}</span>
+            <span class="item-sub">{{ restaurant.cuisine }} · {{ restaurant.score }}% score</span>
+          </div>
+          <div class="item-rank" :style="{ backgroundColor: rankColors[index] }">
+            {{ restaurant.rank }}
+          </div>
+        </RouterLink>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -193,6 +247,17 @@ async function shareProfile() {
   margin: 0;
 }
 
+/* Loading */
+.loading {
+  font-size: 48px;
+  animation: pulse 1s ease-in-out infinite;
+  margin-top: 40%;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.9); }
+}
+
 /* Winner section */
 .winner-section {
   display: flex;
@@ -221,7 +286,6 @@ async function shareProfile() {
   margin: 0 0 10px;
   letter-spacing: -0.5px;
 }
-
 .winner-tag {
   display: block;
   padding: 6px 18px;
