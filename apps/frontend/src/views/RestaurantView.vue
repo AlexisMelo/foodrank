@@ -1,20 +1,27 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { Restaurant, Visit } from '@/types/restaurant'
-import { fetchRestaurantById, fetchVisitsByRestaurantId } from '@/services/restaurantService'
+import type { Restaurant, Visit, CommunityVisit } from '@/types/restaurant'
+import {
+  fetchRestaurantById,
+  fetchVisitsByRestaurantId,
+  fetchCommunityVisitsByRestaurantId,
+} from '@/services/restaurantService'
 
 const route = useRoute()
 const router = useRouter()
 const restaurant = ref<Restaurant | null>(null)
 const visits = ref<Visit[]>([])
+const communityVisits = ref<CommunityVisit[]>([])
 const loading = ref(true)
+const activeTab = ref<'mine' | 'community'>('mine')
 
 onMounted(async () => {
   const id = route.params.id as string
-  const [found, foundVisits] = await Promise.all([
+  const [found, foundVisits, foundCommunity] = await Promise.all([
     fetchRestaurantById(id),
     fetchVisitsByRestaurantId(id),
+    fetchCommunityVisitsByRestaurantId(id),
   ])
   if (!found) {
     router.replace('/')
@@ -22,6 +29,7 @@ onMounted(async () => {
   }
   restaurant.value = found
   visits.value = foundVisits
+  communityVisits.value = foundCommunity
   loading.value = false
 })
 
@@ -102,52 +110,86 @@ function scoreColor(score: number): string {
 
         <!-- Visits -->
         <div class="visits-section">
-          <h2 class="visits-title">My Visits</h2>
-
-          <div v-if="!visits.length" class="no-visits">
-            No visits yet 🍽️
+          <!-- Tab switcher -->
+          <div class="tab-bar">
+            <button
+              class="tab-btn"
+              :class="{ 'tab-btn-active': activeTab === 'mine' }"
+              @click="activeTab = 'mine'"
+            >My Visits</button>
+            <button
+              class="tab-btn"
+              :class="{ 'tab-btn-active': activeTab === 'community' }"
+              @click="activeTab = 'community'"
+            >Recent</button>
           </div>
 
-          <div v-for="visit in visits" :key="visit.id" class="visit-card">
-            <div class="visit-header">
-              <span class="visit-date">{{ formatDate(visit.date) }}</span>
-              <span class="visit-avg" :style="{ backgroundColor: scoreColor(visitAvg(visit)) }">
-                {{ visitAvg(visit) }}
-              </span>
-            </div>
-            <div class="criteria-list">
-              <div class="criterion">
-                <span class="criterion-label">🍽️ Food</span>
-                <div class="criterion-bar-wrap">
-                  <div
-                    class="criterion-bar"
-                    :style="{ width: `${visit.food}%`, backgroundColor: scoreColor(visit.food) }"
-                  />
-                </div>
-                <span class="criterion-score">{{ visit.food }}</span>
+          <!-- My Visits tab -->
+          <template v-if="activeTab === 'mine'">
+            <div v-if="!visits.length" class="no-visits">No visits yet 🍽️</div>
+            <div v-for="visit in visits" :key="visit.id" class="visit-card">
+              <div class="visit-header">
+                <span class="visit-date">{{ formatDate(visit.date) }}</span>
+                <span class="visit-avg" :style="{ backgroundColor: scoreColor(visitAvg(visit)) }">
+                  {{ visitAvg(visit) }}
+                </span>
               </div>
-              <div class="criterion">
-                <span class="criterion-label">🤝 Service</span>
-                <div class="criterion-bar-wrap">
-                  <div
-                    class="criterion-bar"
-                    :style="{ width: `${visit.service}%`, backgroundColor: scoreColor(visit.service) }"
-                  />
+              <div class="criteria-list">
+                <div class="criterion">
+                  <span class="criterion-label">🍽️ Food</span>
+                  <div class="criterion-bar-wrap">
+                    <div class="criterion-bar" :style="{ width: `${visit.food}%`, backgroundColor: scoreColor(visit.food) }" />
+                  </div>
+                  <span class="criterion-score">{{ visit.food }}</span>
                 </div>
-                <span class="criterion-score">{{ visit.service }}</span>
-              </div>
-              <div class="criterion">
-                <span class="criterion-label">✨ Decor</span>
-                <div class="criterion-bar-wrap">
-                  <div
-                    class="criterion-bar"
-                    :style="{ width: `${visit.decor}%`, backgroundColor: scoreColor(visit.decor) }"
-                  />
+                <div class="criterion">
+                  <span class="criterion-label">🤝 Service</span>
+                  <div class="criterion-bar-wrap">
+                    <div class="criterion-bar" :style="{ width: `${visit.service}%`, backgroundColor: scoreColor(visit.service) }" />
+                  </div>
+                  <span class="criterion-score">{{ visit.service }}</span>
                 </div>
-                <span class="criterion-score">{{ visit.decor }}</span>
+                <div class="criterion">
+                  <span class="criterion-label">✨ Decor</span>
+                  <div class="criterion-bar-wrap">
+                    <div class="criterion-bar" :style="{ width: `${visit.decor}%`, backgroundColor: scoreColor(visit.decor) }" />
+                  </div>
+                  <span class="criterion-score">{{ visit.decor }}</span>
+                </div>
               </div>
             </div>
-          </div>
+          </template>
+
+          <!-- Community tab -->
+          <template v-else>
+            <div v-if="!communityVisits.length" class="no-visits">No recent visits 🍽️</div>
+            <div v-for="cv in communityVisits" :key="cv.id" class="community-card">
+              <div class="community-user">
+                <span class="community-avatar">{{ cv.user.avatar }}</span>
+                <div class="community-user-info">
+                  <span class="community-name">{{ cv.user.name }}</span>
+                  <span class="community-date">{{ formatDate(cv.date) }}</span>
+                </div>
+              </div>
+              <div class="community-scores">
+                <div class="community-score-item">
+                  <span class="community-score-label">🍽️</span>
+                  <span class="community-score-value" :style="{ color: scoreColor(cv.food) }">{{ cv.food }}</span>
+                </div>
+                <div class="community-score-item">
+                  <span class="community-score-label">🤝</span>
+                  <span class="community-score-value" :style="{ color: scoreColor(cv.service) }">{{ cv.service }}</span>
+                </div>
+                <div class="community-score-item">
+                  <span class="community-score-label">✨</span>
+                  <span class="community-score-value" :style="{ color: scoreColor(cv.decor) }">{{ cv.decor }}</span>
+                </div>
+                <span class="community-avg" :style="{ backgroundColor: scoreColor(visitAvg(cv)) }">
+                  {{ visitAvg(cv) }}
+                </span>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
     </template>
@@ -364,10 +406,31 @@ function scoreColor(score: number): string {
   gap: 12px;
   margin-top: 8px;
 }
-.visits-title {
-  font-size: 18px;
-  font-weight: 800;
-  margin: 0;
+
+/* Tab bar */
+.tab-bar {
+  display: flex;
+  gap: 8px;
+  background: #1a1a1a;
+  padding: 4px;
+  border-radius: 100px;
+  align-self: flex-start;
+}
+.tab-btn {
+  padding: 7px 18px;
+  border-radius: 100px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  font-family: inherit;
+}
+.tab-btn-active {
+  background: #ffffff;
+  color: #0d0d0d;
 }
 .no-visits {
   color: rgba(255, 255, 255, 0.4);
@@ -440,6 +503,83 @@ function scoreColor(score: number): string {
   width: 28px;
   text-align: right;
   color: rgba(255, 255, 255, 0.8);
+  flex-shrink: 0;
+}
+
+/* Community cards */
+.community-card {
+  background: #1a1a1a;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.community-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.community-avatar {
+  font-size: 28px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.community-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.community-name {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.community-date {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.38);
+  font-weight: 600;
+}
+.community-scores {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.community-score-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.community-score-label {
+  font-size: 12px;
+}
+.community-score-value {
+  font-size: 12px;
+  font-weight: 800;
+}
+.community-avg {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 900;
+  color: #0d0d0d;
   flex-shrink: 0;
 }
 </style>

@@ -1,0 +1,314 @@
+{
+  "data": [
+    {
+      "id": "cv-1",
+      "restaurantId": "bella-napoli",
+      "date": "2026-03-21",
+      "food": 96,
+      "service": 90,
+      "decor": 88,
+      "user": { "id": "u1", "name": "Sophie Martin", "avatar": "👩" }
+    },
+    {
+      "id": "cv-2",
+      "restaurantId": "bella-napoli",
+      "date": "2026-03-18",
+      "food": 92,
+      "service": 85,
+      "decor": 83,
+      "user": { "id": "u2", "name": "Lucas Petit", "avatar": "🧑" }
+    },
+    {
+      "id": "cv-3",
+      "restaurantId": "bella-napoli",
+      "date": "2026-03-10",
+      "food": 99,
+      "service": 93,
+      "decor": 91,
+      "user": { "id": "u3", "name": "Emma Dubois", "avatar": "👩‍🦱" }
+    },
+    {
+      "id": "cv-4",
+      "restaurantId": "bella-napoli",
+      "date": "2026-02-28",
+      "food": 88,
+      "service": 80,
+      "decor": 79,
+      "user": { "id": "u4", "name": "Noah Bernard", "avatar": "👦" }
+    },
+    {
+      "id": "cv-5",
+      "restaurantId": "bella-napoli",
+      "date": "2026-02-14",
+      "food": 94,
+      "service": 87,
+      "decor": 90,
+      "user": { "id": "u5", "name": "Mia Leroy", "avatar": "👧" }
+    },
+    {
+      "id": "cv-6",
+      "restaurantId": "bella-napoli",
+      "date": "2026-01-30",
+      "food": 91,
+      "service": 88,
+      "decor": 86,
+      "user": { "id": "u6", "name": "Hugo Moreau", "avatar": "🧔" }
+    },
+    {
+      "id": "cv-7",
+      "restaurantId": "tokyo-ramen-house",
+      "date": "2026-03-20",
+      "food": 95,
+      "service": 72,
+      "decor": 68,
+      "user": { "id": "u3", "name": "Emma Dubois", "avatar": "👩‍🦱" }
+    },
+    {
+      "id": "cv-8",
+      "restaurantId": "tokyo-ramen-house",
+      "date": "2026-03-05",
+      "food": 93,
+      "service": 75,
+      "decor": 71,
+      "user": { "id": "u7", "name": "Chloé Dupont", "avatar": "👩‍🦰" }
+    },
+    {
+      "id": "cv-9",
+      "restaurantId": "tokyo-ramen-house",
+      "date": "2026-02-19",
+      "food": 90,
+      "service": 70,
+      "decor": 65,
+      "user": { "id": "u8", "name": "Ethan Simon", "avatar": "👨" }
+    },
+    {
+      "id": "cv-10",
+      "restaurantId": "tokyo-ramen-house",
+      "date": "2026-01-25",
+      "food": 97,
+      "service": 68,
+      "decor": 70,
+      "user": { "id": "u1", "name": "Sophie Martin", "avatar": "👩" }
+    },
+    {
+      "id": "cv-11",
+      "restaurantId": "tokyo-ramen-house",
+      "date": "2025-12-10",
+      "food": 88,
+      "service": 74,
+      "decor": 66,
+      "user": { "id": "u4", "name": "Noah Bernard", "avatar": "👦" }
+    },
+    {
+      "id": "cv-12",
+      "restaurantId": "le-petit-bistro",
+      "date": "2026-03-15",
+      "food": 94,
+      "service": 97,
+      "decor": 99,
+      "user": { "id": "u5", "name": "Mia Leroy", "avatar": "👧" }
+    },
+    {
+      "id": "cv-13",
+      "restaurantId": "le-petit-bistro",
+      "date": "2026-02-20",
+      "food": 91,
+      "service": 93,
+      "decor": 96,
+      "user": { "id": "u2", "name": "Lucas Petit", "avatar": "🧑" }
+    },
+    {
+      "id": "cv-14",
+      "restaurantId": "le-petit-bistro",
+      "date": "2026-01-18",
+      "food": 89,
+      "service": 91,
+      "decor": 94,
+      "user": { "id": "u6", "name": "Hugo Moreau", "avatar": "🧔" }
+    },
+    {
+      "id": "cv-15",
+      "restaurantId": "le-petit-bistro",
+      "date": "2025-11-11",
+      "food": 87,
+      "service": 88,
+      "decor": 92,
+      "user": { "id": "u8", "name": "Ethan Simon", "avatar": "👨" }
+    },
+    {
+      "id": "cv-16",
+      "restaurantId": "le-petit-bistro",
+      "date": "2025-09-05",
+      "food": 93,
+      "service": 95,
+      "decor": 97,
+      "user": { "id": "u7", "name": "Chloé Dupont", "avatar": "👩‍🦰" }
+    },
+    {
+      "id": "cv-17",
+      "restaurantId": "taco-fiesta",
+      "date": "2026-03-19",
+      "food": 88,
+      "service": 79,
+      "decor": 65,
+      "user": { "id": "u6", "name": "Hugo Moreau", "avatar": "🧔" }
+    },
+    {
+      "id": "cv-18",
+      "restaurantId": "taco-fiesta",
+      "date": "2026-03-08",
+      "food": 85,
+      "service": 77,
+      "decor": 62,
+      "user": { "id": "u3", "name": "Emma Dubois", "avatar": "👩‍🦱" }
+    },
+    {
+      "id": "cv-19",
+      "restaurantId": "taco-fiesta",
+      "date": "2026-02-01",
+      "food": 90,
+      "service": 82,
+      "decor": 68,
+      "user": { "id": "u2", "name": "Lucas Petit", "avatar": "🧑" }
+    },
+    {
+      "id": "cv-20",
+      "restaurantId": "taco-fiesta",
+      "date": "2025-12-20",
+      "food": 87,
+      "service": 80,
+      "decor": 64,
+      "user": { "id": "u5", "name": "Mia Leroy", "avatar": "👧" }
+    },
+    {
+      "id": "cv-21",
+      "restaurantId": "taco-fiesta",
+      "date": "2025-10-15",
+      "food": 92,
+      "service": 84,
+      "decor": 70,
+      "user": { "id": "u8", "name": "Ethan Simon", "avatar": "👨" }
+    },
+    {
+      "id": "cv-22",
+      "restaurantId": "the-curry-palace",
+      "date": "2026-03-17",
+      "food": 90,
+      "service": 82,
+      "decor": 78,
+      "user": { "id": "u7", "name": "Chloé Dupont", "avatar": "👩‍🦰" }
+    },
+    {
+      "id": "cv-23",
+      "restaurantId": "the-curry-palace",
+      "date": "2026-02-10",
+      "food": 86,
+      "service": 78,
+      "decor": 74,
+      "user": { "id": "u1", "name": "Sophie Martin", "avatar": "👩" }
+    },
+    {
+      "id": "cv-24",
+      "restaurantId": "the-curry-palace",
+      "date": "2025-12-05",
+      "food": 83,
+      "service": 76,
+      "decor": 71,
+      "user": { "id": "u4", "name": "Noah Bernard", "avatar": "👦" }
+    },
+    {
+      "id": "cv-25",
+      "restaurantId": "the-curry-palace",
+      "date": "2025-09-22",
+      "food": 89,
+      "service": 80,
+      "decor": 76,
+      "user": { "id": "u6", "name": "Hugo Moreau", "avatar": "🧔" }
+    },
+    {
+      "id": "cv-26",
+      "restaurantId": "dragon-garden",
+      "date": "2026-03-12",
+      "food": 85,
+      "service": 77,
+      "decor": 82,
+      "user": { "id": "u2", "name": "Lucas Petit", "avatar": "🧑" }
+    },
+    {
+      "id": "cv-27",
+      "restaurantId": "dragon-garden",
+      "date": "2026-02-22",
+      "food": 82,
+      "service": 74,
+      "decor": 79,
+      "user": { "id": "u5", "name": "Mia Leroy", "avatar": "👧" }
+    },
+    {
+      "id": "cv-28",
+      "restaurantId": "dragon-garden",
+      "date": "2026-01-09",
+      "food": 79,
+      "service": 70,
+      "decor": 76,
+      "user": { "id": "u3", "name": "Emma Dubois", "avatar": "👩‍🦱" }
+    },
+    {
+      "id": "cv-29",
+      "restaurantId": "dragon-garden",
+      "date": "2025-11-18",
+      "food": 83,
+      "service": 73,
+      "decor": 80,
+      "user": { "id": "u8", "name": "Ethan Simon", "avatar": "👨" }
+    },
+    {
+      "id": "cv-30",
+      "restaurantId": "smoky-bbq-joint",
+      "date": "2026-03-22",
+      "food": 93,
+      "service": 74,
+      "decor": 64,
+      "user": { "id": "u4", "name": "Noah Bernard", "avatar": "👦" }
+    },
+    {
+      "id": "cv-31",
+      "restaurantId": "smoky-bbq-joint",
+      "date": "2026-03-09",
+      "food": 89,
+      "service": 71,
+      "decor": 60,
+      "user": { "id": "u7", "name": "Chloé Dupont", "avatar": "👩‍🦰" }
+    },
+    {
+      "id": "cv-32",
+      "restaurantId": "smoky-bbq-joint",
+      "date": "2026-02-15",
+      "food": 91,
+      "service": 69,
+      "decor": 62,
+      "user": { "id": "u1", "name": "Sophie Martin", "avatar": "👩" }
+    },
+    {
+      "id": "cv-33",
+      "restaurantId": "smoky-bbq-joint",
+      "date": "2026-01-20",
+      "food": 88,
+      "service": 72,
+      "decor": 58,
+      "user": { "id": "u2", "name": "Lucas Petit", "avatar": "🧑" }
+    },
+    {
+      "id": "cv-34",
+      "restaurantId": "smoky-bbq-joint",
+      "date": "2025-12-28",
+      "food": 94,
+      "service": 75,
+      "decor": 63,
+      "user": { "id": "u3", "name": "Emma Dubois", "avatar": "👩‍🦱" }
+    }
+  ],
+  "meta": {
+    "total": 34,
+    "updatedAt": "2026-03-23T00:00:00Z"
+  }
+}

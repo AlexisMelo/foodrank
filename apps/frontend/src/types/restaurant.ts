@@ -21,6 +21,14 @@ export interface Visit {
   decor: number
 }
 
+export interface CommunityVisit extends Visit {
+  user: {
+    id: string
+    name: string
+    avatar: string
+  }
+}
+
 export interface ApiResponse<T> {
   data: T
   meta: {
