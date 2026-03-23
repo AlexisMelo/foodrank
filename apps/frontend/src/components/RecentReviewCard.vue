@@ -1,7 +1,9 @@
 <script setup lang="ts">
 defineProps<{
+  restaurantId: string
   emoji: string
   name: string
+  date: string
   food: number
   service: number
   decor: number
@@ -12,12 +14,22 @@ function scoreColor(score: number): string {
   if (score >= 65) return '#f9c74f'
   return '#ff6b6b'
 }
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
 </script>
 
 <template>
-  <div class="review-card">
-    <div class="emoji-circle">{{ emoji }}</div>
+  <RouterLink :to="`/restaurant/${restaurantId}`" class="review-card">
+    <div class="emoji-wrap">
+      <div class="emoji-circle">{{ emoji }}</div>
+      <div class="avg-bubble" :style="{ backgroundColor: scoreColor(Math.round((food + service + decor) / 3)) }">
+        {{ Math.round((food + service + decor) / 3) }}
+      </div>
+    </div>
     <span class="restaurant-name">{{ name }}</span>
+    <span class="visit-date">{{ formatDate(date) }}</span>
     <div class="criteria">
       <div class="criterion">
         <span class="criterion-label">🍽️</span>
@@ -41,7 +53,7 @@ function scoreColor(score: number): string {
         <span class="criterion-score" :style="{ color: scoreColor(decor) }">{{ decor }}</span>
       </div>
     </div>
-  </div>
+  </RouterLink>
 </template>
 
 <style scoped>
@@ -55,6 +67,23 @@ function scoreColor(score: number): string {
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.review-card:hover {
+  background: #242424;
+  transform: translateY(-2px);
+}
+
+.review-card:active {
+  transform: translateY(0);
+}
+
+.emoji-wrap {
+  position: relative;
+  flex-shrink: 0;
 }
 
 .emoji-circle {
@@ -66,7 +95,22 @@ function scoreColor(score: number): string {
   align-items: center;
   justify-content: center;
   font-size: 28px;
-  flex-shrink: 0;
+}
+
+.avg-bubble {
+  position: absolute;
+  bottom: 0;
+  right: -4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 900;
+  color: #0d0d0d;
+  border: 2px solid #1a1a1a;
 }
 
 .restaurant-name {
@@ -80,6 +124,12 @@ function scoreColor(score: number): string {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+.visit-date {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.35);
 }
 
 .criteria {

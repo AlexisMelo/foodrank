@@ -3,6 +3,9 @@ import { ref, onMounted } from 'vue'
 import type { Restaurant, CommunityVisit } from '@/types/restaurant'
 import { fetchRestaurants, fetchCommunityVisitsByUserId } from '@/services/restaurantService'
 import RecentReviewCard from '@/components/RecentReviewCard.vue'
+import { useNewReview } from '@/composables/useNewReview'
+
+const { open: openNewReview } = useNewReview()
 
 const CURRENT_USER_ID = 'alex'
 
@@ -16,7 +19,7 @@ onMounted(async () => {
   ])
   const restaurantMap = new Map(restaurants.map((r) => [r.id, r]))
   recentVisits.value = visits
-    .slice(0, 3)
+    .slice(0, 5)
     .map((v) => ({ ...v, restaurant: restaurantMap.get(v.restaurantId)! }))
     .filter((v) => v.restaurant)
   loading.value = false
@@ -29,27 +32,25 @@ onMounted(async () => {
     <div class="blob blob-2" />
 
     <section class="section">
-      <h2 class="section-title">Recent reviews</h2>
+      <div class="section-header">
+        <h2 class="section-title">Recent reviews</h2>
+        <button class="add-chip" @click="openNewReview">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New
+        </button>
+      </div>
       <div class="cards-row">
 
-        <!-- Add new review -->
-        <button class="add-card">
-          <div class="add-circle">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-          </div>
-          <span class="add-label">New review</span>
-        </button>
-
-        <div v-if="loading" v-for="i in 3" :key="i" class="card-skeleton" />
+        <div v-if="loading" v-for="i in 5" :key="i" class="card-skeleton" />
 
         <RecentReviewCard
           v-else
           v-for="visit in recentVisits"
           :key="visit.id"
+          :restaurantId="visit.restaurantId"
           :emoji="visit.restaurant.emoji"
           :name="visit.restaurant.name"
+          :date="visit.date"
           :food="visit.food"
           :service="visit.service"
           :decor="visit.decor"
@@ -97,12 +98,44 @@ onMounted(async () => {
   gap: 16px;
 }
 
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .section-title {
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -0.3px;
   color: #ffffff;
   margin: 0;
+}
+
+.add-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px 4px 6px;
+  border-radius: 100px;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.add-chip:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.add-chip svg {
+  width: 14px;
+  height: 14px;
 }
 
 .cards-row {
@@ -116,49 +149,6 @@ onMounted(async () => {
   display: none;
 }
 
-/* Add card */
-.add-card {
-  flex-shrink: 0;
-  width: 148px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1.5px dashed rgba(255, 255, 255, 0.15);
-  border-radius: 20px;
-  padding: 16px 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
-}
-.add-card:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.28);
-}
-
-.add-circle {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #0d0d0d;
-  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.18);
-}
-.add-circle svg {
-  width: 22px;
-  height: 22px;
-}
-
-.add-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.45);
-  text-align: center;
-}
 
 /* Skeleton */
 .card-skeleton {

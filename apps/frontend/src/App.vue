@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import BottomTabBar from '@/components/BottomTabBar.vue'
+import NewReviewModal from '@/components/NewReviewModal.vue'
 </script>
 
 <template>
   <div class="container">
     <RouterView />
     <BottomTabBar />
+    <NewReviewModal />
   </div>
 </template>
 

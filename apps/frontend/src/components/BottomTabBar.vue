@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
+import { useNewReview } from '@/composables/useNewReview'
+
+const { open: openNewReview } = useNewReview()
 
 const CURRENT_USER_ID = 'alex'
 
@@ -27,7 +30,7 @@ function isProfile(): boolean {
       <span>Ratings</span>
     </button>
 
-    <button class="tab-btn tab-btn-add" @click="() => {}">
+    <button class="tab-btn tab-btn-add" @click="openNewReview">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     </button>
 
