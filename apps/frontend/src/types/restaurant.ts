@@ -5,7 +5,6 @@ export interface Restaurant {
   score: number
   emoji: string
   address: string
-  priceRange: string
   description: string
   openNow: boolean
   tags: string[]

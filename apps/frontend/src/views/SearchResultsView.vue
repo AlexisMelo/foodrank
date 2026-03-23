@@ -46,7 +46,7 @@ onMounted(async () => {
       <RouterLink
         v-for="(r, index) in results"
         :key="r.id"
-        :to="`/restaurant/${r.id}`"
+        :to="`/review/${r.id}`"
         class="list-item"
       >
         <div class="item-index">{{ index + 1 }}</div>
@@ -55,7 +55,7 @@ onMounted(async () => {
         </div>
         <div class="item-info">
           <span class="item-name">{{ r.name }}</span>
-          <span class="item-meta">{{ r.cuisine }} · {{ r.priceRange }}</span>
+          <span class="item-meta">{{ r.cuisine }}</span>
         </div>
         <span class="item-arrow">›</span>
       </RouterLink>

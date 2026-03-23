@@ -82,7 +82,6 @@ function scoreColor(score: number): string {
       <div class="content">
         <div class="name-row">
           <h1 class="name">{{ restaurant.name }}</h1>
-          <span class="price">{{ restaurant.priceRange }}</span>
         </div>
 
         <div class="chips">

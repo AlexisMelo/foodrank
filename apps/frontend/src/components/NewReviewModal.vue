@@ -90,7 +90,7 @@ watch(isOpen, async (val) => {
             No restaurants found
           </div>
           <ul v-else-if="suggestions.length" class="suggestions">
-            <li v-for="r in suggestions" :key="r.id" class="suggestion-item">
+            <li v-for="r in suggestions" :key="r.id" class="suggestion-item" @click="() => { close(); router.push(`/review/${r.id}`) }">
               <span class="suggestion-emoji">{{ r.emoji }}</span>
               <div class="suggestion-info">
                 <span class="suggestion-name">{{ r.name }}</span>
