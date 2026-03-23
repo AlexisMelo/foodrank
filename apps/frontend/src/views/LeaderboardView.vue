@@ -6,7 +6,6 @@ import {
   fetchRestaurants,
   fetchUserById,
   fetchCommunityVisitsByUserId,
-  fetchAllCommunityVisits,
 } from '@/services/restaurantService'
 
 const CURRENT_USER_ID = 'alex'
@@ -19,18 +18,15 @@ const isOwnProfile = computed(() => !route.params.id)
 
 const displayUser = ref<User | null>(null)
 const allRestaurants = ref<Restaurant[]>([])
-const allCommunityVisits = ref<CommunityVisit[]>([])
-const userVisitedIds = ref<Set<string>>(new Set())
+const userVisits = ref<CommunityVisit[]>([])
 const visitedCount = ref(0)
 const loading = ref(true)
-const sortAsc = ref(true)
 
 onMounted(async () => {
-  const [found, userVisits, restaurants, communityVisits] = await Promise.all([
+  const [found, visits, restaurants] = await Promise.all([
     fetchUserById(profileUserId.value),
     fetchCommunityVisitsByUserId(profileUserId.value),
     fetchRestaurants(),
-    fetchAllCommunityVisits(),
   ])
   if (!found) {
     router.replace('/')
@@ -38,31 +34,26 @@ onMounted(async () => {
   }
   displayUser.value = found
   allRestaurants.value = restaurants
-  allCommunityVisits.value = communityVisits
-  const ratedIds = new Set(userVisits.map((v) => v.restaurantId))
-  userVisitedIds.value = ratedIds
-  visitedCount.value = ratedIds.size
+  userVisits.value = visits
+  visitedCount.value = new Set(visits.map((v) => v.restaurantId)).size
   loading.value = false
 })
 
-// Average score across all users for a given restaurant
-function globalAvg(restaurantId: string): number {
-  const visits = allCommunityVisits.value.filter((v) => v.restaurantId === restaurantId)
+// Average of the user's own ratings for a restaurant
+function userAvg(restaurantId: string): number {
+  const visits = userVisits.value.filter((v) => v.restaurantId === restaurantId)
   if (!visits.length) return 0
   return visits.reduce((s, v) => s + (v.food + v.service + v.decor) / 3, 0) / visits.length
 }
 
-// All restaurants ranked globally by average rating, filtered to user's visited ones
-const rankedRestaurants = computed(() => {
-  const sorted = [...allRestaurants.value].sort((a, b) => globalAvg(b.id) - globalAvg(a.id))
-  return sorted
-    .map((r, i) => ({ ...r, rank: i + 1 }))
-    .filter((r) => userVisitedIds.value.has(r.id))
+// Restaurants the user visited, ranked by their personal average (best = rank 1)
+const displayedRestaurants = computed(() => {
+  const visitedIds = new Set(userVisits.value.map((v) => v.restaurantId))
+  return [...allRestaurants.value]
+    .filter((r) => visitedIds.has(r.id))
+    .sort((a, b) => userAvg(b.id) - userAvg(a.id))
+    .map((r, i) => ({ ...r, rank: i + 1, avgScore: userAvg(r.id) }))
 })
-
-const displayedRestaurants = computed(() =>
-  sortAsc.value ? rankedRestaurants.value : [...rankedRestaurants.value].reverse(),
-)
 
 const rankColors = ['#f9c74f', '#a8dadc', '#f4a261', '#90be6d', '#c77dff', '#4cc9f0', '#ff6b6b']
 
@@ -117,7 +108,7 @@ async function shareProfile() {
           </div>
           <div class="item-info">
             <span class="item-name">{{ restaurant.name }}</span>
-            <span class="item-sub">{{ restaurant.cuisine }} · {{ restaurant.score }}% score</span>
+            <span class="item-sub">{{ restaurant.cuisine }} · {{ restaurant.avgScore.toFixed(1) }}/10</span>
           </div>
           <div class="item-rank" :style="{ backgroundColor: rankColors[index] }">
             {{ restaurant.rank }}
