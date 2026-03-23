@@ -1,7 +1,10 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import BottomTabBar from '@/components/BottomTabBar.vue'
+</script>
 
 <template>
   <RouterView />
+  <BottomTabBar />
 </template>
 
 <style>
@@ -15,5 +18,6 @@
 
 body {
   background: #0d0d0d;
+  padding-bottom: 72px;
 }
 </style>
