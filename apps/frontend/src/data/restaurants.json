@@ -1,0 +1,99 @@
+{
+  "data": [
+    {
+      "id": "bella-napoli",
+      "rank": 1,
+      "name": "Bella Napoli",
+      "cuisine": "Italian",
+      "score": 100,
+      "emoji": "🍕",
+      "address": "12 Via Roma, Little Italy",
+      "priceRange": "$$",
+      "description": "Authentic Neapolitan pizza baked in a wood-fired oven imported straight from Naples. The margherita is a must, but the truffle burrata will steal the show.",
+      "openNow": true,
+      "tags": ["pizza", "pasta", "wine", "dine-in"]
+    },
+    {
+      "id": "tokyo-ramen-house",
+      "rank": 2,
+      "name": "Tokyo Ramen House",
+      "cuisine": "Japanese",
+      "score": 94,
+      "emoji": "🍜",
+      "address": "88 Sakura Street, Japantown",
+      "priceRange": "$",
+      "description": "Rich tonkotsu broth simmered for 18 hours, topped with chashu pork and a perfectly soft-boiled egg. Cash only, but absolutely worth the queue.",
+      "openNow": true,
+      "tags": ["ramen", "noodles", "broth", "casual"]
+    },
+    {
+      "id": "le-petit-bistro",
+      "rank": 3,
+      "name": "Le Petit Bistro",
+      "cuisine": "French",
+      "score": 91,
+      "emoji": "🥐",
+      "address": "7 Boulevard Haussmann, Montmartre",
+      "priceRange": "$$$",
+      "description": "Classic French bistro with an ever-changing seasonal menu. The duck confit and crème brûlée are permanent fixtures for good reason. Reservations strongly recommended.",
+      "openNow": false,
+      "tags": ["french", "wine", "brunch", "reservations"]
+    },
+    {
+      "id": "taco-fiesta",
+      "rank": 4,
+      "name": "Taco Fiesta",
+      "cuisine": "Mexican",
+      "score": 87,
+      "emoji": "🌮",
+      "address": "34 Calle Ocho, Eastside",
+      "priceRange": "$",
+      "description": "Family-run taqueria serving slow-cooked birria and al pastor tacos since 1998. The salsa verde is made fresh every morning and the horchata is cold and creamy.",
+      "openNow": true,
+      "tags": ["tacos", "burritos", "takeaway", "family-friendly"]
+    },
+    {
+      "id": "the-curry-palace",
+      "rank": 5,
+      "name": "The Curry Palace",
+      "cuisine": "Indian",
+      "score": 83,
+      "emoji": "🍛",
+      "address": "55 Spice Lane, Southgate",
+      "priceRange": "$$",
+      "description": "Fragrant curries and freshly baked naan from a tandoor oven. The butter chicken is a crowd favourite, while the lamb rogan josh is deeply spiced and comforting.",
+      "openNow": true,
+      "tags": ["curry", "naan", "vegetarian options", "delivery"]
+    },
+    {
+      "id": "dragon-garden",
+      "rank": 6,
+      "name": "Dragon Garden",
+      "cuisine": "Chinese",
+      "score": 79,
+      "emoji": "🥢",
+      "address": "21 Jade Avenue, Chinatown",
+      "priceRange": "$$",
+      "description": "Dim sum by day, Cantonese roasts by night. The char siu pork is lacquered to perfection and the XO fried rice is generously loaded with seafood.",
+      "openNow": false,
+      "tags": ["dim sum", "roasts", "seafood", "family-style"]
+    },
+    {
+      "id": "smoky-bbq-joint",
+      "rank": 7,
+      "name": "Smoky BBQ Joint",
+      "cuisine": "American",
+      "score": 75,
+      "emoji": "🍖",
+      "address": "9 Pitmaster Road, Westtown",
+      "priceRange": "$$",
+      "description": "Low-and-slow smoked brisket, pulled pork, and baby back ribs. Everything is smoked on-site over hickory wood and served with house-made pickles and cornbread.",
+      "openNow": true,
+      "tags": ["bbq", "brisket", "ribs", "comfort food"]
+    }
+  ],
+  "meta": {
+    "total": 7,
+    "updatedAt": "2026-03-23T00:00:00Z"
+  }
+}

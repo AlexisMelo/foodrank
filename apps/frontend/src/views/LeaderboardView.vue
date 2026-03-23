@@ -1,11 +1,7 @@
 <script setup lang="ts">
-interface Restaurant {
-  rank: number
-  name: string
-  cuisine: string
-  score: number
-  emoji: string
-}
+import { ref, onMounted } from 'vue'
+import type { Restaurant } from '@/types/restaurant'
+import { fetchRestaurants } from '@/services/restaurantService'
 
 const user = {
   name: 'Alex Dupont',
@@ -13,15 +9,11 @@ const user = {
   visited: 47,
 }
 
-const restaurants: Restaurant[] = [
-  { rank: 1, name: 'Bella Napoli', cuisine: 'Italian', score: 100, emoji: '🍕' },
-  { rank: 2, name: 'Tokyo Ramen House', cuisine: 'Japanese', score: 94, emoji: '🍜' },
-  { rank: 3, name: 'Le Petit Bistro', cuisine: 'French', score: 91, emoji: '🥐' },
-  { rank: 4, name: 'Taco Fiesta', cuisine: 'Mexican', score: 87, emoji: '🌮' },
-  { rank: 5, name: 'The Curry Palace', cuisine: 'Indian', score: 83, emoji: '🍛' },
-  { rank: 6, name: 'Dragon Garden', cuisine: 'Chinese', score: 79, emoji: '🥢' },
-  { rank: 7, name: 'Smoky BBQ Joint', cuisine: 'American', score: 75, emoji: '🍖' },
-]
+const restaurants = ref<Restaurant[]>([])
+
+onMounted(async () => {
+  restaurants.value = await fetchRestaurants()
+})
 
 const rankColors = ['#f9c74f', '#a8dadc', '#f4a261', '#90be6d', '#c77dff', '#4cc9f0', '#ff6b6b']
 
@@ -60,9 +52,10 @@ async function shareProfile() {
 
     <!-- Ranked list -->
     <div class="list">
-      <div
+      <RouterLink
         v-for="(restaurant, index) in restaurants"
         :key="restaurant.rank"
+        :to="`/restaurant/${restaurant.id}`"
         class="list-item"
         :class="{ 'list-item-first': index === 0 }"
       >
@@ -76,7 +69,7 @@ async function shareProfile() {
         <div class="item-rank" :style="{ backgroundColor: rankColors[index] }">
           {{ restaurant.rank }}
         </div>
-      </div>
+      </RouterLink>
     </div>
   </div>
 </template>
@@ -231,7 +224,6 @@ async function shareProfile() {
 
 .winner-tag {
   display: block;
-  rotate: 4deg;
   padding: 6px 18px;
   border-radius: 100px;
   background: rgba(144, 190, 109, 0.25);
@@ -256,6 +248,8 @@ async function shareProfile() {
   padding: 12px 16px;
   border-radius: 16px;
   background: #1a1a1a;
+  text-decoration: none;
+  color: inherit;
 }
 .list-item-first {
   background: #ffffff;
