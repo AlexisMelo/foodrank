@@ -8,6 +8,7 @@ const router = createRouter({
     { path: '/profile', component: () => import('@/views/ProfileView.vue') },
     { path: '/restaurant/:id', component: () => import('@/views/RestaurantView.vue') },
     { path: '/user/:id', component: () => import('@/views/ProfileView.vue') },
+    { path: '/search', component: () => import('@/views/SearchResultsView.vue') },
   ],
 })
 

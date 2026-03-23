@@ -1,8 +1,18 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { useNewReview } from '@/composables/useNewReview'
 import { fetchRestaurants } from '@/services/restaurantService'
 import type { Restaurant } from '@/types/restaurant'
+
+const router = useRouter()
+
+function submitSearch() {
+  const trimmed = query.value.trim()
+  if (!trimmed) return
+  close()
+  router.push({ path: '/search', query: { q: trimmed } })
+}
 
 const { isOpen, close } = useNewReview()
 
@@ -68,8 +78,9 @@ watch(isOpen, async (val) => {
             class="search-input"
             type="text"
             placeholder="Search a restaurant…"
+            @keydown.enter="submitSearch"
           />
-          <button class="search-btn">🔍</button>
+          <button class="search-btn" @click="submitSearch">🔍</button>
         </div>
 
         <!-- Suggestions — rendered outside the flow of search-row -->
