@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Restaurant, CommunityVisit } from '@/types/restaurant'
 import { fetchRestaurantById, fetchCommunityVisitsByRestaurantId } from '@/services/restaurantService'
+import RatingScores from '@/components/RatingScores.vue'
 
 const CURRENT_USER_ID = 'alex'
 
@@ -173,18 +174,7 @@ function scoreColor(score: number): string {
                 </div>
               </div>
               <div class="community-scores">
-                <div class="community-score-item">
-                  <span class="community-score-label">🍽️</span>
-                  <span class="community-score-value" :style="{ color: scoreColor(cv.food) }">{{ cv.food }}</span>
-                </div>
-                <div class="community-score-item">
-                  <span class="community-score-label">🤝</span>
-                  <span class="community-score-value" :style="{ color: scoreColor(cv.service) }">{{ cv.service }}</span>
-                </div>
-                <div class="community-score-item">
-                  <span class="community-score-label">✨</span>
-                  <span class="community-score-value" :style="{ color: scoreColor(cv.decor) }">{{ cv.decor }}</span>
-                </div>
+                <RatingScores :food="cv.food" :service="cv.service" :decor="cv.decor" />
                 <span class="community-avg" :style="{ backgroundColor: scoreColor(visitAvg(cv)) }">
                   {{ visitAvg(cv) }}
                 </span>

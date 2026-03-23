@@ -7,6 +7,7 @@ import {
   fetchUserById,
   fetchCommunityVisitsByUserId,
 } from '@/services/restaurantService'
+import RatingScores from '@/components/RatingScores.vue'
 
 const CURRENT_USER_ID = 'alex'
 
@@ -39,11 +40,14 @@ onMounted(async () => {
   loading.value = false
 })
 
-// Average of the user's own ratings for a restaurant
-function userAvg(restaurantId: string): number {
+// Per-criterion averages of the user's own visits for a restaurant
+function userCriteriaAvg(restaurantId: string): { food: number; service: number; decor: number; overall: number } {
   const visits = userVisits.value.filter((v) => v.restaurantId === restaurantId)
-  if (!visits.length) return 0
-  return visits.reduce((s, v) => s + (v.food + v.service + v.decor) / 3, 0) / visits.length
+  if (!visits.length) return { food: 0, service: 0, decor: 0, overall: 0 }
+  const food = visits.reduce((s, v) => s + v.food, 0) / visits.length
+  const service = visits.reduce((s, v) => s + v.service, 0) / visits.length
+  const decor = visits.reduce((s, v) => s + v.decor, 0) / visits.length
+  return { food, service, decor, overall: (food + service + decor) / 3 }
 }
 
 // Restaurants the user visited, ranked by their personal average (best = rank 1)
@@ -51,8 +55,9 @@ const displayedRestaurants = computed(() => {
   const visitedIds = new Set(userVisits.value.map((v) => v.restaurantId))
   return [...allRestaurants.value]
     .filter((r) => visitedIds.has(r.id))
-    .sort((a, b) => userAvg(b.id) - userAvg(a.id))
-    .map((r, i) => ({ ...r, rank: i + 1, avgScore: userAvg(r.id) }))
+    .map((r) => ({ ...r, scores: userCriteriaAvg(r.id) }))
+    .sort((a, b) => b.scores.overall - a.scores.overall)
+    .map((r, i) => ({ ...r, rank: i + 1 }))
 })
 
 const rankColors = ['#f9c74f', '#a8dadc', '#f4a261', '#90be6d', '#c77dff', '#4cc9f0', '#ff6b6b']
@@ -63,7 +68,7 @@ async function shareProfile() {
 </script>
 
 <template>
-  <div class="leaderboard">
+  <div class="profile">
     <!-- Background blobs -->
     <div class="blob blob-1" />
     <div class="blob blob-2" />
@@ -75,8 +80,7 @@ async function shareProfile() {
     <!-- Header -->
     <div class="header">
       <button v-if="!isOwnProfile" class="back-btn" @click="router.back()">←</button>
-      <h1 class="title">Leaderboard 🏆</h1>
-      <button class="share-btn" @click="shareProfile">⬆</button>
+<button class="share-btn" @click="shareProfile">⬆</button>
     </div>
 
     <!-- Loading (other user fetch) -->
@@ -108,8 +112,13 @@ async function shareProfile() {
           </div>
           <div class="item-info">
             <span class="item-name">{{ restaurant.name }}</span>
-            <span class="item-sub">{{ restaurant.cuisine }} · {{ restaurant.avgScore.toFixed(1) }}/10</span>
+            <span class="item-sub">{{ restaurant.cuisine }}</span>
           </div>
+          <RatingScores
+            :food="restaurant.scores.food"
+            :service="restaurant.scores.service"
+            :decor="restaurant.scores.decor"
+          />
           <div class="item-rank" :style="{ backgroundColor: rankColors[index] }">
             {{ restaurant.rank }}
           </div>
@@ -120,7 +129,7 @@ async function shareProfile() {
 </template>
 
 <style scoped>
-.leaderboard {
+.profile {
   position: relative;
   min-height: 100vh;
   background-color: #0d0d0d;
@@ -228,14 +237,6 @@ async function shareProfile() {
 }
 .share-btn:hover {
   background: rgba(255, 255, 255, 0.1);
-}
-.title {
-  flex: 1;
-  text-align: center;
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.3px;
-  margin: 0;
 }
 
 /* Loading */
