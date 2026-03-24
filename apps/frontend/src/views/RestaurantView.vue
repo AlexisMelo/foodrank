@@ -126,7 +126,7 @@ function scoreColor(score: number): string {
                 @click="activeTab = 'community'"
               >Recent</button>
             </div>
-            <NewReviewChip />
+            <NewReviewChip :restaurantId="restaurant.id" />
           </div>
 
           <!-- My Visits tab -->
