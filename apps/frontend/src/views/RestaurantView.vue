@@ -5,6 +5,8 @@ import type { Restaurant, CommunityVisit } from '@/types/restaurant'
 import { fetchRestaurantById, fetchCommunityVisitsByRestaurantId } from '@/services/restaurantService'
 import RatingScores from '@/components/RatingScores.vue'
 import NewReviewChip from '@/components/NewReviewChip.vue'
+import CuisineChip from '@/components/CuisineChip.vue'
+import RestaurantAddress from '@/components/RestaurantAddress.vue'
 
 const CURRENT_USER_ID = 'alex'
 
@@ -86,7 +88,7 @@ function scoreColor(score: number): string {
         </div>
 
         <div class="chips">
-          <span class="chip chip-cuisine">{{ restaurant.cuisine }}</span>
+          <CuisineChip :cuisine="restaurant.cuisine" />
           <span class="chip" :class="restaurant.openNow ? 'chip-open' : 'chip-closed'">
             {{ restaurant.openNow ? '● Open now' : '● Closed' }}
           </span>
@@ -101,10 +103,7 @@ function scoreColor(score: number): string {
 
         <p class="description">{{ restaurant.description }}</p>
 
-        <div class="info-block">
-          <span class="info-icon">📍</span>
-          <span class="info-text">{{ restaurant.address }}</span>
-        </div>
+        <RestaurantAddress :address="restaurant.address" />
 
         <div class="tags">
           <span v-for="tag in restaurant.tags" :key="tag" class="tag">{{ tag }}</span>

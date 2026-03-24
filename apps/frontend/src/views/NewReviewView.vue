@@ -7,6 +7,8 @@ import {
   fetchCommunityVisitsByUserId,
   fetchRestaurants,
 } from '@/services/restaurantService'
+import CuisineChip from '@/components/CuisineChip.vue'
+import RestaurantAddress from '@/components/RestaurantAddress.vue'
 
 const CURRENT_USER_ID = 'alex'
 
@@ -102,8 +104,10 @@ onMounted(async () => {
       <div class="restaurant-hero">
         <div class="emoji-circle">{{ restaurant.emoji }}</div>
         <h2 class="restaurant-name">{{ restaurant.name }}</h2>
-        <span class="restaurant-cuisine">{{ restaurant.cuisine }}</span>
+        <CuisineChip :cuisine="restaurant.cuisine" />
       </div>
+
+      <RestaurantAddress :address="restaurant.address" />
 
       <p class="section-label">Your verdict</p>
 
@@ -373,14 +377,6 @@ onMounted(async () => {
   letter-spacing: -0.3px;
   margin: 0;
   text-align: center;
-}
-
-.restaurant-cuisine {
-  font-size: 13px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.4);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
 }
 
 .section-label {
