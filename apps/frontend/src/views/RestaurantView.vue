@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import type { Restaurant, CommunityVisit } from '@/types/restaurant'
 import { fetchRestaurantById, fetchCommunityVisitsByRestaurantId } from '@/services/restaurantService'
 import RatingScores from '@/components/RatingScores.vue'
+import NewReviewChip from '@/components/NewReviewChip.vue'
 
 const CURRENT_USER_ID = 'alex'
 
@@ -111,18 +112,21 @@ function scoreColor(score: number): string {
 
         <!-- Visits -->
         <div class="visits-section">
-          <!-- Tab switcher -->
-          <div class="tab-bar">
-            <button
-              class="tab-btn"
-              :class="{ 'tab-btn-active': activeTab === 'mine' }"
-              @click="activeTab = 'mine'"
-            >My Visits</button>
-            <button
-              class="tab-btn"
-              :class="{ 'tab-btn-active': activeTab === 'community' }"
-              @click="activeTab = 'community'"
-            >Recent</button>
+          <!-- Tab switcher + new review -->
+          <div class="tab-row">
+            <div class="tab-bar">
+              <button
+                class="tab-btn"
+                :class="{ 'tab-btn-active': activeTab === 'mine' }"
+                @click="activeTab = 'mine'"
+              >My Visits</button>
+              <button
+                class="tab-btn"
+                :class="{ 'tab-btn-active': activeTab === 'community' }"
+                @click="activeTab = 'community'"
+              >Recent</button>
+            </div>
+            <NewReviewChip />
           </div>
 
           <!-- My Visits tab -->
@@ -398,6 +402,11 @@ function scoreColor(score: number): string {
 }
 
 /* Tab bar */
+.tab-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .tab-bar {
   display: flex;
   gap: 8px;

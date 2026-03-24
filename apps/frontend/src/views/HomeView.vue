@@ -3,9 +3,7 @@ import { ref, onMounted } from 'vue'
 import type { Restaurant, CommunityVisit } from '@/types/restaurant'
 import { fetchRestaurants, fetchCommunityVisitsByUserId } from '@/services/restaurantService'
 import RecentReviewCard from '@/components/RecentReviewCard.vue'
-import { useNewReview } from '@/composables/useNewReview'
-
-const { open: openNewReview } = useNewReview()
+import NewReviewChip from '@/components/NewReviewChip.vue'
 
 const CURRENT_USER_ID = 'alex'
 
@@ -34,10 +32,7 @@ onMounted(async () => {
     <section class="section">
       <div class="section-header">
         <h2 class="section-title">Recent reviews</h2>
-        <button class="add-chip" @click="openNewReview">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          New
-        </button>
+        <NewReviewChip />
       </div>
       <div class="cards-row">
 
@@ -110,32 +105,6 @@ onMounted(async () => {
   letter-spacing: -0.3px;
   color: #ffffff;
   margin: 0;
-}
-
-.add-chip {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px 4px 6px;
-  border-radius: 100px;
-  border: 1.5px solid rgba(255, 255, 255, 0.15);
-  background: transparent;
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 12px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
-}
-
-.add-chip:hover {
-  border-color: rgba(255, 255, 255, 0.4);
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.add-chip svg {
-  width: 14px;
-  height: 14px;
 }
 
 .cards-row {
