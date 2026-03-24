@@ -7,8 +7,6 @@ import {
   fetchCommunityVisitsByUserId,
   fetchRestaurants,
 } from '@/services/restaurantService'
-import CuisineChip from '@/components/CuisineChip.vue'
-import RestaurantAddress from '@/components/RestaurantAddress.vue'
 
 const CURRENT_USER_ID = 'alex'
 
@@ -104,10 +102,7 @@ onMounted(async () => {
       <div class="restaurant-hero">
         <div class="emoji-circle">{{ restaurant.emoji }}</div>
         <h2 class="restaurant-name">{{ restaurant.name }}</h2>
-        <CuisineChip :cuisine="restaurant.cuisine" />
       </div>
-
-      <RestaurantAddress :address="restaurant.address" />
 
       <p class="section-label">Your verdict</p>
 
@@ -299,7 +294,7 @@ onMounted(async () => {
   min-height: 100vh;
   background: #0d0d0d;
   color: #ffffff;
-  padding: 24px 20px 40px;
+  padding: 24px 20px 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -352,31 +347,34 @@ onMounted(async () => {
 }
 
 .restaurant-hero {
+  width: 100%;
+  max-width: 420px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 20px;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 16px;
 }
 
 .emoji-circle {
-  width: 64px;
-  height: 64px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.06);
   border: 2px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 30px;
+  font-size: 22px;
+  flex-shrink: 0;
 }
 
 .restaurant-name {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 900;
   letter-spacing: -0.3px;
   margin: 0;
-  text-align: center;
 }
 
 .section-label {
