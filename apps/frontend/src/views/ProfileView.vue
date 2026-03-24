@@ -7,7 +7,7 @@ import {
   fetchUserById,
   fetchCommunityVisitsByUserId,
 } from '@/services/restaurantService'
-import RatingScores from '@/components/RatingScores.vue'
+import RankedRestaurantItem from '@/components/RankedRestaurantItem.vue'
 
 const CURRENT_USER_ID = 'alex'
 
@@ -60,18 +60,6 @@ const displayedRestaurants = computed(() => {
     .map((r, i) => ({ ...r, rank: i + 1 }))
 })
 
-function scoreColor(score: number): string {
-  if (score >= 85) return '#90be6d'
-  if (score >= 65) return '#f9c74f'
-  return '#ff6b6b'
-}
-
-function itemBackground(index: number): string {
-  if (index === 0) return '#ffffff'
-  if (index === 1) return 'rgba(255,255,255,0.14)'
-  if (index === 2) return 'rgba(255,255,255,0.07)'
-  return '#1a1a1a'
-}
 
 async function shareProfile() {
   await navigator.share({ title: `${displayUser.value?.name}'s FoodRank profile`, url: window.location.href })
@@ -111,30 +99,19 @@ async function shareProfile() {
 
       <!-- Ranked list -->
       <div class="list">
-        <RouterLink
+        <RankedRestaurantItem
           v-for="(restaurant, index) in displayedRestaurants"
-          :key="restaurant.rank"
-          :to="`/restaurant/${restaurant.id}`"
-          class="list-item"
-          :class="{ 'list-item-first': index === 0 }"
-          :style="{ background: itemBackground(index) }"
-        >
-          <div class="item-avatar">
-            <span class="item-emoji">{{ restaurant.emoji }}</span>
-          </div>
-          <div class="item-info">
-            <span class="item-name">{{ restaurant.name }}</span>
-            <span class="item-sub">{{ restaurant.cuisine }}</span>
-          </div>
-          <RatingScores
-            :food="restaurant.scores.food"
-            :service="restaurant.scores.service"
-            :decor="restaurant.scores.decor"
-          />
-          <div class="item-avg" :style="{ backgroundColor: scoreColor(restaurant.scores.overall) }">
-            {{ Math.round(restaurant.scores.overall) }}
-          </div>
-        </RouterLink>
+          :key="restaurant.id"
+          :restaurantId="restaurant.id"
+          :emoji="restaurant.emoji"
+          :name="restaurant.name"
+          :cuisine="restaurant.cuisine"
+          :food="restaurant.scores.food"
+          :service="restaurant.scores.service"
+          :decor="restaurant.scores.decor"
+          :overall="restaurant.scores.overall"
+          :index="index"
+        />
       </div>
     </template>
   </div>
@@ -308,64 +285,5 @@ async function shareProfile() {
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-.list-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 16px;
-  border-radius: 16px;
-  text-decoration: none;
-  color: inherit;
-}
-.list-item-first {
-  color: #0d0d0d;
-}
-.list-item-first .item-name {
-  color: #0d0d0d;
-}
-.list-item-first .item-sub {
-  color: #555;
-}
-.item-avatar {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  flex-shrink: 0;
-}
-.list-item-first .item-avatar {
-  background: rgba(0, 0, 0, 0.06);
-}
-.item-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.item-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: #ffffff;
-}
-.item-sub {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.45);
-}
-.item-avg {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 900;
-  font-size: 12px;
-  color: #0d0d0d;
-  flex-shrink: 0;
 }
 </style>
