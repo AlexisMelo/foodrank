@@ -33,10 +33,8 @@ function sliderGradient(value: number) {
 }
 
 function ratingLabel(value: number) {
-  if (value < 20) return 'Ouch...'
-  if (value < 50) return 'Okay'
-  if (value < 90) return 'Good !'
-  return 'Great !'
+  const match = [...THRESHOLD_MARKERS].reverse().find((t) => value >= t.value)
+  return match?.label ?? THRESHOLD_MARKERS[0]!.label
 }
 
 const foodGradient = computed(() => sliderGradient(food.value))
@@ -49,23 +47,24 @@ function markerLeft(value: number) {
 }
 
 const THRESHOLD_MARKERS = [
-  { value: 10, label: 'Ouch...' },
-  { value: 35, label: 'Okay' },
-  { value: 70, label: 'Good !' },
-  { value: 95, label: 'Great !' },
+  { value: 0, label: 'Awful' },
+  { value: 10, label: 'Okay' },
+  { value: 35, label: 'Good' },
+  { value: 65, label: 'Great !' },
+  { value: 90, label: 'Amazing !' },
 ]
 
-const MARKER_TARGETS = [25, 50, 80]
+const MARKER_TARGETS = [22, 50, 78]
 
 function pickMarkers(key: 'food' | 'service' | 'decor') {
   const used = new Set<string>()
   return MARKER_TARGETS.map((target) => {
     const best = allUserReviews.value
-      .filter((v) => !used.has(v.id))
+      .filter((v) => !used.has(v.id) && Math.abs(v[key] - target) <= 10)
       .sort((a, b) => Math.abs(a[key] - target) - Math.abs(b[key] - target))[0]
     if (best) used.add(best.id)
-    return best
-  }).filter((v): v is NonNullable<typeof v> => v != null)
+    return best ?? null
+  }).filter((v): v is NonNullable<typeof v> => v !== null)
 }
 
 const foodMarkers = computed(() => pickMarkers('food'))
@@ -106,7 +105,6 @@ onMounted(async () => {
         <span class="restaurant-cuisine">{{ restaurant.cuisine }}</span>
       </div>
 
-
       <p class="section-label">Your verdict</p>
 
       <div class="criterion-card">
@@ -116,16 +114,41 @@ onMounted(async () => {
             <span class="criterion-title">Food</span>
             <span class="criterion-label">Did the food blow your mind?</span>
           </div>
-          <span class="rating-chip" :style="{ backgroundColor: sliderColor(food) + '33', color: sliderColor(food), borderColor: sliderColor(food) + '66' }">{{ ratingLabel(food) }}</span>
+          <span
+            class="rating-chip"
+            :style="{
+              backgroundColor: sliderColor(food) + '33',
+              color: sliderColor(food),
+              borderColor: sliderColor(food) + '66',
+            }"
+            >{{ ratingLabel(food) }}</span
+          >
         </div>
         <div class="slider-wrap">
-          <input type="range" min="0" max="100" v-model.number="food" class="slider" :style="{ background: foodGradient }" />
+          <input
+            type="range"
+            min="0"
+            max="100"
+            v-model.number="food"
+            class="slider"
+            :style="{ background: foodGradient }"
+          />
           <div class="markers-overlay">
-            <div v-for="t in THRESHOLD_MARKERS" :key="t.label" class="marker threshold-marker" :style="{ left: markerLeft(t.value) }">
+            <div
+              v-for="t in THRESHOLD_MARKERS.slice(1)"
+              :key="t.label"
+              class="marker threshold-marker"
+              :style="{ left: markerLeft(t.value) }"
+            >
               <div class="marker-bar" />
               <span class="marker-name">{{ t.label }}</span>
             </div>
-            <div v-for="v in foodMarkers" :key="v.id" class="marker" :style="{ left: markerLeft(v.food), zIndex: v.food }">
+            <div
+              v-for="v in foodMarkers"
+              :key="v.id"
+              class="marker"
+              :style="{ left: markerLeft(v.food), zIndex: v.food }"
+            >
               <div class="marker-bar" />
               <span class="marker-emoji">{{ v.restaurant.emoji }}</span>
               <span class="marker-name">{{ v.restaurant.name }}</span>
@@ -141,16 +164,41 @@ onMounted(async () => {
             <span class="criterion-title">Service</span>
             <span class="criterion-label">How was the team treating you?</span>
           </div>
-          <span class="rating-chip" :style="{ backgroundColor: sliderColor(service) + '33', color: sliderColor(service), borderColor: sliderColor(service) + '66' }">{{ ratingLabel(service) }}</span>
+          <span
+            class="rating-chip"
+            :style="{
+              backgroundColor: sliderColor(service) + '33',
+              color: sliderColor(service),
+              borderColor: sliderColor(service) + '66',
+            }"
+            >{{ ratingLabel(service) }}</span
+          >
         </div>
         <div class="slider-wrap">
-          <input type="range" min="0" max="100" v-model.number="service" class="slider" :style="{ background: serviceGradient }" />
+          <input
+            type="range"
+            min="0"
+            max="100"
+            v-model.number="service"
+            class="slider"
+            :style="{ background: serviceGradient }"
+          />
           <div class="markers-overlay">
-            <div v-for="t in THRESHOLD_MARKERS" :key="t.label" class="marker threshold-marker" :style="{ left: markerLeft(t.value) }">
+            <div
+              v-for="t in THRESHOLD_MARKERS.slice(1)"
+              :key="t.label"
+              class="marker threshold-marker"
+              :style="{ left: markerLeft(t.value) }"
+            >
               <div class="marker-bar" />
               <span class="marker-name">{{ t.label }}</span>
             </div>
-            <div v-for="v in serviceMarkers" :key="v.id" class="marker" :style="{ left: markerLeft(v.service), zIndex: v.service }">
+            <div
+              v-for="v in serviceMarkers"
+              :key="v.id"
+              class="marker"
+              :style="{ left: markerLeft(v.service), zIndex: v.service }"
+            >
               <div class="marker-bar" />
               <span class="marker-emoji">{{ v.restaurant.emoji }}</span>
               <span class="marker-name">{{ v.restaurant.name }}</span>
@@ -166,16 +214,41 @@ onMounted(async () => {
             <span class="criterion-title">Decor</span>
             <span class="criterion-label">Would you Instagram this place?</span>
           </div>
-          <span class="rating-chip" :style="{ backgroundColor: sliderColor(scenery) + '33', color: sliderColor(scenery), borderColor: sliderColor(scenery) + '66' }">{{ ratingLabel(scenery) }}</span>
+          <span
+            class="rating-chip"
+            :style="{
+              backgroundColor: sliderColor(scenery) + '33',
+              color: sliderColor(scenery),
+              borderColor: sliderColor(scenery) + '66',
+            }"
+            >{{ ratingLabel(scenery) }}</span
+          >
         </div>
         <div class="slider-wrap">
-          <input type="range" min="0" max="100" v-model.number="scenery" class="slider" :style="{ background: sceneryGradient }" />
+          <input
+            type="range"
+            min="0"
+            max="100"
+            v-model.number="scenery"
+            class="slider"
+            :style="{ background: sceneryGradient }"
+          />
           <div class="markers-overlay">
-            <div v-for="t in THRESHOLD_MARKERS" :key="t.label" class="marker threshold-marker" :style="{ left: markerLeft(t.value) }">
+            <div
+              v-for="t in THRESHOLD_MARKERS.slice(1)"
+              :key="t.label"
+              class="marker threshold-marker"
+              :style="{ left: markerLeft(t.value) }"
+            >
               <div class="marker-bar" />
               <span class="marker-name">{{ t.label }}</span>
             </div>
-            <div v-for="v in decorMarkers" :key="v.id" class="marker" :style="{ left: markerLeft(v.decor), zIndex: v.decor }">
+            <div
+              v-for="v in decorMarkers"
+              :key="v.id"
+              class="marker"
+              :style="{ left: markerLeft(v.decor), zIndex: v.decor }"
+            >
               <div class="marker-bar" />
               <span class="marker-emoji">{{ v.restaurant.emoji }}</span>
               <span class="marker-name">{{ v.restaurant.name }}</span>
@@ -185,7 +258,11 @@ onMounted(async () => {
       </div>
 
       <div class="actions-card">
-        <button class="crush-toggle" :class="{ 'crush-on': instantCrush }" @click="instantCrush = !instantCrush">
+        <button
+          class="crush-toggle"
+          :class="{ 'crush-on': instantCrush }"
+          @click="instantCrush = !instantCrush"
+        >
           <span class="crush-heart">{{ instantCrush ? '❤️' : '🤍' }}</span>
           <div class="crush-text">
             <span class="crush-title">Instant Crush</span>
@@ -196,7 +273,16 @@ onMounted(async () => {
 
         <button class="submit-btn" @click="router.push(`/restaurant/${route.params.id}`)">
           Lock it in
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
         </button>
       </div>
     </template>
@@ -366,7 +452,10 @@ onMounted(async () => {
   border: 1.5px solid;
   font-size: 11px;
   font-weight: 800;
-  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s;
 }
 
 .criterion-label {
@@ -403,7 +492,7 @@ onMounted(async () => {
 
 .marker-bar {
   width: 2px;
-  height: 10px;
+  height: 15px;
   background: rgba(255, 255, 255, 0.25);
   border-radius: 1px;
   flex-shrink: 0;
@@ -572,7 +661,9 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: opacity 0.2s, transform 0.15s;
+  transition:
+    opacity 0.2s,
+    transform 0.15s;
 }
 .submit-btn svg {
   width: 18px;
