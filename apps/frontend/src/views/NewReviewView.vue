@@ -2,7 +2,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Restaurant, CommunityVisit } from '@/types/restaurant'
-import { fetchRestaurantById, fetchCommunityVisitsByUserId, fetchRestaurants } from '@/services/restaurantService'
+import {
+  fetchRestaurantById,
+  fetchCommunityVisitsByUserId,
+  fetchRestaurants,
+} from '@/services/restaurantService'
 
 const CURRENT_USER_ID = 'alex'
 
@@ -14,6 +18,7 @@ const recentReviews = ref<(CommunityVisit & { restaurant: Restaurant })[]>([])
 const food = ref(50)
 const service = ref(50)
 const scenery = ref(50)
+const instantCrush = ref(false)
 
 function sliderGradient(value: number) {
   const pct = value / 100
@@ -27,6 +32,11 @@ function sliderGradient(value: number) {
 const foodGradient = computed(() => sliderGradient(food.value))
 const serviceGradient = computed(() => sliderGradient(service.value))
 const sceneryGradient = computed(() => sliderGradient(scenery.value))
+
+// Position a marker on the slider track, accounting for the 22px thumb offset
+function markerLeft(value: number) {
+  return `calc(${value / 100} * (100% - 22px) + 11px)`
+}
 
 function scoreColor(score: number) {
   if (score >= 85) return '#90be6d'
@@ -44,7 +54,10 @@ onMounted(async () => {
     fetchCommunityVisitsByUserId(CURRENT_USER_ID),
     fetchRestaurants(),
   ])
-  if (!found) { router.replace('/'); return }
+  if (!found) {
+    router.replace('/')
+    return
+  }
   restaurant.value = found
   const restaurantMap = new Map(restaurants.map((r) => [r.id, r]))
   recentReviews.value = visits
@@ -76,7 +89,12 @@ onMounted(async () => {
           <div v-for="v in recentReviews" :key="v.id" class="mini-card">
             <div class="mini-emoji-wrap">
               <div class="mini-emoji">{{ v.restaurant.emoji }}</div>
-              <div class="mini-bubble" :style="{ backgroundColor: scoreColor(Math.round((v.food + v.service + v.decor) / 3)) }">
+              <div
+                class="mini-bubble"
+                :style="{
+                  backgroundColor: scoreColor(Math.round((v.food + v.service + v.decor) / 3)),
+                }"
+              >
                 {{ Math.round((v.food + v.service + v.decor) / 3) }}
               </div>
             </div>
@@ -94,11 +112,27 @@ onMounted(async () => {
             <span class="criterion-icon">🍽️</span>
             <span class="criterion-label">Did the food blow your mind?</span>
           </div>
-          <input
-            type="range" min="0" max="100" v-model.number="food"
-            class="slider"
-            :style="{ background: foodGradient }"
-          />
+          <div class="slider-wrap">
+            <input
+              type="range"
+              min="0"
+              max="100"
+              v-model.number="food"
+              class="slider"
+              :style="{ background: foodGradient }"
+            />
+            <div class="markers-overlay">
+              <div
+                v-for="v in recentReviews"
+                :key="v.id"
+                class="marker"
+                :style="{ left: markerLeft(v.food) }"
+              >
+                <span class="marker-emoji">{{ v.restaurant.emoji }}</span>
+                <div class="marker-bar" />
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="criterion">
@@ -106,11 +140,27 @@ onMounted(async () => {
             <span class="criterion-icon">🤝</span>
             <span class="criterion-label">How was the team treating you?</span>
           </div>
-          <input
-            type="range" min="0" max="100" v-model.number="service"
-            class="slider"
-            :style="{ background: serviceGradient }"
-          />
+          <div class="slider-wrap">
+            <input
+              type="range"
+              min="0"
+              max="100"
+              v-model.number="service"
+              class="slider"
+              :style="{ background: serviceGradient }"
+            />
+            <div class="markers-overlay">
+              <div
+                v-for="v in recentReviews"
+                :key="v.id"
+                class="marker"
+                :style="{ left: markerLeft(v.service) }"
+              >
+                <span class="marker-emoji">{{ v.restaurant.emoji }}</span>
+                <div class="marker-bar" />
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="criterion">
@@ -118,14 +168,45 @@ onMounted(async () => {
             <span class="criterion-icon">✨</span>
             <span class="criterion-label">Would you Instagram this place?</span>
           </div>
-          <input
-            type="range" min="0" max="100" v-model.number="scenery"
-            class="slider"
-            :style="{ background: sceneryGradient }"
-          />
+          <div class="slider-wrap">
+            <input
+              type="range"
+              min="0"
+              max="100"
+              v-model.number="scenery"
+              class="slider"
+              :style="{ background: sceneryGradient }"
+            />
+            <div class="markers-overlay">
+              <div
+                v-for="v in recentReviews"
+                :key="v.id"
+                class="marker"
+                :style="{ left: markerLeft(v.decor) }"
+              >
+                <span class="marker-emoji">{{ v.restaurant.emoji }}</span>
+                <div class="marker-bar" />
+              </div>
+            </div>
+          </div>
         </div>
 
-        <button class="submit-btn" @click="router.push(`/restaurant/${route.params.id}`)">Submit review</button>
+        <button
+          class="crush-toggle"
+          :class="{ 'crush-on': instantCrush }"
+          @click="instantCrush = !instantCrush"
+        >
+          <span class="crush-heart">{{ instantCrush ? '❤️' : '🤍' }}</span>
+          <div class="crush-text">
+            <span class="crush-title">Instant Crush</span>
+            <span class="crush-sub">This place stole your heart !</span>
+          </div>
+          <div class="crush-pip" :class="{ 'crush-pip-on': instantCrush }" />
+        </button>
+
+        <button class="submit-btn" @click="router.push(`/restaurant/${route.params.id}`)">
+          Submit review
+        </button>
       </div>
     </template>
   </div>
@@ -357,6 +438,41 @@ onMounted(async () => {
   line-height: 1.3;
 }
 
+/* Slider with markers */
+.slider-wrap {
+  position: relative;
+  padding-top: 20px;
+}
+
+.markers-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.marker {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.marker-emoji {
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.marker-bar {
+  width: 2px;
+  height: 13px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 1px;
+}
+
 /* Slider */
 .slider {
   -webkit-appearance: none;
@@ -395,6 +511,85 @@ onMounted(async () => {
   cursor: pointer;
 }
 
+/* Instant Crush */
+.crush-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+.crush-toggle.crush-on {
+  border-color: rgba(255, 100, 130, 0.5);
+  background: rgba(255, 80, 110, 0.08);
+}
+
+.crush-heart {
+  font-size: 26px;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+.crush-toggle.crush-on .crush-heart {
+  transform: scale(1.15);
+}
+
+.crush-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.crush-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #ffffff;
+}
+.crush-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.crush-pip {
+  width: 36px;
+  height: 20px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.12);
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.crush-pip::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transition:
+    transform 0.2s,
+    background 0.2s;
+}
+.crush-pip.crush-pip-on {
+  background: #ff4d6d;
+}
+.crush-pip.crush-pip-on::after {
+  transform: translateX(16px);
+  background: #ffffff;
+}
+
 /* Submit */
 .submit-btn {
   margin-top: 4px;
@@ -408,7 +603,9 @@ onMounted(async () => {
   font-weight: 900;
   cursor: pointer;
   letter-spacing: 0.2px;
-  transition: opacity 0.2s, transform 0.15s;
+  transition:
+    opacity 0.2s,
+    transform 0.15s;
 }
 .submit-btn:hover {
   opacity: 0.9;
