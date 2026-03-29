@@ -13,6 +13,10 @@ function isHome(): boolean {
   return route.path === '/'
 }
 
+function isTierlists(): boolean {
+  return route.path === '/tierlists'
+}
+
 function isProfile(): boolean {
   return route.path === '/profile' || route.path === `/user/${CURRENT_USER_ID}`
 }
@@ -25,9 +29,9 @@ function isProfile(): boolean {
       <span>Home</span>
     </button>
 
-    <button class="tab-btn" :class="{ active: false }" disabled>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-      <span>Ratings</span>
+    <button class="tab-btn" :class="{ active: isTierlists() }" @click="router.push('/tierlists')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="4" rx="1"/><rect x="3" y="10" width="14" height="4" rx="1"/><rect x="3" y="17" width="10" height="4" rx="1"/></svg>
+      <span>Tierlists</span>
     </button>
 
     <button class="tab-btn tab-btn-add" @click="openNewReview">
