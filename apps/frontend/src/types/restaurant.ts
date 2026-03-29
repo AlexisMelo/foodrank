@@ -34,6 +34,16 @@ export interface User {
   bio: string
 }
 
+export interface Tierlist {
+  id: string
+  userId: string
+  name: string
+  description: string
+  emoji: string
+  restaurantIds: string[]
+  createdAt: string
+}
+
 export interface ApiResponse<T> {
   data: T
   meta: {

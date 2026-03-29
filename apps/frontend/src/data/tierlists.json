@@ -1,0 +1,314 @@
+{
+  "data": [
+    {
+      "id": "tl-alex-1",
+      "userId": "alex",
+      "name": "Weekend Comfort Picks",
+      "description": "My go-to spots when I want to unwind without thinking too hard.",
+      "emoji": "🛋️",
+      "restaurantIds": ["bella-napoli", "le-petit-bistro", "taco-fiesta"],
+      "createdAt": "2026-01-15T18:00:00Z"
+    },
+    {
+      "id": "tl-alex-2",
+      "userId": "alex",
+      "name": "Broth & Noodle Hall of Fame",
+      "description": "Everything in a bowl. These places do it right every single time.",
+      "emoji": "🍜",
+      "restaurantIds": ["tokyo-ramen-house", "dragon-garden"],
+      "createdAt": "2026-02-03T12:30:00Z"
+    },
+    {
+      "id": "tl-alex-3",
+      "userId": "alex",
+      "name": "Carnivore's Dream",
+      "description": "For the nights when only serious meat will do. No compromises.",
+      "emoji": "🥩",
+      "restaurantIds": ["smoky-bbq-joint", "taco-fiesta", "the-curry-palace"],
+      "createdAt": "2026-02-20T20:00:00Z"
+    },
+    {
+      "id": "tl-alex-4",
+      "userId": "alex",
+      "name": "Date Night Worthy",
+      "description": "Places I'd actually take someone I want to impress. Tested and approved.",
+      "emoji": "🕯️",
+      "restaurantIds": ["bella-napoli", "le-petit-bistro", "the-curry-palace"],
+      "createdAt": "2026-03-01T19:00:00Z"
+    },
+    {
+      "id": "tl-alex-5",
+      "userId": "alex",
+      "name": "Hidden Gems",
+      "description": "Underrated spots my friends always overlook. Their loss.",
+      "emoji": "💎",
+      "restaurantIds": ["dragon-garden", "the-curry-palace", "tokyo-ramen-house"],
+      "createdAt": "2026-03-18T14:00:00Z"
+    },
+    {
+      "id": "tl-u1-1",
+      "userId": "u1",
+      "name": "Paris-Approved Abroad",
+      "description": "Not Paris, but they earned my croissant-trained palate's approval.",
+      "emoji": "🗼",
+      "restaurantIds": ["bella-napoli", "the-curry-palace"],
+      "createdAt": "2026-02-12T10:00:00Z"
+    },
+    {
+      "id": "tl-u1-2",
+      "userId": "u1",
+      "name": "Rainy Day Cravings",
+      "description": "When the weather turns grey, these are my first calls.",
+      "emoji": "🌧️",
+      "restaurantIds": ["tokyo-ramen-house", "smoky-bbq-joint"],
+      "createdAt": "2026-02-25T17:30:00Z"
+    },
+    {
+      "id": "tl-u1-3",
+      "userId": "u1",
+      "name": "Best in Show",
+      "description": "Top performers from my visits so far. Consistently excellent.",
+      "emoji": "🏅",
+      "restaurantIds": ["bella-napoli", "tokyo-ramen-house", "smoky-bbq-joint"],
+      "createdAt": "2026-03-10T11:00:00Z"
+    },
+    {
+      "id": "tl-u2-1",
+      "userId": "u2",
+      "name": "Paper Bag Paradise",
+      "description": "No reservations, no dress code, maximum flavor. Street food done right.",
+      "emoji": "🛍️",
+      "restaurantIds": ["taco-fiesta", "smoky-bbq-joint"],
+      "createdAt": "2026-01-20T13:00:00Z"
+    },
+    {
+      "id": "tl-u2-2",
+      "userId": "u2",
+      "name": "Big Night Out",
+      "description": "When I actually want to sit down and eat properly. Worth every euro.",
+      "emoji": "🌟",
+      "restaurantIds": ["bella-napoli", "le-petit-bistro"],
+      "createdAt": "2026-02-08T19:30:00Z"
+    },
+    {
+      "id": "tl-u2-3",
+      "userId": "u2",
+      "name": "All-Star Comfort Food",
+      "description": "These three never let me down. Reliable, delicious, always open.",
+      "emoji": "🎯",
+      "restaurantIds": ["bella-napoli", "taco-fiesta", "smoky-bbq-joint"],
+      "createdAt": "2026-02-28T16:00:00Z"
+    },
+    {
+      "id": "tl-u2-4",
+      "userId": "u2",
+      "name": "Hidden Depths",
+      "description": "Look past the obvious and these two really deliver. Most people miss it.",
+      "emoji": "🔍",
+      "restaurantIds": ["dragon-garden", "le-petit-bistro"],
+      "createdAt": "2026-03-15T12:00:00Z"
+    },
+    {
+      "id": "tl-u3-1",
+      "userId": "u3",
+      "name": "The Tier 1 Club",
+      "description": "These two have consistent 90+ performances across every metric. The data speaks.",
+      "emoji": "🥇",
+      "restaurantIds": ["bella-napoli", "tokyo-ramen-house"],
+      "createdAt": "2026-01-10T09:00:00Z"
+    },
+    {
+      "id": "tl-u3-2",
+      "userId": "u3",
+      "name": "Umami Champions",
+      "description": "If umami were a competition, these two would be standing on the podium.",
+      "emoji": "🧪",
+      "restaurantIds": ["tokyo-ramen-house", "dragon-garden"],
+      "createdAt": "2026-01-28T18:00:00Z"
+    },
+    {
+      "id": "tl-u3-3",
+      "userId": "u3",
+      "name": "My Reliable Rotation",
+      "description": "Always open, always good. I've never once left disappointed.",
+      "emoji": "🔄",
+      "restaurantIds": ["bella-napoli", "taco-fiesta", "smoky-bbq-joint"],
+      "createdAt": "2026-02-14T15:00:00Z"
+    },
+    {
+      "id": "tl-u3-4",
+      "userId": "u3",
+      "name": "Carnivore Certified",
+      "description": "Meat-heavy, unashamedly indulgent. I rated both. Both delivered.",
+      "emoji": "🔥",
+      "restaurantIds": ["smoky-bbq-joint", "taco-fiesta"],
+      "createdAt": "2026-03-02T20:00:00Z"
+    },
+    {
+      "id": "tl-u3-5",
+      "userId": "u3",
+      "name": "Crowd Pleasers Verified",
+      "description": "Bring literally anyone here and they will thank you. I've checked.",
+      "emoji": "✅",
+      "restaurantIds": ["bella-napoli", "taco-fiesta", "dragon-garden"],
+      "createdAt": "2026-03-20T11:30:00Z"
+    },
+    {
+      "id": "tl-u4-1",
+      "userId": "u4",
+      "name": "Chef School Field Trips",
+      "description": "Places I visit to understand what great technique actually looks like in the wild.",
+      "emoji": "🎓",
+      "restaurantIds": ["bella-napoli", "tokyo-ramen-house"],
+      "createdAt": "2026-01-22T14:00:00Z"
+    },
+    {
+      "id": "tl-u4-2",
+      "userId": "u4",
+      "name": "Spice Appreciation Club",
+      "description": "Bold, unapologetic flavors that demand your full attention. No bland allowed.",
+      "emoji": "🌶️",
+      "restaurantIds": ["the-curry-palace", "smoky-bbq-joint"],
+      "createdAt": "2026-02-17T19:00:00Z"
+    },
+    {
+      "id": "tl-u4-3",
+      "userId": "u4",
+      "name": "My Personal Top 4",
+      "description": "Every place I've rated, and every single one made the cut. No fillers.",
+      "emoji": "🏆",
+      "restaurantIds": ["bella-napoli", "tokyo-ramen-house", "the-curry-palace", "smoky-bbq-joint"],
+      "createdAt": "2026-03-05T10:00:00Z"
+    },
+    {
+      "id": "tl-u5-1",
+      "userId": "u5",
+      "name": "Dessert-Worthy Meals",
+      "description": "Places where the main course genuinely earns the dessert that follows it.",
+      "emoji": "🍮",
+      "restaurantIds": ["bella-napoli", "le-petit-bistro"],
+      "createdAt": "2026-01-30T20:30:00Z"
+    },
+    {
+      "id": "tl-u5-2",
+      "userId": "u5",
+      "name": "Casual Bliss",
+      "description": "Low effort, high reward. No fuss, just good food and a good time.",
+      "emoji": "😌",
+      "restaurantIds": ["taco-fiesta", "dragon-garden"],
+      "createdAt": "2026-02-22T13:00:00Z"
+    },
+    {
+      "id": "tl-u5-3",
+      "userId": "u5",
+      "name": "Life Is Short, Eat Here First",
+      "description": "If you have one meal to spare, pick from this list. You won't regret it.",
+      "emoji": "⏳",
+      "restaurantIds": ["bella-napoli", "le-petit-bistro", "taco-fiesta"],
+      "createdAt": "2026-03-12T17:00:00Z"
+    },
+    {
+      "id": "tl-u6-1",
+      "userId": "u6",
+      "name": "Smoke & Spice Approved",
+      "description": "Strong flavors, zero pretension. The BBQ loyalist's honest shortlist.",
+      "emoji": "🪵",
+      "restaurantIds": ["taco-fiesta", "the-curry-palace"],
+      "createdAt": "2026-01-18T19:00:00Z"
+    },
+    {
+      "id": "tl-u6-2",
+      "userId": "u6",
+      "name": "Euro Classics Done Right",
+      "description": "When I want something familiar executed at the highest level. Both deliver.",
+      "emoji": "🇪🇺",
+      "restaurantIds": ["bella-napoli", "le-petit-bistro"],
+      "createdAt": "2026-02-05T21:00:00Z"
+    },
+    {
+      "id": "tl-u6-3",
+      "userId": "u6",
+      "name": "First Date Menu",
+      "description": "Bold enough to be interesting, reliable enough not to embarrass me.",
+      "emoji": "💑",
+      "restaurantIds": ["bella-napoli", "the-curry-palace"],
+      "createdAt": "2026-02-24T18:30:00Z"
+    },
+    {
+      "id": "tl-u6-4",
+      "userId": "u6",
+      "name": "Bring the Whole Table",
+      "description": "Every person I've brought to these places has been happy. Every single time.",
+      "emoji": "🙌",
+      "restaurantIds": ["bella-napoli", "taco-fiesta", "the-curry-palace"],
+      "createdAt": "2026-03-16T12:00:00Z"
+    },
+    {
+      "id": "tl-u7-1",
+      "userId": "u7",
+      "name": "Budget Fine Dining",
+      "description": "Maximum elegance-to-cost ratio. The spreadsheet confirms both are exceptional value.",
+      "emoji": "💳",
+      "restaurantIds": ["le-petit-bistro", "the-curry-palace"],
+      "createdAt": "2026-01-25T11:00:00Z"
+    },
+    {
+      "id": "tl-u7-2",
+      "userId": "u7",
+      "name": "Comfort Over Everything",
+      "description": "When I want to eat with my whole personality. No manners required.",
+      "emoji": "🧸",
+      "restaurantIds": ["tokyo-ramen-house", "smoky-bbq-joint"],
+      "createdAt": "2026-02-18T20:00:00Z"
+    },
+    {
+      "id": "tl-u7-3",
+      "userId": "u7",
+      "name": "My Full Shortlist",
+      "description": "Every restaurant I've reviewed. All of them made the cut. Not a single dud.",
+      "emoji": "📋",
+      "restaurantIds": ["tokyo-ramen-house", "le-petit-bistro", "the-curry-palace", "smoky-bbq-joint"],
+      "createdAt": "2026-03-08T09:30:00Z"
+    },
+    {
+      "id": "tl-u8-1",
+      "userId": "u8",
+      "name": "Ramen & Its Cousins",
+      "description": "When only a deep, steaming bowl of something savory will do. These two get it.",
+      "emoji": "🍜",
+      "restaurantIds": ["tokyo-ramen-house", "dragon-garden"],
+      "createdAt": "2026-01-14T19:00:00Z"
+    },
+    {
+      "id": "tl-u8-2",
+      "userId": "u8",
+      "name": "Surprisingly Impressive",
+      "description": "Places I didn't expect to be this good. Both proved me completely wrong.",
+      "emoji": "😲",
+      "restaurantIds": ["le-petit-bistro", "dragon-garden"],
+      "createdAt": "2026-02-10T14:00:00Z"
+    },
+    {
+      "id": "tl-u8-3",
+      "userId": "u8",
+      "name": "Casual Weeknight Wins",
+      "description": "Quick, satisfying, no need to plan ahead. Just show up and eat well.",
+      "emoji": "🌙",
+      "restaurantIds": ["taco-fiesta", "tokyo-ramen-house"],
+      "createdAt": "2026-03-01T18:00:00Z"
+    },
+    {
+      "id": "tl-u8-4",
+      "userId": "u8",
+      "name": "Full Spectrum Favorites",
+      "description": "From ramen to bistro, these four cover every mood and every craving.",
+      "emoji": "🌈",
+      "restaurantIds": ["tokyo-ramen-house", "le-petit-bistro", "taco-fiesta", "dragon-garden"],
+      "createdAt": "2026-03-22T10:00:00Z"
+    }
+  ],
+  "meta": {
+    "total": 34,
+    "updatedAt": "2026-03-23T00:00:00Z"
+  }
+}
