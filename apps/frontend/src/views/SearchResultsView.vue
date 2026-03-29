@@ -66,7 +66,6 @@ onMounted(async () => {
 <style scoped>
 .page {
   position: relative;
-  min-height: 100vh;
   background: #0d0d0d;
   color: #ffffff;
   padding: 24px 20px 40px;
@@ -163,7 +162,9 @@ onMounted(async () => {
   border-radius: 16px;
   text-decoration: none;
   color: inherit;
-  transition: background 0.15s, transform 0.15s;
+  transition:
+    background 0.15s,
+    transform 0.15s;
 }
 .list-item:hover {
   background: #222222;
@@ -227,7 +228,12 @@ onMounted(async () => {
   animation: pulse 1.2s ease-in-out infinite;
 }
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 </style>

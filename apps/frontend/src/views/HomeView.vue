@@ -116,7 +116,6 @@ const topRestaurants = computed(() => {
 <style scoped>
 .home {
   position: relative;
-  min-height: 100vh;
   background-color: #0d0d0d;
   color: #ffffff;
   overflow: hidden;

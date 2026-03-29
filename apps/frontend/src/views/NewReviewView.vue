@@ -291,7 +291,6 @@ onMounted(async () => {
 <style scoped>
 .page {
   position: relative;
-  min-height: 100vh;
   background: #0d0d0d;
   color: #ffffff;
   padding: 24px 20px 0;

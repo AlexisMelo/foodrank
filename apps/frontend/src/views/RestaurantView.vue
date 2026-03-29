@@ -2,7 +2,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Restaurant, CommunityVisit } from '@/types/restaurant'
-import { fetchRestaurantById, fetchCommunityVisitsByRestaurantId } from '@/services/restaurantService'
+import {
+  fetchRestaurantById,
+  fetchCommunityVisitsByRestaurantId,
+} from '@/services/restaurantService'
 import RatingScores from '@/components/RatingScores.vue'
 import NewReviewChip from '@/components/NewReviewChip.vue'
 import CuisineChip from '@/components/CuisineChip.vue'
@@ -49,7 +52,11 @@ const overallAvg = computed(() => {
 })
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  return new Date(iso).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
 }
 
 function scoreColor(score: number): string {
@@ -96,9 +103,13 @@ function scoreColor(score: number): string {
 
         <div v-if="overallAvg !== null" class="rating-row">
           <span class="stars">★</span>
-          <span class="rating-value" :style="{ color: scoreColor(overallAvg) }">{{ overallAvg }}</span>
+          <span class="rating-value" :style="{ color: scoreColor(overallAvg) }">{{
+            overallAvg
+          }}</span>
           <span class="rating-max">/100</span>
-          <span class="review-count">· {{ allVisits.length }} visit{{ allVisits.length > 1 ? 's' : '' }}</span>
+          <span class="review-count"
+            >· {{ allVisits.length }} visit{{ allVisits.length > 1 ? 's' : '' }}</span
+          >
         </div>
 
         <p class="description">{{ restaurant.description }}</p>
@@ -118,12 +129,16 @@ function scoreColor(score: number): string {
                 class="tab-btn"
                 :class="{ 'tab-btn-active': activeTab === 'mine' }"
                 @click="activeTab = 'mine'"
-              >My Visits</button>
+              >
+                My Visits
+              </button>
               <button
                 class="tab-btn"
                 :class="{ 'tab-btn-active': activeTab === 'community' }"
                 @click="activeTab = 'community'"
-              >Recent</button>
+              >
+                Recent
+              </button>
             </div>
             <NewReviewChip :restaurantId="restaurant.id" />
           </div>
@@ -142,21 +157,36 @@ function scoreColor(score: number): string {
                 <div class="criterion">
                   <span class="criterion-label">🍽️ Food</span>
                   <div class="criterion-bar-wrap">
-                    <div class="criterion-bar" :style="{ width: `${visit.food}%`, backgroundColor: scoreColor(visit.food) }" />
+                    <div
+                      class="criterion-bar"
+                      :style="{ width: `${visit.food}%`, backgroundColor: scoreColor(visit.food) }"
+                    />
                   </div>
                   <span class="criterion-score">{{ visit.food }}</span>
                 </div>
                 <div class="criterion">
                   <span class="criterion-label">🤝 Service</span>
                   <div class="criterion-bar-wrap">
-                    <div class="criterion-bar" :style="{ width: `${visit.service}%`, backgroundColor: scoreColor(visit.service) }" />
+                    <div
+                      class="criterion-bar"
+                      :style="{
+                        width: `${visit.service}%`,
+                        backgroundColor: scoreColor(visit.service),
+                      }"
+                    />
                   </div>
                   <span class="criterion-score">{{ visit.service }}</span>
                 </div>
                 <div class="criterion">
                   <span class="criterion-label">✨ Decor</span>
                   <div class="criterion-bar-wrap">
-                    <div class="criterion-bar" :style="{ width: `${visit.decor}%`, backgroundColor: scoreColor(visit.decor) }" />
+                    <div
+                      class="criterion-bar"
+                      :style="{
+                        width: `${visit.decor}%`,
+                        backgroundColor: scoreColor(visit.decor),
+                      }"
+                    />
                   </div>
                   <span class="criterion-score">{{ visit.decor }}</span>
                 </div>
@@ -167,7 +197,12 @@ function scoreColor(score: number): string {
           <!-- Community tab -->
           <template v-else>
             <div v-if="!recentVisits.length" class="no-visits">No recent visits 🍽️</div>
-            <RouterLink v-for="cv in recentVisits" :key="cv.id" :to="`/user/${cv.user.id}`" class="community-card">
+            <RouterLink
+              v-for="cv in recentVisits"
+              :key="cv.id"
+              :to="`/user/${cv.user.id}`"
+              class="community-card"
+            >
               <div class="community-user">
                 <span class="community-avatar">{{ cv.user.avatar }}</span>
                 <div class="community-user-info">
@@ -192,7 +227,6 @@ function scoreColor(score: number): string {
 <style scoped>
 .page {
   position: relative;
-  min-height: 100vh;
   background-color: #0d0d0d;
   color: #ffffff;
   overflow: hidden;
@@ -262,8 +296,15 @@ function scoreColor(score: number): string {
   margin-top: 40%;
 }
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.9); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.9);
+  }
 }
 
 /* Hero */
@@ -423,7 +464,9 @@ function scoreColor(score: number): string {
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
   font-family: inherit;
 }
 .tab-btn-active {

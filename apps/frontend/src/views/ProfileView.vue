@@ -41,7 +41,12 @@ onMounted(async () => {
 })
 
 // Per-criterion averages of the user's own visits for a restaurant
-function userCriteriaAvg(restaurantId: string): { food: number; service: number; decor: number; overall: number } {
+function userCriteriaAvg(restaurantId: string): {
+  food: number
+  service: number
+  decor: number
+  overall: number
+} {
   const visits = userVisits.value.filter((v) => v.restaurantId === restaurantId)
   if (!visits.length) return { food: 0, service: 0, decor: 0, overall: 0 }
   const food = visits.reduce((s, v) => s + v.food, 0) / visits.length
@@ -60,9 +65,11 @@ const displayedRestaurants = computed(() => {
     .map((r, i) => ({ ...r, rank: i + 1 }))
 })
 
-
 async function shareProfile() {
-  await navigator.share({ title: `${displayUser.value?.name}'s FoodRank profile`, url: window.location.href })
+  await navigator.share({
+    title: `${displayUser.value?.name}'s FoodRank profile`,
+    url: window.location.href,
+  })
 }
 </script>
 
@@ -79,7 +86,7 @@ async function shareProfile() {
     <!-- Header -->
     <div class="header">
       <button v-if="!isOwnProfile" class="back-btn" @click="router.back()">←</button>
-<button class="share-btn" @click="shareProfile">⬆</button>
+      <button class="share-btn" @click="shareProfile">⬆</button>
     </div>
 
     <!-- Loading (other user fetch) -->
@@ -120,7 +127,6 @@ async function shareProfile() {
 <style scoped>
 .profile {
   position: relative;
-  min-height: 100vh;
   background-color: #0d0d0d;
   color: #ffffff;
   overflow: hidden;
@@ -235,8 +241,15 @@ async function shareProfile() {
   margin-top: 40%;
 }
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.9); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.9);
+  }
 }
 
 /* Winner section */
