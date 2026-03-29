@@ -1,31 +1,55 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { Restaurant, Tierlist } from '@/types/restaurant'
-import { fetchTierlistById, fetchRestaurants } from '@/services/restaurantService'
+import type { Restaurant, CommunityVisit, Tierlist } from '@/types/restaurant'
+import { fetchTierlistById, fetchRestaurants, fetchCommunityVisitsByUserId } from '@/services/restaurantService'
+import RankedRestaurantItem from '@/components/RankedRestaurantItem.vue'
+
+const CURRENT_USER_ID = 'alex'
 
 const route = useRoute()
 const router = useRouter()
 
 const tierlist = ref<Tierlist | null>(null)
 const restaurants = ref<Restaurant[]>([])
+const userVisits = ref<CommunityVisit[]>([])
 const loading = ref(true)
 
 onMounted(async () => {
   const id = route.params.id as string
-  const [found, allRestaurants] = await Promise.all([
+  const [found, allRestaurants, visits] = await Promise.all([
     fetchTierlistById(id),
     fetchRestaurants(),
+    fetchCommunityVisitsByUserId(CURRENT_USER_ID),
   ])
   if (!found) {
     router.replace('/tierlists')
     return
   }
   tierlist.value = found
+  const tierlistIds = new Set(found.restaurants.map((e) => e.restaurantId))
   const restaurantMap = new Map(allRestaurants.map((r) => [r.id, r]))
-  restaurants.value = found.restaurants.map((e) => restaurantMap.get(e.restaurantId)!).filter(Boolean)
+  restaurants.value = found.restaurants
+    .map((e) => restaurantMap.get(e.restaurantId)!)
+    .filter(Boolean)
+  userVisits.value = visits.filter((v) => tierlistIds.has(v.restaurantId))
   loading.value = false
 })
+
+function scoreForRestaurant(restaurantId: string) {
+  const visits = userVisits.value.filter((v) => v.restaurantId === restaurantId)
+  if (!visits.length) return { food: 0, service: 0, decor: 0, overall: 0 }
+  const food = visits.reduce((s, v) => s + v.food, 0) / visits.length
+  const service = visits.reduce((s, v) => s + v.service, 0) / visits.length
+  const decor = visits.reduce((s, v) => s + v.decor, 0) / visits.length
+  return { food, service, decor, overall: (food + service + decor) / 3 }
+}
+
+const rankedRestaurants = computed(() =>
+  restaurants.value
+    .map((r) => ({ ...r, scores: scoreForRestaurant(r.id) }))
+    .sort((a, b) => b.scores.overall - a.scores.overall),
+)
 
 function formattedDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -60,21 +84,19 @@ function formattedDate(iso: string) {
       </div>
 
       <div class="restaurant-list">
-        <RouterLink
-          v-for="restaurant in restaurants"
-          :key="restaurant.id"
-          :to="`/restaurant/${restaurant.id}`"
-          class="restaurant-row"
-        >
-          <div class="row-emoji">{{ restaurant.emoji }}</div>
-          <div class="row-info">
-            <span class="row-name">{{ restaurant.name }}</span>
-            <span class="row-cuisine">{{ restaurant.cuisine }}</span>
-          </div>
-          <svg class="row-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
-        </RouterLink>
+        <RankedRestaurantItem
+          v-for="(r, index) in rankedRestaurants"
+          :key="r.id"
+          :restaurantId="r.id"
+          :emoji="r.emoji"
+          :name="r.name"
+          :cuisine="r.cuisine"
+          :food="r.scores.food"
+          :service="r.scores.service"
+          :decor="r.scores.decor"
+          :overall="r.scores.overall"
+          :index="index"
+        />
       </div>
     </template>
   </div>
@@ -229,64 +251,6 @@ function formattedDate(iso: string) {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-}
-
-.restaurant-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: #161616;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  text-decoration: none;
-  color: inherit;
-  transition: background 0.15s;
-}
-
-.restaurant-row:active {
-  background: #1f1f1f;
-}
-
-.row-emoji {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  flex-shrink: 0;
-}
-
-.row-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.row-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.row-cuisine {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.row-chevron {
-  width: 16px;
-  height: 16px;
-  color: rgba(255, 255, 255, 0.2);
-  flex-shrink: 0;
+  gap: 10px;
 }
 </style>
