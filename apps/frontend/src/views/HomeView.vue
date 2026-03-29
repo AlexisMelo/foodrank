@@ -6,6 +6,7 @@ import {
   fetchRestaurants,
   fetchCommunityVisitsByUserId,
   fetchUserById,
+  fetchTierlistsByUserId,
 } from '@/services/restaurantService'
 import RecentReviewCard from '@/components/RecentReviewCard.vue'
 import NewReviewChip from '@/components/NewReviewChip.vue'
@@ -19,13 +20,15 @@ const visitedCount = ref(0)
 const recentVisits = ref<(CommunityVisit & { restaurant: Restaurant })[]>([])
 const allRestaurants = ref<Restaurant[]>([])
 const allVisits = ref<CommunityVisit[]>([])
+const recentTierlists = ref<{ id: string; name: string; emoji: string }[]>([])
 const loading = ref(true)
 
 onMounted(async () => {
-  const [user, visits, restaurants] = await Promise.all([
+  const [user, visits, restaurants, tierlists] = await Promise.all([
     fetchUserById(CURRENT_USER_ID),
     fetchCommunityVisitsByUserId(CURRENT_USER_ID),
     fetchRestaurants(),
+    fetchTierlistsByUserId(CURRENT_USER_ID),
   ])
   currentUser.value = user ?? null
   allVisits.value = visits
@@ -36,6 +39,10 @@ onMounted(async () => {
     .slice(0, 5)
     .map((v) => ({ ...v, restaurant: restaurantMap.get(v.restaurantId)! }))
     .filter((v) => v.restaurant)
+  recentTierlists.value = [...tierlists]
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    .slice(0, 8)
+    .map((t) => ({ id: t.id, name: t.name, emoji: t.emoji }))
   loading.value = false
 })
 
@@ -86,6 +93,24 @@ const topRestaurants = computed(() => {
           :service="visit.service"
           :decor="visit.decor"
         />
+      </div>
+    </section>
+
+    <section v-if="recentTierlists.length" class="section">
+      <div class="section-header">
+        <h2 class="section-title">Tierlists</h2>
+        <RouterLink to="/tierlists" class="see-all-chip">See all</RouterLink>
+      </div>
+      <div class="cards-row">
+        <RouterLink
+          v-for="t in recentTierlists"
+          :key="t.id"
+          :to="`/tierlists/${t.id}`"
+          class="tierlist-chip"
+        >
+          <div class="tierlist-chip-cover">{{ t.emoji }}</div>
+          <span class="tierlist-chip-name">{{ t.name }}</span>
+        </RouterLink>
       </div>
     </section>
 
@@ -247,6 +272,46 @@ const topRestaurants = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* Tierlist compact chip */
+.tierlist-chip {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  width: 72px;
+}
+
+.tierlist-chip-cover {
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  transition: background 0.15s;
+}
+
+.tierlist-chip:active .tierlist-chip-cover {
+  background: #252525;
+}
+
+.tierlist-chip-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Skeleton */
