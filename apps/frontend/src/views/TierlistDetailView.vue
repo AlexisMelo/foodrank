@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { Restaurant, CommunityVisit, Tierlist } from '@/types/restaurant'
-import { fetchTierlistById, fetchRestaurants, fetchCommunityVisitsByUserId } from '@/services/restaurantService'
+import type { Restaurant, CommunityVisit, Tierlist, User } from '@/types/restaurant'
+import { fetchTierlistById, fetchRestaurants, fetchCommunityVisitsByUserId, fetchUserById } from '@/services/restaurantService'
 import RankedRestaurantItem from '@/components/RankedRestaurantItem.vue'
 
 const CURRENT_USER_ID = 'alex'
@@ -11,10 +11,13 @@ const route = useRoute()
 const router = useRouter()
 
 const tierlist = ref<Tierlist | null>(null)
+const owner = ref<User | null>(null)
 const restaurants = ref<Restaurant[]>([])
 const userVisits = ref<CommunityVisit[]>([])
 const isPinned = ref(false)
 const loading = ref(true)
+
+const isOwner = computed(() => tierlist.value?.userId === CURRENT_USER_ID)
 
 onMounted(async () => {
   const id = route.params.id as string
@@ -35,6 +38,7 @@ onMounted(async () => {
     .map((e) => restaurantMap.get(e.restaurantId)!)
     .filter(Boolean)
   userVisits.value = visits.filter((v) => tierlistIds.has(v.restaurantId))
+  owner.value = (await fetchUserById(found.userId)) ?? null
   loading.value = false
 })
 
@@ -53,9 +57,7 @@ const rankedRestaurants = computed(() =>
     .sort((a, b) => b.scores.overall - a.scores.overall),
 )
 
-function formattedDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-}
+
 </script>
 
 <template>
@@ -78,19 +80,22 @@ function formattedDate(iso: string) {
         <div class="cover">{{ tierlist.emoji }}</div>
         <h1 class="title">{{ tierlist.name }}</h1>
         <p class="description">{{ tierlist.description }}</p>
-        <div class="meta-row">
-          <span class="meta-chip">{{ restaurants.length }} restaurants</span>
-          <span class="meta-sep">·</span>
-          <span class="meta-date">{{ formattedDate(tierlist.createdAt) }}</span>
-        </div>
 
-        <button class="pin-btn" :class="{ pinned: isPinned }" @click="isPinned = !isPinned">
+        <button v-if="isOwner" class="pin-btn" :class="{ pinned: isPinned }" @click="isPinned = !isPinned">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="17" x2="12" y2="22"/>
             <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>
           </svg>
           {{ isPinned ? 'Pinned to profile' : 'Pin to profile' }}
         </button>
+      </div>
+
+      <div class="list-header">
+        <RouterLink v-if="owner" :to="`/user/${owner.id}`" class="owner">
+          <span class="owner-avatar">{{ owner.avatar }}</span>
+          <span class="owner-name">{{ owner.name }}</span>
+        </RouterLink>
+        <span class="meta-chip">{{ restaurants.length }} restaurants</span>
       </div>
 
       <div class="restaurant-list">
@@ -230,11 +235,30 @@ function formattedDate(iso: string) {
   max-width: 300px;
 }
 
-.meta-row {
+.list-header {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 4px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.owner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.owner-avatar {
+  font-size: 14px;
+}
+
+.owner-name {
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .meta-chip {
@@ -244,16 +268,6 @@ function formattedDate(iso: string) {
   background: rgba(255, 255, 255, 0.08);
   padding: 4px 10px;
   border-radius: 100px;
-}
-
-.meta-sep {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.2);
-}
-
-.meta-date {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.35);
 }
 
 .pin-btn {
