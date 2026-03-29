@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import RatingScores from '@/components/RatingScores.vue'
 
 const props = defineProps<{
@@ -12,7 +13,10 @@ const props = defineProps<{
   overall: number
   index: number
   myScore?: number
+  rateLink?: string
 }>()
+
+const router = useRouter()
 
 function scoreColor(score: number) {
   if (score >= 85) return '#90be6d'
@@ -33,7 +37,7 @@ function itemBackground(index: number) {
     :to="`/restaurant/${restaurantId}`"
     class="list-item"
     :class="{ 'list-item-first': index === 0 }"
-    :style="{ background: itemBackground(index) }"
+    :style="{ background: itemBackground(index), '--item-bg': itemBackground(index) }"
   >
     <div class="item-avatar">
       <span class="item-emoji">{{ emoji }}</span>
@@ -53,6 +57,13 @@ function itemBackground(index: number) {
         :style="{ backgroundColor: scoreColor(Math.round(myScore)) }"
       >
         {{ Math.round(myScore) }}
+      </div>
+      <div
+        v-else-if="rateLink"
+        class="my-score my-score-rate"
+        @click.prevent.stop="router.push(rateLink)"
+      >
+        <span class="rate-plus">+</span>
       </div>
     </div>
   </RouterLink>
@@ -124,6 +135,7 @@ function itemBackground(index: number) {
   justify-content: center;
   font-weight: 900;
   font-size: 12px;
+  line-height: 1;
   color: #0d0d0d;
 }
 
@@ -139,11 +151,36 @@ function itemBackground(index: number) {
   justify-content: center;
   font-weight: 900;
   font-size: 8px;
+  line-height: 1;
   color: #0d0d0d;
   border: 2px solid #0d0d0d;
 }
 
 .list-item-first .my-score {
   border-color: #ffffff;
+}
+
+.rate-plus {
+  display: block;
+  transform: translateY(-2px);
+}
+
+.my-score-rate {
+  background: #2f2f2f;
+  /* box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.35); */
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  transition:
+    transform 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
+}
+
+.my-score-rate:hover {
+  transform: scale(1.15);
+  color: #ffffff;
+  /* box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.9); */
 }
 </style>

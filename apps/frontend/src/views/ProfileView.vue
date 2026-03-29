@@ -124,29 +124,21 @@ async function shareProfile() {
 
       <!-- Ranked list -->
       <div class="list">
-        <div
+        <RankedRestaurantItem
           v-for="(restaurant, index) in displayedRestaurants"
           :key="restaurant.id"
-          class="item-wrap"
-        >
-          <RankedRestaurantItem
-            :restaurantId="restaurant.id"
-            :emoji="restaurant.emoji"
-            :name="restaurant.name"
-            :cuisine="restaurant.cuisine"
-            :food="restaurant.scores.food"
-            :service="restaurant.scores.service"
-            :decor="restaurant.scores.decor"
-            :overall="restaurant.scores.overall"
-            :index="index"
-            :myScore="isOwnProfile ? undefined : restaurant.myScore"
-          />
-          <RouterLink
-            v-if="!isOwnProfile && restaurant.myScore === undefined"
-            :to="`/review/${restaurant.id}`"
-            class="rate-btn"
-          >+ Rate</RouterLink>
-        </div>
+          :restaurantId="restaurant.id"
+          :emoji="restaurant.emoji"
+          :name="restaurant.name"
+          :cuisine="restaurant.cuisine"
+          :food="restaurant.scores.food"
+          :service="restaurant.scores.service"
+          :decor="restaurant.scores.decor"
+          :overall="restaurant.scores.overall"
+          :index="index"
+          :myScore="isOwnProfile ? undefined : restaurant.myScore"
+          :rateLink="!isOwnProfile && restaurant.myScore === undefined ? `/review/${restaurant.id}` : undefined"
+        />
       </div>
     </template>
   </div>
@@ -322,35 +314,6 @@ async function shareProfile() {
 /* Pinned tierlists spacing */
 :deep(.pinned-section) {
   margin-bottom: 24px;
-}
-
-/* List */
-.item-wrap {
-  position: relative;
-}
-
-.rate-btn {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 10px;
-  font-weight: 800;
-  font-family: inherit;
-  color: rgba(255, 255, 255, 0.5);
-  background: transparent;
-  border: 1.5px dashed rgba(255, 255, 255, 0.25);
-  border-radius: 100px;
-  padding: 4px 8px;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: color 0.15s, border-color 0.15s;
-  z-index: 1;
-}
-
-.rate-btn:hover {
-  color: rgba(255, 255, 255, 0.85);
-  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .list {
