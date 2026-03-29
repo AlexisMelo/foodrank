@@ -13,7 +13,8 @@ const router = useRouter()
 const tierlist = ref<Tierlist | null>(null)
 const owner = ref<User | null>(null)
 const restaurants = ref<Restaurant[]>([])
-const userVisits = ref<CommunityVisit[]>([])
+const ownerVisits = ref<CommunityVisit[]>([])
+const myVisits = ref<CommunityVisit[]>([])
 const isPinned = ref(false)
 const loading = ref(true)
 
@@ -29,23 +30,37 @@ onMounted(async () => {
   tierlist.value = found
   isPinned.value = found.pinned
 
+  const isViewerOwner = found.userId === CURRENT_USER_ID
   const tierlistIds = new Set(found.restaurants.map((e) => e.restaurantId))
-  const [allRestaurants, visits, foundOwner] = await Promise.all([
+  const fetches: Promise<unknown>[] = [
     fetchRestaurants(),
     fetchCommunityVisitsByUserId(found.userId),
     fetchUserById(found.userId),
-  ])
+  ]
+  if (!isViewerOwner) fetches.push(fetchCommunityVisitsByUserId(CURRENT_USER_ID))
+
+  const [allRestaurants, visits, foundOwner, myVisitsRaw] = await Promise.all(fetches) as [
+    Restaurant[], CommunityVisit[], User | undefined, CommunityVisit[] | undefined
+  ]
   const restaurantMap = new Map(allRestaurants.map((r) => [r.id, r]))
   restaurants.value = found.restaurants
     .map((e) => restaurantMap.get(e.restaurantId)!)
     .filter(Boolean)
-  userVisits.value = visits.filter((v) => tierlistIds.has(v.restaurantId))
+  ownerVisits.value = visits.filter((v) => tierlistIds.has(v.restaurantId))
+  myVisits.value = (myVisitsRaw ?? []).filter((v) => tierlistIds.has(v.restaurantId))
   owner.value = foundOwner ?? null
   loading.value = false
 })
 
+function overallAvg(visits: CommunityVisit[]): number {
+  const food = visits.reduce((s, v) => s + v.food, 0) / visits.length
+  const service = visits.reduce((s, v) => s + v.service, 0) / visits.length
+  const decor = visits.reduce((s, v) => s + v.decor, 0) / visits.length
+  return (food + service + decor) / 3
+}
+
 function scoreForRestaurant(restaurantId: string) {
-  const visits = userVisits.value.filter((v) => v.restaurantId === restaurantId)
+  const visits = ownerVisits.value.filter((v) => v.restaurantId === restaurantId)
   if (!visits.length) return { food: 0, service: 0, decor: 0, overall: 0 }
   const food = visits.reduce((s, v) => s + v.food, 0) / visits.length
   const service = visits.reduce((s, v) => s + v.service, 0) / visits.length
@@ -53,9 +68,15 @@ function scoreForRestaurant(restaurantId: string) {
   return { food, service, decor, overall: (food + service + decor) / 3 }
 }
 
+function myScoreForRestaurant(restaurantId: string): number | undefined {
+  if (isOwner.value) return undefined
+  const visits = myVisits.value.filter((v) => v.restaurantId === restaurantId)
+  return visits.length ? overallAvg(visits) : undefined
+}
+
 const rankedRestaurants = computed(() =>
   restaurants.value
-    .map((r) => ({ ...r, scores: scoreForRestaurant(r.id) }))
+    .map((r) => ({ ...r, scores: scoreForRestaurant(r.id), myScore: myScoreForRestaurant(r.id) }))
     .sort((a, b) => b.scores.overall - a.scores.overall),
 )
 
@@ -113,6 +134,7 @@ const rankedRestaurants = computed(() =>
           :decor="r.scores.decor"
           :overall="r.scores.overall"
           :index="index"
+          :myScore="r.myScore"
         />
       </div>
     </template>

@@ -21,14 +21,17 @@ const isOwnProfile = computed(() => !route.params.id)
 const displayUser = ref<User | null>(null)
 const allRestaurants = ref<Restaurant[]>([])
 const userVisits = ref<CommunityVisit[]>([])
+const myVisits = ref<CommunityVisit[]>([])
 const visitedCount = ref(0)
 const loading = ref(true)
 
 onMounted(async () => {
-  const [found, visits, restaurants] = await Promise.all([
+  const viewingOther = profileUserId.value !== CURRENT_USER_ID
+  const [found, visits, restaurants, myVisitsRaw] = await Promise.all([
     fetchUserById(profileUserId.value),
     fetchCommunityVisitsByUserId(profileUserId.value),
     fetchRestaurants(),
+    viewingOther ? fetchCommunityVisitsByUserId(CURRENT_USER_ID) : Promise.resolve([] as CommunityVisit[]),
   ])
   if (!found) {
     router.replace('/')
@@ -37,6 +40,7 @@ onMounted(async () => {
   displayUser.value = found
   allRestaurants.value = restaurants
   userVisits.value = visits
+  myVisits.value = myVisitsRaw ?? []
   visitedCount.value = new Set(visits.map((v) => v.restaurantId)).size
   loading.value = false
 })
@@ -56,12 +60,21 @@ function userCriteriaAvg(restaurantId: string): {
   return { food, service, decor, overall: (food + service + decor) / 3 }
 }
 
+function myScoreFor(restaurantId: string): number | undefined {
+  const visits = myVisits.value.filter((v) => v.restaurantId === restaurantId)
+  if (!visits.length) return undefined
+  const food = visits.reduce((s, v) => s + v.food, 0) / visits.length
+  const service = visits.reduce((s, v) => s + v.service, 0) / visits.length
+  const decor = visits.reduce((s, v) => s + v.decor, 0) / visits.length
+  return (food + service + decor) / 3
+}
+
 // Restaurants the user visited, ranked by their personal average (best = rank 1)
 const displayedRestaurants = computed(() => {
   const visitedIds = new Set(userVisits.value.map((v) => v.restaurantId))
   return [...allRestaurants.value]
     .filter((r) => visitedIds.has(r.id))
-    .map((r) => ({ ...r, scores: userCriteriaAvg(r.id) }))
+    .map((r) => ({ ...r, scores: userCriteriaAvg(r.id), myScore: myScoreFor(r.id) }))
     .sort((a, b) => b.scores.overall - a.scores.overall)
     .map((r, i) => ({ ...r, rank: i + 1 }))
 })
@@ -110,19 +123,29 @@ async function shareProfile() {
 
       <!-- Ranked list -->
       <div class="list">
-        <RankedRestaurantItem
+        <div
           v-for="(restaurant, index) in displayedRestaurants"
           :key="restaurant.id"
-          :restaurantId="restaurant.id"
-          :emoji="restaurant.emoji"
-          :name="restaurant.name"
-          :cuisine="restaurant.cuisine"
-          :food="restaurant.scores.food"
-          :service="restaurant.scores.service"
-          :decor="restaurant.scores.decor"
-          :overall="restaurant.scores.overall"
-          :index="index"
-        />
+          class="item-wrap"
+        >
+          <RankedRestaurantItem
+            :restaurantId="restaurant.id"
+            :emoji="restaurant.emoji"
+            :name="restaurant.name"
+            :cuisine="restaurant.cuisine"
+            :food="restaurant.scores.food"
+            :service="restaurant.scores.service"
+            :decor="restaurant.scores.decor"
+            :overall="restaurant.scores.overall"
+            :index="index"
+            :myScore="isOwnProfile ? undefined : restaurant.myScore"
+          />
+          <RouterLink
+            v-if="!isOwnProfile && restaurant.myScore === undefined"
+            :to="`/review/${restaurant.id}`"
+            class="rate-btn"
+          >+ Rate</RouterLink>
+        </div>
       </div>
     </template>
   </div>
@@ -301,6 +324,34 @@ async function shareProfile() {
 }
 
 /* List */
+.item-wrap {
+  position: relative;
+}
+
+.rate-btn {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  font-weight: 800;
+  font-family: inherit;
+  color: rgba(255, 255, 255, 0.5);
+  background: transparent;
+  border: 1.5px dashed rgba(255, 255, 255, 0.25);
+  border-radius: 100px;
+  padding: 4px 8px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+  z-index: 1;
+}
+
+.rate-btn:hover {
+  color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
 .list {
   width: 100%;
   max-width: 420px;

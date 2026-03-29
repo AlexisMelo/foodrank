@@ -11,6 +11,7 @@ const props = defineProps<{
   decor: number
   overall: number
   index: number
+  myScore?: number
 }>()
 
 function scoreColor(score: number) {
@@ -42,8 +43,17 @@ function itemBackground(index: number) {
       <span class="item-sub">{{ cuisine }}</span>
     </div>
     <RatingScores :food="food" :service="service" :decor="decor" />
-    <div class="item-avg" :style="{ backgroundColor: scoreColor(Math.round(overall)) }">
-      {{ Math.round(overall) }}
+    <div class="score-wrap">
+      <div class="item-avg" :style="{ backgroundColor: scoreColor(Math.round(overall)) }">
+        {{ Math.round(overall) }}
+      </div>
+      <div
+        v-if="myScore !== undefined"
+        class="my-score"
+        :style="{ backgroundColor: scoreColor(Math.round(myScore)) }"
+      >
+        {{ Math.round(myScore) }}
+      </div>
     </div>
   </RouterLink>
 </template>
@@ -100,6 +110,11 @@ function itemBackground(index: number) {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.45);
 }
+.score-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
 .item-avg {
   width: 34px;
   height: 34px;
@@ -110,6 +125,25 @@ function itemBackground(index: number) {
   font-weight: 900;
   font-size: 12px;
   color: #0d0d0d;
-  flex-shrink: 0;
+}
+
+.my-score {
+  position: absolute;
+  bottom: -10px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 8px;
+  color: #0d0d0d;
+  border: 2px solid #0d0d0d;
+}
+
+.list-item-first .my-score {
+  border-color: #ffffff;
 }
 </style>
