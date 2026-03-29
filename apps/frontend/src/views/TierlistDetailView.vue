@@ -21,24 +21,26 @@ const isOwner = computed(() => tierlist.value?.userId === CURRENT_USER_ID)
 
 onMounted(async () => {
   const id = route.params.id as string
-  const [found, allRestaurants, visits] = await Promise.all([
-    fetchTierlistById(id),
-    fetchRestaurants(),
-    fetchCommunityVisitsByUserId(CURRENT_USER_ID),
-  ])
+  const found = await fetchTierlistById(id)
   if (!found) {
     router.replace('/tierlists')
     return
   }
   tierlist.value = found
   isPinned.value = found.pinned
+
   const tierlistIds = new Set(found.restaurants.map((e) => e.restaurantId))
+  const [allRestaurants, visits, foundOwner] = await Promise.all([
+    fetchRestaurants(),
+    fetchCommunityVisitsByUserId(found.userId),
+    fetchUserById(found.userId),
+  ])
   const restaurantMap = new Map(allRestaurants.map((r) => [r.id, r]))
   restaurants.value = found.restaurants
     .map((e) => restaurantMap.get(e.restaurantId)!)
     .filter(Boolean)
   userVisits.value = visits.filter((v) => tierlistIds.has(v.restaurantId))
-  owner.value = (await fetchUserById(found.userId)) ?? null
+  owner.value = foundOwner ?? null
   loading.value = false
 })
 
