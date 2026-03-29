@@ -10,8 +10,9 @@ import RatingScores from '@/components/RatingScores.vue'
 import NewReviewChip from '@/components/NewReviewChip.vue'
 import CuisineChip from '@/components/CuisineChip.vue'
 import RestaurantAddress from '@/components/RestaurantAddress.vue'
+import { useAuth } from '@/composables/useAuth'
 
-const CURRENT_USER_ID = 'alex'
+const { currentUserId: CURRENT_USER_ID } = useAuth()
 
 const route = useRoute()
 const router = useRouter()

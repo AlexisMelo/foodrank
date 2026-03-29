@@ -7,8 +7,9 @@ import {
   fetchCommunityVisitsByUserId,
   fetchRestaurants,
 } from '@/services/restaurantService'
+import { useAuth } from '@/composables/useAuth'
 
-const CURRENT_USER_ID = 'alex'
+const { currentUserId: CURRENT_USER_ID } = useAuth()
 
 const route = useRoute()
 const router = useRouter()

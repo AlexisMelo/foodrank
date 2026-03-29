@@ -458,10 +458,676 @@
       "service": 75,
       "decor": 63,
       "user": { "id": "u3", "name": "Emma Dubois", "avatar": "👩‍🦱" }
+    },
+    {
+      "id": "cv-35",
+      "restaurantId": "golden-chopsticks",
+      "date": "2026-03-14",
+      "food": 91,
+      "service": 84,
+      "decor": 79,
+      "user": { "id": "u1", "name": "Sophie Martin", "avatar": "👩" }
+    },
+    {
+      "id": "cv-36",
+      "restaurantId": "golden-chopsticks",
+      "date": "2026-02-08",
+      "food": 88,
+      "service": 80,
+      "decor": 75,
+      "user": { "id": "u3", "name": "Emma Dubois", "avatar": "👩‍🦱" }
+    },
+    {
+      "id": "cv-37",
+      "restaurantId": "golden-chopsticks",
+      "date": "2025-12-19",
+      "food": 93,
+      "service": 82,
+      "decor": 78,
+      "user": { "id": "u5", "name": "Mia Leroy", "avatar": "👧" }
+    },
+    {
+      "id": "cv-38",
+      "restaurantId": "golden-chopsticks",
+      "date": "2025-10-03",
+      "food": 86,
+      "service": 79,
+      "decor": 72,
+      "user": { "id": "u7", "name": "Chloé Dupont", "avatar": "👩‍🦰" }
+    },
+    {
+      "id": "cv-39",
+      "restaurantId": "el-asador",
+      "date": "2026-03-11",
+      "food": 90,
+      "service": 85,
+      "decor": 88,
+      "user": { "id": "u2", "name": "Lucas Petit", "avatar": "🧑" }
+    },
+    {
+      "id": "cv-40",
+      "restaurantId": "el-asador",
+      "date": "2026-01-27",
+      "food": 94,
+      "service": 88,
+      "decor": 86,
+      "user": { "id": "u4", "name": "Noah Bernard", "avatar": "👦" }
+    },
+    {
+      "id": "cv-41",
+      "restaurantId": "el-asador",
+      "date": "2025-11-15",
+      "food": 96,
+      "service": 83,
+      "decor": 90,
+      "user": { "id": "u6", "name": "Hugo Moreau", "avatar": "🧔" }
+    },
+    {
+      "id": "cv-42",
+      "restaurantId": "el-asador",
+      "date": "2025-08-20",
+      "food": 88,
+      "service": 80,
+      "decor": 84,
+      "user": { "id": "u8", "name": "Ethan Simon", "avatar": "👨" }
+    },
+    {
+      "id": "cv-43",
+      "restaurantId": "sakura-sushi",
+      "date": "2026-03-18",
+      "food": 97,
+      "service": 92,
+      "decor": 89,
+      "user": { "id": "u1", "name": "Sophie Martin", "avatar": "👩" }
+    },
+    {
+      "id": "cv-44",
+      "restaurantId": "sakura-sushi",
+      "date": "2026-02-09",
+      "food": 99,
+      "service": 94,
+      "decor": 91,
+      "user": { "id": "u4", "name": "Noah Bernard", "avatar": "👦" }
+    },
+    {
+      "id": "cv-45",
+      "restaurantId": "sakura-sushi",
+      "date": "2025-12-28",
+      "food": 95,
+      "service": 90,
+      "decor": 87,
+      "user": { "id": "u6", "name": "Hugo Moreau", "avatar": "🧔" }
+    },
+    {
+      "id": "cv-46",
+      "restaurantId": "sakura-sushi",
+      "date": "2025-09-14",
+      "food": 98,
+      "service": 93,
+      "decor": 90,
+      "user": { "id": "u7", "name": "Chloé Dupont", "avatar": "👩‍🦰" }
+    },
+    {
+      "id": "cv-47",
+      "restaurantId": "mama-ethiopia",
+      "date": "2026-03-07",
+      "food": 88,
+      "service": 79,
+      "decor": 74,
+      "user": { "id": "u2", "name": "Lucas Petit", "avatar": "🧑" }
+    },
+    {
+      "id": "cv-48",
+      "restaurantId": "mama-ethiopia",
+      "date": "2026-01-14",
+      "food": 85,
+      "service": 76,
+      "decor": 71,
+      "user": { "id": "u5", "name": "Mia Leroy", "avatar": "👧" }
+    },
+    {
+      "id": "cv-49",
+      "restaurantId": "mama-ethiopia",
+      "date": "2025-10-28",
+      "food": 82,
+      "service": 73,
+      "decor": 68,
+      "user": { "id": "u8", "name": "Ethan Simon", "avatar": "👨" }
+    },
+    {
+      "id": "cv-50",
+      "restaurantId": "la-maison-du-crepe",
+      "date": "2026-03-03",
+      "food": 82,
+      "service": 74,
+      "decor": 70,
+      "user": { "id": "u3", "name": "Emma Dubois", "avatar": "👩‍🦱" }
+    },
+    {
+      "id": "cv-51",
+      "restaurantId": "la-maison-du-crepe",
+      "date": "2025-12-11",
+      "food": 79,
+      "service": 71,
+      "decor": 67,
+      "user": { "id": "u6", "name": "Hugo Moreau", "avatar": "🧔" }
+    },
+    {
+      "id": "cv-52",
+      "restaurantId": "la-maison-du-crepe",
+      "date": "2025-07-26",
+      "food": 83,
+      "service": 77,
+      "decor": 72,
+      "user": { "id": "u1", "name": "Sophie Martin", "avatar": "👩" }
+    },
+    {
+      "id": "cv-53",
+      "restaurantId": "spice-route",
+      "date": "2026-03-16",
+      "food": 92,
+      "service": 83,
+      "decor": 80,
+      "user": { "id": "u2", "name": "Lucas Petit", "avatar": "🧑" }
+    },
+    {
+      "id": "cv-54",
+      "restaurantId": "spice-route",
+      "date": "2026-02-04",
+      "food": 90,
+      "service": 81,
+      "decor": 77,
+      "user": { "id": "u4", "name": "Noah Bernard", "avatar": "👦" }
+    },
+    {
+      "id": "cv-55",
+      "restaurantId": "spice-route",
+      "date": "2025-11-22",
+      "food": 93,
+      "service": 85,
+      "decor": 82,
+      "user": { "id": "u7", "name": "Chloé Dupont", "avatar": "👩‍🦰" }
+    },
+    {
+      "id": "cv-56",
+      "restaurantId": "spice-route",
+      "date": "2025-09-08",
+      "food": 88,
+      "service": 79,
+      "decor": 75,
+      "user": { "id": "u8", "name": "Ethan Simon", "avatar": "👨" }
+    },
+    {
+      "id": "cv-57",
+      "restaurantId": "trattoria-da-marco",
+      "date": "2026-03-13",
+      "food": 90,
+      "service": 84,
+      "decor": 82,
+      "user": { "id": "u1", "name": "Sophie Martin", "avatar": "👩" }
+    },
+    {
+      "id": "cv-58",
+      "restaurantId": "trattoria-da-marco",
+      "date": "2026-01-06",
+      "food": 87,
+      "service": 81,
+      "decor": 79,
+      "user": { "id": "u3", "name": "Emma Dubois", "avatar": "👩‍🦱" }
+    },
+    {
+      "id": "cv-59",
+      "restaurantId": "trattoria-da-marco",
+      "date": "2025-08-17",
+      "food": 91,
+      "service": 86,
+      "decor": 83,
+      "user": { "id": "u5", "name": "Mia Leroy", "avatar": "👧" }
+    },
+    {
+      "id": "cv-60",
+      "restaurantId": "the-greek-corner",
+      "date": "2026-02-26",
+      "food": 84,
+      "service": 76,
+      "decor": 73,
+      "user": { "id": "u2", "name": "Lucas Petit", "avatar": "🧑" }
+    },
+    {
+      "id": "cv-61",
+      "restaurantId": "the-greek-corner",
+      "date": "2025-12-01",
+      "food": 81,
+      "service": 73,
+      "decor": 70,
+      "user": { "id": "u6", "name": "Hugo Moreau", "avatar": "🧔" }
+    },
+    {
+      "id": "cv-62",
+      "restaurantId": "the-greek-corner",
+      "date": "2025-06-09",
+      "food": 85,
+      "service": 78,
+      "decor": 75,
+      "user": { "id": "u8", "name": "Ethan Simon", "avatar": "👨" }
+    },
+    {
+      "id": "cv-63",
+      "restaurantId": "umami-burger-lab",
+      "date": "2026-03-21",
+      "food": 87,
+      "service": 78,
+      "decor": 72,
+      "user": { "id": "u3", "name": "Emma Dubois", "avatar": "👩‍🦱" }
+    },
+    {
+      "id": "cv-64",
+      "restaurantId": "umami-burger-lab",
+      "date": "2026-01-12",
+      "food": 84,
+      "service": 75,
+      "decor": 69,
+      "user": { "id": "u4", "name": "Noah Bernard", "avatar": "👦" }
+    },
+    {
+      "id": "cv-65",
+      "restaurantId": "umami-burger-lab",
+      "date": "2025-10-30",
+      "food": 88,
+      "service": 80,
+      "decor": 74,
+      "user": { "id": "u7", "name": "Chloé Dupont", "avatar": "👩‍🦰" }
+    },
+    {
+      "id": "cv-66",
+      "restaurantId": "umami-burger-lab",
+      "date": "2025-05-18",
+      "food": 82,
+      "service": 73,
+      "decor": 67,
+      "user": { "id": "u5", "name": "Mia Leroy", "avatar": "👧" }
+    },
+    {
+      "id": "cv-67",
+      "restaurantId": "pearl-of-the-sea",
+      "date": "2026-03-20",
+      "food": 96,
+      "service": 92,
+      "decor": 90,
+      "user": { "id": "u1", "name": "Sophie Martin", "avatar": "👩" }
+    },
+    {
+      "id": "cv-68",
+      "restaurantId": "pearl-of-the-sea",
+      "date": "2026-02-14",
+      "food": 93,
+      "service": 88,
+      "decor": 87,
+      "user": { "id": "u2", "name": "Lucas Petit", "avatar": "🧑" }
+    },
+    {
+      "id": "cv-69",
+      "restaurantId": "pearl-of-the-sea",
+      "date": "2025-11-27",
+      "food": 97,
+      "service": 91,
+      "decor": 89,
+      "user": { "id": "u6", "name": "Hugo Moreau", "avatar": "🧔" }
+    },
+    {
+      "id": "cv-70",
+      "restaurantId": "pearl-of-the-sea",
+      "date": "2025-07-10",
+      "food": 95,
+      "service": 90,
+      "decor": 88,
+      "user": { "id": "u7", "name": "Chloé Dupont", "avatar": "👩‍🦰" }
+    },
+    {
+      "id": "cv-71",
+      "restaurantId": "seoul-kitchen",
+      "date": "2026-03-15",
+      "food": 93,
+      "service": 87,
+      "decor": 84,
+      "user": { "id": "u3", "name": "Emma Dubois", "avatar": "👩‍🦱" }
+    },
+    {
+      "id": "cv-72",
+      "restaurantId": "seoul-kitchen",
+      "date": "2026-02-03",
+      "food": 90,
+      "service": 84,
+      "decor": 81,
+      "user": { "id": "u5", "name": "Mia Leroy", "avatar": "👧" }
+    },
+    {
+      "id": "cv-73",
+      "restaurantId": "seoul-kitchen",
+      "date": "2025-12-20",
+      "food": 95,
+      "service": 82,
+      "decor": 79,
+      "user": { "id": "u8", "name": "Ethan Simon", "avatar": "👨" }
+    },
+    {
+      "id": "cv-74",
+      "restaurantId": "seoul-kitchen",
+      "date": "2025-09-05",
+      "food": 91,
+      "service": 85,
+      "decor": 80,
+      "user": { "id": "u4", "name": "Noah Bernard", "avatar": "👦" }
+    },
+    {
+      "id": "cv-75",
+      "restaurantId": "patisserie-celeste",
+      "date": "2026-03-22",
+      "food": 99,
+      "service": 95,
+      "decor": 93,
+      "user": { "id": "u1", "name": "Sophie Martin", "avatar": "👩" }
+    },
+    {
+      "id": "cv-76",
+      "restaurantId": "patisserie-celeste",
+      "date": "2026-02-17",
+      "food": 97,
+      "service": 92,
+      "decor": 90,
+      "user": { "id": "u2", "name": "Lucas Petit", "avatar": "🧑" }
+    },
+    {
+      "id": "cv-77",
+      "restaurantId": "patisserie-celeste",
+      "date": "2025-12-03",
+      "food": 98,
+      "service": 94,
+      "decor": 91,
+      "user": { "id": "u4", "name": "Noah Bernard", "avatar": "👦" }
+    },
+    {
+      "id": "cv-78",
+      "restaurantId": "patisserie-celeste",
+      "date": "2025-08-24",
+      "food": 96,
+      "service": 91,
+      "decor": 89,
+      "user": { "id": "u6", "name": "Hugo Moreau", "avatar": "🧔" }
+    },
+    {
+      "id": "cv-79",
+      "restaurantId": "casa-oaxaca",
+      "date": "2026-03-09",
+      "food": 94,
+      "service": 87,
+      "decor": 85,
+      "user": { "id": "u3", "name": "Emma Dubois", "avatar": "👩‍🦱" }
+    },
+    {
+      "id": "cv-80",
+      "restaurantId": "casa-oaxaca",
+      "date": "2026-01-21",
+      "food": 91,
+      "service": 84,
+      "decor": 82,
+      "user": { "id": "u5", "name": "Mia Leroy", "avatar": "👧" }
+    },
+    {
+      "id": "cv-81",
+      "restaurantId": "casa-oaxaca",
+      "date": "2025-11-08",
+      "food": 93,
+      "service": 86,
+      "decor": 84,
+      "user": { "id": "u7", "name": "Chloé Dupont", "avatar": "👩‍🦰" }
+    },
+    {
+      "id": "cv-82",
+      "restaurantId": "casa-oaxaca",
+      "date": "2025-07-03",
+      "food": 89,
+      "service": 81,
+      "decor": 79,
+      "user": { "id": "u8", "name": "Ethan Simon", "avatar": "👨" }
+    },
+    {
+      "id": "cv-83",
+      "restaurantId": "the-dim-sum-club",
+      "date": "2026-03-17",
+      "food": 89,
+      "service": 81,
+      "decor": 79,
+      "user": { "id": "u1", "name": "Sophie Martin", "avatar": "👩" }
+    },
+    {
+      "id": "cv-84",
+      "restaurantId": "the-dim-sum-club",
+      "date": "2026-02-07",
+      "food": 87,
+      "service": 78,
+      "decor": 76,
+      "user": { "id": "u4", "name": "Noah Bernard", "avatar": "👦" }
+    },
+    {
+      "id": "cv-85",
+      "restaurantId": "the-dim-sum-club",
+      "date": "2025-10-19",
+      "food": 90,
+      "service": 83,
+      "decor": 80,
+      "user": { "id": "u6", "name": "Hugo Moreau", "avatar": "🧔" }
+    },
+    {
+      "id": "cv-86",
+      "restaurantId": "the-dim-sum-club",
+      "date": "2025-05-31",
+      "food": 85,
+      "service": 76,
+      "decor": 73,
+      "user": { "id": "u2", "name": "Lucas Petit", "avatar": "🧑" }
+    },
+    {
+      "id": "cv-87",
+      "restaurantId": "monsoon-table",
+      "date": "2026-03-18",
+      "food": 91,
+      "service": 86,
+      "decor": 83,
+      "user": { "id": "u3", "name": "Emma Dubois", "avatar": "👩‍🦱" }
+    },
+    {
+      "id": "cv-88",
+      "restaurantId": "monsoon-table",
+      "date": "2026-01-29",
+      "food": 89,
+      "service": 84,
+      "decor": 80,
+      "user": { "id": "u7", "name": "Chloé Dupont", "avatar": "👩‍🦰" }
+    },
+    {
+      "id": "cv-89",
+      "restaurantId": "monsoon-table",
+      "date": "2025-12-07",
+      "food": 87,
+      "service": 80,
+      "decor": 77,
+      "user": { "id": "u8", "name": "Ethan Simon", "avatar": "👨" }
+    },
+    {
+      "id": "cv-90",
+      "restaurantId": "monsoon-table",
+      "date": "2025-08-13",
+      "food": 92,
+      "service": 87,
+      "decor": 84,
+      "user": { "id": "u5", "name": "Mia Leroy", "avatar": "👧" }
+    },
+    {
+      "id": "cv-91",
+      "restaurantId": "la-taquiza",
+      "date": "2026-03-05",
+      "food": 80,
+      "service": 72,
+      "decor": 64,
+      "user": { "id": "u1", "name": "Sophie Martin", "avatar": "👩" }
+    },
+    {
+      "id": "cv-92",
+      "restaurantId": "la-taquiza",
+      "date": "2026-01-18",
+      "food": 77,
+      "service": 69,
+      "decor": 61,
+      "user": { "id": "u2", "name": "Lucas Petit", "avatar": "🧑" }
+    },
+    {
+      "id": "cv-93",
+      "restaurantId": "la-taquiza",
+      "date": "2025-11-24",
+      "food": 81,
+      "service": 74,
+      "decor": 66,
+      "user": { "id": "u3", "name": "Emma Dubois", "avatar": "👩‍🦱" }
+    },
+    {
+      "id": "cv-94",
+      "restaurantId": "brasserie-nord",
+      "date": "2026-02-22",
+      "food": 85,
+      "service": 78,
+      "decor": 76,
+      "user": { "id": "u4", "name": "Noah Bernard", "avatar": "👦" }
+    },
+    {
+      "id": "cv-95",
+      "restaurantId": "brasserie-nord",
+      "date": "2025-12-14",
+      "food": 82,
+      "service": 75,
+      "decor": 73,
+      "user": { "id": "u5", "name": "Mia Leroy", "avatar": "👧" }
+    },
+    {
+      "id": "cv-96",
+      "restaurantId": "brasserie-nord",
+      "date": "2025-09-29",
+      "food": 86,
+      "service": 80,
+      "decor": 77,
+      "user": { "id": "u8", "name": "Ethan Simon", "avatar": "👨" }
+    },
+    {
+      "id": "cv-97",
+      "restaurantId": "levant-mezze",
+      "date": "2026-03-08",
+      "food": 88,
+      "service": 81,
+      "decor": 79,
+      "user": { "id": "u2", "name": "Lucas Petit", "avatar": "🧑" }
+    },
+    {
+      "id": "cv-98",
+      "restaurantId": "levant-mezze",
+      "date": "2026-01-24",
+      "food": 85,
+      "service": 78,
+      "decor": 76,
+      "user": { "id": "u6", "name": "Hugo Moreau", "avatar": "🧔" }
+    },
+    {
+      "id": "cv-99",
+      "restaurantId": "levant-mezze",
+      "date": "2025-11-05",
+      "food": 87,
+      "service": 82,
+      "decor": 80,
+      "user": { "id": "u7", "name": "Chloé Dupont", "avatar": "👩‍🦰" }
+    },
+    {
+      "id": "cv-100",
+      "restaurantId": "levant-mezze",
+      "date": "2025-06-22",
+      "food": 83,
+      "service": 76,
+      "decor": 73,
+      "user": { "id": "u4", "name": "Noah Bernard", "avatar": "👦" }
+    },
+    {
+      "id": "cv-101",
+      "restaurantId": "noodle-republic",
+      "date": "2026-03-04",
+      "food": 83,
+      "service": 75,
+      "decor": 71,
+      "user": { "id": "u1", "name": "Sophie Martin", "avatar": "👩" }
+    },
+    {
+      "id": "cv-102",
+      "restaurantId": "noodle-republic",
+      "date": "2026-02-11",
+      "food": 81,
+      "service": 72,
+      "decor": 68,
+      "user": { "id": "u3", "name": "Emma Dubois", "avatar": "👩‍🦱" }
+    },
+    {
+      "id": "cv-103",
+      "restaurantId": "noodle-republic",
+      "date": "2025-10-17",
+      "food": 84,
+      "service": 76,
+      "decor": 72,
+      "user": { "id": "u5", "name": "Mia Leroy", "avatar": "👧" }
+    },
+    {
+      "id": "cv-104",
+      "restaurantId": "noodle-republic",
+      "date": "2025-07-14",
+      "food": 79,
+      "service": 70,
+      "decor": 65,
+      "user": { "id": "u8", "name": "Ethan Simon", "avatar": "👨" }
+    },
+    {
+      "id": "cv-105",
+      "restaurantId": "osteria-del-porto",
+      "date": "2026-03-19",
+      "food": 95,
+      "service": 89,
+      "decor": 87,
+      "user": { "id": "u2", "name": "Lucas Petit", "avatar": "🧑" }
+    },
+    {
+      "id": "cv-106",
+      "restaurantId": "osteria-del-porto",
+      "date": "2026-02-01",
+      "food": 93,
+      "service": 87,
+      "decor": 85,
+      "user": { "id": "u4", "name": "Noah Bernard", "avatar": "👦" }
+    },
+    {
+      "id": "cv-107",
+      "restaurantId": "osteria-del-porto",
+      "date": "2025-11-16",
+      "food": 96,
+      "service": 90,
+      "decor": 88,
+      "user": { "id": "u6", "name": "Hugo Moreau", "avatar": "🧔" }
+    },
+    {
+      "id": "cv-108",
+      "restaurantId": "osteria-del-porto",
+      "date": "2025-07-27",
+      "food": 94,
+      "service": 88,
+      "decor": 86,
+      "user": { "id": "u7", "name": "Chloé Dupont", "avatar": "👩‍🦰" }
     }
   ],
   "meta": {
-    "total": 51,
-    "updatedAt": "2026-03-23T00:00:00Z"
+    "total": 125,
+    "updatedAt": "2026-03-29T00:00:00Z"
   }
 }

@@ -4,8 +4,9 @@ import { useRoute, useRouter } from 'vue-router'
 import type { Restaurant, CommunityVisit, Tierlist, User } from '@/types/restaurant'
 import { fetchTierlistById, fetchRestaurants, fetchCommunityVisitsByUserId, fetchUserById } from '@/services/restaurantService'
 import RankedRestaurantItem from '@/components/RankedRestaurantItem.vue'
+import { useAuth } from '@/composables/useAuth'
 
-const CURRENT_USER_ID = 'alex'
+const { currentUserId: CURRENT_USER_ID } = useAuth()
 
 const route = useRoute()
 const router = useRouter()

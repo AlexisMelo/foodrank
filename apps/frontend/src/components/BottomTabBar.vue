@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
 import { useNewReview } from '@/composables/useNewReview'
+import { useAuth } from '@/composables/useAuth'
 
 const { open: openNewReview } = useNewReview()
-
-const CURRENT_USER_ID = 'alex'
+const { currentUserId: CURRENT_USER_ID } = useAuth()
 
 const router = useRouter()
 const route = useRoute()

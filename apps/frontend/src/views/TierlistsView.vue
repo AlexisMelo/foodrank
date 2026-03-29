@@ -3,8 +3,9 @@ import { ref, computed, onMounted } from 'vue'
 import type { Restaurant, Tierlist } from '@/types/restaurant'
 import { fetchTierlistsByUserId, fetchRestaurants } from '@/services/restaurantService'
 import TierlistCard from '@/components/TierlistCard.vue'
+import { useAuth } from '@/composables/useAuth'
 
-const CURRENT_USER_ID = 'alex'
+const { currentUserId: CURRENT_USER_ID } = useAuth()
 
 type SortKey = 'recent' | 'az' | 'updated'
 

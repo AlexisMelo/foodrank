@@ -12,8 +12,9 @@ import RecentReviewCard from '@/components/RecentReviewCard.vue'
 import NewReviewChip from '@/components/NewReviewChip.vue'
 import RankedRestaurantItem from '@/components/RankedRestaurantItem.vue'
 import TierlistChip from '@/components/TierlistChip.vue'
+import { useAuth } from '@/composables/useAuth'
 
-const CURRENT_USER_ID = 'alex'
+const { currentUserId: CURRENT_USER_ID } = useAuth()
 const router = useRouter()
 
 const currentUser = ref<User | null>(null)
