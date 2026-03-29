@@ -34,14 +34,20 @@ export interface User {
   bio: string
 }
 
+export interface TierlistEntry {
+  restaurantId: string
+  addedAt: string
+}
+
 export interface Tierlist {
   id: string
   userId: string
   name: string
   description: string
   emoji: string
-  restaurantIds: string[]
+  restaurants: TierlistEntry[]
   createdAt: string
+  updatedAt: string
 }
 
 export interface ApiResponse<T> {

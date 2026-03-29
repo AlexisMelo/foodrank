@@ -9,6 +9,7 @@ const router = createRouter({
     { path: '/restaurant/:id', component: () => import('@/views/RestaurantView.vue') },
     { path: '/user/:id', component: () => import('@/views/ProfileView.vue') },
     { path: '/tierlists', component: () => import('@/views/TierlistsView.vue') },
+    { path: '/tierlists/:id', component: () => import('@/views/TierlistDetailView.vue') },
     { path: '/search', component: () => import('@/views/SearchResultsView.vue') },
     { path: '/review/:id', component: () => import('@/views/NewReviewView.vue') },
   ],

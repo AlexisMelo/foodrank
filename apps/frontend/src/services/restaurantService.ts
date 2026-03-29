@@ -1,7 +1,8 @@
-import type { Restaurant, CommunityVisit, User, ApiResponse } from '@/types/restaurant'
+import type { Restaurant, CommunityVisit, User, Tierlist, ApiResponse } from '@/types/restaurant'
 import mockRestaurants from '@/data/restaurants.json'
 import mockCommunityRatings from '@/data/community-ratings.json'
 import mockUsers from '@/data/users.json'
+import mockTierlists from '@/data/tierlists.json'
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -47,4 +48,18 @@ export async function fetchUserById(id: string): Promise<User | undefined> {
   await delay(200)
   const response = mockUsers as ApiResponse<User[]>
   return response.data.find((u) => u.id === id)
+}
+
+export async function fetchTierlistsByUserId(userId: string): Promise<Tierlist[]> {
+  await delay(200)
+  const response = mockTierlists as ApiResponse<Tierlist[]>
+  return response.data
+    .filter((t) => t.userId === userId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+}
+
+export async function fetchTierlistById(id: string): Promise<Tierlist | undefined> {
+  await delay(200)
+  const response = mockTierlists as ApiResponse<Tierlist[]>
+  return response.data.find((t) => t.id === id)
 }
