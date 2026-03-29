@@ -48,6 +48,7 @@ export interface Tierlist {
   restaurants: TierlistEntry[]
   createdAt: string
   updatedAt: string
+  pinned: boolean
 }
 
 export interface ApiResponse<T> {

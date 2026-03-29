@@ -63,3 +63,9 @@ export async function fetchTierlistById(id: string): Promise<Tierlist | undefine
   const response = mockTierlists as ApiResponse<Tierlist[]>
   return response.data.find((t) => t.id === id)
 }
+
+export async function fetchPinnedTierlistsByUserId(userId: string): Promise<Tierlist[]> {
+  await delay(200)
+  const response = mockTierlists as ApiResponse<Tierlist[]>
+  return response.data.filter((t) => t.userId === userId && t.pinned)
+}

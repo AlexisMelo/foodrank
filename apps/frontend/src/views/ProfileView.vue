@@ -8,6 +8,7 @@ import {
   fetchCommunityVisitsByUserId,
 } from '@/services/restaurantService'
 import RankedRestaurantItem from '@/components/RankedRestaurantItem.vue'
+import PinnedTierlists from '@/components/PinnedTierlists.vue'
 
 const CURRENT_USER_ID = 'alex'
 
@@ -103,6 +104,9 @@ async function shareProfile() {
         <h2 class="winner-name">{{ displayUser!.name }}</h2>
         <div class="winner-tag">{{ visitedCount }} ratings</div>
       </div>
+
+      <!-- Pinned tierlists -->
+      <PinnedTierlists :userId="profileUserId" />
 
       <!-- Ranked list -->
       <div class="list">
@@ -289,6 +293,11 @@ async function shareProfile() {
   border: 1.5px solid #90be6d;
   font-size: 14px;
   font-weight: 700;
+}
+
+/* Pinned tierlists spacing */
+:deep(.pinned-section) {
+  margin-bottom: 24px;
 }
 
 /* List */

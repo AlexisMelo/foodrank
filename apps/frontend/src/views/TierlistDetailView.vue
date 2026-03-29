@@ -13,6 +13,7 @@ const router = useRouter()
 const tierlist = ref<Tierlist | null>(null)
 const restaurants = ref<Restaurant[]>([])
 const userVisits = ref<CommunityVisit[]>([])
+const isPinned = ref(false)
 const loading = ref(true)
 
 onMounted(async () => {
@@ -27,6 +28,7 @@ onMounted(async () => {
     return
   }
   tierlist.value = found
+  isPinned.value = found.pinned
   const tierlistIds = new Set(found.restaurants.map((e) => e.restaurantId))
   const restaurantMap = new Map(allRestaurants.map((r) => [r.id, r]))
   restaurants.value = found.restaurants
@@ -81,6 +83,14 @@ function formattedDate(iso: string) {
           <span class="meta-sep">·</span>
           <span class="meta-date">{{ formattedDate(tierlist.createdAt) }}</span>
         </div>
+
+        <button class="pin-btn" :class="{ pinned: isPinned }" @click="isPinned = !isPinned">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="17" x2="12" y2="22"/>
+            <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>
+          </svg>
+          {{ isPinned ? 'Pinned to profile' : 'Pin to profile' }}
+        </button>
       </div>
 
       <div class="restaurant-list">
@@ -244,6 +254,34 @@ function formattedDate(iso: string) {
 .meta-date {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.35);
+}
+
+.pin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border-radius: 100px;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.pin-btn svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.pin-btn.pinned {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #0d0d0d;
 }
 
 .restaurant-list {

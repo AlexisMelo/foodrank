@@ -11,6 +11,7 @@ import {
 import RecentReviewCard from '@/components/RecentReviewCard.vue'
 import NewReviewChip from '@/components/NewReviewChip.vue'
 import RankedRestaurantItem from '@/components/RankedRestaurantItem.vue'
+import TierlistChip from '@/components/TierlistChip.vue'
 
 const CURRENT_USER_ID = 'alex'
 const router = useRouter()
@@ -102,15 +103,13 @@ const topRestaurants = computed(() => {
         <RouterLink to="/tierlists" class="see-all-chip">See all</RouterLink>
       </div>
       <div class="cards-row">
-        <RouterLink
+        <TierlistChip
           v-for="t in recentTierlists"
           :key="t.id"
-          :to="`/tierlists/${t.id}`"
-          class="tierlist-chip"
-        >
-          <div class="tierlist-chip-cover">{{ t.emoji }}</div>
-          <span class="tierlist-chip-name">{{ t.name }}</span>
-        </RouterLink>
+          :id="t.id"
+          :name="t.name"
+          :emoji="t.emoji"
+        />
       </div>
     </section>
 
@@ -272,46 +271,6 @@ const topRestaurants = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-/* Tierlist compact chip */
-.tierlist-chip {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-  color: inherit;
-  width: 72px;
-}
-
-.tierlist-chip-cover {
-  width: 72px;
-  height: 72px;
-  border-radius: 14px;
-  background: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  transition: background 0.15s;
-}
-
-.tierlist-chip:active .tierlist-chip-cover {
-  background: #252525;
-}
-
-.tierlist-chip-name {
-  font-size: 11px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.7);
-  text-align: center;
-  width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* Skeleton */
