@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Restaurant, CommunityVisit, User } from '@/types/restaurant'
 import {
@@ -26,11 +26,12 @@ const myVisits = ref<CommunityVisit[]>([])
 const visitedCount = ref(0)
 const loading = ref(true)
 
-onMounted(async () => {
-  const viewingOther = profileUserId.value !== CURRENT_USER_ID
+async function loadProfile(userId: string) {
+  loading.value = true
+  const viewingOther = userId !== CURRENT_USER_ID
   const [found, visits, restaurants, myVisitsRaw] = await Promise.all([
-    fetchUserById(profileUserId.value),
-    fetchCommunityVisitsByUserId(profileUserId.value),
+    fetchUserById(userId),
+    fetchCommunityVisitsByUserId(userId),
     fetchRestaurants(),
     viewingOther ? fetchCommunityVisitsByUserId(CURRENT_USER_ID) : Promise.resolve([] as CommunityVisit[]),
   ])
@@ -44,7 +45,10 @@ onMounted(async () => {
   myVisits.value = myVisitsRaw ?? []
   visitedCount.value = new Set(visits.map((v) => v.restaurantId)).size
   loading.value = false
-})
+}
+
+onMounted(() => loadProfile(profileUserId.value))
+watch(profileUserId, (newId) => loadProfile(newId))
 
 // Per-criterion averages of the user's own visits for a restaurant
 function userCriteriaAvg(restaurantId: string): {
