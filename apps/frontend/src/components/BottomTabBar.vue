@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
 import { useNewReview } from '@/composables/useNewReview'
-import { useAuth } from '@/composables/useAuth'
 
 const { open: openNewReview } = useNewReview()
-const { currentUserId: CURRENT_USER_ID } = useAuth()
 
 const router = useRouter()
 const route = useRoute()
@@ -17,8 +15,8 @@ function isTierlists(): boolean {
   return route.path === '/tierlists'
 }
 
-function isProfile(): boolean {
-  return route.path === '/profile' || route.path === `/user/${CURRENT_USER_ID}`
+function isExplore(): boolean {
+  return route.path === '/explore'
 }
 </script>
 
@@ -29,9 +27,9 @@ function isProfile(): boolean {
       <span>Home</span>
     </button>
 
-    <button class="tab-btn" :class="{ active: isTierlists() }" @click="router.push('/tierlists')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="4" rx="1"/><rect x="3" y="10" width="14" height="4" rx="1"/><rect x="3" y="17" width="10" height="4" rx="1"/></svg>
-      <span>Tierlists</span>
+    <button class="tab-btn" :class="{ active: isExplore() }" @click="router.push('/explore')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+      <span>Explore</span>
     </button>
 
     <button class="tab-btn tab-btn-add" @click="openNewReview">
@@ -43,9 +41,9 @@ function isProfile(): boolean {
       <span>Activity</span>
     </button>
 
-    <button class="tab-btn" :class="{ active: isProfile() }" @click="router.push('/profile')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <span>Profile</span>
+    <button class="tab-btn" :class="{ active: isTierlists() }" @click="router.push('/tierlists')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="4" rx="1"/><rect x="3" y="10" width="14" height="4" rx="1"/><rect x="3" y="17" width="10" height="4" rx="1"/></svg>
+      <span>Tierlists</span>
     </button>
   </nav>
 </template>

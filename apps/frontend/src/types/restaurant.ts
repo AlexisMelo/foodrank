@@ -8,6 +8,8 @@ export interface Restaurant {
   description: string
   openNow: boolean
   tags: string[]
+  lat: number
+  lng: number
 }
 
 export interface Visit {

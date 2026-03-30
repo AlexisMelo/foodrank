@@ -9,12 +9,9 @@
             "address": "12 Via Roma, Little Italy",
             "description": "Authentic Neapolitan pizza baked in a wood-fired oven imported straight from Naples. The margherita is a must, but the truffle burrata will steal the show.",
             "openNow": true,
-            "tags": [
-                "pizza",
-                "pasta",
-                "wine",
-                "dine-in"
-            ]
+            "tags": ["pizza", "pasta", "wine", "dine-in"],
+            "lat": 48.853,
+            "lng": 2.3488
         },
         {
             "id": "tokyo-ramen-house",
@@ -25,12 +22,9 @@
             "address": "88 Sakura Street, Japantown",
             "description": "Rich tonkotsu broth simmered for 18 hours, topped with chashu pork and a perfectly soft-boiled egg. Cash only, but absolutely worth the queue.",
             "openNow": true,
-            "tags": [
-                "ramen",
-                "noodles",
-                "broth",
-                "casual"
-            ]
+            "tags": ["ramen", "noodles", "broth", "casual"],
+            "lat": 48.8600,
+            "lng": 2.345
         },
         {
             "id": "le-petit-bistro",
@@ -41,12 +35,9 @@
             "address": "7 Boulevard Haussmann, Montmartre",
             "description": "Classic French bistro with an ever-changing seasonal menu. The duck confit and crème brûlée are permanent fixtures for good reason. Reservations strongly recommended.",
             "openNow": false,
-            "tags": [
-                "french",
-                "wine",
-                "brunch",
-                "reservations"
-            ]
+            "tags": ["french", "wine", "brunch", "reservations"],
+            "lat": 48.8640,
+            "lng": 2.332
         },
         {
             "id": "taco-fiesta",
@@ -57,12 +48,9 @@
             "address": "34 Calle Ocho, Eastside",
             "description": "Family-run taqueria serving slow-cooked birria and al pastor tacos since 1998. The salsa verde is made fresh every morning and the horchata is cold and creamy.",
             "openNow": true,
-            "tags": [
-                "tacos",
-                "burritos",
-                "takeaway",
-                "family-friendly"
-            ]
+            "tags": ["tacos", "burritos", "takeaway", "family-friendly"],
+            "lat": 48.8480,
+            "lng": 2.370
         },
         {
             "id": "the-curry-palace",
@@ -73,12 +61,9 @@
             "address": "55 Spice Lane, Southgate",
             "description": "Fragrant curries and freshly baked naan from a tandoor oven. The butter chicken is a crowd favourite, while the lamb rogan josh is deeply spiced and comforting.",
             "openNow": true,
-            "tags": [
-                "curry",
-                "naan",
-                "vegetarian options",
-                "delivery"
-            ]
+            "tags": ["curry", "naan", "vegetarian options", "delivery"],
+            "lat": 48.8510,
+            "lng": 2.380
         },
         {
             "id": "dragon-garden",
@@ -89,12 +74,9 @@
             "address": "21 Jade Avenue, Chinatown",
             "description": "Dim sum by day, Cantonese roasts by night. The char siu pork is lacquered to perfection and the XO fried rice is generously loaded with seafood.",
             "openNow": false,
-            "tags": [
-                "dim sum",
-                "roasts",
-                "seafood",
-                "family-style"
-            ]
+            "tags": ["dim sum", "roasts", "seafood", "family-style"],
+            "lat": 48.8575,
+            "lng": 2.356
         },
         {
             "id": "smoky-bbq-joint",
@@ -105,12 +87,9 @@
             "address": "9 Pitmaster Road, Westtown",
             "description": "Low-and-slow smoked brisket, pulled pork, and baby back ribs. Everything is smoked on-site over hickory wood and served with house-made pickles and cornbread.",
             "openNow": true,
-            "tags": [
-                "bbq",
-                "brisket",
-                "ribs",
-                "comfort food"
-            ]
+            "tags": ["bbq", "brisket", "ribs", "comfort food"],
+            "lat": 48.8430,
+            "lng": 2.325
         },
         {
             "id": "golden-chopsticks",
@@ -121,12 +100,9 @@
             "address": "14 Saigon Alley, Riverside",
             "description": "Steaming bowls of pho broth simmered overnight with star anise and charred ginger. The bánh mì is loaded with house-pickled daikon and crispy pork belly.",
             "openNow": true,
-            "tags": [
-                "pho",
-                "banh mi",
-                "noodles",
-                "casual"
-            ]
+            "tags": ["pho", "banh mi", "noodles", "casual"],
+            "lat": 48.8620,
+            "lng": 2.362
         },
         {
             "id": "el-asador",
@@ -137,12 +113,9 @@
             "address": "3 Pampa Street, Southgate",
             "description": "Wood-fire parrilla steakhouse serving perfectly charred cuts of ribeye and skirt steak. The chimichurri is made tableside and the Malbec list is exceptional.",
             "openNow": true,
-            "tags": [
-                "steak",
-                "grill",
-                "wine",
-                "dine-in"
-            ]
+            "tags": ["steak", "grill", "wine", "dine-in"],
+            "lat": 48.8490,
+            "lng": 2.340
         },
         {
             "id": "sakura-sushi",
@@ -153,12 +126,9 @@
             "address": "27 Blossom Lane, Japantown",
             "description": "Omakase-style counter where the chef sources fish daily from Tsukiji. The otoro nigiri melts on the tongue and the house ponzu is a closely guarded secret.",
             "openNow": false,
-            "tags": [
-                "sushi",
-                "omakase",
-                "sake",
-                "reservations"
-            ]
+            "tags": ["sushi", "omakase", "sake", "reservations"],
+            "lat": 48.8610,
+            "lng": 2.347
         },
         {
             "id": "mama-ethiopia",
@@ -169,12 +139,9 @@
             "address": "61 Haile Avenue, Eastside",
             "description": "Generous sharing platters of injera topped with slow-cooked doro wat and misir. Everything is made from scratch and the spiced honey wine is not to be missed.",
             "openNow": true,
-            "tags": [
-                "sharing",
-                "vegetarian options",
-                "spiced",
-                "casual"
-            ]
+            "tags": ["sharing", "vegetarian options", "spiced", "casual"],
+            "lat": 48.8470,
+            "lng": 2.365
         },
         {
             "id": "la-maison-du-crepe",
@@ -185,12 +152,9 @@
             "address": "5 Rue de Bretagne, Old Quarter",
             "description": "Buckwheat galettes and sweet crêpes flambéed at the table. The salted caramel and Grand Marnier crêpe Suzette are crowd favourites on a cosy Breton-themed terrace.",
             "openNow": true,
-            "tags": [
-                "crepes",
-                "brunch",
-                "dessert",
-                "terrace"
-            ]
+            "tags": ["crepes", "brunch", "dessert", "terrace"],
+            "lat": 48.8555,
+            "lng": 2.330
         },
         {
             "id": "spice-route",
@@ -201,12 +165,9 @@
             "address": "19 Bangkok Road, Northside",
             "description": "Punchy green curries and fragrant pad kra pao cooked over high flame. The som tam papaya salad is genuinely fiery and the mango sticky rice is a perfect finish.",
             "openNow": true,
-            "tags": [
-                "curry",
-                "spicy",
-                "noodles",
-                "takeaway"
-            ]
+            "tags": ["curry", "spicy", "noodles", "takeaway"],
+            "lat": 48.8680,
+            "lng": 2.350
         },
         {
             "id": "trattoria-da-marco",
@@ -217,12 +178,9 @@
             "address": "8 Via Toscana, Little Italy",
             "description": "Family trattoria serving hand-rolled pasta and slow-braised ragù that has been on the menu since 1972. The tiramisu is made fresh each morning and is never too sweet.",
             "openNow": false,
-            "tags": [
-                "pasta",
-                "wine",
-                "dine-in",
-                "family-friendly"
-            ]
+            "tags": ["pasta", "wine", "dine-in", "family-friendly"],
+            "lat": 48.8520,
+            "lng": 2.348
         },
         {
             "id": "the-greek-corner",
@@ -233,12 +191,9 @@
             "address": "44 Acropolis Square, Harbourfront",
             "description": "Charcoal-grilled souvlaki, creamy tzatziki and flaky spanakopita baked in-house. The barrel retsina and sea-view terrace make this a reliable warm-weather spot.",
             "openNow": true,
-            "tags": [
-                "grill",
-                "mezze",
-                "terrace",
-                "seafood"
-            ]
+            "tags": ["grill", "mezze", "terrace", "seafood"],
+            "lat": 48.8590,
+            "lng": 2.376
         },
         {
             "id": "umami-burger-lab",
@@ -249,12 +204,9 @@
             "address": "11 Bun Street, Midtown",
             "description": "Smash burgers with a double-sear crust, aged cheddar and a proprietary umami sauce. The truffle fries are dangerously addictive and the shakes are served frozen-thick.",
             "openNow": true,
-            "tags": [
-                "burgers",
-                "fries",
-                "casual",
-                "takeaway"
-            ]
+            "tags": ["burgers", "fries", "casual", "takeaway"],
+            "lat": 48.8540,
+            "lng": 2.355
         },
         {
             "id": "pearl-of-the-sea",
@@ -265,12 +217,9 @@
             "address": "2 Harbour Quay, Docklands",
             "description": "Whole lobster, oysters flown in daily and a bouillabaisse that takes two days to prepare. Floor-to-ceiling windows face the water for an unmatched dining atmosphere.",
             "openNow": false,
-            "tags": [
-                "lobster",
-                "oysters",
-                "fine dining",
-                "reservations"
-            ]
+            "tags": ["lobster", "oysters", "fine dining", "reservations"],
+            "lat": 48.8560,
+            "lng": 2.370
         },
         {
             "id": "seoul-kitchen",
@@ -281,12 +230,9 @@
             "address": "38 Hangang Road, Koreatown",
             "description": "Table-top BBQ with marinated galbi and bulgogi, plus a rotating lineup of twelve banchan. The kimchi jjigae is deeply fermented and the cold naengmyeon is a revelation.",
             "openNow": true,
-            "tags": [
-                "bbq",
-                "sharing",
-                "spicy",
-                "dine-in"
-            ]
+            "tags": ["bbq", "sharing", "spicy", "dine-in"],
+            "lat": 48.8500,
+            "lng": 2.358
         },
         {
             "id": "patisserie-celeste",
@@ -297,12 +243,9 @@
             "address": "1 Place du Marché, Old Quarter",
             "description": "Award-winning pâtisserie known for laminated croissants with 81 layers and seasonal tarts that sell out before 9am. The pistachio éclair has a cult following.",
             "openNow": true,
-            "tags": [
-                "pastry",
-                "brunch",
-                "dessert",
-                "coffee"
-            ]
+            "tags": ["pastry", "brunch", "dessert", "coffee"],
+            "lat": 48.8545,
+            "lng": 2.332
         },
         {
             "id": "casa-oaxaca",
@@ -313,12 +256,9 @@
             "address": "22 Zócalo Lane, Westside",
             "description": "Regional Mexican cooking rooted in Oaxacan tradition. The seven-chili mole negro is the star, slow-cooked for eight hours and served over turkey with fresh tortillas.",
             "openNow": true,
-            "tags": [
-                "mole",
-                "mezcal",
-                "regional",
-                "dine-in"
-            ]
+            "tags": ["mole", "mezcal", "regional", "dine-in"],
+            "lat": 48.8460,
+            "lng": 2.351
         },
         {
             "id": "the-dim-sum-club",
@@ -329,12 +269,9 @@
             "address": "77 Canton Road, Chinatown",
             "description": "Weekend dim sum institution with push carts, crystal prawn har gow and flaky egg tarts fresh from the oven. Arrive early — the queues form before opening.",
             "openNow": false,
-            "tags": [
-                "dim sum",
-                "dumplings",
-                "brunch",
-                "family-style"
-            ]
+            "tags": ["dim sum", "dumplings", "brunch", "family-style"],
+            "lat": 48.8575,
+            "lng": 2.359
         },
         {
             "id": "monsoon-table",
@@ -345,12 +282,9 @@
             "address": "9 Spice Bazaar, Northgate",
             "description": "Contemporary Indian tasting menu reinterpreting street food classics. The chaat trolley, smoked dal makhani and cardamom kulfi are the headline acts.",
             "openNow": true,
-            "tags": [
-                "tasting menu",
-                "vegetarian options",
-                "cocktails",
-                "reservations"
-            ]
+            "tags": ["tasting menu", "vegetarian options", "cocktails", "reservations"],
+            "lat": 48.8670,
+            "lng": 2.342
         },
         {
             "id": "la-taquiza",
@@ -361,12 +295,9 @@
             "address": "55 Mercado Street, Eastside",
             "description": "No-frills street taco stand that went brick-and-mortar. Carnitas, lengua, and crispy chicharrón tacos on freshly pressed corn tortillas with three housemade salsas.",
             "openNow": true,
-            "tags": [
-                "tacos",
-                "street food",
-                "casual",
-                "takeaway"
-            ]
+            "tags": ["tacos", "street food", "casual", "takeaway"],
+            "lat": 48.8495,
+            "lng": 2.372
         },
         {
             "id": "brasserie-nord",
@@ -377,12 +308,9 @@
             "address": "12 Grand Place, Old Quarter",
             "description": "Classic Belgian brasserie with moules-frites cooked six ways and a beer list of over forty Trappist and lambic ales. The waterzooi is a warming weekend staple.",
             "openNow": true,
-            "tags": [
-                "beer",
-                "mussels",
-                "frites",
-                "dine-in"
-            ]
+            "tags": ["beer", "mussels", "frites", "dine-in"],
+            "lat": 48.8550,
+            "lng": 2.336
         },
         {
             "id": "levant-mezze",
@@ -393,12 +321,9 @@
             "address": "33 Cedar Street, Harbourfront",
             "description": "Abundant mezze spread of hand-rolled falafel, silky hummus and fresh fattoush. The mixed grill platter and baklava tower are the best way to end a long table feast.",
             "openNow": false,
-            "tags": [
-                "mezze",
-                "sharing",
-                "vegetarian options",
-                "grill"
-            ]
+            "tags": ["mezze", "sharing", "vegetarian options", "grill"],
+            "lat": 48.8580,
+            "lng": 2.375
         },
         {
             "id": "noodle-republic",
@@ -409,12 +334,9 @@
             "address": "6 Penang Walk, Riverside",
             "description": "Hawker-style kopitiam serving penang char kway teow with wok hei, laksa with coconut-prawn broth and crispy roti canai dipped in dhal. Queue-worthy and worth every minute.",
             "openNow": true,
-            "tags": [
-                "noodles",
-                "hawker",
-                "spicy",
-                "casual"
-            ]
+            "tags": ["noodles", "hawker", "spicy", "casual"],
+            "lat": 48.8620,
+            "lng": 2.368
         },
         {
             "id": "osteria-del-porto",
@@ -425,12 +347,9 @@
             "address": "18 Via del Mare, Harbourfront",
             "description": "Seafood-focused osteria where the catch changes daily. The spaghetti alle vongole is briny and perfect, the grilled branzino arrives whole, and the Sicilian cannoli seals the deal.",
             "openNow": true,
-            "tags": [
-                "seafood",
-                "pasta",
-                "wine",
-                "dine-in"
-            ]
+            "tags": ["seafood", "pasta", "wine", "dine-in"],
+            "lat": 48.8565,
+            "lng": 2.3735
         }
     ],
     "meta": {
