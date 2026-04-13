@@ -1,13 +1,21 @@
 <script setup lang="ts">
 import BottomTabBar from '@/components/BottomTabBar.vue'
 import NewReviewModal from '@/components/NewReviewModal.vue'
+import AuthForm from '@/components/AuthForm.vue'
+import { useAuth } from '@/composables/useAuth'
+
+const { session, isReady } = useAuth()
 </script>
 
 <template>
   <div class="container">
-    <RouterView />
-    <BottomTabBar />
-    <NewReviewModal />
+    <template v-if="!isReady" />
+    <AuthForm v-else-if="!session" />
+    <template v-else>
+      <RouterView />
+      <BottomTabBar />
+      <NewReviewModal />
+    </template>
   </div>
 </template>
 
