@@ -69,11 +69,28 @@ const topRestaurants = computed(() => {
     <div class="blob blob-1" />
     <div class="blob blob-2" />
 
-    <button v-if="currentUser" class="user-bar" @click="router.push('/profile')">
-      <span class="user-avatar">{{ currentUser.avatar }}</span>
-      <span class="user-name">{{ currentUser.name }}</span>
-      <span class="user-visited">{{ visitedCount }} restaurants</span>
-    </button>
+    <div v-if="currentUser" class="top-bar">
+      <button class="user-bar" @click="router.push('/profile')">
+        <span class="user-avatar">{{ currentUser.avatar }}</span>
+        <span class="user-name">{{ currentUser.name }}</span>
+        <span class="user-visited">{{ visitedCount }} restaurants</span>
+      </button>
+      <button class="settings-btn" @click="router.push('/settings')" aria-label="Settings">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+          />
+        </svg>
+      </button>
+    </div>
 
     <section class="section">
       <div class="section-header">
@@ -171,12 +188,18 @@ const topRestaurants = computed(() => {
   left: -40px;
 }
 
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .user-bar {
   position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 100%;
+  flex: 1;
   background: #1a1a1a;
   border: 1.5px solid rgba(255, 255, 255, 0.07);
   border-radius: 16px;
@@ -189,6 +212,31 @@ const topRestaurants = computed(() => {
 }
 .user-bar:hover {
   background: #222;
+}
+
+.settings-btn {
+  flex-shrink: 0;
+  height: 60px;
+  width: 60px;
+  border-radius: 14px;
+  background: #1a1a1a;
+  border: 1.5px solid rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.settings-btn:hover {
+  background: #222;
+  color: rgba(255, 255, 255, 0.8);
+}
+.settings-btn svg {
+  width: 25px;
+  height: 25px;
 }
 
 .user-avatar {

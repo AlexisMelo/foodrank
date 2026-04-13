@@ -13,6 +13,7 @@ const router = createRouter({
     { path: '/tierlists/:id', component: () => import('@/views/TierlistDetailView.vue') },
     { path: '/search', component: () => import('@/views/SearchResultsView.vue') },
     { path: '/review/:id', component: () => import('@/views/NewReviewView.vue') },
+    { path: '/settings', component: () => import('@/views/SettingsView.vue') },
   ],
 })
 
