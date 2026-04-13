@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import BottomTabBar from '@/components/BottomTabBar.vue'
 import NewReviewModal from '@/components/NewReviewModal.vue'
-import AuthForm from '@/components/AuthForm.vue'
+import AuthView from '@/views/AuthView.vue'
 import { useAuth } from '@/composables/useAuth'
 
 const { session, isReady } = useAuth()
@@ -10,7 +10,7 @@ const { session, isReady } = useAuth()
 <template>
   <div class="container">
     <template v-if="!isReady" />
-    <AuthForm v-else-if="!session" />
+    <AuthView v-else-if="!session" />
     <template v-else>
       <RouterView />
       <BottomTabBar />
