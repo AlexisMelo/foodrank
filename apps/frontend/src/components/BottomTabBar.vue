@@ -55,7 +55,7 @@ function isExplore(): boolean {
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 420px;
+  max-width: 680px;
   height: 72px;
   background: rgba(18, 18, 18, 0.85);
   backdrop-filter: blur(20px);
