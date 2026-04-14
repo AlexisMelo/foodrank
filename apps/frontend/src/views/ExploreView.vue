@@ -70,10 +70,6 @@ onMounted(async () => {
 
 <template>
   <div class="explore">
-    <div class="blob blob-1" />
-    <div class="blob blob-2" />
-    <div class="blob blob-3" />
-
     <div class="page-header">
       <h1 class="page-title">Explore</h1>
       <p class="page-subtitle">Places you haven't tried yet</p>
@@ -114,33 +110,6 @@ onMounted(async () => {
   overflow: hidden;
   padding: 24px 20px 100px;
   font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
-}
-
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-}
-.blob-1 {
-  width: 90px;
-  height: 90px;
-  background: rgba(249, 199, 79, 0.35);
-  top: 6%;
-  right: 8%;
-}
-.blob-2 {
-  width: 50px;
-  height: 50px;
-  background: rgba(76, 201, 240, 0.4);
-  top: 30%;
-  left: 5%;
-}
-.blob-3 {
-  width: 30px;
-  height: 30px;
-  background: rgba(144, 190, 109, 0.5);
-  top: 18%;
-  right: 35%;
 }
 
 .page-header {

@@ -86,9 +86,6 @@ const rankedRestaurants = computed(() =>
 
 <template>
   <div class="detail-view">
-    <div class="blob blob-1" />
-    <div class="blob blob-2" />
-
     <div class="top-bar">
       <button class="back-btn" @click="router.back()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -153,30 +150,6 @@ const rankedRestaurants = computed(() =>
   max-width: 420px;
   margin: 0 auto;
   font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
-}
-
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.blob-1 {
-  width: 320px;
-  height: 320px;
-  background: rgba(255, 200, 60, 0.07);
-  top: -100px;
-  left: -60px;
-}
-
-.blob-2 {
-  width: 200px;
-  height: 200px;
-  background: rgba(100, 100, 255, 0.06);
-  bottom: 300px;
-  right: -60px;
 }
 
 .top-bar {

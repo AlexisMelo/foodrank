@@ -38,9 +38,6 @@ function reset() {
 
 <template>
   <div class="auth">
-    <div class="blob blob-1" />
-    <div class="blob blob-2" />
-
     <div class="auth-card">
       <div class="logo">🍽️</div>
       <h1 class="title">FoodRank</h1>
@@ -93,26 +90,6 @@ function reset() {
   padding: 24px 20px;
   font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
   overflow: hidden;
-}
-
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-}
-.blob-1 {
-  width: 260px;
-  height: 260px;
-  background: rgba(199, 125, 255, 0.08);
-  top: -80px;
-  right: -80px;
-}
-.blob-2 {
-  width: 180px;
-  height: 180px;
-  background: rgba(76, 201, 240, 0.07);
-  bottom: 10%;
-  left: -60px;
 }
 
 .auth-card {
