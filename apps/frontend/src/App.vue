@@ -3,14 +3,19 @@ import BottomTabBar from '@/components/BottomTabBar.vue'
 import NewReviewModal from '@/components/NewReviewModal.vue'
 import AuthView from '@/views/AuthView.vue'
 import { useAuth } from '@/composables/useAuth'
+import { useRoute } from 'vue-router'
 
-const { session, isReady } = useAuth()
+const { isLoggedIn, isReady } = useAuth()
+const route = useRoute()
 </script>
 
 <template>
   <div class="container">
-    <template v-if="!isReady" />
-    <AuthView v-else-if="!session" />
+    <template v-if="route.path === '/auth/callback'">
+      <RouterView />
+    </template>
+    <template v-else-if="!isReady" />
+    <AuthView v-else-if="!isLoggedIn" />
     <template v-else>
       <RouterView />
       <BottomTabBar />

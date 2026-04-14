@@ -4,9 +4,8 @@ import { useRouter } from 'vue-router'
 import type { User } from '@/types/restaurant'
 import { fetchUserById } from '@/services/restaurantService'
 import { useAuth } from '@/composables/useAuth'
-import { supabase } from '@/supabaseClient'
 
-const { currentUserId: CURRENT_USER_ID } = useAuth()
+const { currentUserId: CURRENT_USER_ID, setLoggedIn } = useAuth()
 const router = useRouter()
 
 const currentUser = ref<User | null>(null)
@@ -17,8 +16,13 @@ onMounted(async () => {
 })
 
 async function logout() {
-  await supabase.auth.signOut()
-  router.replace('/')
+  const res = await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+
+  if (res.ok) {
+    setLoggedIn(false)
+  } else {
+    alert('Failed to log out. Please try again.')
+  }
 }
 </script>
 

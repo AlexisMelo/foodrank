@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { supabase } from '../supabaseClient.ts'
 
 type State = 'idle' | 'loading' | 'success' | 'error'
 
@@ -15,13 +14,15 @@ async function sendMagicLink() {
   state.value = 'loading'
   errorMessage.value = ''
 
-  const { error } = await supabase.auth.signInWithOtp({
-    email: trimmed,
-    // options: { shouldCreateUser: true },
+  const res = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: trimmed }),
   })
 
-  if (error) {
-    errorMessage.value = error.message
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    errorMessage.value = data.error ?? 'Something went wrong'
     state.value = 'error'
   } else {
     state.value = 'success'

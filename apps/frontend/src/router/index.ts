@@ -14,6 +14,7 @@ const router = createRouter({
     { path: '/search', component: () => import('@/views/SearchResultsView.vue') },
     { path: '/review/:id', component: () => import('@/views/NewReviewView.vue') },
     { path: '/settings', component: () => import('@/views/SettingsView.vue') },
+    { path: '/auth/callback', component: () => import('@/views/AuthCallbackView.vue') },
   ],
 })
 
