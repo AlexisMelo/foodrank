@@ -86,14 +86,6 @@ const rankedRestaurants = computed(() =>
 
 <template>
   <div class="detail-view">
-    <div class="top-bar">
-      <button class="back-btn" @click="router.back()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 18 9 12 15 6"/>
-        </svg>
-      </button>
-    </div>
-
     <div v-if="loading" class="loading">⏳</div>
 
     <template v-else-if="tierlist">
@@ -148,36 +140,6 @@ const rankedRestaurants = computed(() =>
   position: relative;
   overflow: hidden;
   font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
-}
-
-.top-bar {
-  position: relative;
-  z-index: 1;
-  padding-top: 52px;
-  margin-bottom: 8px;
-}
-
-.back-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
-}
-
-.back-btn:active {
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.back-btn svg {
-  width: 18px;
-  height: 18px;
 }
 
 .loading {

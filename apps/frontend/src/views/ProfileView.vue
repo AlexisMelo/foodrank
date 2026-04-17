@@ -96,7 +96,6 @@ async function shareProfile() {
   <div class="profile">
     <!-- Header -->
     <div class="header">
-      <button v-if="!isOwnProfile" class="back-btn" @click="router.back()">←</button>
       <button class="share-btn" @click="shareProfile">⬆</button>
     </div>
 
@@ -161,25 +160,6 @@ async function shareProfile() {
   align-items: center;
   margin-bottom: 32px;
   position: relative;
-}
-.back-btn {
-  position: absolute;
-  left: 0;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  color: #fff;
-  font-size: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-}
-.back-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
 }
 .share-btn {
   position: absolute;

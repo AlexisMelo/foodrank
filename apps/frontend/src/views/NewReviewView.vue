@@ -92,10 +92,6 @@ onMounted(async () => {
 
 <template>
   <div class="page">
-    <div class="header">
-      <button class="back-btn" @click="router.back()">←</button>
-    </div>
-
     <template v-if="restaurant">
       <div class="restaurant-hero">
         <div class="emoji-circle">{{ restaurant.emoji }}</div>
@@ -297,30 +293,6 @@ onMounted(async () => {
   align-items: center;
   font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
   overflow: hidden;
-}
-
-.header {
-  width: 100%;
-
-  margin-bottom: 16px;
-}
-
-.back-btn {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  color: #fff;
-  font-size: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-}
-.back-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
 }
 
 .restaurant-hero {

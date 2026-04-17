@@ -21,11 +21,6 @@ onMounted(async () => {
 
 <template>
   <div class="page">
-    <!-- Header -->
-    <div class="header">
-      <button class="back-btn" @click="router.back()">←</button>
-    </div>
-
     <!-- Title block -->
     <div class="title-block">
       <div class="query-label">Results for</div>
@@ -70,28 +65,6 @@ onMounted(async () => {
   flex-direction: column;
   font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
   overflow: hidden;
-}
-
-.header {
-  margin-bottom: 28px;
-}
-
-.back-btn {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  color: #fff;
-  font-size: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-}
-.back-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
 }
 
 .title-block {
