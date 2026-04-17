@@ -156,7 +156,7 @@ async function shareProfile() {
 /* Header */
 .header {
   width: 100%;
-  max-width: 420px;
+
   display: flex;
   align-items: center;
   margin-bottom: 32px;
@@ -265,7 +265,7 @@ async function shareProfile() {
 
 .list {
   width: 100%;
-  max-width: 420px;
+
   display: flex;
   flex-direction: column;
   gap: 10px;

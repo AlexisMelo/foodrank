@@ -99,8 +99,6 @@ const sortedTierlists = computed(() => {
   padding: 0 20px 100px;
   position: relative;
   overflow: hidden;
-  max-width: 420px;
-  margin: 0 auto;
   font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
 }
 
@@ -209,7 +207,6 @@ const sortedTierlists = computed(() => {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.45);
   margin: 0;
-  max-width: 260px;
   line-height: 1.5;
 }
 </style>

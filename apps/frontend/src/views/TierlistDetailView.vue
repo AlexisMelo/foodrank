@@ -147,8 +147,6 @@ const rankedRestaurants = computed(() =>
   padding: 0 20px 100px;
   position: relative;
   overflow: hidden;
-  max-width: 420px;
-  margin: 0 auto;
   font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
 }
 
@@ -230,7 +228,6 @@ const rankedRestaurants = computed(() =>
   color: rgba(255, 255, 255, 0.5);
   margin: 0;
   line-height: 1.5;
-  max-width: 300px;
 }
 
 .list-header {

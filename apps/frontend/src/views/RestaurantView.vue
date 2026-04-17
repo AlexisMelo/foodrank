@@ -236,7 +236,7 @@ function scoreColor(score: number): string {
 /* Header */
 .header {
   width: 100%;
-  max-width: 420px;
+
   margin-bottom: 28px;
 }
 .back-btn {
@@ -294,7 +294,7 @@ function scoreColor(score: number): string {
 /* Content */
 .content {
   width: 100%;
-  max-width: 420px;
+
   display: flex;
   flex-direction: column;
   gap: 16px;

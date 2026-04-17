@@ -90,7 +90,17 @@ watch(isOpen, async (val) => {
             No restaurants found
           </div>
           <ul v-else-if="suggestions.length" class="suggestions">
-            <li v-for="r in suggestions" :key="r.id" class="suggestion-item" @click="() => { close(); router.push(`/review/${r.id}`) }">
+            <li
+              v-for="r in suggestions"
+              :key="r.id"
+              class="suggestion-item"
+              @click="
+                () => {
+                  close()
+                  router.push(`/review/${r.id}`)
+                }
+              "
+            >
               <span class="suggestion-emoji">{{ r.emoji }}</span>
               <div class="suggestion-info">
                 <span class="suggestion-name">{{ r.name }}</span>
@@ -113,7 +123,6 @@ watch(isOpen, async (val) => {
   z-index: 200;
   display: flex;
   align-items: flex-start;
-  max-width: 420px;
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
@@ -202,8 +211,12 @@ watch(isOpen, async (val) => {
   flex-shrink: 0;
   transition: transform 0.15s;
 }
-.search-btn:hover { transform: scale(1.06); }
-.search-btn:active { transform: scale(0.96); }
+.search-btn:hover {
+  transform: scale(1.06);
+}
+.search-btn:active {
+  transform: scale(0.96);
+}
 
 .suggestions-area {
   margin-top: 0;

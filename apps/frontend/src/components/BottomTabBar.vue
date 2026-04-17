@@ -52,10 +52,8 @@ function isExplore(): boolean {
 .tab-bar {
   position: fixed;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
   width: 100%;
-  max-width: 680px;
   height: 72px;
   background: rgba(18, 18, 18, 0.85);
   backdrop-filter: blur(20px);
