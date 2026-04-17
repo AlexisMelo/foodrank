@@ -27,7 +27,9 @@ onMounted(async () => {
   const restaurantMap = new Map(allRestaurants.map((r) => [r.id, r]))
   tierlists.value = userTierlists.map((t) => ({
     ...t,
-    resolvedRestaurants: t.restaurants.map((e) => restaurantMap.get(e.restaurantId)!).filter(Boolean),
+    resolvedRestaurants: t.restaurants
+      .map((e) => restaurantMap.get(e.restaurantId)!)
+      .filter(Boolean),
   }))
   loading.value = false
 })
@@ -46,9 +48,6 @@ const sortedTierlists = computed(() => {
 
 <template>
   <div class="tierlists-view">
-    <div class="blob blob-1" />
-    <div class="blob blob-2" />
-
     <header class="page-header">
       <h1 class="page-title">My Tierlists</h1>
       <p class="page-subtitle">Your personal restaurant collections</p>
@@ -73,7 +72,9 @@ const sortedTierlists = computed(() => {
     <div v-else-if="sortedTierlists.length === 0" class="empty-state">
       <div class="empty-icon">🏆</div>
       <p class="empty-title">No tierlists yet</p>
-      <p class="empty-desc">Create your first tierlist to start grouping your favorite restaurants.</p>
+      <p class="empty-desc">
+        Create your first tierlist to start grouping your favorite restaurants.
+      </p>
     </div>
 
     <div v-else class="list">
@@ -101,30 +102,6 @@ const sortedTierlists = computed(() => {
   max-width: 420px;
   margin: 0 auto;
   font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
-}
-
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.blob-1 {
-  width: 300px;
-  height: 300px;
-  background: rgba(255, 180, 0, 0.06);
-  top: -80px;
-  right: -60px;
-}
-
-.blob-2 {
-  width: 250px;
-  height: 250px;
-  background: rgba(255, 80, 80, 0.05);
-  bottom: 200px;
-  left: -80px;
 }
 
 .page-header {
@@ -166,7 +143,10 @@ const sortedTierlists = computed(() => {
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
   white-space: nowrap;
 }
 
@@ -192,8 +172,13 @@ const sortedTierlists = computed(() => {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 .empty-state {

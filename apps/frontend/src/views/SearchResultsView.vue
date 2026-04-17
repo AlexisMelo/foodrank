@@ -21,9 +21,6 @@ onMounted(async () => {
 
 <template>
   <div class="page">
-    <div class="blob blob-1" />
-    <div class="blob blob-2" />
-
     <!-- Header -->
     <div class="header">
       <button class="back-btn" @click="router.back()">←</button>
@@ -73,26 +70,6 @@ onMounted(async () => {
   flex-direction: column;
   font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
   overflow: hidden;
-}
-
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-}
-.blob-1 {
-  width: 180px;
-  height: 180px;
-  background: rgba(76, 201, 240, 0.07);
-  top: -60px;
-  right: -40px;
-}
-.blob-2 {
-  width: 120px;
-  height: 120px;
-  background: rgba(199, 125, 255, 0.07);
-  bottom: 20%;
-  left: -30px;
 }
 
 .header {

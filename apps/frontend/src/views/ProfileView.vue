@@ -94,14 +94,6 @@ async function shareProfile() {
 
 <template>
   <div class="profile">
-    <!-- Background blobs -->
-    <div class="blob blob-1" />
-    <div class="blob blob-2" />
-    <div class="blob blob-3" />
-    <div class="blob blob-4" />
-    <div class="blob blob-5" />
-    <div class="blob blob-6" />
-
     <!-- Header -->
     <div class="header">
       <button v-if="!isOwnProfile" class="back-btn" @click="router.back()">←</button>
@@ -159,55 +151,6 @@ async function shareProfile() {
   flex-direction: column;
   align-items: center;
   font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
-}
-
-/* Floating blobs */
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-}
-.blob-1 {
-  width: 80px;
-  height: 80px;
-  background: rgba(168, 218, 220, 0.5);
-  top: 8%;
-  right: 6%;
-}
-.blob-2 {
-  width: 40px;
-  height: 40px;
-  background: rgba(249, 199, 79, 0.6);
-  top: 28%;
-  left: 4%;
-}
-.blob-3 {
-  width: 24px;
-  height: 24px;
-  background: rgba(144, 190, 109, 0.7);
-  top: 14%;
-  right: 30%;
-}
-.blob-4 {
-  width: 56px;
-  height: 56px;
-  background: rgba(200, 100, 255, 0.35);
-  top: 42%;
-  right: 5%;
-}
-.blob-5 {
-  width: 18px;
-  height: 18px;
-  background: rgba(255, 107, 107, 0.7);
-  bottom: 30%;
-  left: 8%;
-}
-.blob-6 {
-  width: 36px;
-  height: 36px;
-  background: rgba(76, 201, 240, 0.5);
-  bottom: 20%;
-  right: 14%;
 }
 
 /* Header */

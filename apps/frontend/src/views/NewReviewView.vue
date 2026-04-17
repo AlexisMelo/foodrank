@@ -92,9 +92,6 @@ onMounted(async () => {
 
 <template>
   <div class="page">
-    <div class="blob blob-1" />
-    <div class="blob blob-2" />
-
     <div class="header">
       <button class="back-btn" @click="router.back()">←</button>
     </div>
@@ -300,26 +297,6 @@ onMounted(async () => {
   align-items: center;
   font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
   overflow: hidden;
-}
-
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-}
-.blob-1 {
-  width: 160px;
-  height: 160px;
-  background: rgba(249, 199, 79, 0.07);
-  top: -50px;
-  right: -40px;
-}
-.blob-2 {
-  width: 120px;
-  height: 120px;
-  background: rgba(199, 125, 255, 0.07);
-  bottom: 25%;
-  left: -30px;
 }
 
 .header {

@@ -28,9 +28,6 @@ async function logout() {
 
 <template>
   <div class="settings">
-    <div class="blob blob-1" />
-    <div class="blob blob-2" />
-
     <div class="header">
       <button class="back-btn" @click="router.back()">←</button>
       <h1 class="title">Settings</h1>
@@ -57,26 +54,6 @@ async function logout() {
   font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
   display: flex;
   flex-direction: column;
-}
-
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-}
-.blob-1 {
-  width: 200px;
-  height: 200px;
-  background: rgba(199, 125, 255, 0.08);
-  top: -60px;
-  right: -60px;
-}
-.blob-2 {
-  width: 140px;
-  height: 140px;
-  background: rgba(76, 201, 240, 0.07);
-  bottom: 20%;
-  left: -40px;
 }
 
 .header {

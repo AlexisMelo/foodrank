@@ -69,11 +69,6 @@ function scoreColor(score: number): string {
 
 <template>
   <div class="page">
-    <!-- Background blobs -->
-    <div class="blob blob-1" />
-    <div class="blob blob-2" />
-    <div class="blob blob-3" />
-
     <!-- Header -->
     <div class="header">
       <button class="back-btn" @click="router.back()">←</button>
@@ -236,34 +231,6 @@ function scoreColor(score: number): string {
   flex-direction: column;
   align-items: center;
   font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
-}
-
-/* Blobs */
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-}
-.blob-1 {
-  width: 100px;
-  height: 100px;
-  background: rgba(249, 199, 79, 0.2);
-  top: 5%;
-  right: -20px;
-}
-.blob-2 {
-  width: 60px;
-  height: 60px;
-  background: rgba(200, 100, 255, 0.25);
-  top: 35%;
-  left: -10px;
-}
-.blob-3 {
-  width: 40px;
-  height: 40px;
-  background: rgba(76, 201, 240, 0.3);
-  bottom: 25%;
-  right: 10%;
 }
 
 /* Header */
