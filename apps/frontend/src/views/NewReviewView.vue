@@ -92,10 +92,6 @@ onMounted(async () => {
 
 <template>
   <div class="page">
-    <div class="header">
-      <button class="back-btn" @click="router.back()">←</button>
-    </div>
-
     <template v-if="restaurant">
       <div class="restaurant-hero">
         <div class="emoji-circle">{{ restaurant.emoji }}</div>
@@ -299,33 +295,9 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-.header {
-  width: 100%;
-  max-width: 420px;
-  margin-bottom: 16px;
-}
-
-.back-btn {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  color: #fff;
-  font-size: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-}
-.back-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-
 .restaurant-hero {
   width: 100%;
-  max-width: 420px;
+
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -356,7 +328,7 @@ onMounted(async () => {
 
 .section-label {
   width: 100%;
-  max-width: 420px;
+
   font-size: 12px;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.3);
@@ -367,7 +339,7 @@ onMounted(async () => {
 
 .criterion-card {
   width: 100%;
-  max-width: 420px;
+
   background: #1a1a1a;
   border-radius: 20px;
   padding: 20px 20px 8px;
@@ -380,7 +352,7 @@ onMounted(async () => {
 
 .actions-card {
   width: 100%;
-  max-width: 420px;
+
   background: #1a1a1a;
   border-radius: 20px;
   padding: 16px;

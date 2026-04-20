@@ -69,11 +69,6 @@ function scoreColor(score: number): string {
 
 <template>
   <div class="page">
-    <!-- Header -->
-    <div class="header">
-      <button class="back-btn" @click="router.back()">←</button>
-    </div>
-
     <!-- Loading -->
     <div v-if="loading" class="loading">🍽️</div>
 
@@ -233,30 +228,6 @@ function scoreColor(score: number): string {
   font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
 }
 
-/* Header */
-.header {
-  width: 100%;
-  max-width: 420px;
-  margin-bottom: 28px;
-}
-.back-btn {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  color: #fff;
-  font-size: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-}
-.back-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
 /* Loading */
 .loading {
   font-size: 48px;
@@ -294,7 +265,7 @@ function scoreColor(score: number): string {
 /* Content */
 .content {
   width: 100%;
-  max-width: 420px;
+
   display: flex;
   flex-direction: column;
   gap: 16px;

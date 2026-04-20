@@ -95,7 +95,6 @@ function reset() {
 .auth-card {
   position: relative;
   width: 100%;
-  max-width: 380px;
   background: #1a1a1a;
   border: 1.5px solid rgba(255, 255, 255, 0.07);
   border-radius: 24px;

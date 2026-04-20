@@ -2,7 +2,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Restaurant, CommunityVisit, Tierlist, User } from '@/types/restaurant'
-import { fetchTierlistById, fetchRestaurants, fetchCommunityVisitsByUserId, fetchUserById } from '@/services/restaurantService'
+import {
+  fetchTierlistById,
+  fetchRestaurants,
+  fetchCommunityVisitsByUserId,
+  fetchUserById,
+} from '@/services/restaurantService'
 import RankedRestaurantItem from '@/components/RankedRestaurantItem.vue'
 import { useAuth } from '@/composables/useAuth'
 
@@ -40,8 +45,11 @@ onMounted(async () => {
   ]
   if (!isViewerOwner) fetches.push(fetchCommunityVisitsByUserId(CURRENT_USER_ID))
 
-  const [allRestaurants, visits, foundOwner, myVisitsRaw] = await Promise.all(fetches) as [
-    Restaurant[], CommunityVisit[], User | undefined, CommunityVisit[] | undefined
+  const [allRestaurants, visits, foundOwner, myVisitsRaw] = (await Promise.all(fetches)) as [
+    Restaurant[],
+    CommunityVisit[],
+    User | undefined,
+    CommunityVisit[] | undefined,
   ]
   const restaurantMap = new Map(allRestaurants.map((r) => [r.id, r]))
   restaurants.value = found.restaurants
@@ -80,20 +88,10 @@ const rankedRestaurants = computed(() =>
     .map((r) => ({ ...r, scores: scoreForRestaurant(r.id), myScore: myScoreForRestaurant(r.id) }))
     .sort((a, b) => b.scores.overall - a.scores.overall),
 )
-
-
 </script>
 
 <template>
   <div class="detail-view">
-    <div class="top-bar">
-      <button class="back-btn" @click="router.back()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 18 9 12 15 6"/>
-        </svg>
-      </button>
-    </div>
-
     <div v-if="loading" class="loading">⏳</div>
 
     <template v-else-if="tierlist">
@@ -102,10 +100,24 @@ const rankedRestaurants = computed(() =>
         <h1 class="title">{{ tierlist.name }}</h1>
         <p class="description">{{ tierlist.description }}</p>
 
-        <button v-if="isOwner" class="pin-btn" :class="{ pinned: isPinned }" @click="isPinned = !isPinned">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="17" x2="12" y2="22"/>
-            <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>
+        <button
+          v-if="isOwner"
+          class="pin-btn"
+          :class="{ pinned: isPinned }"
+          @click="isPinned = !isPinned"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="12" y1="17" x2="12" y2="22" />
+            <path
+              d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"
+            />
           </svg>
           {{ isPinned ? 'Pinned to profile' : 'Pin to profile' }}
         </button>
@@ -147,39 +159,7 @@ const rankedRestaurants = computed(() =>
   padding: 0 20px 100px;
   position: relative;
   overflow: hidden;
-  max-width: 420px;
-  margin: 0 auto;
   font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
-}
-
-.top-bar {
-  position: relative;
-  z-index: 1;
-  padding-top: 52px;
-  margin-bottom: 8px;
-}
-
-.back-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
-}
-
-.back-btn:active {
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.back-btn svg {
-  width: 18px;
-  height: 18px;
 }
 
 .loading {
@@ -190,8 +170,15 @@ const rankedRestaurants = computed(() =>
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.9); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.9);
+  }
 }
 
 .hero {
@@ -230,7 +217,6 @@ const rankedRestaurants = computed(() =>
   color: rgba(255, 255, 255, 0.5);
   margin: 0;
   line-height: 1.5;
-  max-width: 300px;
 }
 
 .list-header {
@@ -281,7 +267,10 @@ const rankedRestaurants = computed(() =>
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s;
 }
 
 .pin-btn svg {

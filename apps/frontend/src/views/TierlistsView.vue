@@ -27,7 +27,9 @@ onMounted(async () => {
   const restaurantMap = new Map(allRestaurants.map((r) => [r.id, r]))
   tierlists.value = userTierlists.map((t) => ({
     ...t,
-    resolvedRestaurants: t.restaurants.map((e) => restaurantMap.get(e.restaurantId)!).filter(Boolean),
+    resolvedRestaurants: t.restaurants
+      .map((e) => restaurantMap.get(e.restaurantId)!)
+      .filter(Boolean),
   }))
   loading.value = false
 })
@@ -70,7 +72,9 @@ const sortedTierlists = computed(() => {
     <div v-else-if="sortedTierlists.length === 0" class="empty-state">
       <div class="empty-icon">🏆</div>
       <p class="empty-title">No tierlists yet</p>
-      <p class="empty-desc">Create your first tierlist to start grouping your favorite restaurants.</p>
+      <p class="empty-desc">
+        Create your first tierlist to start grouping your favorite restaurants.
+      </p>
     </div>
 
     <div v-else class="list">
@@ -95,8 +99,6 @@ const sortedTierlists = computed(() => {
   padding: 0 20px 100px;
   position: relative;
   overflow: hidden;
-  max-width: 420px;
-  margin: 0 auto;
   font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
 }
 
@@ -139,7 +141,10 @@ const sortedTierlists = computed(() => {
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
   white-space: nowrap;
 }
 
@@ -165,8 +170,13 @@ const sortedTierlists = computed(() => {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 .empty-state {
@@ -197,7 +207,6 @@ const sortedTierlists = computed(() => {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.45);
   margin: 0;
-  max-width: 260px;
   line-height: 1.5;
 }
 </style>

@@ -31,7 +31,6 @@ onMounted(async () => {
 <style scoped>
 .pinned-section {
   width: 100%;
-  max-width: 420px;
   display: flex;
   flex-direction: column;
   gap: 14px;
