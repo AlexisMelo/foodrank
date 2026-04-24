@@ -48,7 +48,7 @@ function isExplore(): boolean {
   </nav>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .tab-bar {
   position: fixed;
   bottom: 0;

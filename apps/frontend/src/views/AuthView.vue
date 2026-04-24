@@ -79,7 +79,7 @@ function reset() {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .auth {
   min-height: 100dvh;
   display: flex;
@@ -90,7 +90,6 @@ function reset() {
 
 .auth-card {
   position: relative;
-  width: 100%;
   background: #1a1a1a;
   border: 1.5px solid rgba(255, 255, 255, 0.07);
   border-radius: 24px;

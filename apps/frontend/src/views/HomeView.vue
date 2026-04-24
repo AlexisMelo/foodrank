@@ -152,7 +152,7 @@ const topRestaurants = computed(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .home {
   color: #ffffff;
   overflow: hidden;

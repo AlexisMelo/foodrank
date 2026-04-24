@@ -114,7 +114,7 @@ watch(isOpen, async (val) => {
   </Transition>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .overlay {
   position: fixed;
   inset: 0;

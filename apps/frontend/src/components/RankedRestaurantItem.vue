@@ -69,7 +69,7 @@ function itemBackground(index: number) {
   </RouterLink>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .list-item {
   display: flex;
   align-items: center;

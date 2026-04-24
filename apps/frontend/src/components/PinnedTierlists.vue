@@ -28,7 +28,7 @@ onMounted(async () => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .pinned-section {
   width: 100%;
   display: flex;

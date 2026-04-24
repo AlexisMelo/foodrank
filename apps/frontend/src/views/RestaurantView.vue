@@ -215,7 +215,7 @@ function scoreColor(score: number): string {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .page {
   color: #ffffff;
   overflow: hidden;

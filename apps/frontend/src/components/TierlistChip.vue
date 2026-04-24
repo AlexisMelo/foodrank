@@ -13,7 +13,7 @@ defineProps<{
   </RouterLink>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .tierlist-chip {
   flex-shrink: 0;
   display: flex;

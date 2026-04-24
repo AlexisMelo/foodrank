@@ -37,7 +37,7 @@ onMounted(async () => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .callback {
   min-height: 100dvh;
   display: flex;

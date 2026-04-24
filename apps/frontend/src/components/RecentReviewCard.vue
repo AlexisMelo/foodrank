@@ -56,7 +56,7 @@ function formatDate(iso: string): string {
   </RouterLink>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .review-card {
   flex-shrink: 0;
   width: 148px;

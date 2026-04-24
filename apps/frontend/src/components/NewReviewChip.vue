@@ -25,7 +25,7 @@ function handleClick() {
   </button>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .add-chip {
   display: flex;
   align-items: center;

@@ -29,7 +29,7 @@ function scoreColor(score: number): string {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .rating-scores {
   display: flex;
   align-items: center;

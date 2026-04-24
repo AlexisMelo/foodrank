@@ -151,7 +151,7 @@ const rankedRestaurants = computed(() =>
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .detail-view {
   min-height: 100dvh;
   color: #ffffff;

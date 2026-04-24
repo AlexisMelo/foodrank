@@ -101,7 +101,7 @@ onMounted(async () => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .explore {
   color: #ffffff;
   min-height: 100dvh;

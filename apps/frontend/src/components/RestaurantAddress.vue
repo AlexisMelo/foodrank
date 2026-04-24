@@ -9,7 +9,7 @@ defineProps<{ address: string }>()
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .info-block {
   display: flex;
   align-items: center;

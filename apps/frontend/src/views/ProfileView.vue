@@ -139,7 +139,7 @@ async function shareProfile() {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .profile {
   color: #ffffff;
   overflow: hidden;

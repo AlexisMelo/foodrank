@@ -42,7 +42,7 @@ async function logout() {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .settings {
   min-height: 100dvh;
   color: #ffffff;

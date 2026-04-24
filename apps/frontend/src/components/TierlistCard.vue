@@ -25,7 +25,7 @@ defineProps<{
   </RouterLink>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .tierlist-card {
   display: flex;
   align-items: center;

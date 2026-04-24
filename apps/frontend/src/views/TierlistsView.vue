@@ -91,7 +91,7 @@ const sortedTierlists = computed(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .tierlists-view {
   min-height: 100dvh;
   color: #ffffff;

@@ -6,7 +6,7 @@ defineProps<{ cuisine: string }>()
   <span class="chip-cuisine">{{ cuisine }}</span>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .chip-cuisine {
   display: inline-block;
   padding: 5px 14px;

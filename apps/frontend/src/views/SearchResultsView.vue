@@ -54,7 +54,7 @@ onMounted(async () => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .page {
   color: #ffffff;
   display: flex;
