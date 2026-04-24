@@ -141,15 +141,11 @@ async function shareProfile() {
 
 <style scoped>
 .profile {
-  position: relative;
-  background-color: #0d0d0d;
   color: #ffffff;
   overflow: hidden;
-  padding: 24px 20px 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
 }
 
 /* Header */

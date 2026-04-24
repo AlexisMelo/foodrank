@@ -103,13 +103,9 @@ onMounted(async () => {
 
 <style scoped>
 .explore {
-  position: relative;
-  background-color: #0d0d0d;
   color: #ffffff;
   min-height: 100dvh;
   overflow: hidden;
-  padding: 24px 20px 100px;
-  font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
 }
 
 .page-header {

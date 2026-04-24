@@ -154,12 +154,8 @@ const rankedRestaurants = computed(() =>
 <style scoped>
 .detail-view {
   min-height: 100dvh;
-  background: #0d0d0d;
   color: #ffffff;
-  padding: 0 20px 100px;
-  position: relative;
   overflow: hidden;
-  font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
 }
 
 .loading {

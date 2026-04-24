@@ -81,14 +81,10 @@ function reset() {
 
 <style scoped>
 .auth {
-  position: relative;
   min-height: 100dvh;
-  background: #0d0d0d;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px 20px;
-  font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
   overflow: hidden;
 }
 

@@ -10,19 +10,21 @@ const route = useRoute()
 </script>
 
 <template>
-  <template v-if="route.path === '/auth/callback'">
-    <RouterView />
-  </template>
-  <template v-else-if="!isReady" />
-  <AuthView v-else-if="!isLoggedIn" />
-  <template v-else>
-    <RouterView />
-    <BottomTabBar />
-    <NewReviewModal />
-  </template>
+  <div class="container">
+    <template v-if="route.path === '/auth/callback'">
+      <RouterView />
+    </template>
+    <template v-else-if="!isReady" />
+    <AuthView v-else-if="!isLoggedIn" />
+    <template v-else>
+      <RouterView />
+      <BottomTabBar />
+      <NewReviewModal />
+    </template>
+  </div>
 </template>
 
-<style>
+<style lang="scss">
 *,
 *::before,
 *::after {
@@ -34,6 +36,11 @@ const route = useRoute()
 body {
   background: #0d0d0d;
   padding-bottom: 72px;
-}
+  font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
+  padding: 20px;
 
+  @include responsive.responsive('medium') {
+    padding: 0;
+  }
+}
 </style>

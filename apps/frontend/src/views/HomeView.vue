@@ -154,12 +154,8 @@ const topRestaurants = computed(() => {
 
 <style scoped>
 .home {
-  position: relative;
-  background-color: #0d0d0d;
   color: #ffffff;
   overflow: hidden;
-  padding: 40px 20px;
-  font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
   display: flex;
   flex-direction: column;
   gap: 28px;

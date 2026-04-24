@@ -44,13 +44,9 @@ async function logout() {
 
 <style scoped>
 .settings {
-  position: relative;
   min-height: 100dvh;
-  background-color: #0d0d0d;
   color: #ffffff;
   overflow: hidden;
-  padding: 40px 20px;
-  font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
   display: flex;
   flex-direction: column;
 }

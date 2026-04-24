@@ -284,14 +284,10 @@ onMounted(async () => {
 
 <style scoped>
 .page {
-  position: relative;
-  background: #0d0d0d;
   color: #ffffff;
-  padding: 24px 20px 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
   overflow: hidden;
 }
 

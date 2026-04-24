@@ -44,7 +44,6 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   color: rgba(255, 255, 255, 0.4);
-  font-family: 'Nunito', system-ui, sans-serif;
   font-size: 14px;
 }
 </style>
