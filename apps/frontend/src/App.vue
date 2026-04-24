@@ -37,5 +37,6 @@ body {
   background: #0d0d0d;
   padding-bottom: 72px;
   font-family: 'Nunito', 'Poppins', system-ui, sans-serif;
+  padding: 20px;
 }
 </style>

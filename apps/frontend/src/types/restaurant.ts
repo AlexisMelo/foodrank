@@ -6,7 +6,6 @@ export interface Restaurant {
   emoji: string
   address: string
   description: string
-  openNow: boolean
   tags: string[]
   lat: number
   lng: number

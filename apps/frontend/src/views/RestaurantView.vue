@@ -87,9 +87,6 @@ function scoreColor(score: number): string {
 
         <div class="chips">
           <CuisineChip :cuisine="restaurant.cuisine" />
-          <span class="chip" :class="restaurant.openNow ? 'chip-open' : 'chip-closed'">
-            {{ restaurant.openNow ? '● Open now' : '● Closed' }}
-          </span>
         </div>
 
         <div v-if="overallAvg !== null" class="rating-row">
@@ -299,16 +296,6 @@ function scoreColor(score: number): string {
   background: rgba(76, 201, 240, 0.15);
   color: #4cc9f0;
   border: 1.5px solid #4cc9f0;
-}
-.chip-open {
-  background: rgba(144, 190, 109, 0.15);
-  color: #90be6d;
-  border: 1.5px solid #90be6d;
-}
-.chip-closed {
-  background: rgba(255, 107, 107, 0.15);
-  color: #ff6b6b;
-  border: 1.5px solid #ff6b6b;
 }
 .rating-row {
   display: flex;

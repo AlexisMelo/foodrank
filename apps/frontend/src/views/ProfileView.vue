@@ -33,7 +33,9 @@ async function loadProfile(userId: string) {
     fetchUserById(userId),
     fetchCommunityVisitsByUserId(userId),
     fetchRestaurants(),
-    viewingOther ? fetchCommunityVisitsByUserId(CURRENT_USER_ID) : Promise.resolve([] as CommunityVisit[]),
+    viewingOther
+      ? fetchCommunityVisitsByUserId(CURRENT_USER_ID)
+      : Promise.resolve([] as CommunityVisit[]),
   ])
   if (!found) {
     router.replace('/')
@@ -83,22 +85,10 @@ const displayedRestaurants = computed(() => {
     .sort((a, b) => b.scores.overall - a.scores.overall)
     .map((r, i) => ({ ...r, rank: i + 1 }))
 })
-
-async function shareProfile() {
-  await navigator.share({
-    title: `${displayUser.value?.name}'s FoodRank profile`,
-    url: window.location.href,
-  })
-}
 </script>
 
 <template>
   <div class="profile">
-    <!-- Header -->
-    <div class="header">
-      <button class="share-btn" @click="shareProfile">⬆</button>
-    </div>
-
     <!-- Loading (other user fetch) -->
     <div v-if="loading" class="loading">👤</div>
 
@@ -132,7 +122,11 @@ async function shareProfile() {
           :overall="restaurant.scores.overall"
           :index="index"
           :myScore="isOwnProfile ? undefined : restaurant.myScore"
-          :rateLink="!isOwnProfile && restaurant.myScore === undefined ? `/review/${restaurant.id}` : undefined"
+          :rateLink="
+            !isOwnProfile && restaurant.myScore === undefined
+              ? `/review/${restaurant.id}`
+              : undefined
+          "
         />
       </div>
     </template>
@@ -146,35 +140,6 @@ async function shareProfile() {
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-/* Header */
-.header {
-  width: 100%;
-
-  display: flex;
-  align-items: center;
-  margin-bottom: 32px;
-  position: relative;
-}
-.share-btn {
-  position: absolute;
-  right: 0;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  color: #fff;
-  font-size: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-}
-.share-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
 }
 
 /* Loading */
