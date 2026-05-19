@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \":*)",
+      "Bash(ls -la c:/dev/foodrank/apps/frontend/.env*)",
+      "Bash(\"c:/dev/foodrank/apps/frontend/.env.example\":*)",
+      "Bash(npm uninstall:*)",
+      "Bash(find /c/Users/Melo/.nuget/packages -path *gotrue* -type d)",
+      "Bash(dotnet build:*)"
+    ]
+  }
+}
