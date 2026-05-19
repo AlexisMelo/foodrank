@@ -1,0 +1,61 @@
+export interface Restaurant {
+  id: string
+  name: string
+  cuisine: string
+  score: number
+  emoji: string
+  address: string
+  description: string
+  tags: string[]
+  lat: number
+  lng: number
+}
+
+export interface Visit {
+  id: string
+  restaurantId: string
+  date: string
+  food: number
+  service: number
+  decor: number
+}
+
+export interface CommunityVisit extends Visit {
+  user: {
+    id: string
+    name: string
+    avatar: string
+  }
+}
+
+export interface User {
+  id: string
+  name: string
+  avatar: string
+  bio: string
+}
+
+export interface TierlistEntry {
+  restaurantId: string
+  addedAt: string
+}
+
+export interface Tierlist {
+  id: string
+  userId: string
+  name: string
+  description: string
+  emoji: string
+  restaurants: TierlistEntry[]
+  createdAt: string
+  updatedAt: string
+  pinned: boolean
+}
+
+export interface ApiResponse<T> {
+  data: T
+  meta: {
+    total: number
+    updatedAt: string
+  }
+}

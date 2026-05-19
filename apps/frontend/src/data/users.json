@@ -1,0 +1,62 @@
+{
+  "data": [
+    {
+      "id": "alex",
+      "name": "Alex Dupont",
+      "avatar": "🧑‍🍳",
+      "bio": "Obsessed with finding the world's best bite. One restaurant at a time."
+    },
+    {
+      "id": "u1",
+      "name": "Sophie Martin",
+      "avatar": "👩",
+      "bio": "Parisian foodie on a never-ending quest for the perfect croissant."
+    },
+    {
+      "id": "u2",
+      "name": "Lucas Petit",
+      "avatar": "🧑",
+      "bio": "Street food enthusiast. If it fits in a paper bag, I'm in."
+    },
+    {
+      "id": "u3",
+      "name": "Emma Dubois",
+      "avatar": "👩‍🦱",
+      "bio": "I rate everything. My friends say it's annoying. They're wrong."
+    },
+    {
+      "id": "u4",
+      "name": "Noah Bernard",
+      "avatar": "👦",
+      "bio": "Aspiring chef who eats out too much for research purposes."
+    },
+    {
+      "id": "u5",
+      "name": "Mia Leroy",
+      "avatar": "👧",
+      "bio": "Dessert first, always. Life is short."
+    },
+    {
+      "id": "u6",
+      "name": "Hugo Moreau",
+      "avatar": "🧔",
+      "bio": "BBQ loyalist. Will travel far for good brisket."
+    },
+    {
+      "id": "u7",
+      "name": "Chloé Dupont",
+      "avatar": "👩‍🦰",
+      "bio": "Fine dining on a budget. The spreadsheet helps."
+    },
+    {
+      "id": "u8",
+      "name": "Ethan Simon",
+      "avatar": "👨",
+      "bio": "Ramen, ramen, ramen. Also occasionally other food."
+    }
+  ],
+  "meta": {
+    "total": 8,
+    "updatedAt": "2026-03-23T00:00:00Z"
+  }
+}
