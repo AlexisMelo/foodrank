@@ -1,37 +1,36 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useAuth } from '@/composables/useAuth'
 
-type State = 'idle' | 'loading' | 'success' | 'error'
+type Mode = 'login' | 'signup'
 
+const { login, signup } = useAuth()
+
+const mode = ref<Mode>('login')
 const email = ref('')
-const state = ref<State>('idle')
+const password = ref('')
+const loading = ref(false)
 const errorMessage = ref('')
 
-async function sendMagicLink() {
-  const trimmed = email.value.trim()
-  if (!trimmed) return
-
-  state.value = 'loading'
+async function submit() {
   errorMessage.value = ''
-
-  const res = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: trimmed }),
-  })
-
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}))
-    errorMessage.value = data.error ?? 'Something went wrong'
-    state.value = 'error'
-  } else {
-    state.value = 'success'
+  loading.value = true
+  try {
+    if (mode.value === 'login') {
+      await login(email.value.trim(), password.value)
+    } else {
+      await signup(email.value.trim(), password.value)
+    }
+  } catch {
+    errorMessage.value =
+      mode.value === 'login' ? 'Invalid email or password.' : 'Could not create account.'
+  } finally {
+    loading.value = false
   }
 }
 
-function reset() {
-  email.value = ''
-  state.value = 'idle'
+function switchMode(next: Mode) {
+  mode.value = next
   errorMessage.value = ''
 }
 </script>
@@ -41,40 +40,47 @@ function reset() {
     <div class="auth-card">
       <div class="logo">🍽️</div>
       <h1 class="title">FoodRank</h1>
-      <p class="subtitle">Sign in to track and rank your restaurant experiences.</p>
+      <p class="subtitle">Track and rank your restaurant experiences.</p>
 
-      <Transition name="fade" mode="out-in">
-        <div v-if="state === 'success'" class="success-state" key="success">
-          <div class="success-icon">✉️</div>
-          <p class="success-title">Check your inbox</p>
-          <p class="success-body">
-            We sent a sign-in link to <strong>{{ email }}</strong
-            >.
-          </p>
-          <button class="btn-secondary" @click="reset">Use a different email</button>
-        </div>
+      <div class="tabs">
+        <button :class="{ active: mode === 'login' }" @click="switchMode('login')">Sign in</button>
+        <button :class="{ active: mode === 'signup' }" @click="switchMode('signup')">
+          Sign up
+        </button>
+      </div>
 
-        <form v-else class="form" key="form" @submit.prevent="sendMagicLink">
-          <label class="label" for="email">Email address</label>
-          <input
-            id="email"
-            v-model="email"
-            class="input"
-            type="email"
-            placeholder="you@example.com"
-            autocomplete="email"
-            :disabled="state === 'loading'"
-            required
-          />
+      <form class="form" @submit.prevent="submit">
+        <label class="label" for="email">Email address</label>
+        <input
+          id="email"
+          v-model="email"
+          class="input"
+          type="email"
+          placeholder="you@example.com"
+          autocomplete="email"
+          :disabled="loading"
+          required
+        />
 
-          <p v-if="state === 'error'" class="error">{{ errorMessage }}</p>
+        <label class="label" for="password">Password</label>
+        <input
+          id="password"
+          v-model="password"
+          class="input"
+          type="password"
+          :placeholder="mode === 'signup' ? 'Choose a password' : 'Your password'"
+          :autocomplete="mode === 'signup' ? 'new-password' : 'current-password'"
+          :disabled="loading"
+          required
+        />
 
-          <button class="btn-primary" type="submit" :disabled="state === 'loading'">
-            <span v-if="state === 'loading'" class="spinner" />
-            <span v-else>Send magic link</span>
-          </button>
-        </form>
-      </Transition>
+        <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
+
+        <button class="btn-primary" type="submit" :disabled="loading">
+          <span v-if="loading" class="spinner" />
+          <span v-else>{{ mode === 'login' ? 'Sign in' : 'Create account' }}</span>
+        </button>
+      </form>
     </div>
   </div>
 </template>
@@ -94,6 +100,8 @@ function reset() {
   border: 1.5px solid rgba(255, 255, 255, 0.07);
   border-radius: 24px;
   padding: 36px 28px;
+  width: 100%;
+  max-width: 360px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -118,8 +126,39 @@ function reset() {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.4);
   text-align: center;
-  margin: 0 0 16px;
+  margin: 0 0 8px;
   line-height: 1.5;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: #111;
+  border-radius: 12px;
+  padding: 4px;
+  width: 100%;
+  margin-bottom: 8px;
+
+  button {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+      background 0.2s,
+      color 0.2s;
+    font-family: inherit;
+
+    &.active {
+      background: #2a2a2a;
+      color: #fff;
+    }
+  }
 }
 
 .form {
@@ -147,15 +186,16 @@ function reset() {
   font-family: inherit;
   outline: none;
   transition: border-color 0.2s;
-}
-.input::placeholder {
-  color: rgba(255, 255, 255, 0.2);
-}
-.input:focus {
-  border-color: rgba(255, 255, 255, 0.35);
-}
-.input:disabled {
-  opacity: 0.5;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+  }
+  &:focus {
+    border-color: rgba(255, 255, 255, 0.35);
+  }
+  &:disabled {
+    opacity: 0.5;
+  }
 }
 
 .error {
@@ -183,16 +223,17 @@ function reset() {
   transition:
     opacity 0.2s,
     transform 0.15s;
-}
-.btn-primary:hover:not(:disabled) {
-  opacity: 0.9;
-}
-.btn-primary:active:not(:disabled) {
-  transform: scale(0.98);
-}
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: default;
+
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
 }
 
 .spinner {
@@ -207,68 +248,5 @@ function reset() {
   to {
     transform: rotate(360deg);
   }
-}
-
-.success-state {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  text-align: center;
-  padding: 8px 0;
-}
-
-.success-icon {
-  font-size: 36px;
-  line-height: 1;
-  margin-bottom: 4px;
-}
-
-.success-title {
-  font-size: 16px;
-  font-weight: 800;
-  color: #ffffff;
-  margin: 0;
-}
-
-.success-body {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.45);
-  margin: 0;
-  line-height: 1.5;
-}
-.success-body strong {
-  color: rgba(255, 255, 255, 0.75);
-  font-weight: 700;
-}
-
-.btn-secondary {
-  margin-top: 8px;
-  background: none;
-  border: 1.5px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-  padding: 8px 16px;
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 12px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition:
-    border-color 0.2s,
-    color 0.2s;
-}
-.btn-secondary:hover {
-  border-color: rgba(255, 255, 255, 0.35);
-  color: rgba(255, 255, 255, 0.75);
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.18s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
 }
 </style>

@@ -1,3 +1,4 @@
+import axios from 'axios'
 import type { Restaurant, CommunityVisit, User, Tierlist, ApiResponse } from '@/types/restaurant'
 import mockRestaurants from '@/data/restaurants.json'
 import mockCommunityRatings from '@/data/community-ratings.json'
@@ -9,8 +10,9 @@ function delay(ms: number) {
 }
 
 export async function fetchRestaurants(): Promise<Restaurant[]> {
-  await delay(300)
-  const response = mockRestaurants as ApiResponse<Restaurant[]>
+  const response = await axios.get<Restaurant[]>(
+    `${import.meta.env.VITE_API_BASE_URL}/api/restaurants`,
+  )
   return response.data
 }
 

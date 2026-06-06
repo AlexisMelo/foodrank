@@ -95,7 +95,9 @@ const topRestaurants = computed(() => {
         <NewReviewChip />
       </div>
       <div class="cards-row">
-        <div v-if="loading" v-for="i in 5" :key="i" class="card-skeleton" />
+        <template v-if="loading">
+          <div v-for="i in 5" :key="i" class="card-skeleton" />
+        </template>
 
         <RecentReviewCard
           v-else

@@ -6,7 +6,8 @@
       "Bash(\"c:/dev/foodrank/apps/frontend/.env.example\":*)",
       "Bash(npm uninstall:*)",
       "Bash(find /c/Users/Melo/.nuget/packages -path *gotrue* -type d)",
-      "Bash(dotnet build:*)"
+      "Bash(dotnet build:*)",
+      "Bash(Remove-Item \"c:\\\\dev\\\\foodrank\\\\apps\\\\api\\\\Models\\\\SessionRequest.cs\")"
     ]
   }
 }

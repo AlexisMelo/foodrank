@@ -1,36 +1,18 @@
 using Supabase.Gotrue;
-using static Supabase.Gotrue.Constants;
 
 namespace api.Services;
 
 public class SupabaseAuthService(Supabase.Client supabase) : ISupabaseAuthService
 {
-    /// <summary>
-    /// Send magic link to the given email. The link will redirect to the provided URL
-    /// </summary>
-    /// <param name="email"></param>
-    /// <param name="redirectUrl"></param>
-    /// <returns></returns>
-    public async Task SendMagicLinkAsync(string email, string redirectUrl)
+    public async Task<string?> SignUpAsync(string email, string password)
     {
-        await supabase.Auth.SignInWithOtp(new SignInWithPasswordlessEmailOptions(email)
-        {
-            EmailRedirectTo = redirectUrl
-        });
+        Session? session = await supabase.Auth.SignUp(email, password);
+        return session?.AccessToken;
     }
 
-    /// <summary>
-    /// Verify the token hash received from the magic link callback. If valid, returns the access token; otherwise null.
-    /// </summary>
-    /// <param name="tokenHash"></param>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    public async Task<string?> VerifyTokenHashAsync(string tokenHash, string type)
+    public async Task<string?> SignInAsync(string email, string password)
     {
-        if (!Enum.TryParse(type, ignoreCase: true, out EmailOtpType otpType))
-            return null;
-
-        Session? session = await supabase.Auth.VerifyTokenHash(tokenHash, otpType);
+        Session? session = await supabase.Auth.SignIn(email, password);
         return session?.AccessToken;
     }
 
