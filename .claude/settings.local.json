@@ -7,7 +7,19 @@
       "Bash(npm uninstall:*)",
       "Bash(find /c/Users/Melo/.nuget/packages -path *gotrue* -type d)",
       "Bash(dotnet build:*)",
-      "Bash(Remove-Item \"c:\\\\dev\\\\foodrank\\\\apps\\\\api\\\\Models\\\\SessionRequest.cs\")"
+      "Bash(Remove-Item \"c:\\\\dev\\\\foodrank\\\\apps\\\\api\\\\Models\\\\SessionRequest.cs\")",
+      "Bash(find /c/Users/Melo/.nuget/packages/supabase -name \"GotrueException.cs\" 2>/dev/null | head -5)",
+      "Read(//c/Users/Melo/.nuget/packages/supabase/**)",
+      "Bash(find /c/Users/Melo/.nuget/packages -name \"GotrueException.cs\" 2>/dev/null | head -5)",
+      "Read(//c/Users/Melo/.nuget/packages/**)",
+      "Bash(find /c/Users/Melo/.nuget/packages -iname \"gotrue*\" -type d 2>/dev/null | head -10)",
+      "PowerShell(dotnet nuget locals all --list)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Melo\\\\.nuget\\\\packages\\\\\" | Where-Object { $_.Name -match \"supabase|gotrue\" } | Select-Object Name)",
+      "PowerShell([System.IO.Directory]::GetDirectories\\(\"C:\\\\Users\\\\Melo\\\\.nuget\\\\packages\"\\) | Select-Object -First 20 | ForEach-Object { [System.IO.Path]::GetFileName\\($_\\) })",
+      "PowerShell([System.IO.Directory]::GetDirectories\\(\"C:\\\\Users\\\\Melo\\\\.nuget\\\\packages\\\\supabase\"\\) | ForEach-Object { [System.IO.Path]::GetFileName\\($_\\) })",
+      "PowerShell([System.IO.Directory]::GetDirectories\\(\"C:\\\\Users\\\\Melo\\\\.nuget\\\\packages\"\\) | ForEach-Object { [System.IO.Path]::GetFileName\\($_\\) } | Where-Object { $_ -match \"gotrue\" })",
+      "PowerShell(Add-Type -Path \"C:\\\\Users\\\\Melo\\\\.nuget\\\\packages\\\\supabase\\\\1.1.1\\\\lib\\\\netstandard2.1\\\\Supabase.dll\" -ErrorAction SilentlyContinue; [AppDomain]::CurrentDomain.GetAssemblies\\(\\) | ForEach-Object { $_.GetTypes\\(\\) } | Where-Object { $_.Name -eq \"GotrueException\" } | Select-Object FullName, Namespace)",
+      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\(\"C:\\\\Users\\\\Melo\\\\.nuget\\\\packages\\\\supabase.gotrue\\\\6.0.3\\\\lib\\\\netstandard2.1\\\\Supabase.Gotrue.dll\"\\); $text = [System.Text.Encoding]::UTF8.GetString\\($bytes\\); $matches = [regex]::Matches\\($text, 'GotrueException'\\); \"Found $\\($matches.Count\\) occurrences\")"
     ]
   }
 }

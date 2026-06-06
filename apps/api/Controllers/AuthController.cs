@@ -1,6 +1,7 @@
 using api.Models;
 using api.Services;
 using Microsoft.AspNetCore.Mvc;
+using Supabase.Gotrue.Exceptions;
 
 namespace api.Controllers;
 
@@ -13,13 +14,20 @@ public class AuthController(ISupabaseAuthService authService) : ControllerBase
     [HttpPost("signup")]
     public async Task<IActionResult> Signup([FromBody] SignupRequest request)
     {
-        string? token = await authService.SignUpAsync(request.Email, request.Password);
+        try
+        {
+            string? token = await authService.SignUpAsync(request.Email, request.Password);
 
-        if (token is null)
-            return Unauthorized();
+            if (token is null)
+                return Unauthorized();
 
-        SetSessionCookie(token);
-        return Ok();
+            SetSessionCookie(token);
+            return Ok();
+        }
+        catch (GotrueException ex) when (ex.Reason == FailureHint.Reason.UserAlreadyRegistered)
+        {
+            return Conflict(new { error = "User already exists." });
+        }
     }
 
     [HttpPost("login")]

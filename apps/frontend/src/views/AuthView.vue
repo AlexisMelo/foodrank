@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import axios from 'axios'
 import { ref } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 
@@ -21,9 +22,14 @@ async function submit() {
     } else {
       await signup(email.value.trim(), password.value)
     }
-  } catch {
-    errorMessage.value =
-      mode.value === 'login' ? 'Invalid email or password.' : 'Could not create account.'
+  } catch (err) {
+    if (mode.value === 'login') {
+      errorMessage.value = 'Invalid email or password.'
+    } else if (axios.isAxiosError(err) && err.response?.status === 409) {
+      errorMessage.value = 'An account with this email already exists.'
+    } else {
+      errorMessage.value = 'Could not create account.'
+    }
   } finally {
     loading.value = false
   }
