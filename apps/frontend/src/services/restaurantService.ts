@@ -5,10 +5,10 @@ import mockCommunityRatings from '@/data/community-ratings.json'
 import mockUsers from '@/data/users.json'
 import mockTierlists from '@/data/tierlists.json'
 
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
+/**
+ * Get all restaurants
+ * @returns
+ */
 export async function fetchRestaurants(): Promise<Restaurant[]> {
   const response = await axios.get<Restaurant[]>(
     `${import.meta.env.VITE_API_BASE_URL}/api/restaurants`,
@@ -17,13 +17,11 @@ export async function fetchRestaurants(): Promise<Restaurant[]> {
 }
 
 export async function fetchRestaurantById(id: string): Promise<Restaurant | undefined> {
-  await delay(200)
   const response = mockRestaurants as ApiResponse<Restaurant[]>
   return response.data.find((r) => r.id === id)
 }
 
 export async function fetchAllCommunityVisits(): Promise<CommunityVisit[]> {
-  await delay(200)
   const response = mockCommunityRatings as ApiResponse<CommunityVisit[]>
   return response.data
 }
@@ -31,7 +29,6 @@ export async function fetchAllCommunityVisits(): Promise<CommunityVisit[]> {
 export async function fetchCommunityVisitsByRestaurantId(
   restaurantId: string,
 ): Promise<CommunityVisit[]> {
-  await delay(200)
   const response = mockCommunityRatings as ApiResponse<CommunityVisit[]>
   return response.data
     .filter((v) => v.restaurantId === restaurantId)
@@ -39,7 +36,6 @@ export async function fetchCommunityVisitsByRestaurantId(
 }
 
 export async function fetchCommunityVisitsByUserId(userId: string): Promise<CommunityVisit[]> {
-  await delay(200)
   const response = mockCommunityRatings as ApiResponse<CommunityVisit[]>
   return response.data
     .filter((v) => v.user.id === userId)
@@ -47,13 +43,11 @@ export async function fetchCommunityVisitsByUserId(userId: string): Promise<Comm
 }
 
 export async function fetchUserById(id: string): Promise<User | undefined> {
-  await delay(200)
   const response = mockUsers as ApiResponse<User[]>
   return response.data.find((u) => u.id === id)
 }
 
 export async function fetchTierlistsByUserId(userId: string): Promise<Tierlist[]> {
-  await delay(200)
   const response = mockTierlists as ApiResponse<Tierlist[]>
   return response.data
     .filter((t) => t.userId === userId)
@@ -61,13 +55,11 @@ export async function fetchTierlistsByUserId(userId: string): Promise<Tierlist[]
 }
 
 export async function fetchTierlistById(id: string): Promise<Tierlist | undefined> {
-  await delay(200)
   const response = mockTierlists as ApiResponse<Tierlist[]>
   return response.data.find((t) => t.id === id)
 }
 
 export async function fetchPinnedTierlistsByUserId(userId: string): Promise<Tierlist[]> {
-  await delay(200)
   const response = mockTierlists as ApiResponse<Tierlist[]>
   return response.data.filter((t) => t.userId === userId && t.pinned)
 }

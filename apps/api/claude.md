@@ -13,7 +13,11 @@ This project is the API for the foodrank app. It handles communication between t
 
 ## Architecture Rules
 
+- When creating a controller, check wether creating a dedicated Service is useful
+
 ## Code Conventions
+
+- Always write a few lines of documentation above new functions
 
 ### Naming
 
@@ -24,7 +28,8 @@ This project is the API for the foodrank app. It handles communication between t
 - Result<T> pattern for error handling (no exceptions for flow control)
 - File-scoped namespaces
 - Always pass CancellationToken to async methods
-- Using explicit types
+- Always use explicit types
+- In Controllers, code should be minimal and be one-liners as much as possible, letting services handle logic
 
 ### Patterns We DON'T Use (Never Suggest)
 
@@ -32,7 +37,7 @@ This project is the API for the foodrank app. It handles communication between t
 - AutoMapper (write explicit mappings)
 - Exceptions for business logic errors
 - Stored procedures
-- Using var everywhere.
+- Avoid using var anywhere.
 
 ## Validation
 
