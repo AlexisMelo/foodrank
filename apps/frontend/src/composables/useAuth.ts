@@ -8,11 +8,9 @@ const isLoggedIn = ref(false)
 const isReady = ref(false)
 const currentUser = ref<User | null>(null)
 
-let resolveReady!: () => void
-const readyPromise = new Promise<void>((resolve) => {
-  resolveReady = resolve
-})
-
+/**
+ * Check if the user is currently logged in by making a request to the backend.
+ */
 async function checkSession() {
   try {
     await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/auth/me`, { withCredentials: true })
@@ -21,10 +19,14 @@ async function checkSession() {
     isLoggedIn.value = false
   } finally {
     isReady.value = true
-    resolveReady()
   }
 }
 
+/**
+ * Sign in the user using email & password
+ * @param email
+ * @param password
+ */
 async function login(email: string, password: string) {
   await axios.post(
     `${import.meta.env.VITE_API_BASE_URL}/api/auth/login`,
@@ -58,9 +60,9 @@ export function useAuth() {
     isReady: readonly(isReady),
     currentUser: readonly(currentUser),
     currentUserId: CURRENT_USER_ID,
-    waitForReady: () => readyPromise,
     login,
     signup,
     logout,
+    checkSession,
   }
 }

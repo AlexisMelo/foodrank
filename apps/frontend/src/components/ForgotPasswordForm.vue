@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import axios from 'axios'
 import { ref } from 'vue'
 
 const emit = defineEmits<{
@@ -8,13 +9,20 @@ const emit = defineEmits<{
 const email = ref('')
 const loading = ref(false)
 const sent = ref(false)
+const error = ref('')
 
 async function submit() {
+  error.value = ''
   loading.value = true
   try {
-    // TODO: call POST /api/auth/forgot-password when backend is ready
-    await new Promise((resolve) => setTimeout(resolve, 600))
+    await axios.post(
+      `${import.meta.env.VITE_API_BASE_URL}/api/auth/forgot-password`,
+      { email: email.value.trim() },
+      { withCredentials: true },
+    )
     sent.value = true
+  } catch {
+    error.value = 'Something went wrong. Please try again.'
   } finally {
     loading.value = false
   }
@@ -28,8 +36,8 @@ async function submit() {
     <div class="success">
       <p class="success-title">Check your inbox</p>
       <p class="success-body">
-        A reset link has been sent to <strong>{{ email }}</strong
-        >.
+        If an account exists for <strong>{{ email }}</strong
+        >, a reset link has been sent.
       </p>
     </div>
   </template>
@@ -46,6 +54,8 @@ async function submit() {
       :disabled="loading"
       required
     />
+
+    <p v-if="error" class="error">{{ error }}</p>
 
     <button class="btn-primary" type="submit" :disabled="loading">
       <span v-if="loading" class="spinner" />

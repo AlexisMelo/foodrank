@@ -3,13 +3,18 @@ import BottomTabBar from '@/components/BottomTabBar.vue'
 import NewReviewModal from '@/components/NewReviewModal.vue'
 import AuthView from '@/views/AuthView.vue'
 import { useAuth } from '@/composables/useAuth'
+import { useRoute } from 'vue-router'
 
 const { isLoggedIn, isReady } = useAuth()
+const route = useRoute()
 </script>
 
 <template>
   <div class="container">
     <template v-if="!isReady" />
+    <template v-else-if="route.path === '/auth/reset-password'">
+      <RouterView />
+    </template>
     <AuthView v-else-if="!isLoggedIn" />
     <template v-else>
       <RouterView />

@@ -7,9 +7,11 @@ namespace api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController(ISupabaseAuthService authService) : ControllerBase
+public class AuthController(ISupabaseAuthService authService, IConfiguration configuration) : ControllerBase
 {
     private const string CookieName = "foodrank_token";
+
+    private string FrontendUrl => configuration["Frontend:Url"]!;
 
     [HttpPost("signup")]
     public async Task<IActionResult> Signup([FromBody] SignupRequest request)
@@ -30,6 +32,11 @@ public class AuthController(ISupabaseAuthService authService) : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Allows a user to log in
+    /// </summary>
+    /// <param name="request">User credentials</param>
+    /// <returns></returns>
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
@@ -42,6 +49,10 @@ public class AuthController(ISupabaseAuthService authService) : ControllerBase
         return Ok();
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
     [HttpGet("me")]
     public async Task<IActionResult> Me()
     {
@@ -52,7 +63,7 @@ public class AuthController(ISupabaseAuthService authService) : ControllerBase
 
         if (!isValid)
         {
-            Response.Cookies.Delete(CookieName, new CookieOptions { Path = "/" });
+            DeleteCookie();
             return Unauthorized();
         }
 
@@ -62,12 +73,53 @@ public class AuthController(ISupabaseAuthService authService) : ControllerBase
     [HttpPost("logout")]
     public IActionResult Logout()
     {
-        Response.Cookies.Delete(CookieName, new CookieOptions { Path = "/" });
+        DeleteCookie();
         return Ok();
     }
 
     /// <summary>
-    /// Sets the session cookie with appropriate security settings.
+    /// Delete logged in user Cookie
+    /// </summary>
+    private void DeleteCookie()
+    {
+        Response.Cookies.Delete(CookieName, new CookieOptions { Path = "/" });
+    }
+
+    /// <summary>
+    /// Sends a password reset email. Always returns 200 to prevent email enumeration.
+    /// </summary>
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        string redirectUrl = $"{FrontendUrl}/auth/reset-password";
+        try
+        {
+            await authService.SendPasswordResetEmailAsync(request.Email, redirectUrl);
+        }
+        catch
+        {
+            // Swallow errors to prevent email enumeration
+        }
+        return Ok();
+    }
+
+    /// <summary>
+    /// Validates the recovery token, updates the password, and opens a session.
+    /// </summary>
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        string? token = await authService.ResetPasswordAsync(request.AccessToken, request.RefreshToken, request.Password);
+
+        if (token is null)
+            return Unauthorized();
+
+        SetSessionCookie(token);
+        return Ok();
+    }
+
+    /// <summary>
+    /// Set connection token to the request
     /// </summary>
     /// <param name="token"></param>
     private void SetSessionCookie(string token)
