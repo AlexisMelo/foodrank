@@ -1,0 +1,10 @@
+{
+  "name": "foodrank",
+  "private": true,
+  "scripts": {
+    "start": "concurrently -k -n api,front -c blue,green \"dotnet watch run --project apps/api --launch-profile https\" \"npm run dev --prefix apps/frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.4"
+  }
+}

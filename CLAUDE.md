@@ -47,4 +47,11 @@ npm run format        # format with prettier
 
 ## Development
 
-The frontend and API are developed and run independently. There is currently no shared code or root-level build script.
+The frontend and API have no shared code and can still be run independently. A root `package.json` uses `concurrently` to start both at once:
+
+```bash
+npm install   # at the root (installs concurrently)
+npm start     # runs `dotnet watch` on the API (https profile, port 7207) + Vite dev server
+```
+
+The API must use the `https` launch profile because the Vite proxy targets `https://localhost:7207`.

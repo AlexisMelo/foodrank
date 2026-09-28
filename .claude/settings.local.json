@@ -19,7 +19,10 @@
       "PowerShell([System.IO.Directory]::GetDirectories\\(\"C:\\\\Users\\\\Melo\\\\.nuget\\\\packages\\\\supabase\"\\) | ForEach-Object { [System.IO.Path]::GetFileName\\($_\\) })",
       "PowerShell([System.IO.Directory]::GetDirectories\\(\"C:\\\\Users\\\\Melo\\\\.nuget\\\\packages\"\\) | ForEach-Object { [System.IO.Path]::GetFileName\\($_\\) } | Where-Object { $_ -match \"gotrue\" })",
       "PowerShell(Add-Type -Path \"C:\\\\Users\\\\Melo\\\\.nuget\\\\packages\\\\supabase\\\\1.1.1\\\\lib\\\\netstandard2.1\\\\Supabase.dll\" -ErrorAction SilentlyContinue; [AppDomain]::CurrentDomain.GetAssemblies\\(\\) | ForEach-Object { $_.GetTypes\\(\\) } | Where-Object { $_.Name -eq \"GotrueException\" } | Select-Object FullName, Namespace)",
-      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\(\"C:\\\\Users\\\\Melo\\\\.nuget\\\\packages\\\\supabase.gotrue\\\\6.0.3\\\\lib\\\\netstandard2.1\\\\Supabase.Gotrue.dll\"\\); $text = [System.Text.Encoding]::UTF8.GetString\\($bytes\\); $matches = [regex]::Matches\\($text, 'GotrueException'\\); \"Found $\\($matches.Count\\) occurrences\")"
+      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\(\"C:\\\\Users\\\\Melo\\\\.nuget\\\\packages\\\\supabase.gotrue\\\\6.0.3\\\\lib\\\\netstandard2.1\\\\Supabase.Gotrue.dll\"\\); $text = [System.Text.Encoding]::UTF8.GetString\\($bytes\\); $matches = [regex]::Matches\\($text, 'GotrueException'\\); \"Found $\\($matches.Count\\) occurrences\")",
+      "PowerShell(git -C c:\\\\dev\\\\foodrank ls-files package.json package-lock.json .gitignore)",
+      "PowerShell(npm install -D concurrently@^9)",
+      "PowerShell($p = Start-Process -FilePath \"cmd.exe\" -ArgumentList \"/c npm start > `\"$env:TEMP\\\\fr_start.log`\" 2>&1\" -WorkingDirectory C:\\\\dev\\\\foodrank -PassThru -WindowStyle Hidden; Start-Sleep -Seconds 45; taskkill /T /F /PID $p.Id | Out-Null; Get-Content \"$env:TEMP\\\\fr_start.log\" | Select-Object -Last 40)"
     ]
   }
 }
