@@ -17,4 +17,10 @@ public interface IPlaceSearchService
     /// Returns a longer list of restaurants for the search results page ("Load more").
     /// </summary>
     Task<Result<IReadOnlyList<PlaceSuggestion>>> SearchAsync(string query, double? lat, double? lon, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Returns the area searches are centered on: the city at (<paramref name="lat"/>, <paramref name="lon"/>),
+    /// or the configured default city when no position is given.
+    /// </summary>
+    Task<Result<SearchArea>> GetSearchAreaAsync(double? lat, double? lon, CancellationToken cancellationToken);
 }

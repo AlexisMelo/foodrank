@@ -24,6 +24,17 @@ public class PlaceSearchService(IPlaceProvider placeProvider, IConfiguration con
     /// </summary>
     private const int SearchLimit = 25;
 
+    /// <summary>
+    /// How many more candidates than displayed are fetched from the provider, so that a nearby place the provider
+    /// ranked low can still make it into the list after <see cref="PlaceRanking.Rank"/>.
+    /// </summary>
+    private const int CandidatesFactor = 2;
+
+    /// <summary>
+    /// Position used when neither the user's position nor Places:DefaultLocation is available (Paris).
+    /// </summary>
+    private static readonly GeoPoint FallbackLocation = new(48.8566, 2.3522);
+
     /// <inheritdoc />
     public Task<Result<IReadOnlyList<PlaceSuggestion>>> AutocompleteAsync(string input, double? lat, double? lon, CancellationToken cancellationToken)
         => SearchWithLimitAsync(input, AutocompleteLimit, lat, lon, cancellationToken);
@@ -32,8 +43,19 @@ public class PlaceSearchService(IPlaceProvider placeProvider, IConfiguration con
     public Task<Result<IReadOnlyList<PlaceSuggestion>>> SearchAsync(string query, double? lat, double? lon, CancellationToken cancellationToken)
         => SearchWithLimitAsync(query, SearchLimit, lat, lon, cancellationToken);
 
+    /// <inheritdoc />
+    public async Task<Result<SearchArea>> GetSearchAreaAsync(double? lat, double? lon, CancellationToken cancellationToken)
+    {
+        bool isDefault = !IsValidPosition(lat, lon);
+        Result<string?> locality = await placeProvider.GetLocalityAsync(ResolvePosition(lat, lon), cancellationToken);
+        return locality.IsSuccess
+            ? Result<SearchArea>.Success(new SearchArea(locality.Value, isDefault))
+            : Result<SearchArea>.Failure(locality.Error!);
+    }
+
     /// <summary>
-    /// Validates the input, resolves the position (user's or the configured default city) and maps results to suggestions.
+    /// Validates the input, resolves the position (user's or the configured default city), fetches extra candidates,
+    /// re-ranks them by match then distance, and keeps the first <paramref name="limit"/> as suggestions.
     /// </summary>
     private async Task<Result<IReadOnlyList<PlaceSuggestion>>> SearchWithLimitAsync(string query, int limit, double? lat, double? lon, CancellationToken cancellationToken)
     {
@@ -41,26 +63,37 @@ public class PlaceSearchService(IPlaceProvider placeProvider, IConfiguration con
         if (trimmed.Length < MinInputLength)
             return Result<IReadOnlyList<PlaceSuggestion>>.Success([]);
 
-        Result<IReadOnlyList<PlaceDetails>> result = await placeProvider.SearchAsync(trimmed, limit, ResolvePosition(lat, lon), cancellationToken);
+        GeoPoint position = ResolvePosition(lat, lon);
+        Result<IReadOnlyList<PlaceDetails>> result = await placeProvider.SearchAsync(trimmed, limit * CandidatesFactor, position, cancellationToken);
         if (!result.IsSuccess)
             return Result<IReadOnlyList<PlaceSuggestion>>.Failure(result.Error!);
 
-        List<PlaceSuggestion> suggestions = result.Value!
+        List<PlaceSuggestion> suggestions = PlaceRanking.Rank(result.Value!, trimmed, position)
+            .Take(limit)
             .Select(p => new PlaceSuggestion(p.PlaceId, p.Name, p.Address))
             .ToList();
         return Result<IReadOnlyList<PlaceSuggestion>>.Success(suggestions);
     }
 
     /// <summary>
-    /// Returns the user's position when provided, otherwise the default city from configuration (Places:DefaultLocation).
+    /// Returns the user's position when valid, otherwise the default city from configuration (Places:DefaultLocation),
+    /// otherwise <see cref="FallbackLocation"/>. Never null.
     /// </summary>
-    private GeoPoint? ResolvePosition(double? lat, double? lon)
+    private GeoPoint ResolvePosition(double? lat, double? lon)
     {
-        if (lat is not null && lon is not null)
-            return new GeoPoint(lat.Value, lon.Value);
+        if (IsValidPosition(lat, lon))
+            return new GeoPoint(lat!.Value, lon!.Value);
 
         double? defaultLat = configuration.GetValue<double?>("Places:DefaultLocation:Lat");
         double? defaultLon = configuration.GetValue<double?>("Places:DefaultLocation:Lon");
-        return defaultLat is not null && defaultLon is not null ? new GeoPoint(defaultLat.Value, defaultLon.Value) : null;
+        return IsValidPosition(defaultLat, defaultLon)
+            ? new GeoPoint(defaultLat!.Value, defaultLon!.Value)
+            : FallbackLocation;
     }
+
+    /// <summary>
+    /// True when both coordinates are given and within valid ranges (latitude -90..90, longitude -180..180).
+    /// </summary>
+    private static bool IsValidPosition(double? lat, double? lon)
+        => lat is >= -90 and <= 90 && lon is >= -180 and <= 180;
 }

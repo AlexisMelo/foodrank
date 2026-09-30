@@ -57,6 +57,7 @@ internal record PhotonFeature(PhotonProperties Properties, PhotonGeometry? Geome
 /// <param name="Street">Street name.</param>
 /// <param name="Postcode">Postal code.</param>
 /// <param name="City">City name.</param>
+/// <param name="Type">Kind of object ("house", "street", "city", ...); "city" means the place is itself a locality.</param>
 internal record PhotonProperties(
     string OsmType,
     long OsmId,
@@ -64,7 +65,8 @@ internal record PhotonProperties(
     string? Housenumber,
     string? Street,
     string? Postcode,
-    string? City);
+    string? City,
+    string? Type);
 
 /// <summary>
 /// GeoJSON point of a place found by Photon.

@@ -6,6 +6,7 @@ import type {
   Tierlist,
   ApiResponse,
   PlaceSuggestion,
+  SearchArea,
 } from '@/types/restaurant'
 import type { UserLocation } from '@/composables/useUserLocation'
 import mockCommunityRatings from '@/data/community-ratings.json'
@@ -53,6 +54,18 @@ export async function searchPlaces(
   const response = await axios.get<PlaceSuggestion[]>(
     `${import.meta.env.VITE_API_BASE_URL}/api/places/search`,
     { params: { query, lat: location?.lat, lon: location?.lon } },
+  )
+  return response.data
+}
+
+/**
+ * Get the city searches are centered on
+ * @param location user position; the API returns its default city when omitted
+ */
+export async function fetchSearchArea(location?: UserLocation | null): Promise<SearchArea> {
+  const response = await axios.get<SearchArea>(
+    `${import.meta.env.VITE_API_BASE_URL}/api/places/area`,
+    { params: { lat: location?.lat, lon: location?.lon } },
   )
   return response.data
 }

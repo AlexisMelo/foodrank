@@ -26,4 +26,11 @@ public class PlacesController(IPlaceSearchService placeSearchService) : Controll
     [HttpGet("search")]
     public async Task<IActionResult> Search([FromQuery] string query, [FromQuery] double? lat, [FromQuery] double? lon, CancellationToken cancellationToken)
         => (await placeSearchService.SearchAsync(query, lat, lon, cancellationToken)).ToActionResult();
+
+    /// <summary>
+    /// Returns the city searches are centered on (the user's, or the default one when no position is given).
+    /// </summary>
+    [HttpGet("area")]
+    public async Task<IActionResult> Area([FromQuery] double? lat, [FromQuery] double? lon, CancellationToken cancellationToken)
+        => (await placeSearchService.GetSearchAreaAsync(lat, lon, cancellationToken)).ToActionResult();
 }

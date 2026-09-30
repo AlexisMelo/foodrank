@@ -3,6 +3,7 @@ import { ref, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNewReview } from '@/composables/useNewReview'
 import { useUserLocation } from '@/composables/useUserLocation'
+import SearchAreaHint from '@/components/SearchAreaHint.vue'
 import { autocompletePlaces, createRestaurantFromPlace } from '@/services/restaurantService'
 import type { PlaceSuggestion } from '@/types/restaurant'
 
@@ -93,7 +94,7 @@ watch(isOpen, async (val) => {
     <div v-if="isOpen" class="overlay" @click.self="close">
       <div class="sheet">
         <div class="header">
-          <h2 class="title">New review</h2>
+          <h2 class="title">Restaurant</h2>
           <button class="close-btn" @click="close">✕</button>
         </div>
 
@@ -108,6 +109,8 @@ watch(isOpen, async (val) => {
           />
           <button class="search-btn" @click="submitSearch">🔍</button>
         </div>
+
+        <SearchAreaHint />
 
         <!-- Suggestions — rendered outside the flow of search-row -->
         <div class="suggestions-area">

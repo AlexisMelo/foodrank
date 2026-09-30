@@ -24,3 +24,10 @@ public record PlaceDetails(string PlaceId, string Name, string Address, double? 
 /// <param name="Name">Name of the place.</param>
 /// <param name="SecondaryText">Additional line displayed under the name (the address).</param>
 public record PlaceSuggestion(string PlaceId, string Name, string SecondaryText);
+
+/// <summary>
+/// Area around which restaurant searches are centered, as shown to the user.
+/// </summary>
+/// <param name="Locality">Name of the city at the search position, null when it could not be determined.</param>
+/// <param name="IsDefault">True when no user position was given and the configured default city is used.</param>
+public record SearchArea(string? Locality, bool IsDefault);

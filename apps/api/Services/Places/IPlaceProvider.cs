@@ -16,4 +16,9 @@ public interface IPlaceProvider
     /// Fetches a single place from its provider identifier.
     /// </summary>
     Task<Result<PlaceDetails>> GetDetailsAsync(string placeId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Returns the name of the locality (city, town, village) at <paramref name="point"/>, or null when unknown.
+    /// </summary>
+    Task<Result<string?>> GetLocalityAsync(GeoPoint point, CancellationToken cancellationToken);
 }

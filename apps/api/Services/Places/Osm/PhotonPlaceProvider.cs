@@ -28,8 +28,10 @@ public partial class PhotonPlaceProvider(HttpClient httpClient, NominatimClient 
 
     /// <summary>
     /// Weight of a place's global prominence against its distance (0 to 1, lower = distance matters more).
+    /// 0 = proximity as strong as possible: with 0.2, "novita" near Caen ranked exact-spelling places in Japan and
+    /// New York above the local "Novità". Exact names far away are still found (e.g. "paul bocuse" from Paris).
     /// </summary>
-    private const string LocationBiasScale = "0.2";
+    private const string LocationBiasScale = "0.0";
 
     /// <summary>
     /// OSM tags (key:value) of the places returned by searches: restaurants, fast foods and cafés.
@@ -45,6 +47,11 @@ public partial class PhotonPlaceProvider(HttpClient httpClient, NominatimClient 
     /// How long each place found by a search stays available for <see cref="GetDetailsAsync"/> without calling Nominatim.
     /// </summary>
     private static readonly TimeSpan PlaceCacheDuration = TimeSpan.FromHours(1);
+
+    /// <summary>
+    /// How long the locality of a position is reused; a city name does not change, only the cache size is limited.
+    /// </summary>
+    private static readonly TimeSpan LocalityCacheDuration = TimeSpan.FromHours(6);
 
     /// <inheritdoc />
     public async Task<Result<IReadOnlyList<PlaceDetails>>> SearchAsync(string query, int limit, GeoPoint? near, CancellationToken cancellationToken)
@@ -86,6 +93,32 @@ public partial class PhotonPlaceProvider(HttpClient httpClient, NominatimClient 
         if (result.IsSuccess)
             cache.Set(PlaceCacheKey(placeId), result.Value!, PlaceCacheDuration);
         return result;
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<string?>> GetLocalityAsync(GeoPoint point, CancellationToken cancellationToken)
+    {
+        // Rounded to ~1 km: enough to know the city, and nearby users share cache entries.
+        string lat = Math.Round(point.Lat, 2).ToString(CultureInfo.InvariantCulture);
+        string lon = Math.Round(point.Lon, 2).ToString(CultureInfo.InvariantCulture);
+        string url = $"reverse?lat={lat}&lon={lon}&lang={Language}&limit=1";
+        if (cache.TryGetValue(url, out string? cached))
+            return Result<string?>.Success(cached);
+
+        using HttpResponseMessage response = await httpClient.GetAsync(url, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            logger.LogWarning("Photon reverse geocoding failed with {StatusCode}", (int)response.StatusCode);
+            return Result<string?>.Failure(new Error(ErrorType.Unavailable, "Locality lookup is temporarily unavailable."));
+        }
+
+        PhotonResponse? payload = await response.Content.ReadFromJsonAsync<PhotonResponse>(OsmJson.Options, cancellationToken);
+        PhotonProperties? nearest = payload?.Features?.FirstOrDefault()?.Properties;
+        // "city" holds the locality of the nearest object; when the nearest object is the locality itself, it is its name.
+        string? locality = nearest?.City ?? (nearest?.Type == "city" ? nearest.Name : null);
+
+        cache.Set(url, locality, LocalityCacheDuration);
+        return Result<string?>.Success(locality);
     }
 
     /// <summary>
