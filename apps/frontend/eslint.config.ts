@@ -29,4 +29,12 @@ export default defineConfigWithVueTs(
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
 
   skipFormatting,
+
+  {
+    name: 'app/code-conventions',
+    rules: {
+      // Blank line between each class member declaration (same convention as the API)
+      'lines-between-class-members': ['error', 'always'],
+    },
+  },
 )

@@ -3,6 +3,9 @@ using api.Services.Places;
 
 namespace api.Services;
 
+/// <summary>
+/// Searches real-world restaurants, independently of the underlying place provider.
+/// </summary>
 public interface IPlaceSearchService
 {
     /// <summary>

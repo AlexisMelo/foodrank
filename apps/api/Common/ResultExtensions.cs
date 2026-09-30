@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace api.Common;
 
+/// <summary>
+/// Helpers turning a <see cref="Result{T}"/> into an HTTP response, so controller actions stay one-liners.
+/// </summary>
 public static class ResultExtensions
 {
     /// <summary>

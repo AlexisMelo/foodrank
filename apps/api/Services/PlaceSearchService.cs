@@ -9,8 +9,19 @@ namespace api.Services;
 /// </summary>
 public class PlaceSearchService(IPlaceProvider placeProvider, IConfiguration configuration) : IPlaceSearchService
 {
+    /// <summary>
+    /// Minimum number of characters before querying the provider; shorter inputs return an empty list.
+    /// </summary>
     private const int MinInputLength = 3;
+
+    /// <summary>
+    /// Maximum number of suggestions returned while the user is typing.
+    /// </summary>
     private const int AutocompleteLimit = 8;
+
+    /// <summary>
+    /// Maximum number of results returned by the longer search of the results page ("Load more").
+    /// </summary>
     private const int SearchLimit = 25;
 
     /// <inheritdoc />

@@ -3,6 +3,9 @@ using api.Models;
 
 namespace api.Services;
 
+/// <summary>
+/// Reads restaurants from the database and creates them from places selected in the search.
+/// </summary>
 public interface IRestaurantService
 {
     /// <summary>

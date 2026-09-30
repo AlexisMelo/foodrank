@@ -15,12 +15,35 @@ namespace api.Services.Places.Osm;
 /// </remarks>
 public partial class PhotonPlaceProvider(HttpClient httpClient, NominatimClient nominatimClient, IMemoryCache cache, ILogger<PhotonPlaceProvider> logger) : IPlaceProvider
 {
+    /// <summary>
+    /// Language of the returned names and addresses.
+    /// </summary>
     private const string Language = "fr";
-    // Proximity tuning, tested on Lyon/Paris: keeps results local while still finding exact names further away.
+
+    /// <summary>
+    /// Size of the area favored around the user's position (map-like zoom level, higher = smaller area).
+    /// Tuned with <see cref="LocationBiasScale"/> on Lyon/Paris: keeps results local while still finding exact names further away.
+    /// </summary>
     private const int Zoom = 14;
+
+    /// <summary>
+    /// Weight of a place's global prominence against its distance (0 to 1, lower = distance matters more).
+    /// </summary>
     private const string LocationBiasScale = "0.2";
+
+    /// <summary>
+    /// OSM tags (key:value) of the places returned by searches: restaurants, fast foods and cafés.
+    /// </summary>
     private static readonly string[] OsmTags = ["amenity:restaurant", "amenity:fast_food", "amenity:cafe"];
+
+    /// <summary>
+    /// How long a search response is reused for identical queries, to limit calls to the public Photon instance.
+    /// </summary>
     private static readonly TimeSpan SearchCacheDuration = TimeSpan.FromMinutes(10);
+
+    /// <summary>
+    /// How long each place found by a search stays available for <see cref="GetDetailsAsync"/> without calling Nominatim.
+    /// </summary>
     private static readonly TimeSpan PlaceCacheDuration = TimeSpan.FromHours(1);
 
     /// <inheritdoc />

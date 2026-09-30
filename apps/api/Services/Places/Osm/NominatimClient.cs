@@ -12,8 +12,19 @@ namespace api.Services.Places.Osm;
 /// </remarks>
 public class NominatimClient(HttpClient httpClient, ILogger<NominatimClient> logger)
 {
+    /// <summary>
+    /// Minimum delay between two Nominatim requests, required by the usage policy (max 1 request/second).
+    /// </summary>
     private static readonly TimeSpan MinDelayBetweenRequests = TimeSpan.FromSeconds(1);
+
+    /// <summary>
+    /// Lets a single request through at a time, shared by all instances, so the delay applies application-wide.
+    /// </summary>
     private static readonly SemaphoreSlim Throttle = new(1, 1);
+
+    /// <summary>
+    /// Time (UTC) of the last request sent to Nominatim, used to compute the remaining wait.
+    /// </summary>
     private static DateTime _lastRequestUtc = DateTime.MinValue;
 
     /// <summary>

@@ -5,13 +5,22 @@ namespace api.Common;
 /// </summary>
 public enum ErrorType
 {
+    /// <summary>
+    /// The requested resource does not exist (HTTP 404).
+    /// </summary>
     NotFound,
+
+    /// <summary>
+    /// A dependency (database, external service) failed or is unreachable (HTTP 503).
+    /// </summary>
     Unavailable
 }
 
 /// <summary>
 /// Describes why an operation failed.
 /// </summary>
+/// <param name="Type">Category of the failure.</param>
+/// <param name="Message">Explanation returned to the client.</param>
 public record Error(ErrorType Type, string Message);
 
 /// <summary>
@@ -19,10 +28,24 @@ public record Error(ErrorType Type, string Message);
 /// </summary>
 public record Result<T>
 {
+    /// <summary>
+    /// Value produced by the operation; only meaningful when <see cref="IsSuccess"/> is true.
+    /// </summary>
     public T? Value { get; }
+
+    /// <summary>
+    /// Reason of the failure; null when the operation succeeded.
+    /// </summary>
     public Error? Error { get; }
+
+    /// <summary>
+    /// True when the operation succeeded (no <see cref="Error"/>).
+    /// </summary>
     public bool IsSuccess => Error is null;
 
+    /// <summary>
+    /// Private: use <see cref="Success"/> or <see cref="Failure"/> so a result is never both a value and an error.
+    /// </summary>
     private Result(T? value, Error? error)
     {
         Value = value;

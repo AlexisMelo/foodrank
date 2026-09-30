@@ -18,6 +18,9 @@ This project is the API for the foodrank app. It handles communication between t
 ## Code Conventions
 
 - Always write a few lines of documentation above new functions
+- Every class member (constant, field, property, enum value) must have a `/// <summary>` describing it, including private ones. For positional records, document each property with a `/// <param>` tag.
+- Separate every member declaration with a blank line (no consecutive constants/fields without an empty line between them).
+- Public members are checked at build time (CS1591, see `.editorconfig`); private members and blank lines are not checked by any tool, so apply them manually.
 
 ### Naming
 

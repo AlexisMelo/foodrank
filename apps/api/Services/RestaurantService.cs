@@ -6,8 +6,14 @@ using Supabase.Postgrest.Responses;
 
 namespace api.Services;
 
+/// <summary>
+/// Reads restaurants from the database and creates them from places selected in the search.
+/// </summary>
 public class RestaurantService(Supabase.Client supabase, IPlaceProvider placeProvider) : IRestaurantService
 {
+    /// <summary>
+    /// Emoji given to restaurants created from a place, until the cuisine type is handled.
+    /// </summary>
     private const string DefaultEmoji = "🍽️";
 
     /// <inheritdoc />
