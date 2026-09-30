@@ -33,7 +33,13 @@ function isExplore(): boolean {
     </button>
 
     <button class="tab-btn tab-btn-add" @click="openNewReview">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <!-- Same 22px icon slot as the other tabs, so the label lines up; the circle overflows it upwards -->
+      <span class="add-slot">
+        <span class="add-circle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </span>
+      </span>
+      <span>Search</span>
     </button>
 
     <button class="tab-btn" :class="{ active: false }" disabled>
@@ -102,29 +108,39 @@ function isExplore(): boolean {
 }
 
 .tab-btn-add {
+  flex-shrink: 0;
+}
+
+.add-slot {
+  position: relative;
+  width: 22px;
+  height: 22px;
+}
+
+.add-circle {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
   width: 56px;
   height: 56px;
   border-radius: 50%;
   background: #ffffff;
   color: #0d0d0d;
-  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  position: relative;
-  top: -16px;
+  transform: translateX(-50%);
   box-shadow: 0 -2px 24px rgba(255, 255, 255, 0.18), 0 4px 20px rgba(0, 0, 0, 0.4);
   transition: transform 0.15s, box-shadow 0.15s;
 }
 
-.tab-btn-add:hover {
-  transform: scale(1.07);
+.tab-btn-add:hover .add-circle {
+  transform: translateX(-50%) scale(1.07);
   box-shadow: 0 6px 24px rgba(255, 255, 255, 0.28);
 }
 
-.tab-btn-add:active {
-  transform: scale(0.95);
+.tab-btn-add:active .add-circle {
+  transform: translateX(-50%) scale(0.95);
 }
 
 .tab-btn-add svg {
