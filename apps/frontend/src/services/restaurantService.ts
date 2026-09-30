@@ -1,6 +1,13 @@
 import axios from 'axios'
-import type { Restaurant, CommunityVisit, User, Tierlist, ApiResponse } from '@/types/restaurant'
-import mockRestaurants from '@/data/restaurants.json'
+import type {
+  Restaurant,
+  CommunityVisit,
+  User,
+  Tierlist,
+  ApiResponse,
+  PlaceSuggestion,
+} from '@/types/restaurant'
+import type { UserLocation } from '@/composables/useUserLocation'
 import mockCommunityRatings from '@/data/community-ratings.json'
 import mockUsers from '@/data/users.json'
 import mockTierlists from '@/data/tierlists.json'
@@ -17,8 +24,48 @@ export async function fetchRestaurants(): Promise<Restaurant[]> {
 }
 
 export async function fetchRestaurantById(id: string): Promise<Restaurant | undefined> {
-  const response = mockRestaurants as ApiResponse<Restaurant[]>
-  return response.data.find((r) => r.id === id)
+  const all = await fetchRestaurants()
+  return all.find((r) => r.id === id)
+}
+
+/**
+ * Get a few restaurant suggestions while the user is typing
+ * @param location favors nearby restaurants; the API falls back to its default city when omitted
+ */
+export async function autocompletePlaces(
+  input: string,
+  location?: UserLocation | null,
+): Promise<PlaceSuggestion[]> {
+  const response = await axios.get<PlaceSuggestion[]>(
+    `${import.meta.env.VITE_API_BASE_URL}/api/places/autocomplete`,
+    { params: { input, lat: location?.lat, lon: location?.lon } },
+  )
+  return response.data
+}
+
+/**
+ * Get a longer list of restaurants for the search results page
+ */
+export async function searchPlaces(
+  query: string,
+  location?: UserLocation | null,
+): Promise<PlaceSuggestion[]> {
+  const response = await axios.get<PlaceSuggestion[]>(
+    `${import.meta.env.VITE_API_BASE_URL}/api/places/search`,
+    { params: { query, lat: location?.lat, lon: location?.lon } },
+  )
+  return response.data
+}
+
+/**
+ * Get the restaurant matching a search result, creating it in our database on first selection
+ */
+export async function createRestaurantFromPlace(placeId: string): Promise<Restaurant> {
+  const response = await axios.post<Restaurant>(
+    `${import.meta.env.VITE_API_BASE_URL}/api/restaurants/from-place`,
+    { placeId },
+  )
+  return response.data
 }
 
 export async function fetchAllCommunityVisits(): Promise<CommunityVisit[]> {

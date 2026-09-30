@@ -22,7 +22,10 @@
       "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\(\"C:\\\\Users\\\\Melo\\\\.nuget\\\\packages\\\\supabase.gotrue\\\\6.0.3\\\\lib\\\\netstandard2.1\\\\Supabase.Gotrue.dll\"\\); $text = [System.Text.Encoding]::UTF8.GetString\\($bytes\\); $matches = [regex]::Matches\\($text, 'GotrueException'\\); \"Found $\\($matches.Count\\) occurrences\")",
       "PowerShell(git -C c:\\\\dev\\\\foodrank ls-files package.json package-lock.json .gitignore)",
       "PowerShell(npm install -D concurrently@^9)",
-      "PowerShell($p = Start-Process -FilePath \"cmd.exe\" -ArgumentList \"/c npm start > `\"$env:TEMP\\\\fr_start.log`\" 2>&1\" -WorkingDirectory C:\\\\dev\\\\foodrank -PassThru -WindowStyle Hidden; Start-Sleep -Seconds 45; taskkill /T /F /PID $p.Id | Out-Null; Get-Content \"$env:TEMP\\\\fr_start.log\" | Select-Object -Last 40)"
+      "PowerShell($p = Start-Process -FilePath \"cmd.exe\" -ArgumentList \"/c npm start > `\"$env:TEMP\\\\fr_start.log`\" 2>&1\" -WorkingDirectory C:\\\\dev\\\\foodrank -PassThru -WindowStyle Hidden; Start-Sleep -Seconds 45; taskkill /T /F /PID $p.Id | Out-Null; Get-Content \"$env:TEMP\\\\fr_start.log\" | Select-Object -Last 40)",
+      "Bash(curl -s -A \"FoodRank/1.0 \\(dev test\\)\" \"https://nominatim.openstreetmap.org/lookup?osm_ids=N5287924742&format=jsonv2&addressdetails=1&extratags=1&namedetails=1&accept-language=fr\")",
+      "Bash(python -m json.tool)",
+      "Bash(curl -s -A \"FoodRank/1.0 \\(dev test\\)\" \"https://nominatim.openstreetmap.org/lookup?osm_ids=N5287924742&format=jsonv2&extratags=1\")"
     ]
   }
 }

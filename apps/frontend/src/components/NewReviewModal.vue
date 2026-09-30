@@ -2,8 +2,9 @@
 import { ref, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNewReview } from '@/composables/useNewReview'
-import { fetchRestaurants } from '@/services/restaurantService'
-import type { Restaurant } from '@/types/restaurant'
+import { useUserLocation } from '@/composables/useUserLocation'
+import { autocompletePlaces, createRestaurantFromPlace } from '@/services/restaurantService'
+import type { PlaceSuggestion } from '@/types/restaurant'
 
 const router = useRouter()
 
@@ -15,11 +16,14 @@ function submitSearch() {
 }
 
 const { isOpen, close } = useNewReview()
+const { location, requestLocation } = useUserLocation()
 
 const query = ref('')
 const searchInput = ref<HTMLInputElement | null>(null)
-const suggestions = ref<Restaurant[]>([])
+const suggestions = ref<PlaceSuggestion[]>([])
 const loading = ref(false)
+const error = ref(false)
+const selecting = ref(false)
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 let lastSearched = ''
@@ -31,6 +35,7 @@ watch(query, (val) => {
 
   if (trimmed.length < 3) {
     suggestions.value = []
+    lastSearched = ''
     return
   }
 
@@ -38,26 +43,47 @@ watch(query, (val) => {
     if (trimmed === lastSearched) return
     lastSearched = trimmed
     loading.value = true
-    const all = await fetchRestaurants()
-    const lower = trimmed.toLowerCase()
-    suggestions.value = all.filter(
-      (r) =>
-        r.name.toLowerCase().includes(lower) ||
-        r.cuisine.toLowerCase().includes(lower) ||
-        r.tags.some((t) => t.toLowerCase().includes(lower)),
-    )
-    loading.value = false
+    error.value = false
+    try {
+      const results = await autocompletePlaces(trimmed, location.value)
+      // Ignore responses to an outdated input
+      if (trimmed !== lastSearched) return
+      suggestions.value = results
+    } catch {
+      if (trimmed !== lastSearched) return
+      error.value = true
+      suggestions.value = []
+    } finally {
+      if (trimmed === lastSearched) loading.value = false
+    }
   }, 500)
 })
 
+async function selectPlace(place: PlaceSuggestion) {
+  if (selecting.value) return
+  selecting.value = true
+  error.value = false
+  try {
+    const restaurant = await createRestaurantFromPlace(place.placeId)
+    close()
+    router.push(`/review/${restaurant.id}`)
+  } catch {
+    error.value = true
+  } finally {
+    selecting.value = false
+  }
+}
+
 watch(isOpen, async (val) => {
   if (val) {
+    requestLocation()
     await nextTick()
     searchInput.value?.focus()
   } else {
     query.value = ''
     suggestions.value = []
     lastSearched = ''
+    error.value = false
   }
 })
 </script>
@@ -86,28 +112,32 @@ watch(isOpen, async (val) => {
         <!-- Suggestions — rendered outside the flow of search-row -->
         <div class="suggestions-area">
           <div v-if="loading" class="hint">Searching…</div>
+          <div v-else-if="error" class="hint">Search is unavailable right now</div>
           <div v-else-if="query.trim().length >= 3 && suggestions.length === 0" class="hint">
             No restaurants found
           </div>
-          <ul v-else-if="suggestions.length" class="suggestions">
-            <li
-              v-for="r in suggestions"
-              :key="r.id"
-              class="suggestion-item"
-              @click="
-                () => {
-                  close()
-                  router.push(`/review/${r.id}`)
-                }
-              "
-            >
-              <span class="suggestion-emoji">{{ r.emoji }}</span>
-              <div class="suggestion-info">
-                <span class="suggestion-name">{{ r.name }}</span>
-                <span class="suggestion-meta">{{ r.cuisine }}</span>
-              </div>
-            </li>
-          </ul>
+          <template v-else-if="suggestions.length">
+            <ul class="suggestions" :class="{ selecting }">
+              <li
+                v-for="s in suggestions"
+                :key="s.placeId"
+                class="suggestion-item"
+                @click="selectPlace(s)"
+              >
+                <span class="suggestion-emoji">🍽️</span>
+                <div class="suggestion-info">
+                  <span class="suggestion-name">{{ s.name }}</span>
+                  <span class="suggestion-meta">{{ s.secondaryText }}</span>
+                </div>
+              </li>
+            </ul>
+            <p class="attribution">
+              ©
+              <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">
+                OpenStreetMap contributors
+              </a>
+            </p>
+          </template>
         </div>
       </div>
     </div>
@@ -278,6 +308,21 @@ watch(isOpen, async (val) => {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.4);
   font-weight: 600;
+}
+
+.suggestions.selecting {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.attribution {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+  text-align: right;
+}
+.attribution a {
+  color: inherit;
 }
 
 /* Transition */

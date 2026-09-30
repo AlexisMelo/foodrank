@@ -10,7 +10,7 @@ public class Restaurant : BaseModel
     public string Id { get; set; } = string.Empty;
 
     [Column("osm_id")]
-    public string OsmId { get; set; } = string.Empty;
+    public string? OsmId { get; set; }
 
     [Column("name")]
     public string Name { get; set; } = string.Empty;

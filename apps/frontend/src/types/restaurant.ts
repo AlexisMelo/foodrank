@@ -11,6 +11,13 @@ export interface Restaurant {
   lng: number
 }
 
+/** A restaurant returned by the place search (not necessarily stored in our database yet). */
+export interface PlaceSuggestion {
+  placeId: string
+  name: string
+  secondaryText: string
+}
+
 export interface Visit {
   id: string
   restaurantId: string

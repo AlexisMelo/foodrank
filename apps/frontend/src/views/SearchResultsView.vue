@@ -1,21 +1,85 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import type { Restaurant } from '@/types/restaurant'
-import { fetchRestaurants } from '@/services/restaurantService'
+import { ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import type { PlaceSuggestion } from '@/types/restaurant'
+import { useUserLocation } from '@/composables/useUserLocation'
+import {
+  autocompletePlaces,
+  searchPlaces,
+  createRestaurantFromPlace,
+} from '@/services/restaurantService'
 
 const route = useRoute()
-const query = route.query.q as string
+const router = useRouter()
+const { location, requestLocation } = useUserLocation()
+const query = computed(() => ((route.query.q as string) ?? '').trim())
 
-const results = ref<Restaurant[]>([])
+const results = ref<PlaceSuggestion[]>([])
 const loading = ref(true)
+const loadingMore = ref(false)
+const moreLoaded = ref(false)
+const error = ref(false)
+const selecting = ref(false)
 
-onMounted(async () => {
-  const all = await fetchRestaurants()
-  const shuffled = [...all].sort(() => Math.random() - 0.5)
-  results.value = shuffled.slice(0, 10)
-  loading.value = false
-})
+// Incremented on each new query so responses to an outdated query are ignored
+let requestId = 0
+
+async function loadSuggestions() {
+  const current = ++requestId
+  results.value = []
+  moreLoaded.value = false
+  error.value = false
+  if (query.value.length < 3) {
+    loading.value = false
+    return
+  }
+  loading.value = true
+  try {
+    const found = await autocompletePlaces(query.value, location.value)
+    if (current === requestId) results.value = found
+  } catch {
+    if (current === requestId) error.value = true
+  } finally {
+    if (current === requestId) loading.value = false
+  }
+}
+
+/**
+ * Longer search: appends the results not already shown
+ */
+async function loadMore() {
+  const current = requestId
+  loadingMore.value = true
+  error.value = false
+  try {
+    const more = await searchPlaces(query.value, location.value)
+    if (current !== requestId) return
+    const known = new Set(results.value.map((r) => r.placeId))
+    results.value = [...results.value, ...more.filter((r) => !known.has(r.placeId))]
+    moreLoaded.value = true
+  } catch {
+    if (current === requestId) error.value = true
+  } finally {
+    loadingMore.value = false
+  }
+}
+
+async function selectPlace(place: PlaceSuggestion) {
+  if (selecting.value) return
+  selecting.value = true
+  error.value = false
+  try {
+    const restaurant = await createRestaurantFromPlace(place.placeId)
+    router.push(`/review/${restaurant.id}`)
+  } catch {
+    error.value = true
+  } finally {
+    selecting.value = false
+  }
+}
+
+requestLocation()
+watch(query, loadSuggestions, { immediate: true })
 </script>
 
 <template>
@@ -33,24 +97,47 @@ onMounted(async () => {
     </div>
 
     <!-- Results -->
-    <div v-else class="list">
-      <RouterLink
-        v-for="(r, index) in results"
-        :key="r.id"
-        :to="`/review/${r.id}`"
-        class="list-item"
+    <template v-else>
+      <div class="list" :class="{ selecting }">
+        <button
+          v-for="(r, index) in results"
+          :key="r.placeId"
+          type="button"
+          class="list-item"
+          @click="selectPlace(r)"
+        >
+          <div class="item-index">{{ index + 1 }}</div>
+          <div class="item-emoji-wrap">
+            <span class="item-emoji">🍽️</span>
+          </div>
+          <div class="item-info">
+            <span class="item-name">{{ r.name }}</span>
+            <span class="item-meta">{{ r.secondaryText }}</span>
+          </div>
+          <span class="item-arrow">›</span>
+        </button>
+      </div>
+
+      <p v-if="error" class="hint">Search is unavailable right now</p>
+      <p v-else-if="results.length === 0" class="hint">No restaurants found</p>
+
+      <button
+        v-if="!moreLoaded && query.length >= 3"
+        type="button"
+        class="load-more"
+        :disabled="loadingMore"
+        @click="loadMore"
       >
-        <div class="item-index">{{ index + 1 }}</div>
-        <div class="item-emoji-wrap">
-          <span class="item-emoji">{{ r.emoji }}</span>
-        </div>
-        <div class="item-info">
-          <span class="item-name">{{ r.name }}</span>
-          <span class="item-meta">{{ r.cuisine }}</span>
-        </div>
-        <span class="item-arrow">›</span>
-      </RouterLink>
-    </div>
+        {{ loadingMore ? 'Loading…' : 'Load more' }}
+      </button>
+
+      <p v-if="results.length" class="attribution">
+        ©
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">
+          OpenStreetMap contributors
+        </a>
+      </p>
+    </template>
   </div>
 </template>
 
@@ -98,13 +185,23 @@ onMounted(async () => {
   gap: 8px;
 }
 
+.list.selecting {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 .list-item {
   display: flex;
   align-items: center;
   gap: 14px;
+  width: 100%;
   padding: 12px 14px;
   background: #1a1a1a;
+  border: none;
   border-radius: 16px;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
   text-decoration: none;
   color: inherit;
   transition:
@@ -164,6 +261,44 @@ onMounted(async () => {
   font-size: 20px;
   color: rgba(255, 255, 255, 0.2);
   flex-shrink: 0;
+}
+
+.hint {
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.35);
+  text-align: center;
+}
+
+.load-more {
+  margin-top: 16px;
+  height: 46px;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: transparent;
+  color: #ffffff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.load-more:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+.load-more:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.attribution {
+  margin: 12px 0 0;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+  text-align: right;
+}
+.attribution a {
+  color: inherit;
 }
 
 .skeleton {
