@@ -2,11 +2,15 @@ using Supabase.Gotrue;
 
 namespace api.Services;
 
-public class SupabaseAuthService(Supabase.Client supabase) : ISupabaseAuthService
+/// <summary>
+/// Handles user authentication through Supabase Auth (GoTrue), with a per-request client so sessions never leak between requests.
+/// </summary>
+/// <param name="auth">GoTrue client scoped to the current request.</param>
+public class SupabaseAuthService(Supabase.Gotrue.Client auth) : ISupabaseAuthService
 {
     public async Task<string?> SignUpAsync(string email, string password)
     {
-        Session? session = await supabase.Auth.SignUp(email, password);
+        Session? session = await auth.SignUp(email, password);
         return session?.AccessToken;
     }
 
@@ -19,19 +23,19 @@ public class SupabaseAuthService(Supabase.Client supabase) : ISupabaseAuthServic
     /// <returns></returns>
     public async Task<string?> SignInAsync(string email, string password)
     {
-        Session? session = await supabase.Auth.SignIn(email, password);
+        Session? session = await auth.SignIn(email, password);
         return session?.AccessToken;
     }
 
     public async Task<bool> ValidateAccessTokenAsync(string accessToken)
     {
-        User? user = await supabase.Auth.GetUser(accessToken);
+        User? user = await auth.GetUser(accessToken);
         return user is not null;
     }
 
     public async Task SendPasswordResetEmailAsync(string email, string redirectUrl)
     {
-        await supabase.Auth.ResetPasswordForEmail(new ResetPasswordForEmailOptions(email)
+        await auth.ResetPasswordForEmail(new ResetPasswordForEmailOptions(email)
         {
             RedirectTo = redirectUrl
         });
@@ -39,11 +43,11 @@ public class SupabaseAuthService(Supabase.Client supabase) : ISupabaseAuthServic
 
     public async Task<string?> ResetPasswordAsync(string accessToken, string refreshToken, string newPassword)
     {
-        Session? session = await supabase.Auth.SetSession(accessToken, refreshToken);
+        Session? session = await auth.SetSession(accessToken, refreshToken);
         if (session?.User == null)
             return null;
 
-        await supabase.Auth.Update(new UserAttributes { Password = newPassword });
+        await auth.Update(new UserAttributes { Password = newPassword });
         return session.AccessToken;
     }
 }

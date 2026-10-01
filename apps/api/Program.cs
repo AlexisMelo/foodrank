@@ -21,6 +21,15 @@ builder.Services.AddSingleton(_ =>
     return client;
 });
 
+// Auth gets its own client, one per request: signing in stores the user's session in the client, which would otherwise
+// make the shared data client above send the user's JWT instead of the service role key (and apply RLS to every request).
+builder.Services.AddScoped(_ => new Supabase.Gotrue.Client(new Supabase.Gotrue.ClientOptions
+{
+    Url = $"{builder.Configuration["Supabase:Url"]}/auth/v1",
+    AutoRefreshToken = false,
+    Headers = { ["apikey"] = builder.Configuration["Supabase:ServiceRoleKey"]! }
+}));
+
 builder.Services.AddScoped<ISupabaseAuthService, SupabaseAuthService>();
 
 // Place search: Photon (OpenStreetMap). Swap the IPlaceProvider registration to change provider.
