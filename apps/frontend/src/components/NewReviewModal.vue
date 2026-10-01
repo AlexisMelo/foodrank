@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useNewReview } from '@/composables/useNewReview'
 import { useUserLocation } from '@/composables/useUserLocation'
 import SearchAreaHint from '@/components/SearchAreaHint.vue'
-import { autocompletePlaces, createRestaurantFromPlace } from '@/services/restaurantService'
+import { autocompletePlaces } from '@/services/restaurantService'
 import type { PlaceSuggestion } from '@/types/restaurant'
 
 const router = useRouter()
@@ -24,7 +24,6 @@ const searchInput = ref<HTMLInputElement | null>(null)
 const suggestions = ref<PlaceSuggestion[]>([])
 const loading = ref(false)
 const error = ref(false)
-const selecting = ref(false)
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 let lastSearched = ''
@@ -60,19 +59,12 @@ watch(query, (val) => {
   }, 500)
 })
 
-async function selectPlace(place: PlaceSuggestion) {
-  if (selecting.value) return
-  selecting.value = true
-  error.value = false
-  try {
-    const restaurant = await createRestaurantFromPlace(place.placeId)
-    close()
-    router.push(`/review/${restaurant.id}`)
-  } catch {
-    error.value = true
-  } finally {
-    selecting.value = false
-  }
+/**
+ * Opens the restaurant page, which gets or creates the restaurant in the database
+ */
+function selectPlace(place: PlaceSuggestion) {
+  close()
+  router.push(`/restaurant/place/${encodeURIComponent(place.placeId)}`)
 }
 
 watch(isOpen, async (val) => {
@@ -120,7 +112,7 @@ watch(isOpen, async (val) => {
             No restaurants found
           </div>
           <template v-else-if="suggestions.length">
-            <ul class="suggestions" :class="{ selecting }">
+            <ul class="suggestions">
               <li
                 v-for="s in suggestions"
                 :key="s.placeId"
@@ -311,11 +303,6 @@ watch(isOpen, async (val) => {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.4);
   font-weight: 600;
-}
-
-.suggestions.selecting {
-  opacity: 0.5;
-  pointer-events: none;
 }
 
 .attribution {

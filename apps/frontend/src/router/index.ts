@@ -8,6 +8,8 @@ const router = createRouter({
     { path: '/profile', component: () => import('@/views/ProfileView.vue') },
     { path: '/explore', component: () => import('@/views/ExploreView.vue') },
     { path: '/restaurant/:id', component: () => import('@/views/RestaurantView.vue') },
+    // Opened from the search: the view gets or creates the restaurant, then replaces the URL with /restaurant/:id
+    { path: '/restaurant/place/:placeId', component: () => import('@/views/RestaurantView.vue') },
     { path: '/user/:id', component: () => import('@/views/ProfileView.vue') },
     { path: '/tierlists', component: () => import('@/views/TierlistsView.vue') },
     { path: '/tierlists/:id', component: () => import('@/views/TierlistDetailView.vue') },

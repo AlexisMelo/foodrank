@@ -24,9 +24,20 @@ export async function fetchRestaurants(): Promise<Restaurant[]> {
   return response.data
 }
 
+/**
+ * Get a restaurant from its database id
+ * @returns undefined when it does not exist
+ */
 export async function fetchRestaurantById(id: string): Promise<Restaurant | undefined> {
-  const all = await fetchRestaurants()
-  return all.find((r) => r.id === id)
+  try {
+    const response = await axios.get<Restaurant>(
+      `${import.meta.env.VITE_API_BASE_URL}/api/restaurants/${encodeURIComponent(id)}`,
+    )
+    return response.data
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) return undefined
+    throw error
+  }
 }
 
 /**

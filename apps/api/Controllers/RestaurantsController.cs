@@ -24,6 +24,13 @@ public class RestaurantsController(IRestaurantService restaurantService) : Contr
         => Ok(await restaurantService.GetAllAsync(cancellationToken));
 
     /// <summary>
+    /// Returns a single restaurant from its database identifier (404 when it does not exist).
+    /// </summary>
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(string id, CancellationToken cancellationToken)
+        => (await restaurantService.GetByIdAsync(id, cancellationToken)).ToActionResult();
+
+    /// <summary>
     /// Returns the restaurant matching a place selected in the search, creating it on first selection.
     /// </summary>
     [HttpPost("from-place")]

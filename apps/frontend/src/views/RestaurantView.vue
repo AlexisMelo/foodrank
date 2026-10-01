@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Restaurant, CommunityVisit } from '@/types/restaurant'
 import {
   fetchRestaurantById,
   fetchCommunityVisitsByRestaurantId,
+  createRestaurantFromPlace,
 } from '@/services/restaurantService'
 import RatingScores from '@/components/RatingScores.vue'
 import NewReviewChip from '@/components/NewReviewChip.vue'
@@ -19,22 +20,49 @@ const router = useRouter()
 const restaurant = ref<Restaurant | null>(null)
 const allVisits = ref<CommunityVisit[]>([])
 const loading = ref(true)
+const loadError = ref(false)
 const activeTab = ref<'mine' | 'community'>('mine')
 
-onMounted(async () => {
-  const id = route.params.id as string
-  const [found, visits] = await Promise.all([
-    fetchRestaurantById(id),
-    fetchCommunityVisitsByRestaurantId(id),
-  ])
-  if (!found) {
-    router.replace('/')
-    return
+/**
+ * Loads the restaurant from the route:
+ * - /restaurant/place/:placeId (opened from the search): gets or creates it in the database,
+ *   then replaces the URL with its stable /restaurant/:id
+ * - /restaurant/:id: reads it from the database
+ */
+async function loadRestaurant() {
+  // The watcher can fire while leaving this view (e.g. to /user/:id): only handle restaurant routes
+  if (!route.path.startsWith('/restaurant/')) return
+
+  const placeId = route.params.placeId as string | undefined
+  const id = route.params.id as string | undefined
+
+  // Already displayed (e.g. right after replacing /restaurant/place/... with /restaurant/:id)
+  if (id && restaurant.value?.id === id) return
+
+  loading.value = true
+  loadError.value = false
+  try {
+    let found: Restaurant | undefined
+    if (placeId) {
+      found = await createRestaurantFromPlace(placeId)
+      router.replace(`/restaurant/${found.id}`)
+    } else if (id) {
+      found = await fetchRestaurantById(id)
+    }
+    if (!found) {
+      router.replace('/')
+      return
+    }
+    restaurant.value = found
+    allVisits.value = await fetchCommunityVisitsByRestaurantId(found.id)
+  } catch {
+    loadError.value = true
+  } finally {
+    loading.value = false
   }
-  restaurant.value = found
-  allVisits.value = visits
-  loading.value = false
-})
+}
+
+watch(() => route.params, loadRestaurant, { immediate: true })
 
 function visitAvg(visit: CommunityVisit): number {
   return Math.round((visit.food + visit.service + visit.decor) / 3)
@@ -72,11 +100,17 @@ function scoreColor(score: number): string {
     <!-- Loading -->
     <div v-if="loading" class="loading">🍽️</div>
 
+    <!-- Error (e.g. place provider unavailable) -->
+    <div v-else-if="loadError" class="load-error">
+      <p>Couldn't load this restaurant</p>
+      <button type="button" class="back-btn" @click="router.back()">Go back</button>
+    </div>
+
     <!-- Content -->
     <template v-else-if="restaurant">
       <div class="hero">
         <div class="emoji-wrap">
-          <span class="emoji">{{ restaurant.emoji }}</span>
+          <span class="emoji">{{ restaurant.emoji || '🍽️' }}</span>
         </div>
       </div>
 
@@ -85,7 +119,7 @@ function scoreColor(score: number): string {
           <h1 class="name">{{ restaurant.name }}</h1>
         </div>
 
-        <div class="chips">
+        <div v-if="restaurant.cuisine" class="chips">
           <CuisineChip :cuisine="restaurant.cuisine" />
         </div>
 
@@ -100,11 +134,11 @@ function scoreColor(score: number): string {
           >
         </div>
 
-        <p class="description">{{ restaurant.description }}</p>
+        <p v-if="restaurant.description" class="description">{{ restaurant.description }}</p>
 
-        <RestaurantAddress :address="restaurant.address" />
+        <RestaurantAddress v-if="restaurant.address" :address="restaurant.address" />
 
-        <div class="tags">
+        <div v-if="restaurant.tags?.length" class="tags">
           <span v-for="tag in restaurant.tags" :key="tag" class="tag">{{ tag }}</span>
         </div>
 
@@ -237,6 +271,35 @@ function scoreColor(score: number): string {
     opacity: 0.5;
     transform: scale(0.9);
   }
+}
+
+/* Error */
+.load-error {
+  margin-top: 40%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 15px;
+  font-weight: 600;
+}
+.load-error p {
+  margin: 0;
+}
+.back-btn {
+  padding: 10px 20px;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: transparent;
+  color: #ffffff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 /* Hero */

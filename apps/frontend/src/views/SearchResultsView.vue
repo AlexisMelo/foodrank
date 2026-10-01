@@ -3,11 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { PlaceSuggestion } from '@/types/restaurant'
 import { useUserLocation } from '@/composables/useUserLocation'
-import {
-  autocompletePlaces,
-  searchPlaces,
-  createRestaurantFromPlace,
-} from '@/services/restaurantService'
+import { autocompletePlaces, searchPlaces } from '@/services/restaurantService'
 
 const route = useRoute()
 const router = useRouter()
@@ -19,7 +15,6 @@ const loading = ref(true)
 const loadingMore = ref(false)
 const moreLoaded = ref(false)
 const error = ref(false)
-const selecting = ref(false)
 
 // Incremented on each new query so responses to an outdated query are ignored
 let requestId = 0
@@ -64,18 +59,11 @@ async function loadMore() {
   }
 }
 
-async function selectPlace(place: PlaceSuggestion) {
-  if (selecting.value) return
-  selecting.value = true
-  error.value = false
-  try {
-    const restaurant = await createRestaurantFromPlace(place.placeId)
-    router.push(`/review/${restaurant.id}`)
-  } catch {
-    error.value = true
-  } finally {
-    selecting.value = false
-  }
+/**
+ * Opens the restaurant page, which gets or creates the restaurant in the database
+ */
+function selectPlace(place: PlaceSuggestion) {
+  router.push(`/restaurant/place/${encodeURIComponent(place.placeId)}`)
 }
 
 requestLocation()
@@ -98,7 +86,7 @@ watch(query, loadSuggestions, { immediate: true })
 
     <!-- Results -->
     <template v-else>
-      <div class="list" :class="{ selecting }">
+      <div class="list">
         <button
           v-for="(r, index) in results"
           :key="r.placeId"
@@ -183,11 +171,6 @@ watch(query, loadSuggestions, { immediate: true })
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.list.selecting {
-  opacity: 0.5;
-  pointer-events: none;
 }
 
 .list-item {
