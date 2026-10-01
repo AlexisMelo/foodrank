@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- Enables the documentation analyzers (CS1591: public members without XML doc), configured in .editorconfig -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- The test project lives under tests/: keep its files out of the API build -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>

@@ -5,7 +5,7 @@ import type { User } from '@/types/restaurant'
 import { fetchUserById } from '@/services/restaurantService'
 import { useAuth } from '@/composables/useAuth'
 
-const { currentUserId: CURRENT_USER_ID, setLoggedIn } = useAuth()
+const { currentUserId: CURRENT_USER_ID, logout } = useAuth()
 const router = useRouter()
 
 const currentUser = ref<User | null>(null)
@@ -14,16 +14,6 @@ onMounted(async () => {
   const [user] = await Promise.all([fetchUserById(CURRENT_USER_ID)])
   currentUser.value = user ?? null
 })
-
-async function logout() {
-  const res = await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
-
-  if (res.ok) {
-    setLoggedIn(false)
-  } else {
-    alert('Failed to log out. Please try again.')
-  }
-}
 </script>
 
 <template>
