@@ -44,7 +44,10 @@ npm run test:unit     # run unit tests in watch mode
 npm run build         # type-check + production build
 npm run lint          # lint and auto-fix
 npm run format        # format with prettier
+npm run gen:types     # regenerate src/types/database.types.ts from the Supabase schema (needs `npx supabase login` once)
 ```
+
+`src/types/database.types.ts` is generated from the Supabase database (tables `restaurants`, `rating`, `profiles`): use it as the reference for column names, never edit it by hand.
 
 ## Development
 

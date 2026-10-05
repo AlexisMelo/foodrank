@@ -25,6 +25,24 @@ public class ApiFactory : WebApplicationFactory<Program>
     public FakeRestaurantService RestaurantService { get; } = new();
 
     /// <summary>
+    /// Rating service used by the controllers, attached to the restaurants of <see cref="RestaurantService"/>.
+    /// </summary>
+    public FakeRatingService RatingService { get; }
+
+    /// <summary>
+    /// Supabase Auth replacement; register the valid tokens in the tests.
+    /// </summary>
+    public FakeSupabaseAuthService AuthService { get; } = new();
+
+    /// <summary>
+    /// Creates the fakes that depend on each other.
+    /// </summary>
+    public ApiFactory()
+    {
+        RatingService = new FakeRatingService(RestaurantService);
+    }
+
+    /// <summary>
     /// Uses a dedicated environment with dummy settings, and replaces external dependencies with the fakes.
     /// </summary>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -40,6 +58,10 @@ public class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IPlaceProvider>(PlaceProvider);
             services.RemoveAll<IRestaurantService>();
             services.AddSingleton<IRestaurantService>(RestaurantService);
+            services.RemoveAll<IRatingService>();
+            services.AddSingleton<IRatingService>(RatingService);
+            services.RemoveAll<ISupabaseAuthService>();
+            services.AddSingleton<ISupabaseAuthService>(AuthService);
         });
     }
 }

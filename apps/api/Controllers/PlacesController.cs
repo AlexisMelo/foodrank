@@ -1,5 +1,6 @@
 using api.Common;
 using api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -11,6 +12,7 @@ namespace api.Controllers;
 [ApiController]
 [Route("api/places")]
 [EnableRateLimiting(RateLimitPolicies.Places)]
+[AllowAnonymous]
 public class PlacesController(IPlaceSearchService placeSearchService) : ControllerBase
 {
     /// <summary>

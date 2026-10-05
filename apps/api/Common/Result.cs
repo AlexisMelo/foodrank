@@ -13,7 +13,22 @@ public enum ErrorType
     /// <summary>
     /// A dependency (database, external service) failed or is unreachable (HTTP 503).
     /// </summary>
-    Unavailable
+    Unavailable,
+
+    /// <summary>
+    /// The request needs a logged-in user (HTTP 401).
+    /// </summary>
+    Unauthorized,
+
+    /// <summary>
+    /// The request data is invalid (HTTP 400).
+    /// </summary>
+    Validation,
+
+    /// <summary>
+    /// The operation conflicts with data already stored (HTTP 409).
+    /// </summary>
+    Conflict
 }
 
 /// <summary>

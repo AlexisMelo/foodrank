@@ -3,6 +3,8 @@ using api.Common;
 using api.Services;
 using api.Services.Places;
 using api.Services.Places.Osm;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +34,12 @@ builder.Services.AddScoped(_ => new Supabase.Gotrue.Client(new Supabase.Gotrue.C
 
 builder.Services.AddScoped<ISupabaseAuthService, SupabaseAuthService>();
 
+// Every endpoint requires a logged-in user (session cookie) unless marked [AllowAnonymous].
+builder.Services.AddAuthentication(SupabaseAuthenticationHandler.SchemeName)
+    .AddScheme<AuthenticationSchemeOptions, SupabaseAuthenticationHandler>(SupabaseAuthenticationHandler.SchemeName, null);
+builder.Services.AddAuthorizationBuilder()
+    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
+
 // Place search: Photon (OpenStreetMap). Swap the IPlaceProvider registration to change provider.
 string placesUserAgent = builder.Configuration["Places:UserAgent"]!;
 builder.Services.AddMemoryCache();
@@ -47,6 +55,7 @@ builder.Services.AddHttpClient<IPlaceProvider, PhotonPlaceProvider>(client =>
 });
 builder.Services.AddScoped<IPlaceSearchService, PlaceSearchService>();
 builder.Services.AddScoped<IRestaurantService, RestaurantService>();
+builder.Services.AddScoped<IRatingService, RatingService>();
 
 //Rate limiting for endpoints calling the free OSM services, so abuse can't get our server throttled or banned.
 builder.Services.AddRateLimiter(options =>
@@ -73,12 +82,13 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
 }
 
 app.UseHttpsRedirection();
 app.UseCors("Frontend");
 app.UseRateLimiter();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
