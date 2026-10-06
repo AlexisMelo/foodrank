@@ -7,6 +7,7 @@ import type {
   ApiResponse,
   PlaceSuggestion,
   SearchArea,
+  RatingInput,
 } from '@/types/restaurant'
 import type { UserLocation } from '@/composables/useUserLocation'
 import mockCommunityRatings from '@/data/community-ratings.json'
@@ -90,6 +91,18 @@ export async function createRestaurantFromPlace(placeId: string): Promise<Restau
     { placeId },
   )
   return response.data
+}
+
+/**
+ * Save the logged-in user's rating of a restaurant for today
+ * @throws the axios error: 401 when not logged in, 404 for an unknown restaurant, 409 when already rated today
+ */
+export async function rateRestaurant(restaurantId: string, rating: RatingInput): Promise<void> {
+  await axios.post(
+    `${import.meta.env.VITE_API_BASE_URL}/api/restaurants/${encodeURIComponent(restaurantId)}/ratings`,
+    rating,
+    { withCredentials: true },
+  )
 }
 
 export async function fetchAllCommunityVisits(): Promise<CommunityVisit[]> {

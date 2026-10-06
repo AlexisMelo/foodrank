@@ -1,4 +1,5 @@
 using Supabase.Gotrue;
+using Supabase.Gotrue.Exceptions;
 
 namespace api.Services;
 
@@ -27,10 +28,22 @@ public class SupabaseAuthService(Supabase.Gotrue.Client auth) : ISupabaseAuthSer
         return session?.AccessToken;
     }
 
-    public async Task<bool> ValidateAccessTokenAsync(string accessToken)
+    /// <inheritdoc />
+    public async Task<string?> GetUserIdAsync(string? accessToken)
     {
-        User? user = await auth.GetUser(accessToken);
-        return user is not null;
+        if (string.IsNullOrEmpty(accessToken))
+            return null;
+
+        try
+        {
+            User? user = await auth.GetUser(accessToken);
+            return user?.Id;
+        }
+        catch (GotrueException)
+        {
+            // Expired or forged token
+            return null;
+        }
     }
 
     public async Task SendPasswordResetEmailAsync(string email, string redirectUrl)

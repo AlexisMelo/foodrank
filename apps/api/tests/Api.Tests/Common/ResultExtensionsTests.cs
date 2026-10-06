@@ -43,4 +43,19 @@ public class ResultExtensionsTests
         ObjectResult result = Assert.IsType<ObjectResult>(response);
         Assert.Equal(StatusCodes.Status503ServiceUnavailable, result.StatusCode);
     }
+
+    /// <summary>
+    /// Unauthorized, Validation and Conflict errors become a 401, 400 and 409.
+    /// </summary>
+    [Theory]
+    [InlineData(ErrorType.Unauthorized, StatusCodes.Status401Unauthorized)]
+    [InlineData(ErrorType.Validation, StatusCodes.Status400BadRequest)]
+    [InlineData(ErrorType.Conflict, StatusCodes.Status409Conflict)]
+    public void ToActionResult_ClientErrors_ReturnMatchingStatus(ErrorType type, int expectedStatus)
+    {
+        IActionResult response = Result<string>.Failure(new Error(type, "error")).ToActionResult();
+
+        ObjectResult result = Assert.IsAssignableFrom<ObjectResult>(response);
+        Assert.Equal(expectedStatus, result.StatusCode);
+    }
 }

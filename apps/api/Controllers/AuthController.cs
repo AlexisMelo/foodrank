@@ -1,5 +1,7 @@
+using api.Common;
 using api.Models;
 using api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Supabase.Gotrue.Exceptions;
 
@@ -9,11 +11,10 @@ namespace api.Controllers;
 [Route("api/auth")]
 public class AuthController(ISupabaseAuthService authService, IConfiguration configuration) : ControllerBase
 {
-    private const string CookieName = "foodrank_token";
-
     private string FrontendUrl => configuration["Frontend:Url"]!;
 
     [HttpPost("signup")]
+    [AllowAnonymous]
     public async Task<IActionResult> Signup([FromBody] SignupRequest request)
     {
         try
@@ -38,6 +39,7 @@ public class AuthController(ISupabaseAuthService authService, IConfiguration con
     /// <param name="request">User credentials</param>
     /// <returns></returns>
     [HttpPost("login")]
+    [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         string? token = await authService.SignInAsync(request.Email, request.Password);
@@ -50,27 +52,14 @@ public class AuthController(ISupabaseAuthService authService, IConfiguration con
     }
 
     /// <summary>
-    /// 
+    /// Returns 200 when the session cookie holds a valid token; otherwise the authentication handler answers 401
+    /// and deletes the cookie.
     /// </summary>
-    /// <returns></returns>
     [HttpGet("me")]
-    public async Task<IActionResult> Me()
-    {
-        if (!Request.Cookies.TryGetValue(CookieName, out string? token))
-            return Unauthorized();
-
-        bool isValid = await authService.ValidateAccessTokenAsync(token);
-
-        if (!isValid)
-        {
-            DeleteCookie();
-            return Unauthorized();
-        }
-
-        return Ok();
-    }
+    public IActionResult Me() => Ok();
 
     [HttpPost("logout")]
+    [AllowAnonymous]
     public IActionResult Logout()
     {
         DeleteCookie();
@@ -82,13 +71,14 @@ public class AuthController(ISupabaseAuthService authService, IConfiguration con
     /// </summary>
     private void DeleteCookie()
     {
-        Response.Cookies.Delete(CookieName, new CookieOptions { Path = "/" });
+        Response.Cookies.Delete(SupabaseAuthenticationHandler.CookieName, new CookieOptions { Path = "/" });
     }
 
     /// <summary>
     /// Sends a password reset email. Always returns 200 to prevent email enumeration.
     /// </summary>
     [HttpPost("forgot-password")]
+    [AllowAnonymous]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
         string redirectUrl = $"{FrontendUrl}/auth/reset-password";
@@ -107,6 +97,7 @@ public class AuthController(ISupabaseAuthService authService, IConfiguration con
     /// Validates the recovery token, updates the password, and opens a session.
     /// </summary>
     [HttpPost("reset-password")]
+    [AllowAnonymous]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
         string? token = await authService.ResetPasswordAsync(request.AccessToken, request.RefreshToken, request.Password);
@@ -124,7 +115,7 @@ public class AuthController(ISupabaseAuthService authService, IConfiguration con
     /// <param name="token"></param>
     private void SetSessionCookie(string token)
     {
-        Response.Cookies.Append(CookieName, token, new CookieOptions
+        Response.Cookies.Append(SupabaseAuthenticationHandler.CookieName, token, new CookieOptions
         {
             HttpOnly = true,
             SameSite = SameSiteMode.Lax,

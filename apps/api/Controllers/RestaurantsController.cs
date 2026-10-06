@@ -1,6 +1,7 @@
 using api.Common;
 using api.Models;
 using api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -20,6 +21,7 @@ public class RestaurantsController(IRestaurantService restaurantService) : Contr
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         => Ok(await restaurantService.GetAllAsync(cancellationToken));
 
@@ -27,6 +29,7 @@ public class RestaurantsController(IRestaurantService restaurantService) : Contr
     /// Returns a single restaurant from its database identifier (404 when it does not exist).
     /// </summary>
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetById(string id, CancellationToken cancellationToken)
         => (await restaurantService.GetByIdAsync(id, cancellationToken)).ToActionResult();
 
@@ -34,6 +37,7 @@ public class RestaurantsController(IRestaurantService restaurantService) : Contr
     /// Returns the restaurant matching a place selected in the search, creating it on first selection.
     /// </summary>
     [HttpPost("from-place")]
+    [AllowAnonymous]
     [EnableRateLimiting(RateLimitPolicies.Places)]
     public async Task<IActionResult> FromPlace([FromBody] CreateRestaurantFromPlaceRequest request, CancellationToken cancellationToken)
         => (await restaurantService.GetOrCreateFromPlaceAsync(request.PlaceId, cancellationToken)).ToActionResult();

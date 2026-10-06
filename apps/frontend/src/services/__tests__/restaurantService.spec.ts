@@ -5,6 +5,7 @@ import {
   createRestaurantFromPlace,
   fetchCommunityVisitsByRestaurantId,
   fetchRestaurantById,
+  rateRestaurant,
 } from '@/services/restaurantService'
 
 // Keep axios' real helpers (isAxiosError...) but intercept the HTTP calls
@@ -82,6 +83,29 @@ describe('createRestaurantFromPlace', () => {
     expect(axios.post).toHaveBeenCalledWith('http://api.test/api/restaurants/from-place', {
       placeId: 'N42',
     })
+  })
+})
+
+describe('rateRestaurant', () => {
+  it('posts the rating with the session cookie, encoding the restaurant id', async () => {
+    vi.mocked(axios.post).mockResolvedValue({ data: {} })
+    const rating = { food: 80, service: 60, setting: 40, bonus: true }
+
+    await rateRestaurant('a/b', rating)
+
+    expect(axios.post).toHaveBeenCalledWith(
+      'http://api.test/api/restaurants/a%2Fb/ratings',
+      rating,
+      { withCredentials: true },
+    )
+  })
+
+  it('rethrows API errors so the page can explain them', async () => {
+    vi.mocked(axios.post).mockRejectedValue(httpError(409))
+
+    await expect(
+      rateRestaurant('r1', { food: 50, service: 50, setting: 50, bonus: false }),
+    ).rejects.toThrow('HTTP error')
   })
 })
 

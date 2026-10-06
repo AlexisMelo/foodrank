@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import axios from 'axios'
 import type { Restaurant, CommunityVisit } from '@/types/restaurant'
 import {
   fetchRestaurantById,
   fetchCommunityVisitsByUserId,
   fetchRestaurants,
+  rateRestaurant,
 } from '@/services/restaurantService'
 import { useAuth } from '@/composables/useAuth'
 
@@ -20,6 +22,40 @@ const food = ref(50)
 const service = ref(50)
 const scenery = ref(50)
 const instantCrush = ref(false)
+const saving = ref(false)
+const saveError = ref<string | null>(null)
+
+/**
+ * Message shown when saving the rating failed, depending on the API answer
+ */
+function saveErrorMessage(error: unknown) {
+  const status = axios.isAxiosError(error) ? error.response?.status : undefined
+  if (status === 409) return 'You already rated this restaurant today.'
+  if (status === 401) return 'Log in to rate this restaurant.'
+  return 'Could not save your rating, try again.'
+}
+
+/**
+ * Save the rating, then go back to the restaurant page
+ */
+async function submit() {
+  if (!restaurant.value || saving.value) return
+  saving.value = true
+  saveError.value = null
+  try {
+    await rateRestaurant(restaurant.value.id, {
+      food: food.value,
+      service: service.value,
+      setting: scenery.value,
+      bonus: instantCrush.value,
+    })
+    router.push(`/restaurant/${restaurant.value.id}`)
+  } catch (error) {
+    saveError.value = saveErrorMessage(error)
+  } finally {
+    saving.value = false
+  }
+}
 
 function sliderColor(value: number) {
   const pct = value / 100
@@ -264,8 +300,8 @@ onMounted(async () => {
           <div class="crush-pip" :class="{ 'crush-pip-on': instantCrush }" />
         </button>
 
-        <button class="submit-btn" @click="router.push(`/restaurant/${route.params.id}`)">
-          Lock it in
+        <button class="submit-btn" :disabled="saving" @click="submit">
+          {{ saving ? 'Saving...' : 'Lock it in' }}
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -277,6 +313,7 @@ onMounted(async () => {
             <path d="M5 12h14M13 6l6 6-6 6" />
           </svg>
         </button>
+        <p v-if="saveError" class="save-error" role="alert">{{ saveError }}</p>
       </div>
     </template>
   </div>
@@ -615,5 +652,18 @@ onMounted(async () => {
 }
 .submit-btn:active {
   transform: translateY(0);
+}
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+}
+
+.save-error {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ff6b6b;
+  text-align: center;
 }
 </style>

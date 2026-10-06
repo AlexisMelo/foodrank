@@ -35,6 +35,21 @@ export interface Visit {
   decor: number
 }
 
+/**
+ * Rating sent by the rating page (POST /api/restaurants/:id/ratings), stored in the `rating` table
+ * (food_rating, service_rating, setting_rating, bonus: see database.types.ts).
+ */
+export interface RatingInput {
+  /** 0 to 100 */
+  food: number
+  /** 0 to 100 */
+  service: number
+  /** Setting (decor), 0 to 100 */
+  setting: number
+  /** "Instant crush" favorite bonus */
+  bonus: boolean
+}
+
 export interface CommunityVisit extends Visit {
   user: {
     id: string

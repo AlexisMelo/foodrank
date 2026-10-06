@@ -62,7 +62,7 @@ public class RestaurantService(Supabase.Client supabase, IPlaceProvider placePro
             ModeledResponse<Restaurant> inserted = await supabase.From<Restaurant>().Insert(ToRestaurant(details.Value!), cancellationToken: cancellationToken);
             saved = inserted.Models.FirstOrDefault() ?? await FindByOsmIdAsync(placeId, cancellationToken);
         }
-        catch (PostgrestException ex) when (IsUniqueViolation(ex))
+        catch (PostgrestException ex) when (PostgrestErrors.IsUniqueViolation(ex))
         {
             saved = await FindByOsmIdAsync(placeId, cancellationToken);
         }
@@ -83,13 +83,6 @@ public class RestaurantService(Supabase.Client supabase, IPlaceProvider placePro
             .Get(cancellationToken);
         return response.Models.FirstOrDefault();
     }
-
-    /// <summary>
-    /// True when PostgREST rejected the insert because of a unique constraint (PostgreSQL 23505, HTTP 409),
-    /// i.e. another request created the same restaurant concurrently.
-    /// </summary>
-    private static bool IsUniqueViolation(PostgrestException ex)
-        => ex.StatusCode == 409 && ex.Content?.Contains("23505") == true;
 
     /// <summary>
     /// Maps place details to a new restaurant row.
