@@ -6,7 +6,7 @@ using api.Models;
 namespace Api.Tests.Controllers;
 
 /// <summary>
-/// Tests POST /api/restaurants/{id}/ratings through HTTP, with in-memory auth, restaurant and rating services.
+/// Tests the /api/restaurants/{id}/ratings endpoints through HTTP, with in-memory auth, restaurant and rating services.
 /// </summary>
 public class RatingsControllerTests : IDisposable
 {
@@ -144,5 +144,167 @@ public class RatingsControllerTests : IDisposable
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         Assert.Contains("already rated", await response.Content.ReadAsStringAsync());
         Assert.Equal(80, Assert.Single(_factory.RatingService.Ratings).FoodRating);
+    }
+
+    /// <summary>
+    /// Sends a GET to <paramref name="url"/>, with the auth cookie when <paramref name="token"/> is given.
+    /// </summary>
+    private Task<HttpResponseMessage> GetAsync(string url, string? token = Token)
+    {
+        HttpRequestMessage request = new(HttpMethod.Get, url);
+        if (token is not null)
+            request.Headers.Add("Cookie", $"{SupabaseAuthenticationHandler.CookieName}={token}");
+        return _client.SendAsync(request);
+    }
+
+    /// <summary>
+    /// Stores a rating of <paramref name="restaurantId"/> by <paramref name="userId"/> on <paramref name="date"/>.
+    /// </summary>
+    private void AddRating(string userId, DateTime date, float food = 50, string restaurantId = RestaurantId)
+        => _factory.RatingService.Ratings.Add(new Rating
+        {
+            RestaurantId = restaurantId,
+            UserId = userId,
+            Date = date,
+            FoodRating = food,
+            ServiceRating = 50,
+            SettingRating = 50
+        });
+
+    /// <summary>
+    /// Without limit, the 5 most recent ratings of the restaurant are returned, every user included, most recent first,
+    /// even to an anonymous visitor.
+    /// </summary>
+    [Fact]
+    public async Task GetRecent_Anonymous_ReturnsFiveMostRecentOfRestaurant()
+    {
+        _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = "r2", Name = "Sushi Bar" });
+        for (int day = 1; day <= 7; day++)
+            AddRating(day % 2 == 0 ? UserId : "user-2", new DateTime(2026, 3, day));
+        AddRating("user-2", new DateTime(2026, 3, 20), restaurantId: "r2");
+
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings", token: null);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        List<RatingResponse> ratings = (await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!;
+        Assert.Equal(["2026-03-07", "2026-03-06", "2026-03-05", "2026-03-04", "2026-03-03"], ratings.Select(r => r.Date));
+        Assert.All(ratings, r => Assert.Equal(RestaurantId, r.RestaurantId));
+    }
+
+    /// <summary>
+    /// The limit query parameter changes the number of ratings returned.
+    /// </summary>
+    [Fact]
+    public async Task GetRecent_WithLimit_ReturnsThatMany()
+    {
+        for (int day = 1; day <= 4; day++)
+            AddRating("user-2", new DateTime(2026, 3, day));
+
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings?limit=2");
+
+        List<RatingResponse> ratings = (await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!;
+        Assert.Equal(2, ratings.Count);
+    }
+
+    /// <summary>
+    /// A limit outside 1-50 is refused with a 400.
+    /// </summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(51)]
+    public async Task GetRecent_LimitOutOfRange_Returns400(int limit)
+    {
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings?limit={limit}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    /// <summary>
+    /// Each rating carries the name and avatar of its author's profile, in camelCase for the frontend.
+    /// </summary>
+    [Fact]
+    public async Task GetRecent_WithProfile_ReturnsAuthorName()
+    {
+        _factory.RatingService.Profiles["user-2"] = new Profile { Id = "user-2", FullName = "Camille", AvatarUrl = "https://img.test/c.png" };
+        AddRating("user-2", new DateTime(2026, 3, 1), food: 72.5f);
+
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings");
+
+        string json = await response.Content.ReadAsStringAsync();
+        Assert.Contains("\"userName\":\"Camille\"", json);
+        Assert.Contains("\"userAvatarUrl\":\"https://img.test/c.png\"", json);
+        Assert.Contains("\"food\":72.5", json);
+        Assert.Contains("\"date\":\"2026-03-01\"", json);
+    }
+
+    /// <summary>
+    /// Recent ratings of an unknown restaurant return a 404.
+    /// </summary>
+    [Fact]
+    public async Task GetRecent_UnknownRestaurant_Returns404()
+    {
+        HttpResponseMessage response = await GetAsync("/api/restaurants/unknown/ratings");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    /// <summary>
+    /// "Mine" returns every rating of the logged-in user for the restaurant (no limit), most recent first, and none of
+    /// the other users' or other restaurants'.
+    /// </summary>
+    [Fact]
+    public async Task GetMine_LoggedIn_ReturnsAllOwnRatingsOfRestaurant()
+    {
+        _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = "r2", Name = "Sushi Bar" });
+        for (int day = 1; day <= 6; day++)
+            AddRating(UserId, new DateTime(2026, 3, day));
+        AddRating("user-2", new DateTime(2026, 3, 10));
+        AddRating(UserId, new DateTime(2026, 3, 11), restaurantId: "r2");
+
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings/mine");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        List<RatingResponse> ratings = (await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!;
+        Assert.Equal(6, ratings.Count);
+        Assert.All(ratings, r => Assert.Equal(UserId, r.UserId));
+        Assert.All(ratings, r => Assert.Equal(RestaurantId, r.RestaurantId));
+        Assert.Equal("2026-03-06", ratings[0].Date);
+    }
+
+    /// <summary>
+    /// A rating just created is returned by "mine", so the restaurant page shows it right after the rating page.
+    /// </summary>
+    [Fact]
+    public async Task GetMine_AfterCreate_ReturnsNewRating()
+    {
+        await RateAsync(RestaurantId, new { food = 91, service = 70, setting = 30, bonus = true });
+
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings/mine");
+
+        RatingResponse rating = Assert.Single((await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!);
+        Assert.Equal(91, rating.Food);
+        Assert.True(rating.Bonus);
+    }
+
+    /// <summary>
+    /// Without the auth cookie, "mine" is refused with a 401.
+    /// </summary>
+    [Fact]
+    public async Task GetMine_NoCookie_Returns401()
+    {
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings/mine", token: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    /// <summary>
+    /// "Mine" for an unknown restaurant returns a 404.
+    /// </summary>
+    [Fact]
+    public async Task GetMine_UnknownRestaurant_Returns404()
+    {
+        HttpResponseMessage response = await GetAsync("/api/restaurants/unknown/ratings/mine");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 }

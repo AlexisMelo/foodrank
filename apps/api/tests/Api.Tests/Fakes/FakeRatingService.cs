@@ -16,6 +16,11 @@ public class FakeRatingService(FakeRestaurantService restaurants) : IRatingServi
     /// </summary>
     public List<Rating> Ratings { get; } = [];
 
+    /// <summary>
+    /// Profiles "stored in the database", by user id; a user without profile is shown as anonymous.
+    /// </summary>
+    public Dictionary<string, Profile> Profiles { get; } = [];
+
     /// <inheritdoc />
     public Task<Result<Rating>> CreateAsync(string restaurantId, string userId, RateRestaurantRequest request, CancellationToken cancellationToken)
     {
@@ -38,5 +43,31 @@ public class FakeRatingService(FakeRestaurantService restaurants) : IRatingServi
         };
         Ratings.Add(rating);
         return Task.FromResult(Result<Rating>.Success(rating));
+    }
+
+    /// <inheritdoc />
+    public Task<Result<IReadOnlyList<RatingResponse>>> GetRecentAsync(string restaurantId, int count, CancellationToken cancellationToken)
+        => Task.FromResult(Find(restaurantId, r => true, count));
+
+    /// <inheritdoc />
+    public Task<Result<IReadOnlyList<RatingResponse>>> GetByUserAsync(string restaurantId, string userId, CancellationToken cancellationToken)
+        => Task.FromResult(Find(restaurantId, r => r.UserId == userId, int.MaxValue));
+
+    /// <summary>
+    /// Returns at most <paramref name="count"/> ratings of the restaurant matching <paramref name="predicate"/>, most
+    /// recent first and with their author, or NotFound when the restaurant does not exist.
+    /// </summary>
+    private Result<IReadOnlyList<RatingResponse>> Find(string restaurantId, Func<Rating, bool> predicate, int count)
+    {
+        if (restaurants.Restaurants.All(r => r.Id != restaurantId))
+            return Result<IReadOnlyList<RatingResponse>>.Failure(new Error(ErrorType.NotFound, "Restaurant not found."));
+
+        List<RatingResponse> ratings = Ratings
+            .Where(r => r.RestaurantId == restaurantId && predicate(r))
+            .OrderByDescending(r => r.Date)
+            .Take(count)
+            .Select(r => RatingResponse.From(r, Profiles.GetValueOrDefault(r.UserId)))
+            .ToList();
+        return Result<IReadOnlyList<RatingResponse>>.Success(ratings);
     }
 }

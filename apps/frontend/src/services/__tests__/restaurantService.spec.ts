@@ -3,7 +3,8 @@ import axios, { AxiosError, type AxiosResponse } from 'axios'
 import {
   autocompletePlaces,
   createRestaurantFromPlace,
-  fetchCommunityVisitsByRestaurantId,
+  fetchMyRatings,
+  fetchRecentRatings,
   fetchRestaurantById,
   rateRestaurant,
 } from '@/services/restaurantService'
@@ -109,15 +110,44 @@ describe('rateRestaurant', () => {
   })
 })
 
-describe('fetchCommunityVisitsByRestaurantId', () => {
-  it('returns only the visits of the restaurant, most recent first', async () => {
-    const restaurantId = (await import('@/data/community-ratings.json')).default.data[0]!
-      .restaurantId
-    const visits = await fetchCommunityVisitsByRestaurantId(restaurantId)
+describe('fetchRecentRatings', () => {
+  it('asks for the 5 most recent ratings by default, encoding the restaurant id', async () => {
+    const ratings = [{ userId: 'u1', date: '2026-03-07', userName: 'Camille' }]
+    vi.mocked(axios.get).mockResolvedValue({ data: ratings })
 
-    expect(visits.length).toBeGreaterThan(0)
-    expect(visits.every((v) => v.restaurantId === restaurantId)).toBe(true)
-    const dates = visits.map((v) => new Date(v.date).getTime())
-    expect(dates).toEqual([...dates].sort((a, b) => b - a))
+    expect(await fetchRecentRatings('a/b')).toEqual(ratings)
+    expect(axios.get).toHaveBeenCalledWith('http://api.test/api/restaurants/a%2Fb/ratings', {
+      params: { limit: 5 },
+    })
+  })
+
+  it('rethrows API errors', async () => {
+    vi.mocked(axios.get).mockRejectedValue(httpError(503))
+
+    await expect(fetchRecentRatings('r1')).rejects.toThrow('HTTP error')
+  })
+})
+
+describe('fetchMyRatings', () => {
+  it("returns the logged-in user's ratings, sending the session cookie", async () => {
+    const ratings = [{ userId: 'me', date: '2026-03-07' }]
+    vi.mocked(axios.get).mockResolvedValue({ data: ratings })
+
+    expect(await fetchMyRatings('a/b')).toEqual(ratings)
+    expect(axios.get).toHaveBeenCalledWith('http://api.test/api/restaurants/a%2Fb/ratings/mine', {
+      withCredentials: true,
+    })
+  })
+
+  it('returns no rating when the user is not logged in', async () => {
+    vi.mocked(axios.get).mockRejectedValue(httpError(401))
+
+    expect(await fetchMyRatings('r1')).toEqual([])
+  })
+
+  it('rethrows other errors', async () => {
+    vi.mocked(axios.get).mockRejectedValue(httpError(404))
+
+    await expect(fetchMyRatings('r1')).rejects.toThrow('HTTP error')
   })
 })

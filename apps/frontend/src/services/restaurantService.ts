@@ -8,6 +8,7 @@ import type {
   PlaceSuggestion,
   SearchArea,
   RatingInput,
+  RestaurantRating,
 } from '@/types/restaurant'
 import type { UserLocation } from '@/composables/useUserLocation'
 import mockCommunityRatings from '@/data/community-ratings.json'
@@ -105,18 +106,41 @@ export async function rateRestaurant(restaurantId: string, rating: RatingInput):
   )
 }
 
-export async function fetchAllCommunityVisits(): Promise<CommunityVisit[]> {
-  const response = mockCommunityRatings as ApiResponse<CommunityVisit[]>
+/**
+ * Get the most recent ratings of a restaurant, every user included, most recent first
+ * @param limit number of ratings, 1 to 50
+ */
+export async function fetchRecentRatings(
+  restaurantId: string,
+  limit = 5,
+): Promise<RestaurantRating[]> {
+  const response = await axios.get<RestaurantRating[]>(
+    `${import.meta.env.VITE_API_BASE_URL}/api/restaurants/${encodeURIComponent(restaurantId)}/ratings`,
+    { params: { limit } },
+  )
   return response.data
 }
 
-export async function fetchCommunityVisitsByRestaurantId(
-  restaurantId: string,
-): Promise<CommunityVisit[]> {
+/**
+ * Get every rating the logged-in user gave to a restaurant, most recent first
+ * @returns an empty list when the user is not logged in (401)
+ */
+export async function fetchMyRatings(restaurantId: string): Promise<RestaurantRating[]> {
+  try {
+    const response = await axios.get<RestaurantRating[]>(
+      `${import.meta.env.VITE_API_BASE_URL}/api/restaurants/${encodeURIComponent(restaurantId)}/ratings/mine`,
+      { withCredentials: true },
+    )
+    return response.data
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 401) return []
+    throw error
+  }
+}
+
+export async function fetchAllCommunityVisits(): Promise<CommunityVisit[]> {
   const response = mockCommunityRatings as ApiResponse<CommunityVisit[]>
   return response.data
-    .filter((v) => v.restaurantId === restaurantId)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 }
 
 export async function fetchCommunityVisitsByUserId(userId: string): Promise<CommunityVisit[]> {

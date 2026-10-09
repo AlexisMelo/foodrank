@@ -4,6 +4,12 @@
 
 /node_modules/
 
+# Agent skills installed locally (`npx skills add ...`): .agents/ holds the files,
+# .claude/skills/<name> is a symlink to them, skills-lock.json records their source
+/.agents/
+/.claude/skills/vue-best-practices
+/skills-lock.json
+
 # ============================================================
 # Angular (Frontend)
 # ============================================================

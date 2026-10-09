@@ -50,6 +50,29 @@ export interface RatingInput {
   bonus: boolean
 }
 
+/**
+ * A rating read from the API (GET /api/restaurants/:id/ratings), with its author.
+ * A user rates a restaurant at most once per day: (userId, date) identifies a rating of a restaurant.
+ */
+export interface RestaurantRating {
+  restaurantId: string
+  userId: string
+  /** Day of the rating, "yyyy-MM-dd" (no time, no time zone) */
+  date: string
+  /** 0 to 100 */
+  food: number
+  /** 0 to 100 */
+  service: number
+  /** Setting (decor), 0 to 100 */
+  setting: number
+  /** "Instant crush" favorite bonus */
+  bonus: boolean
+  /** Full name or user name of the author, "Anonymous" when unknown */
+  userName: string
+  /** Profile picture of the author, null when there is none */
+  userAvatarUrl: string | null
+}
+
 export interface CommunityVisit extends Visit {
   user: {
     id: string

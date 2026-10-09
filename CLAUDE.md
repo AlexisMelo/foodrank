@@ -29,6 +29,8 @@ dotnet test -c Release   # run tests (Release: `npm start` locks bin/Debug)
 
 ### Frontend (`apps/frontend`)
 
+For any change in apps/frontend, load the vue-best-practices skill before writing code.
+
 - **Framework:** Vue 3 + TypeScript (Vite)
 - **Router:** Vue Router 5
 - **Testing:** Vitest + @vue/test-utils
