@@ -2,13 +2,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
-import type { Restaurant, CommunityVisit } from '@/types/restaurant'
-import {
-  fetchRestaurantById,
-  fetchCommunityVisitsByUserId,
-  fetchRestaurants,
-  rateRestaurant,
-} from '@/services/restaurantService'
+import type { Restaurant } from '@/types/restaurant'
+import type { CommunityVisit } from '@/types/rating'
+import { fetchRestaurantById, fetchRestaurants } from '@/services/restaurantService'
+import { fetchCommunityVisitsByUserId, rateRestaurant } from '@/services/ratingService'
 import { useAuth } from '@/composables/useAuth'
 
 const { currentUserId: CURRENT_USER_ID } = useAuth()

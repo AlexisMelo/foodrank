@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { RestaurantRating } from '@/types/restaurant'
+import type { RestaurantRating } from '@/types/rating'
 import { formatRatingDate, ratingAverage, scoreColor } from '@/utils/rating'
 import RatingScores from '@/components/RatingScores.vue'
 

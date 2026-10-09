@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { AxiosError, type AxiosResponse } from 'axios'
 import NewReviewView from '@/views/NewReviewView.vue'
-import { rateRestaurant } from '@/services/restaurantService'
+import { rateRestaurant } from '@/services/ratingService'
 
 const push = vi.fn()
 const replace = vi.fn()
@@ -10,8 +10,10 @@ const replace = vi.fn()
 vi.mock('@/composables/useAuth', () => ({ useAuth: () => ({ currentUserId: 'alex' }) }))
 vi.mock('@/services/restaurantService', () => ({
   fetchRestaurantById: vi.fn().mockResolvedValue({ id: 'r1', name: 'Pizza Roma', emoji: '🍕' }),
-  fetchCommunityVisitsByUserId: vi.fn().mockResolvedValue([]),
   fetchRestaurants: vi.fn().mockResolvedValue([]),
+}))
+vi.mock('@/services/ratingService', () => ({
+  fetchCommunityVisitsByUserId: vi.fn().mockResolvedValue([]),
   rateRestaurant: vi.fn(),
 }))
 vi.mock('vue-router', () => ({

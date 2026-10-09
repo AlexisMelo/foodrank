@@ -1,19 +1,6 @@
 import axios from 'axios'
-import type {
-  Restaurant,
-  CommunityVisit,
-  User,
-  Tierlist,
-  ApiResponse,
-  PlaceSuggestion,
-  SearchArea,
-  RatingInput,
-  RestaurantRating,
-} from '@/types/restaurant'
+import type { Restaurant, PlaceSuggestion, SearchArea } from '@/types/restaurant'
 import type { UserLocation } from '@/composables/useUserLocation'
-import mockCommunityRatings from '@/data/community-ratings.json'
-import mockUsers from '@/data/users.json'
-import mockTierlists from '@/data/tierlists.json'
 
 /**
  * Get all restaurants
@@ -92,82 +79,4 @@ export async function createRestaurantFromPlace(placeId: string): Promise<Restau
     { placeId },
   )
   return response.data
-}
-
-/**
- * Save the logged-in user's rating of a restaurant for today
- * @throws the axios error: 401 when not logged in, 404 for an unknown restaurant, 409 when already rated today
- */
-export async function rateRestaurant(restaurantId: string, rating: RatingInput): Promise<void> {
-  await axios.post(
-    `${import.meta.env.VITE_API_BASE_URL}/api/restaurants/${encodeURIComponent(restaurantId)}/ratings`,
-    rating,
-    { withCredentials: true },
-  )
-}
-
-/**
- * Get the most recent ratings of a restaurant, every user included, most recent first
- * @param limit number of ratings, 1 to 50
- */
-export async function fetchRecentRatings(
-  restaurantId: string,
-  limit = 5,
-): Promise<RestaurantRating[]> {
-  const response = await axios.get<RestaurantRating[]>(
-    `${import.meta.env.VITE_API_BASE_URL}/api/restaurants/${encodeURIComponent(restaurantId)}/ratings`,
-    { params: { limit } },
-  )
-  return response.data
-}
-
-/**
- * Get every rating the logged-in user gave to a restaurant, most recent first
- * @returns an empty list when the user is not logged in (401)
- */
-export async function fetchMyRatings(restaurantId: string): Promise<RestaurantRating[]> {
-  try {
-    const response = await axios.get<RestaurantRating[]>(
-      `${import.meta.env.VITE_API_BASE_URL}/api/restaurants/${encodeURIComponent(restaurantId)}/ratings/mine`,
-      { withCredentials: true },
-    )
-    return response.data
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 401) return []
-    throw error
-  }
-}
-
-export async function fetchAllCommunityVisits(): Promise<CommunityVisit[]> {
-  const response = mockCommunityRatings as ApiResponse<CommunityVisit[]>
-  return response.data
-}
-
-export async function fetchCommunityVisitsByUserId(userId: string): Promise<CommunityVisit[]> {
-  const response = mockCommunityRatings as ApiResponse<CommunityVisit[]>
-  return response.data
-    .filter((v) => v.user.id === userId)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-}
-
-export async function fetchUserById(id: string): Promise<User | undefined> {
-  const response = mockUsers as ApiResponse<User[]>
-  return response.data.find((u) => u.id === id)
-}
-
-export async function fetchTierlistsByUserId(userId: string): Promise<Tierlist[]> {
-  const response = mockTierlists as ApiResponse<Tierlist[]>
-  return response.data
-    .filter((t) => t.userId === userId)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-}
-
-export async function fetchTierlistById(id: string): Promise<Tierlist | undefined> {
-  const response = mockTierlists as ApiResponse<Tierlist[]>
-  return response.data.find((t) => t.id === id)
-}
-
-export async function fetchPinnedTierlistsByUserId(userId: string): Promise<Tierlist[]> {
-  const response = mockTierlists as ApiResponse<Tierlist[]>
-  return response.data.filter((t) => t.userId === userId && t.pinned)
 }

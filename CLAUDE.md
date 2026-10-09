@@ -16,6 +16,8 @@ foodrank/
 
 ### API (`apps/api`)
 
+For any change in apps/api, load the dotnet-best-practices skill before writing code.
+
 - **Runtime:** .NET 10
 - **Type:** ASP.NET Core Web API with controllers
 - **OpenAPI:** enabled via `Microsoft.AspNetCore.OpenApi`, available at `/openapi/v1.json` in development

@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { Restaurant, CommunityVisit, Tierlist, User } from '@/types/restaurant'
-import {
-  fetchTierlistById,
-  fetchRestaurants,
-  fetchCommunityVisitsByUserId,
-  fetchUserById,
-} from '@/services/restaurantService'
+import type { Restaurant } from '@/types/restaurant'
+import type { CommunityVisit } from '@/types/rating'
+import type { Tierlist } from '@/types/tierlist'
+import type { User } from '@/types/user'
+import { fetchRestaurants } from '@/services/restaurantService'
+import { fetchCommunityVisitsByUserId } from '@/services/ratingService'
+import { fetchUserById } from '@/services/userService'
+import { fetchTierlistById } from '@/services/tierlistService'
 import RankedRestaurantItem from '@/components/RankedRestaurantItem.vue'
 import { useAuth } from '@/composables/useAuth'
 

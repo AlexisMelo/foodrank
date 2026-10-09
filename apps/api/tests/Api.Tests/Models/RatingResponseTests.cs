@@ -74,9 +74,9 @@ public class RatingResponseTests
         RatingResponse withEmptyProfile = RatingResponse.From(SampleRating, new Profile { Id = "user-1", AvatarUrl = "" });
         RatingResponse withoutProfile = RatingResponse.From(SampleRating, null);
 
-        Assert.Equal(RatingResponse.AnonymousUserName, withEmptyProfile.UserName);
+        Assert.Equal(Profile.AnonymousName, withEmptyProfile.UserName);
         Assert.Null(withEmptyProfile.UserAvatarUrl);
-        Assert.Equal(RatingResponse.AnonymousUserName, withoutProfile.UserName);
+        Assert.Equal(Profile.AnonymousName, withoutProfile.UserName);
         Assert.Null(withoutProfile.UserAvatarUrl);
     }
 }

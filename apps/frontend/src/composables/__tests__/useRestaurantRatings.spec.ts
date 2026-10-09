@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { shallowRef } from 'vue'
-import type { RestaurantRating } from '@/types/restaurant'
+import type { RestaurantRating } from '@/types/rating'
 import { useRestaurantRatings } from '@/composables/useRestaurantRatings'
-import { fetchMyRatings, fetchRecentRatings } from '@/services/restaurantService'
+import { fetchMyRatings, fetchRecentRatings } from '@/services/ratingService'
 
-vi.mock('@/services/restaurantService', () => ({
+vi.mock('@/services/ratingService', () => ({
   fetchRecentRatings: vi.fn(),
   fetchMyRatings: vi.fn(),
 }))

@@ -30,6 +30,11 @@ public class ApiFactory : WebApplicationFactory<Program>
     public FakeRatingService RatingService { get; }
 
     /// <summary>
+    /// User service used by the controllers, reading the profiles and ratings of <see cref="RatingService"/>.
+    /// </summary>
+    public FakeUserService UserService { get; }
+
+    /// <summary>
     /// Supabase Auth replacement; register the valid tokens in the tests.
     /// </summary>
     public FakeSupabaseAuthService AuthService { get; } = new();
@@ -40,6 +45,7 @@ public class ApiFactory : WebApplicationFactory<Program>
     public ApiFactory()
     {
         RatingService = new FakeRatingService(RestaurantService);
+        UserService = new FakeUserService(RatingService);
     }
 
     /// <summary>
@@ -60,6 +66,8 @@ public class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IRestaurantService>(RestaurantService);
             services.RemoveAll<IRatingService>();
             services.AddSingleton<IRatingService>(RatingService);
+            services.RemoveAll<IUserService>();
+            services.AddSingleton<IUserService>(UserService);
             services.RemoveAll<ISupabaseAuthService>();
             services.AddSingleton<ISupabaseAuthService>(AuthService);
         });

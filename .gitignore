@@ -8,6 +8,7 @@
 # .claude/skills/<name> is a symlink to them, skills-lock.json records their source
 /.agents/
 /.claude/skills/vue-best-practices
+/.claude/skills/*
 /skills-lock.json
 
 # ============================================================

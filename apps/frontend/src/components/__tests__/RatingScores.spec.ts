@@ -18,7 +18,9 @@ describe('RatingScores', () => {
   it('colors scores green from 85, yellow from 65, red below', () => {
     const wrapper = mount(RatingScores, { props: { food: 85, service: 65, decor: 64.9 } })
 
-    const colors = wrapper.findAll('.score-value').map((v) => (v.element as HTMLElement).style.color)
+    const colors = wrapper
+      .findAll('.score-value')
+      .map((v) => (v.element as HTMLElement).style.color)
 
     expect(colors).toEqual([GREEN, YELLOW, RED])
   })

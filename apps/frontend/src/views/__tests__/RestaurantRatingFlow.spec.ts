@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
-import type { RatingInput, RestaurantRating } from '@/types/restaurant'
+import type { RatingInput, RestaurantRating } from '@/types/rating'
 import RestaurantView from '@/views/RestaurantView.vue'
 import NewReviewView from '@/views/NewReviewView.vue'
 
@@ -9,17 +9,19 @@ import NewReviewView from '@/views/NewReviewView.vue'
 const api = vi.hoisted(() => ({ ratings: [] as RestaurantRating[] }))
 
 vi.mock('@/composables/useAuth', () => ({ useAuth: () => ({ currentUserId: 'me' }) }))
-vi.mock('@/services/restaurantService', () => {
+vi.mock('@/services/restaurantService', () => ({
+  fetchRestaurantById: vi.fn(async (id: string) => ({ id, name: 'Pizza Roma', emoji: '🍕' })),
+  createRestaurantFromPlace: vi.fn(),
+  fetchRestaurants: vi.fn(async () => []),
+}))
+vi.mock('@/services/ratingService', () => {
   /** Ratings of the restaurant, most recent first, like the API */
   const ofRestaurant = (restaurantId: string) =>
     api.ratings
       .filter((r) => r.restaurantId === restaurantId)
       .sort((a, b) => b.date.localeCompare(a.date))
   return {
-    fetchRestaurantById: vi.fn(async (id: string) => ({ id, name: 'Pizza Roma', emoji: '🍕' })),
-    createRestaurantFromPlace: vi.fn(),
     fetchCommunityVisitsByUserId: vi.fn(async () => []),
-    fetchRestaurants: vi.fn(async () => []),
     fetchRecentRatings: vi.fn(async (id: string, limit = 5) => ofRestaurant(id).slice(0, limit)),
     fetchMyRatings: vi.fn(async (id: string) => ofRestaurant(id).filter((r) => r.userId === 'me')),
     rateRestaurant: vi.fn(async (restaurantId: string, rating: RatingInput) => {

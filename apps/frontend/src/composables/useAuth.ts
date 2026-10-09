@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { ref, readonly } from 'vue'
-import type { User } from '@/types/restaurant'
+import type { User } from '@/types/user'
 
 const CURRENT_USER_ID = 'alex'
 

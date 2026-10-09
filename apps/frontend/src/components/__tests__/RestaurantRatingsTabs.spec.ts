@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import type { RestaurantRating } from '@/types/restaurant'
+import type { RestaurantRating } from '@/types/rating'
 import RestaurantRatingsTabs from '@/components/RestaurantRatingsTabs.vue'
 
 /**

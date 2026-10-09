@@ -1,3 +1,4 @@
+using System.Globalization;
 using Supabase.Postgrest.Attributes;
 using Supabase.Postgrest.Models;
 
@@ -51,4 +52,11 @@ public class Rating : BaseModel
     /// </summary>
     [Column("bonus")]
     public bool Bonus { get; set; }
+
+    /// <summary>
+    /// Formats a rating day for API responses.
+    /// </summary>
+    /// <param name="date">Day of the rating (its time is ignored).</param>
+    /// <returns>The day as "yyyy-MM-dd", without time nor time zone.</returns>
+    public static string FormatDate(DateTime date) => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 }

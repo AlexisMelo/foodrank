@@ -50,8 +50,22 @@ public class FakeRatingService(FakeRestaurantService restaurants) : IRatingServi
         => Task.FromResult(Find(restaurantId, r => true, count));
 
     /// <inheritdoc />
-    public Task<Result<IReadOnlyList<RatingResponse>>> GetByUserAsync(string restaurantId, string userId, CancellationToken cancellationToken)
+    public Task<Result<IReadOnlyList<RatingResponse>>> GetByRestaurantAndUserAsync(string restaurantId, string userId, CancellationToken cancellationToken)
         => Task.FromResult(Find(restaurantId, r => r.UserId == userId, int.MaxValue));
+
+    /// <inheritdoc />
+    public Task<Result<IReadOnlyList<UserRatingResponse>>> GetByUserAsync(string userId, CancellationToken cancellationToken)
+    {
+        if (!UserIds.IsValid(userId))
+            return Task.FromResult(Result<IReadOnlyList<UserRatingResponse>>.Failure(UserIds.NotFound));
+
+        List<UserRatingResponse> userRatings = Ratings
+            .Where(r => r.UserId == userId)
+            .OrderByDescending(r => r.Date)
+            .Select(r => UserRatingResponse.From(r, restaurants.Restaurants.Single(x => x.Id == r.RestaurantId)))
+            .ToList();
+        return Task.FromResult(Result<IReadOnlyList<UserRatingResponse>>.Success(userRatings));
+    }
 
     /// <summary>
     /// Returns at most <paramref name="count"/> ratings of the restaurant matching <paramref name="predicate"/>, most

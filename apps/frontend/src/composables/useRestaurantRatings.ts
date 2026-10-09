@@ -1,6 +1,6 @@
 import { readonly, ref, shallowRef, toValue, watch, type MaybeRefOrGetter } from 'vue'
-import type { RestaurantRating } from '@/types/restaurant'
-import { fetchMyRatings, fetchRecentRatings } from '@/services/restaurantService'
+import type { RestaurantRating } from '@/types/rating'
+import { fetchMyRatings, fetchRecentRatings } from '@/services/ratingService'
 
 /** Number of ratings shown in the "Recent" tab. */
 export const RECENT_RATINGS_COUNT = 5

@@ -24,5 +24,13 @@ public interface IRatingService
     /// Returns every rating of <paramref name="restaurantId"/> by <paramref name="userId"/>, most recent first.
     /// Fails with NotFound when the restaurant does not exist.
     /// </summary>
-    Task<Result<IReadOnlyList<RatingResponse>>> GetByUserAsync(string restaurantId, string userId, CancellationToken cancellationToken);
+    Task<Result<IReadOnlyList<RatingResponse>>> GetByRestaurantAndUserAsync(string restaurantId, string userId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Returns every rating of <paramref name="userId"/>, all restaurants included, most recent first.
+    /// </summary>
+    /// <param name="userId">Supabase Auth id of the user.</param>
+    /// <param name="cancellationToken">Cancels the database queries.</param>
+    /// <returns>The ratings with their restaurant, or a NotFound failure when <paramref name="userId"/> is not a user id (uuid).</returns>
+    Task<Result<IReadOnlyList<UserRatingResponse>>> GetByUserAsync(string userId, CancellationToken cancellationToken);
 }

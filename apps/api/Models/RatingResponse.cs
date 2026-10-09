@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace api.Models;
 
 /// <summary>
@@ -26,28 +24,19 @@ public record RatingResponse(
     string? UserAvatarUrl)
 {
     /// <summary>
-    /// Name displayed when the user has no profile, or neither a full name nor a user name.
+    /// Maps a rating and the profile of its author to the API response.
     /// </summary>
-    public const string AnonymousUserName = "Anonymous";
-
-    /// <summary>
-    /// Maps a rating and the profile of its author (null when the user has no profile row) to the API response.
-    /// The displayed name is the full name, then the user name, then <see cref="AnonymousUserName"/>.
-    /// </summary>
+    /// <param name="rating">Rating row.</param>
+    /// <param name="profile">Profile row of the author, null when the user has none.</param>
+    /// <returns>The rating with the author's <see cref="Profile.DisplayName"/> and avatar.</returns>
     public static RatingResponse From(Rating rating, Profile? profile) => new(
         rating.RestaurantId,
         rating.UserId,
-        rating.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+        Rating.FormatDate(rating.Date),
         rating.FoodRating,
         rating.ServiceRating,
         rating.SettingRating,
         rating.Bonus,
-        FirstNonBlank(profile?.FullName, profile?.Username) ?? AnonymousUserName,
-        string.IsNullOrWhiteSpace(profile?.AvatarUrl) ? null : profile.AvatarUrl);
-
-    /// <summary>
-    /// Returns the first value that is neither null nor whitespace, or null when there is none.
-    /// </summary>
-    private static string? FirstNonBlank(params string?[] values)
-        => values.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v));
+        Profile.DisplayName(profile),
+        Profile.AvatarUrlOrNull(profile));
 }

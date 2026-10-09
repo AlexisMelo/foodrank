@@ -1,19 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import type { User } from '@/types/restaurant'
-import { fetchUserById } from '@/services/restaurantService'
 import { useAuth } from '@/composables/useAuth'
+import { useUserProfile } from '@/composables/useUserProfile'
+import UserBar from '@/components/UserBar.vue'
 
-const { currentUserId: CURRENT_USER_ID, logout } = useAuth()
-const router = useRouter()
-
-const currentUser = ref<User | null>(null)
-
-onMounted(async () => {
-  const [user] = await Promise.all([fetchUserById(CURRENT_USER_ID)])
-  currentUser.value = user ?? null
-})
+const { logout } = useAuth()
+const { profile } = useUserProfile()
 </script>
 
 <template>
@@ -22,11 +13,9 @@ onMounted(async () => {
       <h1 class="title">Settings</h1>
     </div>
 
-    <div v-if="currentUser" class="bottom-section">
-      <button class="user-bar" @click="router.push('/profile')">
-        <span class="user-avatar">{{ currentUser.avatar }}</span>
-        <span class="user-name">{{ currentUser.name }}</span>
-      </button>
+    <!-- Log out stays available even if the profile could not be loaded -->
+    <div class="bottom-section">
+      <UserBar v-if="profile" :profile="profile" class="settings-user-bar" />
       <button class="logout-btn" @click="logout">Log out</button>
     </div>
   </div>
@@ -64,49 +53,8 @@ onMounted(async () => {
   padding-bottom: 16px;
 }
 
-.user-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.settings-user-bar {
   width: 100%;
-  background: #1a1a1a;
-  border: 1.5px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
-  padding: 10px 14px;
-  cursor: pointer;
-  color: inherit;
-  font-family: inherit;
-  text-align: left;
-  transition: background 0.2s;
-}
-.user-bar:hover {
-  background: #222;
-}
-
-.user-avatar {
-  font-size: 24px;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.user-name {
-  font-size: 14px;
-  font-weight: 800;
-  color: #ffffff;
-  flex: 1;
-}
-
-.user-visited {
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.35);
-  white-space: nowrap;
 }
 
 .logout-btn {

@@ -24,7 +24,10 @@ function formatDate(iso: string): string {
   <RouterLink :to="`/restaurant/${restaurantId}`" class="review-card">
     <div class="emoji-wrap">
       <div class="emoji-circle">{{ emoji }}</div>
-      <div class="avg-bubble" :style="{ backgroundColor: scoreColor(Math.round((food + service + decor) / 3)) }">
+      <div
+        class="avg-bubble"
+        :style="{ backgroundColor: scoreColor(Math.round((food + service + decor) / 3)) }"
+      >
         {{ Math.round((food + service + decor) / 3) }}
       </div>
     </div>
@@ -34,21 +37,30 @@ function formatDate(iso: string): string {
       <div class="criterion">
         <span class="criterion-label">🍽️</span>
         <div class="criterion-bar-wrap">
-          <div class="criterion-bar" :style="{ width: `${food}%`, backgroundColor: scoreColor(food) }" />
+          <div
+            class="criterion-bar"
+            :style="{ width: `${food}%`, backgroundColor: scoreColor(food) }"
+          />
         </div>
         <span class="criterion-score" :style="{ color: scoreColor(food) }">{{ food }}</span>
       </div>
       <div class="criterion">
         <span class="criterion-label">🤝</span>
         <div class="criterion-bar-wrap">
-          <div class="criterion-bar" :style="{ width: `${service}%`, backgroundColor: scoreColor(service) }" />
+          <div
+            class="criterion-bar"
+            :style="{ width: `${service}%`, backgroundColor: scoreColor(service) }"
+          />
         </div>
         <span class="criterion-score" :style="{ color: scoreColor(service) }">{{ service }}</span>
       </div>
       <div class="criterion">
         <span class="criterion-label">✨</span>
         <div class="criterion-bar-wrap">
-          <div class="criterion-bar" :style="{ width: `${decor}%`, backgroundColor: scoreColor(decor) }" />
+          <div
+            class="criterion-bar"
+            :style="{ width: `${decor}%`, backgroundColor: scoreColor(decor) }"
+          />
         </div>
         <span class="criterion-score" :style="{ color: scoreColor(decor) }">{{ decor }}</span>
       </div>
@@ -69,7 +81,9 @@ function formatDate(iso: string): string {
   gap: 10px;
   text-decoration: none;
   color: inherit;
-  transition: background 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    transform 0.15s;
 }
 
 .review-card:hover {

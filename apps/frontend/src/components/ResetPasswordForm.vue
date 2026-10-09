@@ -36,7 +36,11 @@ async function submit() {
   try {
     await axios.post(
       `${import.meta.env.VITE_API_BASE_URL}/api/auth/reset-password`,
-      { accessToken: accessToken.value, refreshToken: refreshToken.value, password: password.value },
+      {
+        accessToken: accessToken.value,
+        refreshToken: refreshToken.value,
+        password: password.value,
+      },
       { withCredentials: true },
     )
     await checkSession()

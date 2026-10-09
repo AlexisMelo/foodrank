@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import type { Restaurant, Tierlist } from '@/types/restaurant'
-import { fetchTierlistsByUserId, fetchRestaurants } from '@/services/restaurantService'
+import type { Restaurant } from '@/types/restaurant'
+import type { Tierlist } from '@/types/tierlist'
+import { fetchRestaurants } from '@/services/restaurantService'
+import { fetchTierlistsByUserId } from '@/services/tierlistService'
 import TierlistCard from '@/components/TierlistCard.vue'
 import { useAuth } from '@/composables/useAuth'
 

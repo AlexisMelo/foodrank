@@ -2,7 +2,8 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import type { Restaurant } from '@/types/restaurant'
-import { fetchRestaurants, fetchCommunityVisitsByUserId } from '@/services/restaurantService'
+import { fetchRestaurants } from '@/services/restaurantService'
+import { fetchCommunityVisitsByUserId } from '@/services/ratingService'
 import { useAuth } from '@/composables/useAuth'
 
 const { currentUserId: CURRENT_USER_ID } = useAuth()
@@ -130,8 +131,15 @@ onMounted(async () => {
   animation: pulse 1s ease-in-out infinite;
 }
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.9); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.9);
+  }
 }
 
 .location-notice {
@@ -163,7 +171,9 @@ onMounted(async () => {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    transform 0.15s;
 }
 .restaurant-card:active {
   transform: scale(0.97);

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, shallowRef } from 'vue'
-import type { RestaurantRating } from '@/types/restaurant'
+import type { RestaurantRating } from '@/types/rating'
 import NewReviewChip from '@/components/NewReviewChip.vue'
 import MyRatingCard from '@/components/MyRatingCard.vue'
 import RecentRatingCard from '@/components/RecentRatingCard.vue'

@@ -20,7 +20,9 @@ function scoreColor(score: number): string {
     </div>
     <div class="score-item">
       <span class="score-label">🤝</span>
-      <span class="score-value" :style="{ color: scoreColor(service) }">{{ Math.round(service) }}</span>
+      <span class="score-value" :style="{ color: scoreColor(service) }">{{
+        Math.round(service)
+      }}</span>
     </div>
     <div class="score-item">
       <span class="score-label">✨</span>

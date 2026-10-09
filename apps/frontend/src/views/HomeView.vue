@@ -1,24 +1,25 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import type { Restaurant, CommunityVisit, User } from '@/types/restaurant'
-import {
-  fetchRestaurants,
-  fetchCommunityVisitsByUserId,
-  fetchUserById,
-  fetchTierlistsByUserId,
-} from '@/services/restaurantService'
+import type { Restaurant } from '@/types/restaurant'
+import type { CommunityVisit } from '@/types/rating'
+import { fetchRestaurants } from '@/services/restaurantService'
+import { fetchCommunityVisitsByUserId } from '@/services/ratingService'
+import { fetchTierlistsByUserId } from '@/services/tierlistService'
 import RecentReviewCard from '@/components/RecentReviewCard.vue'
 import NewReviewChip from '@/components/NewReviewChip.vue'
 import RankedRestaurantItem from '@/components/RankedRestaurantItem.vue'
 import TierlistChip from '@/components/TierlistChip.vue'
+import UserBar from '@/components/UserBar.vue'
 import { useAuth } from '@/composables/useAuth'
+import { useUserProfile } from '@/composables/useUserProfile'
 
 const { currentUserId: CURRENT_USER_ID } = useAuth()
 const router = useRouter()
 
-const currentUser = ref<User | null>(null)
-const visitedCount = ref(0)
+// Logged-in user's name, avatar and number of restaurants rated
+const { profile } = useUserProfile()
+
 const recentVisits = ref<(CommunityVisit & { restaurant: Restaurant })[]>([])
 const allRestaurants = ref<Restaurant[]>([])
 const allVisits = ref<CommunityVisit[]>([])
@@ -26,16 +27,13 @@ const recentTierlists = ref<{ id: string; name: string; emoji: string }[]>([])
 const loading = ref(true)
 
 onMounted(async () => {
-  const [user, visits, restaurants, tierlists] = await Promise.all([
-    fetchUserById(CURRENT_USER_ID),
+  const [visits, restaurants, tierlists] = await Promise.all([
     fetchCommunityVisitsByUserId(CURRENT_USER_ID),
     fetchRestaurants(),
     fetchTierlistsByUserId(CURRENT_USER_ID),
   ])
-  currentUser.value = user ?? null
   allVisits.value = visits
   allRestaurants.value = restaurants
-  visitedCount.value = new Set(visits.map((v) => v.restaurantId)).size
   const restaurantMap = new Map(restaurants.map((r) => [r.id, r]))
   recentVisits.value = visits
     .slice(0, 5)
@@ -66,12 +64,9 @@ const topRestaurants = computed(() => {
 
 <template>
   <div class="home">
-    <div v-if="currentUser" class="top-bar">
-      <button class="user-bar" @click="router.push('/profile')">
-        <span class="user-avatar">{{ currentUser.avatar }}</span>
-        <span class="user-name">{{ currentUser.name }}</span>
-        <span class="user-visited">{{ visitedCount }} restaurants</span>
-      </button>
+    <div class="top-bar">
+      <UserBar v-if="profile" :profile="profile" showCount class="home-user-bar" />
+      <div v-else class="home-user-bar user-bar-skeleton" />
       <button class="settings-btn" @click="router.push('/settings')" aria-label="Settings">
         <svg
           viewBox="0 0 24 24"
@@ -169,24 +164,14 @@ const topRestaurants = computed(() => {
   gap: 10px;
 }
 
-.user-bar {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.home-user-bar {
   flex: 1;
-  background: #1a1a1a;
-  border: 1.5px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
-  padding: 10px 14px;
-  cursor: pointer;
-  color: inherit;
-  font-family: inherit;
-  text-align: left;
-  transition: background 0.2s;
+  min-width: 0;
 }
-.user-bar:hover {
-  background: #222;
+.user-bar-skeleton {
+  height: 60px;
+  border-radius: 16px;
+  background: #1a1a1a;
 }
 
 .settings-btn {
@@ -212,32 +197,6 @@ const topRestaurants = computed(() => {
 .settings-btn svg {
   width: 25px;
   height: 25px;
-}
-
-.user-avatar {
-  font-size: 24px;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.user-name {
-  font-size: 14px;
-  font-weight: 800;
-  color: #ffffff;
-  flex: 1;
-}
-
-.user-visited {
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.35);
-  white-space: nowrap;
 }
 
 .section {

@@ -50,7 +50,7 @@ public class RatingService(Supabase.Client supabase, IRestaurantService restaura
     }
 
     /// <inheritdoc />
-    public async Task<Result<IReadOnlyList<RatingResponse>>> GetByUserAsync(string restaurantId, string userId, CancellationToken cancellationToken)
+    public async Task<Result<IReadOnlyList<RatingResponse>>> GetByRestaurantAndUserAsync(string restaurantId, string userId, CancellationToken cancellationToken)
     {
         Result<Restaurant> restaurant = await restaurantService.GetByIdAsync(restaurantId, cancellationToken);
         if (!restaurant.IsSuccess)
@@ -62,6 +62,19 @@ public class RatingService(Supabase.Client supabase, IRestaurantService restaura
             .Order("date", Constants.Ordering.Descending)
             .Get(cancellationToken);
         return Result<IReadOnlyList<RatingResponse>>.Success(await WithProfilesAsync(response.Models, cancellationToken));
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<IReadOnlyList<UserRatingResponse>>> GetByUserAsync(string userId, CancellationToken cancellationToken)
+    {
+        if (!UserIds.IsValid(userId))
+            return Result<IReadOnlyList<UserRatingResponse>>.Failure(UserIds.NotFound);
+
+        ModeledResponse<Rating> response = await supabase.From<Rating>()
+            .Where(r => r.UserId == userId)
+            .Order("date", Constants.Ordering.Descending)
+            .Get(cancellationToken);
+        return Result<IReadOnlyList<UserRatingResponse>>.Success(await WithRestaurantsAsync(response.Models, cancellationToken));
     }
 
     /// <summary>
@@ -80,6 +93,27 @@ public class RatingService(Supabase.Client supabase, IRestaurantService restaura
         Dictionary<string, Profile> profilesById = profiles.Models.ToDictionary(p => p.Id);
 
         return ratings.Select(r => RatingResponse.From(r, profilesById.GetValueOrDefault(r.UserId))).ToList();
+    }
+
+    /// <summary>
+    /// Loads the restaurants rated in <paramref name="ratings"/> in one query, and maps each rating with its restaurant.
+    /// </summary>
+    private async Task<IReadOnlyList<UserRatingResponse>> WithRestaurantsAsync(IReadOnlyList<Rating> ratings, CancellationToken cancellationToken)
+    {
+        if (ratings.Count == 0)
+            return [];
+
+        List<object> restaurantIds = ratings.Select(r => r.RestaurantId).Distinct().Cast<object>().ToList();
+        ModeledResponse<Restaurant> restaurants = await supabase.From<Restaurant>()
+            .Filter("id", Constants.Operator.In, restaurantIds)
+            .Get(cancellationToken);
+        Dictionary<string, Restaurant> restaurantsById = restaurants.Models.ToDictionary(r => r.Id);
+
+        // The foreign key guarantees the restaurant exists; skip defensively rather than fail the whole list
+        return ratings
+            .Where(r => restaurantsById.ContainsKey(r.RestaurantId))
+            .Select(r => UserRatingResponse.From(r, restaurantsById[r.RestaurantId]))
+            .ToList();
     }
 
     /// <summary>

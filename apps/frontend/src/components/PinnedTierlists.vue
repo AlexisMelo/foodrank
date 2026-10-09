@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { fetchPinnedTierlistsByUserId } from '@/services/restaurantService'
+import { fetchPinnedTierlistsByUserId } from '@/services/tierlistService'
 import TierlistChip from '@/components/TierlistChip.vue'
 
 const props = defineProps<{ userId: string }>()
@@ -17,13 +17,7 @@ onMounted(async () => {
   <div v-if="pinned.length" class="pinned-section">
     <h3 class="section-label">Pinned tierlists</h3>
     <div class="row">
-      <TierlistChip
-        v-for="t in pinned"
-        :key="t.id"
-        :id="t.id"
-        :name="t.name"
-        :emoji="t.emoji"
-      />
+      <TierlistChip v-for="t in pinned" :key="t.id" :id="t.id" :name="t.name" :emoji="t.emoji" />
     </div>
   </div>
 </template>

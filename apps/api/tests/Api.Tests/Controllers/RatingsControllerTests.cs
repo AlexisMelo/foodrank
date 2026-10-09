@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using api.Common;
+using api.Controllers;
 using api.Models;
 
 namespace Api.Tests.Controllers;
@@ -306,5 +307,14 @@ public class RatingsControllerTests : IDisposable
         HttpResponseMessage response = await GetAsync("/api/restaurants/unknown/ratings/mine");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    /// <summary>
+    /// The controller refuses a null service instead of failing on the first request.
+    /// </summary>
+    [Fact]
+    public void Constructor_NullService_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() => new RatingsController(null!));
     }
 }
