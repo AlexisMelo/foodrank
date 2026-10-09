@@ -32,4 +32,10 @@ describe('formatRatingDate', () => {
 
     expect(formatRatingDate('2026-03-07')).toBe('March 7, 2026')
   })
+
+  it('displays only the requested parts', () => {
+    vi.stubEnv('TZ', 'America/New_York')
+
+    expect(formatRatingDate('2026-03-07', { month: 'short', day: 'numeric' })).toBe('Mar 7')
+  })
 })

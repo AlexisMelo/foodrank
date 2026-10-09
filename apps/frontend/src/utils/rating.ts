@@ -25,12 +25,12 @@ export function scoreColor(score: number): string {
  * Formats a rating day ("yyyy-MM-dd") for display, e.g. "March 7, 2026".
  * The day is read in local time: `new Date('2026-03-07')` would be UTC midnight, displayed as the day before
  * in time zones behind UTC.
+ * @param format parts to display, e.g. `{ month: 'short', day: 'numeric' }` for "Mar 7"
  */
-export function formatRatingDate(date: string): string {
+export function formatRatingDate(
+  date: string,
+  format: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' },
+): string {
   const [year, month, day] = date.split('-').map(Number)
-  return new Date(year!, month! - 1, day).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
+  return new Date(year!, month! - 1, day).toLocaleDateString('en-US', format)
 }

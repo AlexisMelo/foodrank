@@ -13,6 +13,7 @@ import TierlistChip from '@/components/TierlistChip.vue'
 import UserBar from '@/components/UserBar.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useUserProfile } from '@/composables/useUserProfile'
+import { useMyRecentRatings } from '@/composables/useMyRecentRatings'
 
 const { currentUserId: CURRENT_USER_ID } = useAuth()
 const router = useRouter()
@@ -20,11 +21,16 @@ const router = useRouter()
 // Logged-in user's name, avatar and number of restaurants rated
 const { profile } = useUserProfile()
 
-const recentVisits = ref<(CommunityVisit & { restaurant: Restaurant })[]>([])
+// Last 5 ratings given by the logged-in user
+const {
+  ratings: recentRatings,
+  loading: recentRatingsLoading,
+  loadError: recentRatingsLoadError,
+} = useMyRecentRatings(5)
+
 const allRestaurants = ref<Restaurant[]>([])
 const allVisits = ref<CommunityVisit[]>([])
 const recentTierlists = ref<{ id: string; name: string; emoji: string }[]>([])
-const loading = ref(true)
 
 onMounted(async () => {
   const [visits, restaurants, tierlists] = await Promise.all([
@@ -34,16 +40,10 @@ onMounted(async () => {
   ])
   allVisits.value = visits
   allRestaurants.value = restaurants
-  const restaurantMap = new Map(restaurants.map((r) => [r.id, r]))
-  recentVisits.value = visits
-    .slice(0, 5)
-    .map((v) => ({ ...v, restaurant: restaurantMap.get(v.restaurantId)! }))
-    .filter((v) => v.restaurant)
   recentTierlists.value = [...tierlists]
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 8)
     .map((t) => ({ id: t.id, name: t.name, emoji: t.emoji }))
-  loading.value = false
 })
 
 const topRestaurants = computed(() => {
@@ -90,21 +90,25 @@ const topRestaurants = computed(() => {
         <NewReviewChip />
       </div>
       <div class="cards-row">
-        <template v-if="loading">
+        <template v-if="recentRatingsLoading">
           <div v-for="i in 5" :key="i" class="card-skeleton" />
         </template>
 
+        <p v-else-if="recentRatingsLoadError" class="empty">Couldn't load your reviews</p>
+        <p v-else-if="!recentRatings.length" class="empty">No review yet 🍽️</p>
+
+        <!-- A user rates a restaurant at most once per day: restaurant + date identifies a rating -->
         <RecentReviewCard
           v-else
-          v-for="visit in recentVisits"
-          :key="visit.id"
-          :restaurantId="visit.restaurantId"
-          :emoji="visit.restaurant.emoji"
-          :name="visit.restaurant.name"
-          :date="visit.date"
-          :food="visit.food"
-          :service="visit.service"
-          :decor="visit.decor"
+          v-for="rating in recentRatings"
+          :key="`${rating.restaurantId}-${rating.date}`"
+          :restaurantId="rating.restaurantId"
+          :emoji="rating.restaurantEmoji"
+          :name="rating.restaurantName"
+          :date="rating.date"
+          :food="rating.food"
+          :service="rating.service"
+          :decor="rating.setting"
         />
       </div>
     </section>
@@ -256,11 +260,19 @@ const topRestaurants = computed(() => {
   gap: 8px;
 }
 
+.empty {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+  padding: 20px 0;
+}
+
 /* Skeleton */
 .card-skeleton {
   flex-shrink: 0;
+  // Same size as RecentReviewCard, so the page does not shift once the reviews are loaded
   width: 148px;
-  height: 190px;
+  height: 216px;
   background: #1a1a1a;
   border-radius: 20px;
   animation: pulse 1.2s ease-in-out infinite;

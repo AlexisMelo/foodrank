@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { formatRatingDate, scoreColor } from '@/utils/rating'
+
 defineProps<{
   restaurantId: string
   emoji: string
@@ -8,16 +10,6 @@ defineProps<{
   service: number
   decor: number
 }>()
-
-function scoreColor(score: number): string {
-  if (score >= 85) return '#90be6d'
-  if (score >= 65) return '#f9c74f'
-  return '#ff6b6b'
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
 </script>
 
 <template>
@@ -32,7 +24,7 @@ function formatDate(iso: string): string {
       </div>
     </div>
     <span class="restaurant-name">{{ name }}</span>
-    <span class="visit-date">{{ formatDate(date) }}</span>
+    <span class="visit-date">{{ formatRatingDate(date, { month: 'short', day: 'numeric' }) }}</span>
     <div class="criteria">
       <div class="criterion">
         <span class="criterion-label">🍽️</span>
@@ -69,9 +61,12 @@ function formatDate(iso: string): string {
 </template>
 
 <style scoped lang="scss">
+// Fixed height so the loading skeleton (HomeView .card-skeleton) can match it:
+// padding 2×16 + emoji 60 + name 34 + date 14 + criteria 3×14 + 2×7 + gaps 3×10 = 226
 .review-card {
   flex-shrink: 0;
   width: 148px;
+  height: 216px;
   background: #1a1a1a;
   border-radius: 20px;
   padding: 16px 14px;
@@ -132,7 +127,9 @@ function formatDate(iso: string): string {
   font-weight: 700;
   color: #ffffff;
   text-align: center;
-  line-height: 1.3;
+  // Always 2 lines high, so the rest of the card does not move up with a short name
+  line-height: 17px;
+  flex-shrink: 0;
   width: 100%;
   overflow: hidden;
   display: -webkit-box;
@@ -144,6 +141,7 @@ function formatDate(iso: string): string {
   font-size: 11px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.35);
+  line-height: 14px;
 }
 
 .criteria {
@@ -157,6 +155,8 @@ function formatDate(iso: string): string {
   display: flex;
   align-items: center;
   gap: 6px;
+  height: 14px;
+  line-height: 14px;
 }
 
 .criterion-label {
