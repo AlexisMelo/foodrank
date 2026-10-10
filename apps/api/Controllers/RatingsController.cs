@@ -44,6 +44,17 @@ public class RatingsController(IRatingService ratingService) : ControllerBase
         => (await _ratingService.GetRecentAsync(restaurantId, limit, cancellationToken)).ToActionResult();
 
     /// <summary>
+    /// Returns the averages of a restaurant's active ratings (each user's latest), per criterion and globally.
+    /// </summary>
+    /// <param name="restaurantId">Database id of the restaurant.</param>
+    /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
+    /// <returns>200 with the averages (null when the restaurant has no rating), 404 for an unknown restaurant.</returns>
+    [HttpGet("summary")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetSummary(string restaurantId, CancellationToken cancellationToken)
+        => (await _ratingService.GetSummaryAsync(restaurantId, cancellationToken)).ToActionResult();
+
+    /// <summary>
     /// Returns every rating the logged-in user gave to a restaurant, most recent first.
     /// </summary>
     /// <param name="restaurantId">Database id of the restaurant.</param>

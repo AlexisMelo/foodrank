@@ -22,6 +22,12 @@ public interface IRatingService
     Task<Result<IReadOnlyList<RatingResponse>>> GetRecentAsync(string restaurantId, int count, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Returns the averages of every active rating of <paramref name="restaurantId"/> (each user's latest), per
+    /// criterion and globally. Fails with NotFound when the restaurant does not exist.
+    /// </summary>
+    Task<Result<RatingSummaryResponse>> GetSummaryAsync(string restaurantId, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Returns every rating of <paramref name="restaurantId"/> by <paramref name="userId"/>, most recent first.
     /// Fails with NotFound when the restaurant does not exist.
     /// </summary>

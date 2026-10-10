@@ -1,5 +1,11 @@
 import axios from 'axios'
-import type { CommunityVisit, RatingInput, RestaurantRating, UserRating } from '@/types/rating'
+import type {
+  CommunityVisit,
+  RatingInput,
+  RatingSummary,
+  RestaurantRating,
+  UserRating,
+} from '@/types/rating'
 import { ME } from '@/services/userService'
 import mockCommunityRatings from '@/data/community-ratings.json'
 
@@ -29,6 +35,16 @@ export async function fetchRecentRatings(
   const response = await axios.get<RestaurantRating[]>(
     `${import.meta.env.VITE_API_BASE_URL}/api/restaurants/${encodeURIComponent(restaurantId)}/ratings`,
     { params: { limit } },
+  )
+  return response.data
+}
+
+/**
+ * Get the averages of every active rating of a restaurant, per criterion and globally
+ */
+export async function fetchRatingSummary(restaurantId: string): Promise<RatingSummary> {
+  const response = await axios.get<RatingSummary>(
+    `${import.meta.env.VITE_API_BASE_URL}/api/restaurants/${encodeURIComponent(restaurantId)}/ratings/summary`,
   )
   return response.data
 }

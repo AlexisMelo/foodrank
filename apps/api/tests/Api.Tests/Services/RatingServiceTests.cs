@@ -41,4 +41,17 @@ public class RatingServiceTests
         Assert.Contains("order=date.desc", url);
         Assert.Contains("limit=5", url);
     }
+
+    /// <summary>
+    /// The query of the restaurant's averages can be built, and keeps every active rating of the restaurant (no limit).
+    /// </summary>
+    [Fact]
+    public void RestaurantActiveRatingsQuery_FiltersOnRestaurantAndActiveFlag()
+    {
+        string url = Uri.UnescapeDataString(RatingService.RestaurantActiveRatingsQuery(RatingTable(), "r1").GenerateUrl());
+
+        Assert.Contains("id_restaurant=eq.r1", url);
+        Assert.Contains("is_active=eq.true", url, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("limit=", url);
+    }
 }

@@ -6,6 +6,8 @@ import { fetchRestaurantById, createRestaurantFromPlace } from '@/services/resta
 import CuisineChip from '@/components/CuisineChip.vue'
 import RestaurantAddress from '@/components/RestaurantAddress.vue'
 import RestaurantRatingsTabs from '@/components/RestaurantRatingsTabs.vue'
+import GlobalScoreBadge from '@/components/GlobalScoreBadge.vue'
+import CriteriaAverages from '@/components/CriteriaAverages.vue'
 import { useRestaurantRatings } from '@/composables/useRestaurantRatings'
 
 const route = useRoute()
@@ -18,6 +20,7 @@ const loadError = shallowRef(false)
 const {
   recentRatings,
   myRatings,
+  summary,
   loading: ratingsLoading,
   loadError: ratingsLoadError,
 } = useRestaurantRatings(() => restaurant.value?.id ?? null)
@@ -79,7 +82,13 @@ watch(() => route.params, loadRestaurant, { immediate: true })
       <div class="hero">
         <div class="emoji-wrap">
           <span class="emoji">{{ restaurant.emoji || '🍽️' }}</span>
+          <GlobalScoreBadge
+            v-if="summary?.global != null"
+            :score="summary.global"
+            class="global-score"
+          />
         </div>
+        <CriteriaAverages v-if="summary" :summary="summary" class="criteria-averages" />
       </div>
 
       <div class="content">
@@ -170,8 +179,13 @@ watch(() => route.params, loadRestaurant, { immediate: true })
 /* Hero */
 .hero {
   margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 .emoji-wrap {
+  position: relative;
+  flex-shrink: 0;
   width: 130px;
   height: 130px;
   border-radius: 50%;
@@ -181,6 +195,15 @@ watch(() => route.params, loadRestaurant, { immediate: true })
   align-items: center;
   justify-content: center;
   font-size: 64px;
+}
+.global-score {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+}
+.criteria-averages {
+  flex: 0 1 170px;
+  min-width: 0;
 }
 
 /* Content */

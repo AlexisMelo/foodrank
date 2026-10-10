@@ -45,6 +45,17 @@ public class RatingService(Supabase.Client supabase, IRestaurantService restaura
         return Result<IReadOnlyList<RatingResponse>>.Success(await WithProfilesAsync(response.Models, cancellationToken));
     }
 
+    /// <inheritdoc />
+    public async Task<Result<RatingSummaryResponse>> GetSummaryAsync(string restaurantId, CancellationToken cancellationToken)
+    {
+        Result<Restaurant> restaurant = await restaurantService.GetByIdAsync(restaurantId, cancellationToken);
+        if (!restaurant.IsSuccess)
+            return Result<RatingSummaryResponse>.Failure(restaurant.Error!);
+
+        ModeledResponse<Rating> response = await RestaurantActiveRatingsQuery(supabase.From<Rating>(), restaurant.Value!.Id).Get(cancellationToken);
+        return Result<RatingSummaryResponse>.Success(RatingSummaryResponse.From(response.Models));
+    }
+
     /// <summary>
     /// Query of the active rating(s) of <paramref name="restaurantId"/> by <paramref name="userId"/>.
     /// </summary>
@@ -66,11 +77,20 @@ public class RatingService(Supabase.Client supabase, IRestaurantService restaura
     /// <param name="count">Maximum number of ratings.</param>
     /// <returns>The filtered query, ready to send.</returns>
     public static IPostgrestTable<Rating> RecentActiveRatingsQuery(IPostgrestTable<Rating> ratings, string restaurantId, int count)
-        => ratings
-            .Where(r => r.RestaurantId == restaurantId)
-            .Where(IsActive)
+        => RestaurantActiveRatingsQuery(ratings, restaurantId)
             .Order("date", Constants.Ordering.Descending)
             .Limit(count);
+
+    /// <summary>
+    /// Query of every active rating of <paramref name="restaurantId"/> (each user's latest).
+    /// </summary>
+    /// <param name="ratings">Query on the "rating" table to filter.</param>
+    /// <param name="restaurantId">Database id of the restaurant.</param>
+    /// <returns>The filtered query, ready to send.</returns>
+    public static IPostgrestTable<Rating> RestaurantActiveRatingsQuery(IPostgrestTable<Rating> ratings, string restaurantId)
+        => ratings
+            .Where(r => r.RestaurantId == restaurantId)
+            .Where(IsActive);
 
     /// <summary>
     /// Filter on the active ratings. The comparison must be explicit: the Postgrest client cannot translate a bare

@@ -57,6 +57,17 @@ public class FakeRatingService(FakeRestaurantService restaurants) : IRatingServi
         => Task.FromResult(Find(restaurantId, r => r.IsActive, count));
 
     /// <inheritdoc />
+    public Task<Result<RatingSummaryResponse>> GetSummaryAsync(string restaurantId, CancellationToken cancellationToken)
+    {
+        if (restaurants.Restaurants.All(r => r.Id != restaurantId))
+            return Task.FromResult(Result<RatingSummaryResponse>.Failure(new Error(ErrorType.NotFound, "Restaurant not found.")));
+
+        // Like the real query, only the active ratings of the restaurant are averaged
+        IEnumerable<Rating> active = Ratings.Where(r => r.RestaurantId == restaurantId && r.IsActive);
+        return Task.FromResult(Result<RatingSummaryResponse>.Success(RatingSummaryResponse.From(active)));
+    }
+
+    /// <inheritdoc />
     public Task<Result<IReadOnlyList<RatingResponse>>> GetByRestaurantAndUserAsync(string restaurantId, string userId, CancellationToken cancellationToken)
         => Task.FromResult(Find(restaurantId, r => r.UserId == userId, int.MaxValue));
 

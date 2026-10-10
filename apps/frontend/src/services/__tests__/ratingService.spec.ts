@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import axios, { AxiosError, type AxiosResponse } from 'axios'
 import {
   fetchMyRatings,
+  fetchRatingSummary,
   fetchRecentRatings,
   fetchUserRatings,
   rateRestaurant,
@@ -47,6 +48,16 @@ describe('rateRestaurant', () => {
     await expect(
       rateRestaurant('r1', { food: 50, service: 50, setting: 50, bonus: false }),
     ).rejects.toThrow('HTTP error')
+  })
+})
+
+describe('fetchRatingSummary', () => {
+  it("gets the restaurant's averages, encoding the restaurant id", async () => {
+    const summary = { count: 2, food: 80, service: 50, setting: 25, global: 51.7 }
+    vi.mocked(axios.get).mockResolvedValue({ data: summary })
+
+    expect(await fetchRatingSummary('a/b')).toEqual(summary)
+    expect(axios.get).toHaveBeenCalledWith('http://api.test/api/restaurants/a%2Fb/ratings/summary')
   })
 })
 

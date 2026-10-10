@@ -162,15 +162,16 @@ public class RatingsControllerTests : IDisposable
     /// Stores a rating of <paramref name="restaurantId"/> by <paramref name="userId"/> on <paramref name="date"/>,
     /// active unless <paramref name="isActive"/> is false.
     /// </summary>
-    private void AddRating(string userId, DateTime date, float food = 50, string restaurantId = RestaurantId, bool isActive = true)
+    private void AddRating(string userId, DateTime date, float food = 50, string restaurantId = RestaurantId, bool isActive = true,
+        float service = 50, float setting = 50)
         => _factory.RatingService.Ratings.Add(new Rating
         {
             RestaurantId = restaurantId,
             UserId = userId,
             Date = date,
             FoodRating = food,
-            ServiceRating = 50,
-            SettingRating = 50,
+            ServiceRating = service,
+            SettingRating = setting,
             IsActive = isActive
         });
 
@@ -283,6 +284,63 @@ public class RatingsControllerTests : IDisposable
     public async Task GetRecent_UnknownRestaurant_Returns404()
     {
         HttpResponseMessage response = await GetAsync("/api/restaurants/unknown/ratings");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    /// <summary>
+    /// The summary averages every active rating of the restaurant (more than the 5 "Recent" ones), ignoring the
+    /// previous ratings and the other restaurants', and is sent in camelCase to an anonymous visitor.
+    /// </summary>
+    [Fact]
+    public async Task GetSummary_Anonymous_AveragesActiveRatingsOfRestaurant()
+    {
+        _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = "r2", Name = "Sushi Bar" });
+        for (int day = 1; day <= 6; day++)
+            AddRating($"user-{day}", new DateTime(2026, 3, day), food: 90, service: 60, setting: 30);
+        AddRating("user-1", new DateTime(2026, 2, 1), food: 0, service: 0, setting: 0, isActive: false);
+        AddRating("user-1", new DateTime(2026, 3, 1), food: 0, service: 0, setting: 0, restaurantId: "r2");
+
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings/summary", token: null);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(new RatingSummaryResponse(6, 90, 60, 30, 60), await response.Content.ReadFromJsonAsync<RatingSummaryResponse>());
+        Assert.Contains("\"global\":60", await response.Content.ReadAsStringAsync());
+    }
+
+    /// <summary>
+    /// A restaurant nobody rated yet has a summary with no averages.
+    /// </summary>
+    [Fact]
+    public async Task GetSummary_NoRating_ReturnsNullAverages()
+    {
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings/summary");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(new RatingSummaryResponse(0, null, null, null, null), await response.Content.ReadFromJsonAsync<RatingSummaryResponse>());
+    }
+
+    /// <summary>
+    /// Right after a new rating, the summary counts it in place of the user's previous one.
+    /// </summary>
+    [Fact]
+    public async Task GetSummary_AfterNewRating_ReplacesPreviousOne()
+    {
+        AddRating(UserId, new DateTime(2026, 3, 1), food: 20, service: 20, setting: 20);
+        await RateAsync(RestaurantId, new { food = 90, service = 60, setting = 30, bonus = false });
+
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings/summary");
+
+        Assert.Equal(new RatingSummaryResponse(1, 90, 60, 30, 60), await response.Content.ReadFromJsonAsync<RatingSummaryResponse>());
+    }
+
+    /// <summary>
+    /// The summary of an unknown restaurant returns a 404.
+    /// </summary>
+    [Fact]
+    public async Task GetSummary_UnknownRestaurant_Returns404()
+    {
+        HttpResponseMessage response = await GetAsync("/api/restaurants/unknown/ratings/summary");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }

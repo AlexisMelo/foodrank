@@ -58,6 +58,23 @@ export interface RestaurantRating {
   userAvatarUrl: string | null
 }
 
+/**
+ * Averages of a restaurant's active ratings (each user's latest), from GET /api/restaurants/:id/ratings/summary.
+ * The averages are null when nobody rated the restaurant yet.
+ */
+export interface RatingSummary {
+  /** Number of active ratings averaged */
+  count: number
+  /** 0 to 100 */
+  food: number | null
+  /** 0 to 100 */
+  service: number | null
+  /** Setting (decor), 0 to 100 */
+  setting: number | null
+  /** Average of every criterion of every active rating, 0 to 100 ("instant crush" bonus not included) */
+  global: number | null
+}
+
 /** A rating of a user, with the restaurant it rates (GET /api/users/:id/ratings). */
 export interface UserRating {
   restaurantId: string
