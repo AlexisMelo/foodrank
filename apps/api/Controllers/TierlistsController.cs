@@ -38,4 +38,16 @@ public class TierlistsController(ITierlistService tierlistService) : ControllerB
     [HttpGet("{id:long}")]
     public async Task<IActionResult> GetById(long id, CancellationToken cancellationToken)
         => (await _tierlistService.GetByIdAsync(id, cancellationToken)).ToActionResult();
+
+    /// <summary>
+    /// Pins a tierlist of the logged-in user to their profile, or unpins it.
+    /// </summary>
+    /// <param name="id">Database id of the tierlist.</param>
+    /// <param name="request">The pinned flag.</param>
+    /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
+    /// <returns>200 with the updated tierlist, 400 without the flag, 401 when not logged in, 403 for a tierlist of
+    /// another user, 404 when it does not exist.</returns>
+    [HttpPut("{id:long}/pinned")]
+    public async Task<IActionResult> SetPinned(long id, [FromBody] PinTierlistRequest request, CancellationToken cancellationToken)
+        => (await _tierlistService.SetPinnedAsync(id, User.GetUserId(), request.Pinned!.Value, cancellationToken)).ToActionResult();
 }

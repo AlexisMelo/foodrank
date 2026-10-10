@@ -35,6 +35,7 @@ function addTierlist(
   createdAt: string,
   updatedAt = createdAt,
   restaurantCount = 0,
+  pinned = false,
 ): void {
   api.tierlists.push({
     id: api.tierlists.length + 1,
@@ -48,7 +49,7 @@ function addTierlist(
     })),
     createdAt,
     updatedAt,
-    pinned: false,
+    pinned,
   })
 }
 
@@ -114,6 +115,17 @@ describe('TierlistsView', () => {
       .find((c) => c.text() === 'A–Z')!
       .trigger('click')
     expect(listedNames(wrapper)).toEqual(['Arepas', 'Burgers', 'Sushi'])
+  })
+
+  it('marks the tierlists pinned to the profile', async () => {
+    addTierlist('Pinned picks', '2026-09-01T10:00:00Z', '2026-09-01T10:00:00Z', 0, true)
+    addTierlist('Not pinned', '2026-01-01T10:00:00Z')
+    const { wrapper } = await openApp('/tierlists')
+
+    const pinned = wrapper.findAll('.tierlist-card').map((c) => c.find('.pinned-badge').exists())
+    expect(listedNames(wrapper)).toEqual(['Pinned picks', 'Not pinned'])
+    expect(pinned).toEqual([true, false])
+    expect(wrapper.get('.pinned-badge').attributes('aria-label')).toBe('Pinned to profile')
   })
 
   it('opens a tierlist when clicked', async () => {

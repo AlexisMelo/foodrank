@@ -53,6 +53,19 @@ public class FakeTierlistService : ITierlistService
             : Result<TierlistResponse>.Success(WithRestaurants(tierlist)));
     }
 
+    /// <inheritdoc />
+    public Task<Result<TierlistResponse>> SetPinnedAsync(long id, string userId, bool pinned, CancellationToken cancellationToken)
+    {
+        Tierlist? tierlist = Tierlists.FirstOrDefault(t => t.Id == id);
+        if (tierlist is null)
+            return Task.FromResult(Result<TierlistResponse>.Failure(TierlistService.NotFound));
+        if (!tierlist.IsOwnedBy(userId))
+            return Task.FromResult(Result<TierlistResponse>.Failure(TierlistService.NotOwner));
+
+        tierlist.Pinned = pinned;
+        return Task.FromResult(Result<TierlistResponse>.Success(WithRestaurants(tierlist)));
+    }
+
     /// <summary>
     /// Maps a tierlist with its restaurants from <see cref="Restaurants"/>.
     /// </summary>

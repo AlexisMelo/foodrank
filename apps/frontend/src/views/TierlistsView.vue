@@ -91,6 +91,7 @@ const sortedTierlists = computed(() => {
         :name="t.name"
         :emoji="t.emoji"
         :restaurantCount="t.restaurants.length"
+        :pinned="t.pinned"
       />
     </div>
   </div>

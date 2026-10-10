@@ -32,4 +32,15 @@ public interface ITierlistService
     /// <param name="cancellationToken">Cancels the database queries.</param>
     /// <returns>The tierlist, or a NotFound failure when it does not exist.</returns>
     Task<Result<TierlistResponse>> GetByIdAsync(long id, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Pins a tierlist of <paramref name="userId"/> to their profile, or unpins it. A user can pin any number of
+    /// tierlists, but only their own.
+    /// </summary>
+    /// <param name="id">Database id of the tierlist.</param>
+    /// <param name="userId">Supabase Auth id of the logged-in user.</param>
+    /// <param name="pinned">True to pin, false to unpin.</param>
+    /// <param name="cancellationToken">Cancels the database queries.</param>
+    /// <returns>The updated tierlist, a NotFound failure when it does not exist, or a Forbidden failure when it belongs to another user.</returns>
+    Task<Result<TierlistResponse>> SetPinnedAsync(long id, string userId, bool pinned, CancellationToken cancellationToken);
 }

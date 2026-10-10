@@ -18,6 +18,11 @@ public class TierlistService(Supabase.Client supabase) : ITierlistService
     public static Error NotFound { get; } = new(ErrorType.NotFound, "Tierlist not found.");
 
     /// <summary>
+    /// Error returned when a user tries to change a tierlist of another user.
+    /// </summary>
+    public static Error NotOwner { get; } = new(ErrorType.Forbidden, "Only the owner of a tierlist can change it.");
+
+    /// <summary>
     /// Client of the Supabase database.
     /// </summary>
     private readonly Supabase.Client _supabase = supabase ?? throw new ArgumentNullException(nameof(supabase));
@@ -58,6 +63,27 @@ public class TierlistService(Supabase.Client supabase) : ITierlistService
         Tierlist? tierlist = response.Models.FirstOrDefault();
         if (tierlist is null)
             return Result<TierlistResponse>.Failure(NotFound);
+
+        IReadOnlyList<TierlistResponse> withRestaurants = await WithRestaurantsAsync([tierlist], cancellationToken);
+        return Result<TierlistResponse>.Success(withRestaurants[0]);
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<TierlistResponse>> SetPinnedAsync(long id, string userId, bool pinned, CancellationToken cancellationToken)
+    {
+        ModeledResponse<Tierlist> response = await _supabase.From<Tierlist>()
+            .Where(t => t.Id == id)
+            .Limit(1)
+            .Get(cancellationToken);
+        Tierlist? tierlist = response.Models.FirstOrDefault();
+        if (tierlist is null)
+            return Result<TierlistResponse>.Failure(NotFound);
+        if (!tierlist.IsOwnedBy(userId))
+            return Result<TierlistResponse>.Failure(NotOwner);
+
+        // Update on the primary key of the row just read; the creation date is never sent
+        tierlist.Pinned = pinned;
+        await _supabase.From<Tierlist>().Update(tierlist, cancellationToken: cancellationToken);
 
         IReadOnlyList<TierlistResponse> withRestaurants = await WithRestaurantsAsync([tierlist], cancellationToken);
         return Result<TierlistResponse>.Success(withRestaurants[0]);

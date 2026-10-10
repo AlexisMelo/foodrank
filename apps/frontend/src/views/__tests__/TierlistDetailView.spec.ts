@@ -5,11 +5,14 @@ import type { UserRating } from '@/types/rating'
 import type { Tierlist } from '@/types/tierlist'
 import type { UserProfile } from '@/types/user'
 import TierlistDetailView from '@/views/TierlistDetailView.vue'
-import { fetchTierlistById } from '@/services/tierlistService'
+import { fetchTierlistById, setTierlistPinned } from '@/services/tierlistService'
 import { fetchUserRatings } from '@/services/ratingService'
 import { fetchUserProfile } from '@/services/userService'
 
-vi.mock('@/services/tierlistService', () => ({ fetchTierlistById: vi.fn() }))
+vi.mock('@/services/tierlistService', () => ({
+  fetchTierlistById: vi.fn(),
+  setTierlistPinned: vi.fn(),
+}))
 vi.mock('@/services/ratingService', () => ({ fetchUserRatings: vi.fn() }))
 vi.mock('@/services/userService', () => ({ ME: 'me', fetchUserProfile: vi.fn() }))
 
@@ -81,6 +84,7 @@ async function openTierlist() {
 }
 
 beforeEach(() => {
+  vi.mocked(setTierlistPinned).mockReset()
   vi.mocked(fetchUserProfile).mockImplementation(async (id = 'me') => profiles[id])
   vi.mocked(fetchUserRatings).mockImplementation(async (id = 'me') => ratings[id] ?? [])
 })
@@ -115,6 +119,37 @@ describe('TierlistDetailView', () => {
 
     expect(wrapper.get('.pin-btn').text()).toBe('Pinned to profile')
     expect(wrapper.find('.my-score').exists()).toBe(false)
+  })
+
+  it('saves the pin when the owner unpins then pins their tierlist again', async () => {
+    vi.mocked(fetchTierlistById).mockResolvedValue(tierlistOf('u1'))
+    vi.mocked(setTierlistPinned).mockImplementation(async (_id, pinned) => ({
+      ...tierlistOf('u1'),
+      pinned,
+    }))
+    const { wrapper } = await openTierlist()
+
+    await wrapper.get('.pin-btn').trigger('click')
+    await flushPromises()
+    expect(setTierlistPinned).toHaveBeenLastCalledWith(7, false)
+    expect(wrapper.get('.pin-btn').text()).toBe('Pin to profile')
+
+    await wrapper.get('.pin-btn').trigger('click')
+    await flushPromises()
+    expect(setTierlistPinned).toHaveBeenLastCalledWith(7, true)
+    expect(wrapper.get('.pin-btn').text()).toBe('Pinned to profile')
+  })
+
+  it('keeps the saved pin and explains when the change fails', async () => {
+    vi.mocked(fetchTierlistById).mockResolvedValue(tierlistOf('u1'))
+    vi.mocked(setTierlistPinned).mockRejectedValue(new Error('503'))
+    const { wrapper } = await openTierlist()
+
+    await wrapper.get('.pin-btn').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('.pin-btn').text()).toBe('Pinned to profile')
+    expect(wrapper.get('.pin-error').text()).toBe("Couldn't update the pin, try again.")
   })
 
   it('goes back to the tierlists for an unknown tierlist', async () => {

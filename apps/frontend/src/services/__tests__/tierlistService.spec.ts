@@ -6,12 +6,13 @@ import {
   fetchPinnedTierlistsByUserId,
   fetchTierlistById,
   fetchTierlistsByUserId,
+  setTierlistPinned,
 } from '@/services/tierlistService'
 
 // Keep axios' real helpers (isAxiosError...) but intercept the HTTP calls
 vi.mock('axios', async (importOriginal) => {
   const actual = await importOriginal<typeof import('axios')>()
-  return { ...actual, default: { ...actual.default, get: vi.fn(), post: vi.fn() } }
+  return { ...actual, default: { ...actual.default, get: vi.fn(), post: vi.fn(), put: vi.fn() } }
 })
 
 /**
@@ -123,5 +124,24 @@ describe('fetchPinnedTierlistsByUserId', () => {
     expect(axios.get).toHaveBeenCalledWith('http://api.test/api/users/u1/tierlists', {
       withCredentials: true,
     })
+  })
+})
+
+describe('setTierlistPinned', () => {
+  it('puts the pinned flag with the session cookie, and returns the updated tierlist', async () => {
+    vi.mocked(axios.put).mockResolvedValue({ data: tierlist(7, true) })
+
+    expect(await setTierlistPinned(7, true)).toEqual(tierlist(7, true))
+    expect(axios.put).toHaveBeenCalledWith(
+      'http://api.test/api/tierlists/7/pinned',
+      { pinned: true },
+      { withCredentials: true },
+    )
+  })
+
+  it('rethrows API errors, like a tierlist of another user', async () => {
+    vi.mocked(axios.put).mockRejectedValue(httpError(403))
+
+    await expect(setTierlistPinned(7, false)).rejects.toThrow('HTTP error')
   })
 })

@@ -45,10 +45,11 @@ public class ResultExtensionsTests
     }
 
     /// <summary>
-    /// Unauthorized, Validation and Conflict errors become a 401, 400 and 409.
+    /// Unauthorized, Forbidden, Validation and Conflict errors become a 401, 403, 400 and 409.
     /// </summary>
     [Theory]
     [InlineData(ErrorType.Unauthorized, StatusCodes.Status401Unauthorized)]
+    [InlineData(ErrorType.Forbidden, StatusCodes.Status403Forbidden)]
     [InlineData(ErrorType.Validation, StatusCodes.Status400BadRequest)]
     [InlineData(ErrorType.Conflict, StatusCodes.Status409Conflict)]
     public void ToActionResult_ClientErrors_ReturnMatchingStatus(ErrorType type, int expectedStatus)

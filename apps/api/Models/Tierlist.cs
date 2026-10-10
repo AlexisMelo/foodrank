@@ -50,4 +50,10 @@ public class Tierlist : BaseModel
     /// </summary>
     [Column("created_at", ignoreOnInsert: true, ignoreOnUpdate: true)]
     public DateTime CreatedAt { get; set; }
+
+    /// <summary>
+    /// True when <paramref name="userId"/> created the tierlist: only its owner can change it.
+    /// </summary>
+    /// <param name="userId">Supabase Auth id of a user.</param>
+    public bool IsOwnedBy(string userId) => UserId is not null && UserId == userId;
 }

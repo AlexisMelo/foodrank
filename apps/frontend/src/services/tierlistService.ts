@@ -47,3 +47,17 @@ export async function fetchTierlistById(id: string | number): Promise<Tierlist |
 export async function fetchPinnedTierlistsByUserId(userId: string = ME): Promise<Tierlist[]> {
   return (await fetchTierlistsByUserId(userId)).filter((t) => t.pinned)
 }
+
+/**
+ * Pin a tierlist of the logged-in user to their profile, or unpin it
+ * @returns the updated tierlist
+ * @throws the axios error: 401 when not logged in, 403 for a tierlist of another user, 404 when it does not exist
+ */
+export async function setTierlistPinned(id: number, pinned: boolean): Promise<Tierlist> {
+  const response = await axios.put<Tierlist>(
+    `${import.meta.env.VITE_API_BASE_URL}/api/tierlists/${encodeURIComponent(id)}/pinned`,
+    { pinned },
+    { withCredentials: true },
+  )
+  return response.data
+}

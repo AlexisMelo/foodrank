@@ -276,6 +276,135 @@ public class TierlistsControllerTests : IDisposable
     }
 
     /// <summary>
+    /// Id of another user.
+    /// </summary>
+    private const string OtherUserId = "22222222-2222-2222-2222-222222222222";
+
+    /// <summary>
+    /// Stores a tierlist of <paramref name="userId"/>.
+    /// </summary>
+    private Tierlist AddTierlist(long id, string userId, bool? pinned)
+    {
+        Tierlist tierlist = new() { Id = id, UserId = userId, Name = $"Tierlist {id}", Emoji = "🏆", Pinned = pinned };
+        _factory.TierlistService.Tierlists.Add(tierlist);
+        return tierlist;
+    }
+
+    /// <summary>
+    /// Sends a pin change of tierlist <paramref name="id"/>, with the auth cookie when <paramref name="token"/> is given.
+    /// </summary>
+    private Task<HttpResponseMessage> SetPinnedAsync(long id, object body, string? token = Token)
+    {
+        HttpRequestMessage request = new(HttpMethod.Put, $"/api/tierlists/{id}/pinned")
+        {
+            Content = JsonContent.Create(body)
+        };
+        if (token is not null)
+            request.Headers.Add("Cookie", $"{SupabaseAuthenticationHandler.CookieName}={token}");
+        return _client.SendAsync(request);
+    }
+
+    /// <summary>
+    /// The owner pins their tierlist (never pinned before, stored as null) and gets it back pinned.
+    /// </summary>
+    [Fact]
+    public async Task SetPinned_OwnTierlist_PinsIt()
+    {
+        Tierlist tierlist = AddTierlist(3, UserId, pinned: null);
+
+        HttpResponseMessage response = await SetPinnedAsync(3, new { pinned = true });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(tierlist.Pinned);
+        Assert.True((await response.Content.ReadFromJsonAsync<TierlistResponse>())!.Pinned);
+    }
+
+    /// <summary>
+    /// The owner unpins a pinned tierlist.
+    /// </summary>
+    [Fact]
+    public async Task SetPinned_False_UnpinsIt()
+    {
+        Tierlist tierlist = AddTierlist(3, UserId, pinned: true);
+
+        HttpResponseMessage response = await SetPinnedAsync(3, new { pinned = false });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.False(tierlist.Pinned);
+    }
+
+    /// <summary>
+    /// Any number of tierlists can be pinned: pinning one leaves the others pinned.
+    /// </summary>
+    [Fact]
+    public async Task SetPinned_SeveralTierlists_AllStayPinned()
+    {
+        AddTierlist(1, UserId, pinned: true);
+        AddTierlist(2, UserId, pinned: false);
+        AddTierlist(3, UserId, pinned: false);
+
+        await SetPinnedAsync(2, new { pinned = true });
+        await SetPinnedAsync(3, new { pinned = true });
+
+        Assert.All(_factory.TierlistService.Tierlists, t => Assert.True(t.Pinned));
+    }
+
+    /// <summary>
+    /// A user cannot pin, nor unpin, a tierlist of another user: refused with a 403, the tierlist is unchanged.
+    /// </summary>
+    [Theory]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    public async Task SetPinned_TierlistOfAnotherUser_Returns403(bool current, bool requested)
+    {
+        Tierlist tierlist = AddTierlist(3, OtherUserId, pinned: current);
+
+        HttpResponseMessage response = await SetPinnedAsync(3, new { pinned = requested });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(current, tierlist.Pinned);
+    }
+
+    /// <summary>
+    /// An unknown tierlist returns a 404.
+    /// </summary>
+    [Fact]
+    public async Task SetPinned_Unknown_Returns404()
+    {
+        HttpResponseMessage response = await SetPinnedAsync(42, new { pinned = true });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    /// <summary>
+    /// Without the pinned flag, the request is refused with a 400 and the tierlist is unchanged.
+    /// </summary>
+    [Fact]
+    public async Task SetPinned_NoFlag_Returns400()
+    {
+        Tierlist tierlist = AddTierlist(3, UserId, pinned: true);
+
+        HttpResponseMessage response = await SetPinnedAsync(3, new { });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.True(tierlist.Pinned);
+    }
+
+    /// <summary>
+    /// Without the auth cookie, the pin change is refused with a 401.
+    /// </summary>
+    [Fact]
+    public async Task SetPinned_NoCookie_Returns401()
+    {
+        Tierlist tierlist = AddTierlist(3, UserId, pinned: false);
+
+        HttpResponseMessage response = await SetPinnedAsync(3, new { pinned = true }, token: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.False(tierlist.Pinned);
+    }
+
+    /// <summary>
     /// The controller refuses a null service instead of failing on the first request.
     /// </summary>
     [Fact]

@@ -6,11 +6,12 @@ import type { Tierlist } from '@/types/tierlist'
 import type { UserProfile } from '@/types/user'
 import { fetchUserRatings } from '@/services/ratingService'
 import { fetchUserProfile, ME } from '@/services/userService'
-import { fetchTierlistById } from '@/services/tierlistService'
+import { fetchTierlistById, setTierlistPinned } from '@/services/tierlistService'
 import { overallByRestaurant, rankTierlistRestaurants } from '@/utils/ranking'
 import { restaurantCountLabel } from '@/utils/profile'
 import RankedRestaurantItem from '@/components/RankedRestaurantItem.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
+import TierlistPinButton from '@/components/TierlistPinButton.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -20,7 +21,8 @@ const owner = shallowRef<UserProfile | null>(null)
 const isOwner = shallowRef(false)
 const ownerRatings = shallowRef<UserRating[]>([])
 const myRatings = shallowRef<UserRating[]>([])
-const isPinned = shallowRef(false)
+const pinSaving = shallowRef(false)
+const pinError = shallowRef(false)
 const loading = shallowRef(true)
 
 onMounted(async () => {
@@ -30,7 +32,6 @@ onMounted(async () => {
     return
   }
   tierlist.value = found
-  isPinned.value = found.pinned
 
   const [me, foundOwner, ratingsOfOwner, ratingsOfMe] = await Promise.all([
     fetchUserProfile(ME),
@@ -44,6 +45,20 @@ onMounted(async () => {
   myRatings.value = ratingsOfMe
   loading.value = false
 })
+
+// Saved through the API, so the pin shows on the profile; the button shows the saved state, unchanged on failure
+async function togglePin() {
+  if (!tierlist.value || pinSaving.value) return
+  pinSaving.value = true
+  pinError.value = false
+  try {
+    tierlist.value = await setTierlistPinned(tierlist.value.id, !tierlist.value.pinned)
+  } catch {
+    pinError.value = true
+  } finally {
+    pinSaving.value = false
+  }
+}
 
 // Restaurants of the tierlist, best first by the owner's scores; on someone else's tierlist, with my own score
 const rankedRestaurants = computed(() => {
@@ -66,27 +81,10 @@ const rankedRestaurants = computed(() => {
         <h1 class="title">{{ tierlist.name }}</h1>
         <p v-if="tierlist.description" class="description">{{ tierlist.description }}</p>
 
-        <button
-          v-if="isOwner"
-          class="pin-btn"
-          :class="{ pinned: isPinned }"
-          @click="isPinned = !isPinned"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="12" y1="17" x2="12" y2="22" />
-            <path
-              d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"
-            />
-          </svg>
-          {{ isPinned ? 'Pinned to profile' : 'Pin to profile' }}
-        </button>
+        <template v-if="isOwner">
+          <TierlistPinButton :pinned="tierlist.pinned" :saving="pinSaving" @toggle="togglePin" />
+          <p v-if="pinError" class="pin-error">Couldn't update the pin, try again.</p>
+        </template>
       </div>
 
       <div class="list-header">
@@ -221,35 +219,10 @@ const rankedRestaurants = computed(() => {
   border-radius: 100px;
 }
 
-.pin-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 18px;
-  border-radius: 100px;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  color: rgba(255, 255, 255, 0.55);
+.pin-error {
   font-size: 13px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition:
-    border-color 0.15s,
-    background 0.15s,
-    color 0.15s;
-}
-
-.pin-btn svg {
-  width: 15px;
-  height: 15px;
-  flex-shrink: 0;
-}
-
-.pin-btn.pinned {
-  background: #ffffff;
-  border-color: #ffffff;
-  color: #0d0d0d;
+  color: #ff6b6b;
+  margin: 0;
 }
 
 .restaurant-list {

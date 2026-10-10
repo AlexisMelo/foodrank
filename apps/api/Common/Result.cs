@@ -21,6 +21,11 @@ public enum ErrorType
     Unauthorized,
 
     /// <summary>
+    /// The logged-in user is not allowed to change the resource (HTTP 403).
+    /// </summary>
+    Forbidden,
+
+    /// <summary>
     /// The request data is invalid (HTTP 400).
     /// </summary>
     Validation,
