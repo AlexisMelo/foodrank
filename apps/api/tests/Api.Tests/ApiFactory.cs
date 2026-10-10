@@ -35,6 +35,11 @@ public class ApiFactory : WebApplicationFactory<Program>
     public FakeUserService UserService { get; }
 
     /// <summary>
+    /// Tierlist service used by the controllers; read the created tierlists in the tests.
+    /// </summary>
+    public FakeTierlistService TierlistService { get; } = new();
+
+    /// <summary>
     /// Supabase Auth replacement; register the valid tokens in the tests.
     /// </summary>
     public FakeSupabaseAuthService AuthService { get; } = new();
@@ -68,6 +73,8 @@ public class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IRatingService>(RatingService);
             services.RemoveAll<IUserService>();
             services.AddSingleton<IUserService>(UserService);
+            services.RemoveAll<ITierlistService>();
+            services.AddSingleton<ITierlistService>(TierlistService);
             services.RemoveAll<ISupabaseAuthService>();
             services.AddSingleton<ISupabaseAuthService>(AuthService);
         });

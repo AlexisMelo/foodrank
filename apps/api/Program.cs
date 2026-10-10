@@ -57,6 +57,7 @@ builder.Services.AddScoped<IPlaceSearchService, PlaceSearchService>();
 builder.Services.AddScoped<IRestaurantService, RestaurantService>();
 builder.Services.AddScoped<IRatingService, RatingService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITierlistService, TierlistService>();
 
 //Rate limiting for endpoints calling the free OSM services, so abuse can't get our server throttled or banned.
 builder.Services.AddRateLimiter(options =>

@@ -101,7 +101,6 @@ const sortedTierlists = computed(() => {
 
 <style scoped lang="scss">
 .tierlists-view {
-  min-height: 100dvh;
   color: #ffffff;
   overflow: hidden;
 }
@@ -113,7 +112,6 @@ const sortedTierlists = computed(() => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding-top: 64px;
   margin-bottom: 20px;
 }
 

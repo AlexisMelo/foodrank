@@ -1,8 +1,19 @@
-import type { Tierlist } from '@/types/tierlist'
+import axios from 'axios'
+import type { Tierlist, TierlistInput } from '@/types/tierlist'
 import mockTierlists from '@/data/tierlists.json'
 
-// Tierlists are not served by the API yet: they are read from local mock data, shaped like the API responses
+// Tierlists are not read from the API yet: they are read from local mock data, shaped like the API responses
 const tierlists: Tierlist[] = mockTierlists
+
+/**
+ * Create a tierlist, without restaurants, for the logged-in user
+ * @throws the axios error: 400 for invalid values, 401 when not logged in
+ */
+export async function createTierlist(tierlist: TierlistInput): Promise<void> {
+  await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/tierlists`, tierlist, {
+    withCredentials: true,
+  })
+}
 
 /**
  * Get the tierlists of a user, most recently created first
