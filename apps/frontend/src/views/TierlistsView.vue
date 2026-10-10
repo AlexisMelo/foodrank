@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import type { Restaurant } from '@/types/restaurant'
 import type { Tierlist } from '@/types/tierlist'
 import { fetchRestaurants } from '@/services/restaurantService'
 import { fetchTierlistsByUserId } from '@/services/tierlistService'
 import TierlistCard from '@/components/TierlistCard.vue'
+import NewChip from '@/components/NewChip.vue'
 import { useAuth } from '@/composables/useAuth'
 
 const { currentUserId: CURRENT_USER_ID } = useAuth()
+const router = useRouter()
 
 type SortKey = 'recent' | 'az' | 'updated'
 
@@ -51,8 +54,11 @@ const sortedTierlists = computed(() => {
 <template>
   <div class="tierlists-view">
     <header class="page-header">
-      <h1 class="page-title">My Tierlists</h1>
-      <p class="page-subtitle">Your personal restaurant collections</p>
+      <div>
+        <h1 class="page-title">My Tierlists</h1>
+        <p class="page-subtitle">Your personal restaurant collections</p>
+      </div>
+      <NewChip class="new-chip" @click="router.push('/tierlists/new')" />
     </header>
 
     <div class="sort-row">
@@ -103,8 +109,18 @@ const sortedTierlists = computed(() => {
 .page-header {
   position: relative;
   z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   padding-top: 64px;
   margin-bottom: 20px;
+}
+
+.new-chip {
+  flex-shrink: 0;
+  // Centers the chip on the first line of the title
+  margin-top: 5px;
 }
 
 .page-title {
