@@ -1,6 +1,6 @@
 <script setup lang="ts">
 defineProps<{
-  id: string
+  id: number
   name: string
   emoji: string
 }>()

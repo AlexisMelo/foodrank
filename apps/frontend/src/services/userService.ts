@@ -1,9 +1,5 @@
 import axios from 'axios'
-import type { User, UserProfile } from '@/types/user'
-import mockUsers from '@/data/users.json'
-
-// Users not served by the API yet are read from local mock data, shaped like the API responses
-const users: User[] = mockUsers
+import type { UserProfile } from '@/types/user'
 
 /** Id standing for the logged-in user in /api/users/... urls. */
 export const ME = 'me'
@@ -23,12 +19,4 @@ export async function fetchUserProfile(userId: string = ME): Promise<UserProfile
     if (axios.isAxiosError(error) && error.response?.status === 404) return undefined
     throw error
   }
-}
-
-/**
- * Get a user from the mock data (not served by the API yet)
- * @returns undefined when the user does not exist
- */
-export async function fetchUserById(id: string): Promise<User | undefined> {
-  return users.find((u) => u.id === id)
 }

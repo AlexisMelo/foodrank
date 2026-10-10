@@ -1,15 +1,22 @@
 using api.Common;
 using api.Models;
+using Supabase.Postgrest;
 using Supabase.Postgrest.Responses;
 
 namespace api.Services;
 
 /// <summary>
-/// Saves the tierlists users create in the "tierlists" table.
+/// Saves and reads the tierlists users create in the "tierlists" table, with their restaurants from the
+/// "tierlist_restaurant" table.
 /// </summary>
 /// <param name="supabase">Client of the Supabase database.</param>
 public class TierlistService(Supabase.Client supabase) : ITierlistService
 {
+    /// <summary>
+    /// Error returned for an id that matches no tierlist.
+    /// </summary>
+    public static Error NotFound { get; } = new(ErrorType.NotFound, "Tierlist not found.");
+
     /// <summary>
     /// Client of the Supabase database.
     /// </summary>
@@ -25,6 +32,51 @@ public class TierlistService(Supabase.Client supabase) : ITierlistService
         Tierlist? tierlist = inserted.Models.FirstOrDefault();
         return tierlist is null
             ? Result<TierlistResponse>.Failure(new Error(ErrorType.Unavailable, "The tierlist could not be created."))
-            : Result<TierlistResponse>.Success(TierlistResponse.From(tierlist));
+            : Result<TierlistResponse>.Success(TierlistResponse.From(tierlist, []));
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<IReadOnlyList<TierlistResponse>>> GetByUserAsync(string userId, CancellationToken cancellationToken)
+    {
+        if (!UserIds.IsValid(userId))
+            return Result<IReadOnlyList<TierlistResponse>>.Failure(UserIds.NotFound);
+
+        ModeledResponse<Tierlist> response = await _supabase.From<Tierlist>()
+            .Where(t => t.UserId == userId)
+            .Order("created_at", Constants.Ordering.Descending)
+            .Get(cancellationToken);
+        return Result<IReadOnlyList<TierlistResponse>>.Success(await WithRestaurantsAsync(response.Models, cancellationToken));
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<TierlistResponse>> GetByIdAsync(long id, CancellationToken cancellationToken)
+    {
+        ModeledResponse<Tierlist> response = await _supabase.From<Tierlist>()
+            .Where(t => t.Id == id)
+            .Limit(1)
+            .Get(cancellationToken);
+        Tierlist? tierlist = response.Models.FirstOrDefault();
+        if (tierlist is null)
+            return Result<TierlistResponse>.Failure(NotFound);
+
+        IReadOnlyList<TierlistResponse> withRestaurants = await WithRestaurantsAsync([tierlist], cancellationToken);
+        return Result<TierlistResponse>.Success(withRestaurants[0]);
+    }
+
+    /// <summary>
+    /// Loads the restaurants of <paramref name="tierlists"/> in one query, and maps each tierlist with its restaurants.
+    /// </summary>
+    private async Task<IReadOnlyList<TierlistResponse>> WithRestaurantsAsync(IReadOnlyList<Tierlist> tierlists, CancellationToken cancellationToken)
+    {
+        if (tierlists.Count == 0)
+            return [];
+
+        List<object> tierlistIds = tierlists.Select(t => (object)t.Id).ToList();
+        ModeledResponse<TierlistRestaurant> restaurants = await _supabase.From<TierlistRestaurant>()
+            .Filter("id_tierlist", Constants.Operator.In, tierlistIds)
+            .Get(cancellationToken);
+        ILookup<long, TierlistRestaurant> restaurantsByTierlist = restaurants.Models.ToLookup(r => r.TierlistId);
+
+        return tierlists.Select(t => TierlistResponse.From(t, restaurantsByTierlist[t.Id])).ToList();
     }
 }

@@ -146,6 +146,7 @@ public class UsersControllerTests : IDisposable
     [Theory]
     [InlineData("/api/users/alex")]
     [InlineData("/api/users/alex/ratings")]
+    [InlineData("/api/users/alex/tierlists")]
     public async Task GetById_NotAUserId_Returns404(string url)
     {
         HttpResponseMessage response = await GetAsync(url);
@@ -217,12 +218,112 @@ public class UsersControllerTests : IDisposable
     }
 
     /// <summary>
+    /// Stores a tierlist of <paramref name="userId"/> created on <paramref name="createdAt"/>.
+    /// </summary>
+    private Tierlist AddTierlist(string userId, string name, DateTime createdAt, bool pinned = false)
+    {
+        Tierlist tierlist = new()
+        {
+            Id = _factory.TierlistService.Tierlists.Count + 1,
+            UserId = userId,
+            Name = name,
+            Emoji = "🏆",
+            Pinned = pinned,
+            CreatedAt = createdAt
+        };
+        _factory.TierlistService.Tierlists.Add(tierlist);
+        return tierlist;
+    }
+
+    /// <summary>
+    /// "me/tierlists" returns the logged-in user's tierlists, most recently created first, with their restaurants, and
+    /// none of the other users'.
+    /// </summary>
+    [Fact]
+    public async Task GetMyTierlists_LoggedIn_ReturnsOwnTierlistsNewestFirst()
+    {
+        Tierlist old = AddTierlist(MeId, "Old favorites", new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), pinned: true);
+        AddTierlist(MeId, "Fresh picks", new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc));
+        AddTierlist(OtherId, "Not mine", new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc));
+        _factory.TierlistService.Restaurants.Add(new TierlistRestaurant { TierlistId = old.Id, RestaurantId = "r1" });
+
+        HttpResponseMessage response = await GetAsync("/api/users/me/tierlists");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        List<TierlistResponse> tierlists = (await response.Content.ReadFromJsonAsync<List<TierlistResponse>>())!;
+        Assert.Equal(["Fresh picks", "Old favorites"], tierlists.Select(t => t.Name));
+        Assert.All(tierlists, t => Assert.Equal(MeId, t.UserId));
+        Assert.Equal("r1", Assert.Single(tierlists[1].Restaurants).RestaurantId);
+        Assert.Empty(tierlists[0].Restaurants);
+        Assert.True(tierlists[1].Pinned);
+    }
+
+    /// <summary>
+    /// A tierlist just created is returned by "me/tierlists", so the tierlists page shows it right after creation.
+    /// </summary>
+    [Fact]
+    public async Task GetMyTierlists_AfterCreate_ReturnsNewTierlist()
+    {
+        AddTierlist(MeId, "Old favorites", new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+        HttpRequestMessage create = new(HttpMethod.Post, "/api/tierlists")
+        {
+            Content = JsonContent.Create(new { emoji = "🍣", name = "Sushi spots", pinned = true })
+        };
+        create.Headers.Add("Cookie", $"{SupabaseAuthenticationHandler.CookieName}={Token}");
+        Assert.Equal(HttpStatusCode.OK, (await _client.SendAsync(create)).StatusCode);
+
+        List<TierlistResponse> tierlists = (await (await GetAsync("/api/users/me/tierlists")).Content.ReadFromJsonAsync<List<TierlistResponse>>())!;
+
+        Assert.Equal(["Sushi spots", "Old favorites"], tierlists.Select(t => t.Name));
+        Assert.Equal("🍣", tierlists[0].Emoji);
+        Assert.True(tierlists[0].Pinned);
+    }
+
+    /// <summary>
+    /// Without the auth cookie, "me/tierlists" is refused with a 401.
+    /// </summary>
+    [Fact]
+    public async Task GetMyTierlists_NoCookie_Returns401()
+    {
+        HttpResponseMessage response = await GetAsync("/api/users/me/tierlists", token: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    /// <summary>
+    /// The tierlists of another user are returned by its id.
+    /// </summary>
+    [Fact]
+    public async Task GetTierlists_OtherUser_ReturnsItsTierlists()
+    {
+        AddTierlist(MeId, "Mine", new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+        AddTierlist(OtherId, "Camille's", new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Utc));
+
+        List<TierlistResponse> tierlists = (await (await GetAsync($"/api/users/{OtherId}/tierlists")).Content.ReadFromJsonAsync<List<TierlistResponse>>())!;
+
+        Assert.Equal("Camille's", Assert.Single(tierlists).Name);
+    }
+
+    /// <summary>
+    /// A user without tierlist has an empty list rather than a 404.
+    /// </summary>
+    [Fact]
+    public async Task GetTierlists_NoTierlist_ReturnsEmptyList()
+    {
+        HttpResponseMessage response = await GetAsync($"/api/users/{OtherId}/tierlists");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Empty((await response.Content.ReadFromJsonAsync<List<TierlistResponse>>())!);
+    }
+
+    /// <summary>
     /// The controller refuses a null service instead of failing on the first request.
     /// </summary>
     [Fact]
     public void Constructor_NullService_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => new UsersController(null!, _factory.RatingService));
-        Assert.Throws<ArgumentNullException>(() => new UsersController(_factory.UserService, null!));
+        Assert.Throws<ArgumentNullException>(() => new UsersController(null!, _factory.RatingService, _factory.TierlistService));
+        Assert.Throws<ArgumentNullException>(() => new UsersController(_factory.UserService, null!, _factory.TierlistService));
+        Assert.Throws<ArgumentNullException>(() => new UsersController(_factory.UserService, _factory.RatingService, null!));
     }
 }

@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import type { Restaurant } from '@/types/restaurant'
+import { restaurantCountLabel } from '@/utils/profile'
 
 defineProps<{
-  id: string
+  id: number
   name: string
-  description: string
   emoji: string
-  restaurants: Restaurant[]
+  restaurantCount: number
 }>()
 </script>
 
@@ -16,7 +15,7 @@ defineProps<{
 
     <div class="info">
       <span class="name">{{ name }}</span>
-      <span class="count">{{ restaurants.length }} restaurants</span>
+      <span class="count">{{ restaurantCountLabel(restaurantCount) }}</span>
     </div>
 
     <svg

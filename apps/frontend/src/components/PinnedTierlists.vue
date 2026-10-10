@@ -1,15 +1,20 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { shallowRef, onMounted } from 'vue'
+import type { Tierlist } from '@/types/tierlist'
 import { fetchPinnedTierlistsByUserId } from '@/services/tierlistService'
 import TierlistChip from '@/components/TierlistChip.vue'
 
 const props = defineProps<{ userId: string }>()
 
-const pinned = ref<{ id: string; name: string; emoji: string }[]>([])
+const pinned = shallowRef<Tierlist[]>([])
 
 onMounted(async () => {
-  const tierlists = await fetchPinnedTierlistsByUserId(props.userId)
-  pinned.value = tierlists.map((t) => ({ id: t.id, name: t.name, emoji: t.emoji }))
+  try {
+    pinned.value = await fetchPinnedTierlistsByUserId(props.userId)
+  } catch {
+    // Secondary section of the profile: hidden rather than failing the page
+    pinned.value = []
+  }
 })
 </script>
 

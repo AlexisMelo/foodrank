@@ -1,22 +1,20 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { shallowRef, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import type { Restaurant } from '@/types/restaurant'
 import type { Tierlist } from '@/types/tierlist'
-import { fetchRestaurants } from '@/services/restaurantService'
 import { fetchTierlistsByUserId } from '@/services/tierlistService'
 import TierlistCard from '@/components/TierlistCard.vue'
 import NewChip from '@/components/NewChip.vue'
-import { useAuth } from '@/composables/useAuth'
 
-const { currentUserId: CURRENT_USER_ID } = useAuth()
 const router = useRouter()
 
 type SortKey = 'recent' | 'az' | 'updated'
 
-const tierlists = ref<(Tierlist & { resolvedRestaurants: Restaurant[] })[]>([])
-const loading = ref(true)
-const sortBy = ref<SortKey>('recent')
+// Loaded on each visit, so a tierlist just created is listed when coming back from the creation page
+const tierlists = shallowRef<Tierlist[]>([])
+const loading = shallowRef(true)
+const loadError = shallowRef(false)
+const sortBy = shallowRef<SortKey>('recent')
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: 'recent', label: 'Recently created' },
@@ -25,18 +23,13 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
 ]
 
 onMounted(async () => {
-  const [userTierlists, allRestaurants] = await Promise.all([
-    fetchTierlistsByUserId(CURRENT_USER_ID),
-    fetchRestaurants(),
-  ])
-  const restaurantMap = new Map(allRestaurants.map((r) => [r.id, r]))
-  tierlists.value = userTierlists.map((t) => ({
-    ...t,
-    resolvedRestaurants: t.restaurants
-      .map((e) => restaurantMap.get(e.restaurantId)!)
-      .filter(Boolean),
-  }))
-  loading.value = false
+  try {
+    tierlists.value = await fetchTierlistsByUserId()
+  } catch {
+    loadError.value = true
+  } finally {
+    loading.value = false
+  }
 })
 
 const sortedTierlists = computed(() => {
@@ -77,6 +70,11 @@ const sortedTierlists = computed(() => {
       <div v-for="i in 4" :key="i" class="skeleton" />
     </div>
 
+    <div v-else-if="loadError" class="empty-state">
+      <p class="empty-title">Couldn't load your tierlists</p>
+      <p class="empty-desc">Check your connection, then come back to this page.</p>
+    </div>
+
     <div v-else-if="sortedTierlists.length === 0" class="empty-state">
       <div class="empty-icon">🏆</div>
       <p class="empty-title">No tierlists yet</p>
@@ -91,9 +89,8 @@ const sortedTierlists = computed(() => {
         :key="t.id"
         :id="t.id"
         :name="t.name"
-        :description="t.description"
         :emoji="t.emoji"
-        :restaurants="t.resolvedRestaurants"
+        :restaurantCount="t.restaurants.length"
       />
     </div>
   </div>

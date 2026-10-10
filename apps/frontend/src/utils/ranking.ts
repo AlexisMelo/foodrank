@@ -54,3 +54,18 @@ export function rankRestaurants(ratings: readonly UserRating[]): RankedRestauran
 export function overallByRestaurant(ratings: readonly UserRating[]): Map<string, number> {
   return new Map(rankRestaurants(ratings).map((r) => [r.restaurantId, r.overall]))
 }
+
+/**
+ * Ranks the restaurants of a tierlist by the average its owner gave them, best first. An owner can only add
+ * restaurants they rated to their tierlists, so every restaurant of the tierlist has a score; one without rating
+ * (data not created by the app) is skipped rather than shown with a made-up score.
+ * @param restaurantIds restaurants of the tierlist
+ * @param ownerRatings every rating of the tierlist's owner
+ */
+export function rankTierlistRestaurants(
+  restaurantIds: readonly string[],
+  ownerRatings: readonly UserRating[],
+): RankedRestaurant[] {
+  const inTierlist = new Set(restaurantIds)
+  return rankRestaurants(ownerRatings).filter((r) => inTierlist.has(r.restaurantId))
+}

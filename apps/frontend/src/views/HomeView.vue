@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, shallowRef, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import type { Restaurant } from '@/types/restaurant'
 import type { CommunityVisit } from '@/types/rating'
+import type { Tierlist } from '@/types/tierlist'
 import { fetchRestaurants } from '@/services/restaurantService'
 import { fetchCommunityVisitsByUserId } from '@/services/ratingService'
 import { fetchTierlistsByUserId } from '@/services/tierlistService'
@@ -30,20 +31,31 @@ const {
 
 const allRestaurants = ref<Restaurant[]>([])
 const allVisits = ref<CommunityVisit[]>([])
-const recentTierlists = ref<{ id: string; name: string; emoji: string }[]>([])
+const tierlists = shallowRef<Tierlist[]>([])
+
+// The logged-in user's 8 most recently updated tierlists
+const recentTierlists = computed(() =>
+  [...tierlists.value]
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    .slice(0, 8),
+)
 
 onMounted(async () => {
-  const [visits, restaurants, tierlists] = await Promise.all([
+  const [visits, restaurants] = await Promise.all([
     fetchCommunityVisitsByUserId(CURRENT_USER_ID),
     fetchRestaurants(),
-    fetchTierlistsByUserId(CURRENT_USER_ID),
   ])
   allVisits.value = visits
   allRestaurants.value = restaurants
-  recentTierlists.value = [...tierlists]
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-    .slice(0, 8)
-    .map((t) => ({ id: t.id, name: t.name, emoji: t.emoji }))
+})
+
+onMounted(async () => {
+  try {
+    tierlists.value = await fetchTierlistsByUserId()
+  } catch {
+    // The section stays hidden: the rest of the home page still works
+    tierlists.value = []
+  }
 })
 
 const topRestaurants = computed(() => {

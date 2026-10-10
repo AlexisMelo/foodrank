@@ -1,6 +1,8 @@
+/** A restaurant of a tierlist */
 export interface TierlistEntry {
   restaurantId: string
-  addedAt: string
+  /** When it was added to the tierlist, null when unknown */
+  addedAt: string | null
 }
 
 /**
@@ -18,14 +20,24 @@ export interface TierlistInput {
   pinned: boolean
 }
 
+/**
+ * A tierlist read from the API (GET /api/users/:id/tierlists, GET /api/tierlists/:id), stored in the `tierlists`
+ * table with its restaurants in `tierlist_restaurant`.
+ */
 export interface Tierlist {
-  id: string
+  id: number
+  /** Id of the user who created it */
   userId: string
   name: string
-  description: string
+  /** Null when there is none */
+  description: string | null
+  /** A single emoji, used as the tierlist picture */
   emoji: string
+  /** Restaurants of the tierlist, oldest added first: only restaurants its owner rated */
   restaurants: TierlistEntry[]
   createdAt: string
+  /** Last time a restaurant was added, or the creation date when none was added since */
   updatedAt: string
+  /** Pinned to its owner's profile */
   pinned: boolean
 }

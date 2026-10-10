@@ -19,7 +19,7 @@ public class TierlistsControllerTests : IDisposable
     /// <summary>
     /// Id of the logged-in user.
     /// </summary>
-    private const string UserId = "user-1";
+    private const string UserId = "11111111-1111-1111-1111-111111111111";
 
     /// <summary>
     /// In-memory API, recreated for each test so tierlists do not leak between tests.
@@ -208,6 +208,71 @@ public class TierlistsControllerTests : IDisposable
         TierlistResponse secondTierlist = (await second.Content.ReadFromJsonAsync<TierlistResponse>())!;
         Assert.NotEqual(firstTierlist.Id, secondTierlist.Id);
         Assert.Equal(2, _factory.TierlistService.Tierlists.Count);
+    }
+
+    /// <summary>
+    /// Sends a GET to <paramref name="url"/>, with the auth cookie when <paramref name="token"/> is given.
+    /// </summary>
+    private Task<HttpResponseMessage> GetAsync(string url, string? token = Token)
+    {
+        HttpRequestMessage request = new(HttpMethod.Get, url);
+        if (token is not null)
+            request.Headers.Add("Cookie", $"{SupabaseAuthenticationHandler.CookieName}={token}");
+        return _client.SendAsync(request);
+    }
+
+    /// <summary>
+    /// A tierlist of any user is returned by its id, with its restaurants (oldest added first) and the date the last
+    /// one was added.
+    /// </summary>
+    [Fact]
+    public async Task GetById_Existing_ReturnsTierlistWithRestaurants()
+    {
+        _factory.TierlistService.Tierlists.Add(new Tierlist
+        {
+            Id = 7,
+            UserId = "22222222-2222-2222-2222-222222222222",
+            Name = "Camille's picks",
+            Emoji = "🍜",
+            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+        });
+        _factory.TierlistService.Restaurants.Add(new TierlistRestaurant { TierlistId = 7, RestaurantId = "r2", AddedAt = new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc) });
+        _factory.TierlistService.Restaurants.Add(new TierlistRestaurant { TierlistId = 7, RestaurantId = "r1", AddedAt = new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc) });
+        _factory.TierlistService.Restaurants.Add(new TierlistRestaurant { TierlistId = 8, RestaurantId = "r3" });
+
+        HttpResponseMessage response = await GetAsync("/api/tierlists/7");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        TierlistResponse tierlist = (await response.Content.ReadFromJsonAsync<TierlistResponse>())!;
+        Assert.Equal("Camille's picks", tierlist.Name);
+        Assert.Equal(["r1", "r2"], tierlist.Restaurants.Select(r => r.RestaurantId));
+        Assert.Equal(new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc), tierlist.UpdatedAt.ToUniversalTime());
+    }
+
+    /// <summary>
+    /// An unknown id, or an id that is not a number (like the old mock ids), returns a 404.
+    /// </summary>
+    [Theory]
+    [InlineData("/api/tierlists/42")]
+    [InlineData("/api/tierlists/tl-alex-1")]
+    public async Task GetById_Unknown_Returns404(string url)
+    {
+        HttpResponseMessage response = await GetAsync(url);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    /// <summary>
+    /// Without the auth cookie, reading a tierlist is refused with a 401.
+    /// </summary>
+    [Fact]
+    public async Task GetById_NoCookie_Returns401()
+    {
+        await CreateAsync(new { emoji = "🏆", name = "Top 10" });
+
+        HttpResponseMessage response = await GetAsync("/api/tierlists/1", token: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     /// <summary>

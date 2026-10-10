@@ -16,16 +16,16 @@ public class Tierlist : BaseModel
     public long Id { get; set; }
 
     /// <summary>
-    /// Supabase Auth identifier of the user who created the tierlist.
+    /// Supabase Auth identifier of the user who created the tierlist (nullable column, always set by the API).
     /// </summary>
     [Column("id_user")]
-    public string UserId { get; set; } = string.Empty;
+    public string? UserId { get; set; }
 
     /// <summary>
-    /// Name of the tierlist.
+    /// Name of the tierlist (nullable column, always set by the API).
     /// </summary>
     [Column("name")]
-    public string Name { get; set; } = string.Empty;
+    public string? Name { get; set; }
 
     /// <summary>
     /// Free text description, null when the user gave none.
@@ -34,16 +34,16 @@ public class Tierlist : BaseModel
     public string? Description { get; set; }
 
     /// <summary>
-    /// Emoji used as the tierlist picture.
+    /// Emoji used as the tierlist picture (nullable column, always set by the API).
     /// </summary>
     [Column("emoji")]
-    public string Emoji { get; set; } = string.Empty;
+    public string? Emoji { get; set; }
 
     /// <summary>
-    /// True when the user pinned the tierlist to its profile.
+    /// True when the user pinned the tierlist to its profile; null is read as not pinned.
     /// </summary>
     [Column("pinned")]
-    public bool Pinned { get; set; }
+    public bool? Pinned { get; set; }
 
     /// <summary>
     /// Creation date, set by the database on insert (never sent by the API).

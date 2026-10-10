@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { UserRating } from '@/types/rating'
-import { overallByRestaurant, rankRestaurants } from '@/utils/ranking'
+import { overallByRestaurant, rankRestaurants, rankTierlistRestaurants } from '@/utils/ranking'
 import { restaurantCountLabel } from '@/utils/profile'
 
 /**
@@ -63,5 +63,25 @@ describe('restaurantCountLabel', () => {
     expect(restaurantCountLabel(0)).toBe('0 restaurants')
     expect(restaurantCountLabel(1)).toBe('1 restaurant')
     expect(restaurantCountLabel(12)).toBe('12 restaurants')
+  })
+})
+
+describe('rankTierlistRestaurants', () => {
+  it("ranks the tierlist's restaurants by the owner's averages, ignoring the other restaurants rated", () => {
+    const ranked = rankTierlistRestaurants(
+      ['meh', 'great'],
+      [rating('meh', 40, 40, 40), rating('great', 90, 90, 90), rating('other', 100, 100, 100)],
+    )
+
+    expect(ranked.map((r) => [r.restaurantId, r.overall])).toEqual([
+      ['great', 90],
+      ['meh', 40],
+    ])
+  })
+
+  it('never lists a restaurant the owner did not rate, rather than giving it a made-up score', () => {
+    const ranked = rankTierlistRestaurants(['unrated', 'rated'], [rating('rated', 20, 20, 20)])
+
+    expect(ranked.map((r) => r.restaurantId)).toEqual(['rated'])
   })
 })
