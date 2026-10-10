@@ -67,6 +67,15 @@ async function logout() {
     .catch(() => {})
 }
 
+/**
+ * Show the login page as soon as the API rejects the session (e.g. the token expired while the app was open),
+ * instead of leaving pages that cannot load their data.
+ */
+axios.interceptors.response.use(undefined, (error) => {
+  if (axios.isAxiosError(error) && error.response?.status === 401) isLoggedIn.value = false
+  return Promise.reject(error)
+})
+
 checkSession()
 
 export function useAuth() {

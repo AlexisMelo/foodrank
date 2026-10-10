@@ -1,8 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
-import axios from 'axios'
+import axios, { AxiosError, type AxiosResponse } from 'axios'
 
-vi.mock('axios', () => ({ default: { get: vi.fn(), post: vi.fn() } }))
+vi.mock('axios', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('axios')>()
+  return {
+    ...actual,
+    default: {
+      ...actual.default,
+      get: vi.fn(),
+      post: vi.fn(),
+      interceptors: { response: { use: vi.fn() } },
+    },
+  }
+})
 
 // Shared across module resets so tests can inspect the navigation done by the fresh composable
 const replace = vi.hoisted(() => vi.fn())
@@ -17,6 +28,16 @@ async function loadUseAuth() {
   const { useAuth } = await import('@/composables/useAuth')
   await flushPromises()
   return useAuth()
+}
+
+/** Runs an API error through the response error handler registered by the freshly imported composable. */
+async function failApiCall(error: unknown) {
+  const onRejected = vi.mocked(axios.interceptors.response.use).mock.lastCall?.[1]
+  await expect(onRejected?.(error)).rejects.toBe(error)
+}
+
+function httpError(status: number) {
+  return new AxiosError('failed', undefined, undefined, undefined, { status } as AxiosResponse)
 }
 
 beforeEach(() => {
@@ -114,5 +135,24 @@ describe('useAuth', () => {
     await logout()
 
     expect(isLoggedIn.value).toBe(false)
+  })
+
+  it('shows the login page when the API rejects the expired session', async () => {
+    vi.mocked(axios.get).mockResolvedValue({})
+    const { isLoggedIn } = await loadUseAuth()
+
+    await failApiCall(httpError(401))
+
+    expect(isLoggedIn.value).toBe(false)
+  })
+
+  it('stays logged in when an API call fails for another reason', async () => {
+    vi.mocked(axios.get).mockResolvedValue({})
+    const { isLoggedIn } = await loadUseAuth()
+
+    await failApiCall(httpError(500))
+    await failApiCall(new AxiosError('Network Error'))
+
+    expect(isLoggedIn.value).toBe(true)
   })
 })
