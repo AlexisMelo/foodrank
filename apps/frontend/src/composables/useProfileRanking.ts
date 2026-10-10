@@ -6,7 +6,7 @@ import { overallByRestaurant, rankRestaurants } from '@/utils/ranking'
 
 /**
  * Restaurants rated by a user, best first, as shown on a profile page.
- * On another user's profile, each restaurant also carries the logged-in user's own average ("myScore"),
+ * On another user's profile, each restaurant also carries the logged-in user's own score ("myScore"),
  * undefined when the logged-in user never rated it.
  * @param userId id of the user, "me" (default) for the logged-in user
  */

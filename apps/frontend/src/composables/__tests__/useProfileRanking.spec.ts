@@ -10,7 +10,7 @@ vi.mock('@/services/userService', () => ({ ME: 'me' }))
 /**
  * Builds a rating of `restaurantId` with the same score for the three criteria.
  */
-function rating(restaurantId: string, score: number): UserRating {
+function rating(restaurantId: string, score: number, isActive = true): UserRating {
   return {
     restaurantId,
     restaurantName: restaurantId,
@@ -21,6 +21,7 @@ function rating(restaurantId: string, score: number): UserRating {
     service: score,
     setting: score,
     bonus: false,
+    isActive,
   }
 }
 
@@ -45,7 +46,9 @@ describe('useProfileRanking', () => {
 
   it("on another user's profile, adds the logged-in user's own score of each restaurant", async () => {
     vi.mocked(fetchUserRatings).mockImplementation(async (id) =>
-      id === 'me' ? [rating('both', 40)] : [rating('both', 80), rating('only-them', 70)],
+      id === 'me'
+        ? [rating('both', 40), rating('both', 100, false)]
+        : [rating('both', 80), rating('only-them', 70), rating('both', 10, false)],
     )
 
     const { rankedRestaurants, isOwnProfile } = useProfileRanking('u2')

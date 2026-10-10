@@ -121,6 +121,7 @@ const topRestaurants = computed(() => {
           :food="rating.food"
           :service="rating.service"
           :decor="rating.setting"
+          :active="rating.isActive"
         />
       </div>
     </section>

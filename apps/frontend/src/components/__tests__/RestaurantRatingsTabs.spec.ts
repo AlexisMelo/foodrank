@@ -15,6 +15,7 @@ function rating(userName: string, date: string, overrides: Partial<RestaurantRat
     service: 60,
     setting: 30,
     bonus: false,
+    isActive: true,
     userName,
     userAvatarUrl: null,
     ...overrides,
@@ -55,6 +56,14 @@ describe('RestaurantRatingsTabs', () => {
     expect(cards[1]!.text()).toContain('January 2, 2026')
     expect(cards[1]!.text()).not.toContain('💘')
     expect(wrapper.text()).not.toContain('Camille')
+  })
+
+  it('dims my previous ratings, replaced by a more recent one', () => {
+    const wrapper = mountTabs({
+      myRatings: [rating('Me', '2026-03-07'), rating('Me', '2026-01-02', { isActive: false })],
+    })
+
+    expect(wrapper.findAll('.visit-card').map((c) => c.classes('inactive'))).toEqual([false, true])
   })
 
   it('shows the recent ratings of every user under "Recent"', async () => {

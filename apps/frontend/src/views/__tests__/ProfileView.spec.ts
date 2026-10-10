@@ -24,7 +24,7 @@ const profiles: Record<string, UserProfile> = {
 /**
  * Builds a rating of `restaurantId` with the same score for the three criteria.
  */
-function rating(restaurantId: string, score: number): UserRating {
+function rating(restaurantId: string, score: number, isActive = true): UserRating {
   return {
     restaurantId,
     restaurantName: `Restaurant ${restaurantId}`,
@@ -35,12 +35,13 @@ function rating(restaurantId: string, score: number): UserRating {
     service: score,
     setting: score,
     bonus: false,
+    isActive,
   }
 }
 
 const ratings: Record<string, UserRating[]> = {
-  // r1 rated twice: listed once, with the average
-  me: [rating('r1', 60), rating('r2', 90), rating('r1', 80)],
+  // r1 rated twice: listed once, with the latest (active) rating
+  me: [rating('r1', 70), rating('r2', 90), rating('r1', 80, false)],
   u2: [rating('r1', 50), rating('r3', 95)],
 }
 
@@ -104,7 +105,7 @@ describe('ProfileView', () => {
     expect(items.map((i) => i.get('.item-name').text())).toEqual(['Restaurant r3', 'Restaurant r1'])
     // Never rated r3: offer to rate it
     expect(items[0]!.find('.my-score-rate').exists()).toBe(true)
-    // Rated r1 twice (60 and 80): my average
+    // Rated r1 twice (70, then 80 before): my active rating
     expect(items[1]!.get('.my-score').text()).toBe('70')
   })
 

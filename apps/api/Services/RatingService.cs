@@ -1,7 +1,8 @@
+using System.Linq.Expressions;
 using api.Common;
 using api.Models;
 using Supabase.Postgrest;
-using Supabase.Postgrest.Exceptions;
+using Supabase.Postgrest.Interfaces;
 using Supabase.Postgrest.Responses;
 
 namespace api.Services;
@@ -18,19 +19,19 @@ public class RatingService(Supabase.Client supabase, IRestaurantService restaura
         if (!restaurant.IsSuccess)
             return Result<Rating>.Failure(restaurant.Error!);
 
-        Rating rating = ToRating(restaurant.Value!.Id, userId, request);
+        string id = restaurant.Value!.Id;
+        ModeledResponse<Rating> currentActive = await ActiveRatingsQuery(supabase.From<Rating>(), id, userId).Get(cancellationToken);
 
-        // Insert, not upsert: the primary key (restaurant, user, date) allows one rating per day, and a second one
-        // the same day must be refused rather than overwrite the first.
-        try
-        {
-            ModeledResponse<Rating> inserted = await supabase.From<Rating>().Insert(rating, cancellationToken: cancellationToken);
-            return Result<Rating>.Success(inserted.Models.FirstOrDefault() ?? rating);
-        }
-        catch (PostgrestException ex) when (PostgrestErrors.IsUniqueViolation(ex))
-        {
-            return Result<Rating>.Failure(new Error(ErrorType.Conflict, "You already rated this restaurant today."));
-        }
+        Result<IReadOnlyList<Rating>> rows = Rating.PlanNew(currentActive.Models, ToRating(id, userId, request));
+        if (!rows.IsSuccess)
+            return Result<Rating>.Failure(rows.Error!);
+
+        // One request is one transaction: the previous active rating is deactivated (update on its primary key) and
+        // the new one inserted together, so there is never zero or two active ratings. Two submits racing the same
+        // day both pass the check above; the second then overwrites the first's row, which stays consistent.
+        Rating newRating = rows.Value![^1];
+        ModeledResponse<Rating> written = await supabase.From<Rating>().Upsert(rows.Value.ToList(), cancellationToken: cancellationToken);
+        return Result<Rating>.Success(written.Models.LastOrDefault() ?? newRating);
     }
 
     /// <inheritdoc />
@@ -40,14 +41,43 @@ public class RatingService(Supabase.Client supabase, IRestaurantService restaura
         if (!restaurant.IsSuccess)
             return Result<IReadOnlyList<RatingResponse>>.Failure(restaurant.Error!);
 
-        string id = restaurant.Value!.Id;
-        ModeledResponse<Rating> response = await supabase.From<Rating>()
-            .Where(r => r.RestaurantId == id)
-            .Order("date", Constants.Ordering.Descending)
-            .Limit(count)
-            .Get(cancellationToken);
+        ModeledResponse<Rating> response = await RecentActiveRatingsQuery(supabase.From<Rating>(), restaurant.Value!.Id, count).Get(cancellationToken);
         return Result<IReadOnlyList<RatingResponse>>.Success(await WithProfilesAsync(response.Models, cancellationToken));
     }
+
+    /// <summary>
+    /// Query of the active rating(s) of <paramref name="restaurantId"/> by <paramref name="userId"/>.
+    /// </summary>
+    /// <param name="ratings">Query on the "rating" table to filter.</param>
+    /// <param name="restaurantId">Database id of the restaurant.</param>
+    /// <param name="userId">Supabase Auth id of the user.</param>
+    /// <returns>The filtered query, ready to send.</returns>
+    public static IPostgrestTable<Rating> ActiveRatingsQuery(IPostgrestTable<Rating> ratings, string restaurantId, string userId)
+        => ratings
+            .Where(r => r.RestaurantId == restaurantId)
+            .Where(r => r.UserId == userId)
+            .Where(IsActive);
+
+    /// <summary>
+    /// Query of the <paramref name="count"/> most recent active ratings of <paramref name="restaurantId"/>, most recent first.
+    /// </summary>
+    /// <param name="ratings">Query on the "rating" table to filter.</param>
+    /// <param name="restaurantId">Database id of the restaurant.</param>
+    /// <param name="count">Maximum number of ratings.</param>
+    /// <returns>The filtered query, ready to send.</returns>
+    public static IPostgrestTable<Rating> RecentActiveRatingsQuery(IPostgrestTable<Rating> ratings, string restaurantId, int count)
+        => ratings
+            .Where(r => r.RestaurantId == restaurantId)
+            .Where(IsActive)
+            .Order("date", Constants.Ordering.Descending)
+            .Limit(count);
+
+    /// <summary>
+    /// Filter on the active ratings. The comparison must be explicit: the Postgrest client cannot translate a bare
+    /// boolean member (<c>r => r.IsActive</c>) and throws a NullReferenceException when building the URL. Kept in its own
+    /// Where (one top-level filter each) rather than joined with &amp;&amp;, which nests "and" groups in the URL.
+    /// </summary>
+    private static readonly Expression<Func<Rating, bool>> IsActive = r => r.IsActive == true;
 
     /// <inheritdoc />
     public async Task<Result<IReadOnlyList<RatingResponse>>> GetByRestaurantAndUserAsync(string restaurantId, string userId, CancellationToken cancellationToken)

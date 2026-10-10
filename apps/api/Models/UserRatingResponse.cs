@@ -12,6 +12,8 @@ namespace api.Models;
 /// <param name="Service">Service rating, from 0 to 100.</param>
 /// <param name="Setting">Setting (decor) rating, from 0 to 100.</param>
 /// <param name="Bonus">True when the user gave the "instant crush" favorite bonus.</param>
+/// <param name="IsActive">True for the user's latest rating of the restaurant, which is their score for it; false for
+/// the previous ones, kept as history.</param>
 public record UserRatingResponse(
     string RestaurantId,
     string RestaurantName,
@@ -21,7 +23,8 @@ public record UserRatingResponse(
     float Food,
     float Service,
     float Setting,
-    bool Bonus)
+    bool Bonus,
+    bool IsActive)
 {
     /// <summary>
     /// Maps a rating and the restaurant it rates to the API response.
@@ -38,5 +41,6 @@ public record UserRatingResponse(
         rating.FoodRating,
         rating.ServiceRating,
         rating.SettingRating,
-        rating.Bonus);
+        rating.Bonus,
+        rating.IsActive);
 }

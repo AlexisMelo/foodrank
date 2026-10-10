@@ -15,7 +15,11 @@ const criteria = computed(() => [
 </script>
 
 <template>
-  <div class="visit-card">
+  <div
+    class="visit-card"
+    :class="{ inactive: !rating.isActive }"
+    :title="rating.isActive ? undefined : 'Replaced by a more recent rating'"
+  >
     <div class="visit-header">
       <span class="visit-date">
         {{ formatRatingDate(rating.date) }}
@@ -46,6 +50,10 @@ const criteria = computed(() => [
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+// A previous rating, kept as history: the latest one is the user's score
+.inactive {
+  opacity: 0.45;
 }
 .visit-header {
   display: flex;

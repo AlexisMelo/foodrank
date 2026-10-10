@@ -18,7 +18,8 @@ public class RatingResponseTests
         FoodRating = 80.5f,
         ServiceRating = 60,
         SettingRating = 40,
-        Bonus = true
+        Bonus = true,
+        IsActive = true
     };
 
     /// <summary>
@@ -36,6 +37,18 @@ public class RatingResponseTests
         Assert.Equal(60, response.Service);
         Assert.Equal(40, response.Setting);
         Assert.True(response.Bonus);
+        Assert.True(response.IsActive);
+    }
+
+    /// <summary>
+    /// A previous rating, replaced by a more recent one, is sent as inactive.
+    /// </summary>
+    [Fact]
+    public void From_PreviousRating_IsInactive()
+    {
+        Rating previous = new() { RestaurantId = "r1", UserId = "user-1", Date = new DateTime(2026, 3, 1), IsActive = false };
+
+        Assert.False(RatingResponse.From(previous, null).IsActive);
     }
 
     /// <summary>

@@ -21,6 +21,7 @@ function rating(restaurantId: string, date: string): UserRating {
     service: 70,
     setting: 60,
     bonus: false,
+    isActive: true,
   }
 }
 

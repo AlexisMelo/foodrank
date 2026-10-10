@@ -65,9 +65,10 @@ public class UsersControllerTests : IDisposable
     }
 
     /// <summary>
-    /// Stores a rating of <paramref name="restaurantId"/> by <paramref name="userId"/> on <paramref name="date"/>.
+    /// Stores a rating of <paramref name="restaurantId"/> by <paramref name="userId"/> on <paramref name="date"/>,
+    /// active unless <paramref name="isActive"/> is false.
     /// </summary>
-    private void AddRating(string userId, string restaurantId, DateTime date, float food = 50)
+    private void AddRating(string userId, string restaurantId, DateTime date, float food = 50, bool isActive = true)
         => _factory.RatingService.Ratings.Add(new Rating
         {
             RestaurantId = restaurantId,
@@ -75,7 +76,8 @@ public class UsersControllerTests : IDisposable
             Date = date,
             FoodRating = food,
             ServiceRating = 60,
-            SettingRating = 70
+            SettingRating = 70,
+            IsActive = isActive
         });
 
     /// <summary>
@@ -178,6 +180,21 @@ public class UsersControllerTests : IDisposable
         Assert.Equal(90, pizza.Food);
         Assert.Equal(60, pizza.Service);
         Assert.Equal(70, pizza.Setting);
+    }
+
+    /// <summary>
+    /// Each rating carries its stored active flag: the previous rating of a restaurant is returned, inactive.
+    /// </summary>
+    [Fact]
+    public async Task GetMyRatings_RestaurantRatedTwice_ReturnsActiveFlags()
+    {
+        AddRating(MeId, "r1", new DateTime(2026, 3, 1), isActive: false);
+        AddRating(MeId, "r2", new DateTime(2026, 3, 2));
+        AddRating(MeId, "r1", new DateTime(2026, 3, 3));
+
+        List<UserRatingResponse> ratings = (await (await GetAsync("/api/users/me/ratings")).Content.ReadFromJsonAsync<List<UserRatingResponse>>())!;
+
+        Assert.Equal([("r1", true), ("r2", true), ("r1", false)], ratings.Select(r => (r.RestaurantId, r.IsActive)));
     }
 
     /// <summary>

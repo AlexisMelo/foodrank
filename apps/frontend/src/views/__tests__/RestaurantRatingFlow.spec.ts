@@ -22,9 +22,18 @@ vi.mock('@/services/ratingService', () => {
       .sort((a, b) => b.date.localeCompare(a.date))
   return {
     fetchCommunityVisitsByUserId: vi.fn(async () => []),
-    fetchRecentRatings: vi.fn(async (id: string, limit = 5) => ofRestaurant(id).slice(0, limit)),
+    fetchRecentRatings: vi.fn(async (id: string, limit = 5) =>
+      ofRestaurant(id)
+        .filter((r) => r.isActive)
+        .slice(0, limit),
+    ),
     fetchMyRatings: vi.fn(async (id: string) => ofRestaurant(id).filter((r) => r.userId === 'me')),
     rateRestaurant: vi.fn(async (restaurantId: string, rating: RatingInput) => {
+      // Like the API, the new rating becomes the active one: the previous ones are kept, inactive
+      for (const previous of api.ratings) {
+        if (previous.restaurantId === restaurantId && previous.userId === 'me')
+          previous.isActive = false
+      }
       api.ratings.push({
         restaurantId,
         userId: 'me',
@@ -33,6 +42,7 @@ vi.mock('@/services/ratingService', () => {
         service: rating.service,
         setting: rating.setting,
         bonus: rating.bonus,
+        isActive: true,
         userName: 'Me',
         userAvatarUrl: null,
       })
@@ -68,6 +78,7 @@ beforeEach(() => {
       service: 50,
       setting: 50,
       bonus: false,
+      isActive: true,
       userName: 'Me',
       userAvatarUrl: null,
     },
@@ -100,9 +111,13 @@ describe('rating a restaurant from its page', () => {
     expect(cards[0]!.text()).toContain('💘')
     expect(cards[0]!.findAll('.criterion-score').map((s) => s.text())).toEqual(['92', '71', '40'])
     expect(cards[1]!.text()).toContain('January 2, 2026')
+    // The new review is the active one: the previous one stays, dimmed
+    expect(cards.map((c) => c.classes('inactive'))).toEqual([false, true])
 
-    // ...and so does "Recent"
+    // ..."Recent" shows only the new one, in place of the previous one
     await wrapper.get('.tab-recent').trigger('click')
-    expect(wrapper.findAll('.community-card')[0]!.text()).toContain('October 9, 2026')
+    const recentCards = wrapper.findAll('.community-card')
+    expect(recentCards).toHaveLength(1)
+    expect(recentCards[0]!.text()).toContain('October 9, 2026')
   })
 })

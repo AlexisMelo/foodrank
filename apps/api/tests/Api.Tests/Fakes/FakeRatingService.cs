@@ -6,7 +6,8 @@ namespace Api.Tests.Fakes;
 
 /// <summary>
 /// In-memory <see cref="IRatingService"/>, replacing the Supabase-backed one in API tests. Follows the same rules as the
-/// database: the restaurant must exist and a user rates a restaurant at most once per day.
+/// real service: the restaurant must exist, a user rates a restaurant at most once per day, and a new rating becomes
+/// the active one (written with <see cref="Rating.PlanNew"/>, like the real upsert).
 /// </summary>
 /// <param name="restaurants">Restaurants the ratings can be attached to.</param>
 public class FakeRatingService(FakeRestaurantService restaurants) : IRatingService
@@ -27,27 +28,33 @@ public class FakeRatingService(FakeRestaurantService restaurants) : IRatingServi
         if (restaurants.Restaurants.All(r => r.Id != restaurantId))
             return Task.FromResult(Result<Rating>.Failure(new Error(ErrorType.NotFound, "Restaurant not found.")));
 
-        DateTime today = DateTime.UtcNow.Date;
-        if (Ratings.Any(r => r.RestaurantId == restaurantId && r.UserId == userId && r.Date == today))
-            return Task.FromResult(Result<Rating>.Failure(new Error(ErrorType.Conflict, "You already rated this restaurant today.")));
-
         Rating rating = new()
         {
             RestaurantId = restaurantId,
             UserId = userId,
-            Date = today,
+            Date = DateTime.UtcNow.Date,
             FoodRating = request.Food,
             ServiceRating = request.Service,
             SettingRating = request.Setting,
             Bonus = request.Bonus
         };
-        Ratings.Add(rating);
-        return Task.FromResult(Result<Rating>.Success(rating));
+        List<Rating> currentActive = Ratings.Where(r => r.RestaurantId == restaurantId && r.UserId == userId && r.IsActive).ToList();
+        Result<IReadOnlyList<Rating>> rows = Rating.PlanNew(currentActive, rating);
+        if (!rows.IsSuccess)
+            return Task.FromResult(Result<Rating>.Failure(rows.Error!));
+
+        // Upsert: replace the rows with the same primary key, add the others
+        foreach (Rating row in rows.Value!)
+        {
+            Ratings.RemoveAll(r => r.RestaurantId == row.RestaurantId && r.UserId == row.UserId && r.Date == row.Date);
+            Ratings.Add(row);
+        }
+        return Task.FromResult(Result<Rating>.Success(rows.Value[^1]));
     }
 
     /// <inheritdoc />
     public Task<Result<IReadOnlyList<RatingResponse>>> GetRecentAsync(string restaurantId, int count, CancellationToken cancellationToken)
-        => Task.FromResult(Find(restaurantId, r => true, count));
+        => Task.FromResult(Find(restaurantId, r => r.IsActive, count));
 
     /// <inheritdoc />
     public Task<Result<IReadOnlyList<RatingResponse>>> GetByRestaurantAndUserAsync(string restaurantId, string userId, CancellationToken cancellationToken)

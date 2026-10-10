@@ -19,7 +19,7 @@ export async function rateRestaurant(restaurantId: string, rating: RatingInput):
 }
 
 /**
- * Get the most recent ratings of a restaurant, every user included, most recent first
+ * Get the most recent active ratings of a restaurant (each user's latest), every user included, most recent first
  * @param limit number of ratings, 1 to 50
  */
 export async function fetchRecentRatings(

@@ -32,7 +32,7 @@ public class RatingsController(IRatingService ratingService) : ControllerBase
         => (await _ratingService.CreateAsync(restaurantId, User.GetUserId(), request, cancellationToken)).ToActionResult();
 
     /// <summary>
-    /// Returns the most recent ratings of a restaurant by every user, most recent first.
+    /// Returns the most recent active ratings of a restaurant (each user's latest), most recent first.
     /// </summary>
     /// <param name="restaurantId">Database id of the restaurant.</param>
     /// <param name="limit">Maximum number of ratings returned, from 1 to 50 (5 by default).</param>

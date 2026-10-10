@@ -29,6 +29,7 @@ function rating(restaurantId: string, date: string): UserRating {
     service: 60,
     setting: 30,
     bonus: false,
+    isActive: true,
   }
 }
 
@@ -113,6 +114,16 @@ describe('HomeView recent reviews', () => {
     ])
     expect(cards[0]!.get('.visit-date').text()).toBe('Oct 8')
     expect(cards[0]!.findAll('.criterion-score').map((s) => s.text())).toEqual(['90', '60', '30'])
+  })
+
+  it('dims a previous review, replaced by a more recent one of the same restaurant', async () => {
+    vi.mocked(fetchUserRatings).mockResolvedValue([
+      rating('r1', '2026-10-08'),
+      { ...rating('r1', '2026-10-01'), isActive: false },
+    ])
+    const { wrapper } = await openHome()
+
+    expect(wrapper.findAll('.review-card').map((c) => c.classes('inactive'))).toEqual([false, true])
   })
 
   it('opens the restaurant page when a review is clicked', async () => {

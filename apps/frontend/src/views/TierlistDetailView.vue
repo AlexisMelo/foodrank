@@ -45,7 +45,7 @@ onMounted(async () => {
   loading.value = false
 })
 
-// Restaurants of the tierlist, best first by the owner's scores; on someone else's tierlist, with my own average
+// Restaurants of the tierlist, best first by the owner's scores; on someone else's tierlist, with my own score
 const rankedRestaurants = computed(() => {
   if (!tierlist.value) return []
   const myScores = overallByRestaurant(myRatings.value)

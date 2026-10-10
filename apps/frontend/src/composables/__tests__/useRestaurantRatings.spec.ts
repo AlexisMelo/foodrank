@@ -22,6 +22,7 @@ function rating(restaurantId: string, userId: string, date = '2026-03-07'): Rest
     service: 70,
     setting: 60,
     bonus: false,
+    isActive: true,
     userName: userId,
     userAvatarUrl: null,
   }

@@ -159,9 +159,10 @@ public class RatingsControllerTests : IDisposable
     }
 
     /// <summary>
-    /// Stores a rating of <paramref name="restaurantId"/> by <paramref name="userId"/> on <paramref name="date"/>.
+    /// Stores a rating of <paramref name="restaurantId"/> by <paramref name="userId"/> on <paramref name="date"/>,
+    /// active unless <paramref name="isActive"/> is false.
     /// </summary>
-    private void AddRating(string userId, DateTime date, float food = 50, string restaurantId = RestaurantId)
+    private void AddRating(string userId, DateTime date, float food = 50, string restaurantId = RestaurantId, bool isActive = true)
         => _factory.RatingService.Ratings.Add(new Rating
         {
             RestaurantId = restaurantId,
@@ -169,7 +170,8 @@ public class RatingsControllerTests : IDisposable
             Date = date,
             FoodRating = food,
             ServiceRating = 50,
-            SettingRating = 50
+            SettingRating = 50,
+            IsActive = isActive
         });
 
     /// <summary>
@@ -239,6 +241,42 @@ public class RatingsControllerTests : IDisposable
     }
 
     /// <summary>
+    /// Only the active rating of each user is returned, and the limit counts active ratings only (the previous ratings
+    /// do not take the place of other users' ones); the flag is sent in camelCase for the frontend.
+    /// </summary>
+    [Fact]
+    public async Task GetRecent_UserRatedSeveralTimes_ReturnsOnlyActiveRatings()
+    {
+        AddRating("user-3", new DateTime(2026, 3, 1));
+        AddRating(UserId, new DateTime(2026, 3, 2));
+        AddRating("user-2", new DateTime(2026, 3, 3), isActive: false);
+        AddRating("user-2", new DateTime(2026, 3, 4), isActive: false);
+        AddRating("user-2", new DateTime(2026, 3, 5));
+
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings?limit=3");
+
+        List<RatingResponse> ratings = (await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!;
+        Assert.Equal([("user-2", "2026-03-05"), (UserId, "2026-03-02"), ("user-3", "2026-03-01")], ratings.Select(r => (r.UserId, r.Date)));
+        Assert.All(ratings, r => Assert.True(r.IsActive));
+        Assert.Contains("\"isActive\":true", await response.Content.ReadAsStringAsync());
+    }
+
+    /// <summary>
+    /// Right after a new rating, "Recent" shows it in place of the user's previous one.
+    /// </summary>
+    [Fact]
+    public async Task GetRecent_AfterNewRating_ReplacesPreviousOne()
+    {
+        AddRating(UserId, new DateTime(2026, 3, 1), food: 20);
+        await RateAsync(RestaurantId, new { food = 91, service = 70, setting = 30, bonus = false });
+
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings");
+
+        RatingResponse rating = Assert.Single((await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!);
+        Assert.Equal(91, rating.Food);
+    }
+
+    /// <summary>
     /// Recent ratings of an unknown restaurant return a 404.
     /// </summary>
     [Fact]
@@ -285,6 +323,26 @@ public class RatingsControllerTests : IDisposable
         RatingResponse rating = Assert.Single((await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!);
         Assert.Equal(91, rating.Food);
         Assert.True(rating.Bonus);
+    }
+
+    /// <summary>
+    /// A new rating becomes the active one: the previous rating is still returned, but inactive, and the other users'
+    /// and restaurants' active ratings are untouched.
+    /// </summary>
+    [Fact]
+    public async Task GetMine_AfterNewRating_NewOneIsActiveAndPreviousIsKept()
+    {
+        _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = "r2", Name = "Sushi Bar" });
+        AddRating(UserId, new DateTime(2026, 3, 1), food: 20);
+        AddRating("user-2", new DateTime(2026, 3, 1));
+        AddRating(UserId, new DateTime(2026, 3, 1), restaurantId: "r2");
+        await RateAsync(RestaurantId, new { food = 91, service = 70, setting = 30, bonus = false });
+
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings/mine");
+
+        List<RatingResponse> ratings = (await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!;
+        Assert.Equal([(91f, true), (20f, false)], ratings.Select(r => (r.Food, r.IsActive)));
+        Assert.Equal(3, _factory.RatingService.Ratings.Count(r => r.IsActive));
     }
 
     /// <summary>

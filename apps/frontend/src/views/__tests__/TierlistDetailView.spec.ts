@@ -33,6 +33,7 @@ function rating(restaurantId: string, score: number): UserRating {
     service: score,
     setting: score,
     bonus: false,
+    isActive: true,
   }
 }
 

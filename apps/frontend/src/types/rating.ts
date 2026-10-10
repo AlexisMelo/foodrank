@@ -47,6 +47,11 @@ export interface RestaurantRating {
   setting: number
   /** "Instant crush" favorite bonus */
   bonus: boolean
+  /**
+   * True for the user's latest rating of the restaurant, which is their score for it; false for the previous ones,
+   * kept as history
+   */
+  isActive: boolean
   /** Full name or user name of the author, "Anonymous" when unknown */
   userName: string
   /** Profile picture of the author, null when there is none */
@@ -69,4 +74,9 @@ export interface UserRating {
   /** Setting (decor), 0 to 100 */
   setting: number
   bonus: boolean
+  /**
+   * True for the user's latest rating of the restaurant, which is their score for it; false for the previous ones,
+   * kept as history
+   */
+  isActive: boolean
 }

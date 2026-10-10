@@ -45,6 +45,7 @@ export type Database = {
           food_rating: number | null
           id_restaurant: string
           id_user: string
+          is_active: boolean
           service_rating: number | null
           setting_rating: number | null
         }
@@ -54,6 +55,7 @@ export type Database = {
           food_rating?: number | null
           id_restaurant?: string
           id_user: string
+          is_active?: boolean
           service_rating?: number | null
           setting_rating?: number | null
         }
@@ -63,6 +65,7 @@ export type Database = {
           food_rating?: number | null
           id_restaurant?: string
           id_user?: string
+          is_active?: boolean
           service_rating?: number | null
           setting_rating?: number | null
         }

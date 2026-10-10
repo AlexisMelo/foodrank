@@ -9,11 +9,18 @@ defineProps<{
   food: number
   service: number
   decor: number
+  /** False for a previous rating, replaced by a more recent one of the same restaurant: shown dimmed */
+  active: boolean
 }>()
 </script>
 
 <template>
-  <RouterLink :to="`/restaurant/${restaurantId}`" class="review-card">
+  <RouterLink
+    :to="`/restaurant/${restaurantId}`"
+    class="review-card"
+    :class="{ inactive: !active }"
+    :title="active ? undefined : 'Replaced by a more recent rating'"
+  >
     <div class="emoji-wrap">
       <div class="emoji-circle">{{ emoji }}</div>
       <div
@@ -84,6 +91,11 @@ defineProps<{
 .review-card:hover {
   background: #242424;
   transform: translateY(-2px);
+}
+
+// A previous rating, kept as history: the latest one of the restaurant is the user's score
+.inactive {
+  opacity: 0.45;
 }
 
 .review-card:active {
