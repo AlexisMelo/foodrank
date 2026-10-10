@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { ref, readonly } from 'vue'
 import type { User } from '@/types/user'
+import router from '@/router'
 
 const CURRENT_USER_ID = 'alex'
 
@@ -23,7 +24,16 @@ async function checkSession() {
 }
 
 /**
- * Sign in the user using email & password
+ * Go to the home page, then show the app. Navigating first keeps the route the user was on while
+ * logged out (e.g. /settings after a logout) from being mounted, even for a frame.
+ */
+async function enterApp() {
+  await router.replace('/')
+  isLoggedIn.value = true
+}
+
+/**
+ * Sign in the user using email & password, then open the home page
  * @param email
  * @param password
  */
@@ -33,16 +43,21 @@ async function login(email: string, password: string) {
     { email, password },
     { withCredentials: true },
   )
-  isLoggedIn.value = true
+  await enterApp()
 }
 
+/**
+ * Create an account using email & password, then open the home page
+ * @param email
+ * @param password
+ */
 async function signup(email: string, password: string) {
   await axios.post(
     `${import.meta.env.VITE_API_BASE_URL}/api/auth/signup`,
     { email, password },
     { withCredentials: true },
   )
-  isLoggedIn.value = true
+  await enterApp()
 }
 
 async function logout() {

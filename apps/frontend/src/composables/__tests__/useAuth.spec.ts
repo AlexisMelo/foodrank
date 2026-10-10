@@ -4,6 +4,10 @@ import axios from 'axios'
 
 vi.mock('axios', () => ({ default: { get: vi.fn(), post: vi.fn() } }))
 
+// Shared across module resets so tests can inspect the navigation done by the fresh composable
+const replace = vi.hoisted(() => vi.fn())
+vi.mock('@/router', () => ({ default: { replace } }))
+
 /**
  * Imports a fresh copy of the composable: its state is shared at module level
  * and the session is checked on import, so each test starts from a new module.
@@ -48,12 +52,57 @@ describe('useAuth', () => {
     expect(isLoggedIn.value).toBe(true)
   })
 
+  it('opens the home page on successful login, before showing the app', async () => {
+    vi.mocked(axios.get).mockRejectedValue(new Error('401'))
+    vi.mocked(axios.post).mockResolvedValue({})
+    const { isLoggedIn, login } = await loadUseAuth()
+    let loggedInDuringNavigation: boolean | undefined
+    replace.mockImplementation(async () => {
+      loggedInDuringNavigation = isLoggedIn.value
+    })
+
+    await login('me@test.fr', 'secret')
+
+    expect(replace).toHaveBeenCalledWith('/')
+    expect(loggedInDuringNavigation).toBe(false)
+  })
+
+  it('opens the home page on successful signup', async () => {
+    vi.mocked(axios.get).mockRejectedValue(new Error('401'))
+    vi.mocked(axios.post).mockResolvedValue({})
+    const { isLoggedIn, signup } = await loadUseAuth()
+
+    await signup('me@test.fr', 'secret')
+
+    expect(replace).toHaveBeenCalledWith('/')
+    expect(isLoggedIn.value).toBe(true)
+  })
+
+  it('stays on the current page on failed signup', async () => {
+    vi.mocked(axios.get).mockRejectedValue(new Error('401'))
+    vi.mocked(axios.post).mockRejectedValue(new Error('409'))
+    const { isLoggedIn, signup } = await loadUseAuth()
+
+    await expect(signup('me@test.fr', 'secret')).rejects.toThrow('409')
+    expect(replace).not.toHaveBeenCalled()
+    expect(isLoggedIn.value).toBe(false)
+  })
+
+  it('does not navigate when the session check finds a session', async () => {
+    vi.mocked(axios.get).mockResolvedValue({})
+
+    await loadUseAuth()
+
+    expect(replace).not.toHaveBeenCalled()
+  })
+
   it('stays logged out and rethrows on failed login', async () => {
     vi.mocked(axios.get).mockRejectedValue(new Error('401'))
     vi.mocked(axios.post).mockRejectedValue(new Error('400'))
     const { isLoggedIn, login } = await loadUseAuth()
 
-    await expect(login('me@test.fr', 'wrong')).rejects.toThrow()
+    await expect(login('me@test.fr', 'wrong')).rejects.toThrow('400')
+    expect(replace).not.toHaveBeenCalled()
     expect(isLoggedIn.value).toBe(false)
   })
 
