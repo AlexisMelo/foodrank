@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import BottomTabBar from '@/components/BottomTabBar.vue'
 import NewReviewModal from '@/components/NewReviewModal.vue'
-import AuthView from '@/views/AuthView.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useRoute } from 'vue-router'
 
@@ -12,11 +11,10 @@ const route = useRoute()
 <template>
   <div class="container">
     <template v-if="!isReady" />
-    <template v-else-if="route.path === '/auth/reset-password'">
-      <RouterView />
-    </template>
-    <AuthView v-else-if="!isLoggedIn" />
-    <template v-else>
+    <!-- Login, sign up and reset password pages: shown without the app navigation -->
+    <RouterView v-else-if="route.meta.access" />
+    <!-- Private pages: a logged-out user is sent to the login page by the navigation guard -->
+    <template v-else-if="isLoggedIn">
       <RouterView />
       <BottomTabBar />
       <NewReviewModal />

@@ -16,16 +16,10 @@ public class Profile : BaseModel
     public string Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Unique user name, when the user chose one.
+    /// Unique pseudonym, the name displayed for the user. Chosen when signing up; older accounts may have none.
     /// </summary>
     [Column("username")]
     public string? Username { get; set; }
-
-    /// <summary>
-    /// Full name, when the user gave it.
-    /// </summary>
-    [Column("full_name")]
-    public string? FullName { get; set; }
 
     /// <summary>
     /// URL of the profile picture, when the user uploaded one.
@@ -34,7 +28,19 @@ public class Profile : BaseModel
     public string? AvatarUrl { get; set; }
 
     /// <summary>
-    /// Name displayed when the user has no profile, or neither a full name nor a user name.
+    /// Year of birth, computed from the age given when signing up; null for older accounts.
+    /// </summary>
+    [Column("birth_year")]
+    public int? BirthYear { get; set; }
+
+    /// <summary>
+    /// Identity chosen when signing up, one of <see cref="Identities"/>; null for older accounts.
+    /// </summary>
+    [Column("identity")]
+    public string? Identity { get; set; }
+
+    /// <summary>
+    /// Name displayed when the user has no profile, or no user name.
     /// </summary>
     public const string AnonymousName = "Anonymous";
 
@@ -42,10 +48,9 @@ public class Profile : BaseModel
     /// Name displayed for the user owning <paramref name="profile"/>.
     /// </summary>
     /// <param name="profile">Profile row of the user, null when the user has none.</param>
-    /// <returns>The full name, then the user name, then <see cref="AnonymousName"/>.</returns>
+    /// <returns>The user name, or <see cref="AnonymousName"/> when there is none.</returns>
     public static string DisplayName(Profile? profile)
-        => new[] { profile?.FullName, profile?.Username }.FirstOrDefault(n => !string.IsNullOrWhiteSpace(n))
-            ?? AnonymousName;
+        => string.IsNullOrWhiteSpace(profile?.Username) ? AnonymousName : profile.Username;
 
     /// <summary>
     /// Profile picture of the user owning <paramref name="profile"/>.

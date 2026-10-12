@@ -1,10 +1,13 @@
 using System.Net;
+using System.Net.Http.Json;
 using api.Common;
+using api.Models;
 
 namespace Api.Tests.Controllers;
 
 /// <summary>
-/// Tests the session endpoints of /api/auth through HTTP, and with them the cookie authentication of every endpoint.
+/// Tests the session and sign up endpoints of /api/auth through HTTP, and with them the cookie authentication of every
+/// endpoint. The sign up runs on the in-memory auth and user services.
 /// </summary>
 public class AuthControllerTests : IDisposable
 {
@@ -47,6 +50,46 @@ public class AuthControllerTests : IDisposable
             request.Headers.Add("Cookie", $"{SupabaseAuthenticationHandler.CookieName}={token}");
         return _client.SendAsync(request);
     }
+
+    /// <summary>
+    /// Sends a sign up with the valid values of <see cref="ValidSignup"/>, replaced by <paramref name="changes"/>
+    /// (a null value removes the field).
+    /// </summary>
+    private Task<HttpResponseMessage> SignupAsync(Dictionary<string, object?>? changes = null)
+    {
+        Dictionary<string, object?> body = new(ValidSignup);
+        foreach ((string field, object? value) in changes ?? [])
+        {
+            if (value is null)
+                body.Remove(field);
+            else
+                body[field] = value;
+        }
+        return _client.PostAsync("/api/auth/signup", JsonContent.Create(body));
+    }
+
+    /// <summary>
+    /// Body of a valid sign up, as sent by the frontend.
+    /// </summary>
+    private static readonly Dictionary<string, object?> ValidSignup = new()
+    {
+        ["email"] = "new@test.fr",
+        ["password"] = "abcdefg1",
+        ["username"] = "alex",
+        ["age"] = 30,
+        ["identity"] = "non_binary"
+    };
+
+    /// <summary>
+    /// Returns the value of the auth cookie set by the response, null when it sets none.
+    /// </summary>
+    private static string? SessionCookie(HttpResponseMessage response)
+        => response.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? cookies)
+            ? cookies
+                .Where(cookie => cookie.StartsWith($"{SupabaseAuthenticationHandler.CookieName}="))
+                .Select(cookie => cookie.Split(';')[0][(SupabaseAuthenticationHandler.CookieName.Length + 1)..])
+                .FirstOrDefault(token => token.Length > 0)
+            : null;
 
     /// <summary>
     /// Returns true when the response tells the browser to delete the auth cookie.
@@ -101,5 +144,164 @@ public class AuthControllerTests : IDisposable
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.True(DeletesCookie(response));
+    }
+
+    /// <summary>
+    /// A valid sign up creates the account, saves its profile with the birth year instead of the age, and opens the
+    /// session of the new user.
+    /// </summary>
+    [Fact]
+    public async Task Signup_Valid_CreatesAccountAndProfileAndOpensSession()
+    {
+        HttpResponseMessage response = await SignupAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        string userId = Assert.Contains("new@test.fr", _factory.AuthService.UserIdsByEmail);
+        Profile profile = Assert.Contains(userId, _factory.RatingService.Profiles);
+        Assert.Equal("alex", profile.Username);
+        Assert.Equal(DateTime.UtcNow.Year - 30, profile.BirthYear);
+        Assert.Equal(Identities.NonBinary, profile.Identity);
+
+        string? token = SessionCookie(response);
+        Assert.NotNull(token);
+        Assert.Equal(userId, _factory.AuthService.UserIdsByToken[token]);
+    }
+
+    /// <summary>
+    /// The three identities and the age limits are accepted.
+    /// </summary>
+    [Theory]
+    [InlineData("man", 0)]
+    [InlineData("woman", 120)]
+    [InlineData("non_binary", 18)]
+    public async Task Signup_EveryIdentityAndAgeLimit_Returns200(string identity, int age)
+    {
+        HttpResponseMessage response = await SignupAsync(new() { ["identity"] = identity, ["age"] = age });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Profile profile = Assert.Single(_factory.RatingService.Profiles.Values);
+        Assert.Equal(identity, profile.Identity);
+        Assert.Equal(DateTime.UtcNow.Year - age, profile.BirthYear);
+    }
+
+    /// <summary>
+    /// Signing up with the email of an existing account (whatever its case) is refused with a 409, without profile
+    /// nor session.
+    /// </summary>
+    [Fact]
+    public async Task Signup_EmailAlreadyRegistered_Returns409()
+    {
+        _factory.AuthService.UserIdsByEmail["new@test.fr"] = "existing-user";
+
+        HttpResponseMessage response = await SignupAsync(new() { ["email"] = "New@Test.fr" });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Contains("An account with this email already exists.", await response.Content.ReadAsStringAsync());
+        Assert.Empty(_factory.RatingService.Profiles);
+        Assert.Null(SessionCookie(response));
+    }
+
+    /// <summary>
+    /// Signing up with the pseudonym of another user is refused with a 409 before the account is created, so the
+    /// email can still be used once another pseudonym is chosen.
+    /// </summary>
+    [Fact]
+    public async Task Signup_UsernameTaken_Returns409WithoutCreatingAccount()
+    {
+        _factory.RatingService.Profiles["other-user"] = new Profile { Id = "other-user", Username = "alex" };
+
+        HttpResponseMessage response = await SignupAsync();
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Contains("This pseudonym is already taken.", await response.Content.ReadAsStringAsync());
+        Assert.Empty(_factory.AuthService.UserIdsByEmail);
+        Assert.Null(SessionCookie(response));
+
+        HttpResponseMessage retry = await SignupAsync(new() { ["username"] = "alex2" });
+        Assert.Equal(HttpStatusCode.OK, retry.StatusCode);
+    }
+
+    /// <summary>
+    /// When Supabase opens no session (email confirmation required), the sign up answers 401 without cookie.
+    /// </summary>
+    [Fact]
+    public async Task Signup_NoSessionOpened_Returns401()
+    {
+        _factory.AuthService.OpensSessionOnSignUp = false;
+
+        HttpResponseMessage response = await SignupAsync();
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Null(SessionCookie(response));
+    }
+
+    /// <summary>
+    /// A missing or malformed email is refused with a 400.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("not-an-email")]
+    public async Task Signup_InvalidEmail_Returns400(string? email)
+        => await AssertRefusedAsync(new() { ["email"] = email });
+
+    /// <summary>
+    /// A missing password, or one breaking the rules (8 characters, a letter, a number), is refused with a 400.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("abcdef1")]
+    [InlineData("abcdefgh")]
+    [InlineData("12345678")]
+    public async Task Signup_WeakPassword_Returns400(string? password)
+        => await AssertRefusedAsync(new() { ["password"] = password });
+
+    /// <summary>
+    /// A missing, blank, too short, too long or space-padded pseudonym is refused with a 400.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("ab")]
+    [InlineData(" alex")]
+    [InlineData("alex ")]
+    [InlineData("abcdefghijklmnopqrstuvwxyz12345")]
+    public async Task Signup_InvalidUsername_Returns400(string? username)
+        => await AssertRefusedAsync(new() { ["username"] = username });
+
+    /// <summary>
+    /// A missing, negative, too high or decimal age is refused with a 400.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData(-1)]
+    [InlineData(121)]
+    [InlineData(30.5)]
+    public async Task Signup_InvalidAge_Returns400(object? age)
+        => await AssertRefusedAsync(new() { ["age"] = age });
+
+    /// <summary>
+    /// A missing identity, or one that is not man, woman or non_binary, is refused with a 400.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("other")]
+    [InlineData("Man")]
+    public async Task Signup_InvalidIdentity_Returns400(string? identity)
+        => await AssertRefusedAsync(new() { ["identity"] = identity });
+
+    /// <summary>
+    /// Sends a sign up with <paramref name="changes"/>, and checks it is refused with a 400 without creating anything.
+    /// </summary>
+    private async Task AssertRefusedAsync(Dictionary<string, object?> changes)
+    {
+        HttpResponseMessage response = await SignupAsync(changes);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Empty(_factory.AuthService.UserIdsByEmail);
+        Assert.Empty(_factory.RatingService.Profiles);
+        Assert.Null(SessionCookie(response));
     }
 }

@@ -44,7 +44,7 @@ public class UsersControllerTests : IDisposable
         _client = _factory.CreateClient();
         _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = "r1", Name = "Pizza Roma", Emoji = "🍕", Cuisine = "Italian" });
         _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = "r2", Name = "Sushi Bar", Emoji = "🍣" });
-        _factory.RatingService.Profiles[MeId] = new Profile { Id = MeId, FullName = "Alexis Melo", AvatarUrl = "https://img.test/me.png" };
+        _factory.RatingService.Profiles[MeId] = new Profile { Id = MeId, Username = "alexis", AvatarUrl = "https://img.test/me.png" };
         _factory.AuthService.UserIdsByToken[Token] = MeId;
     }
 
@@ -96,7 +96,7 @@ public class UsersControllerTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         string json = await response.Content.ReadAsStringAsync();
         Assert.Contains($"\"id\":\"{MeId}\"", json);
-        Assert.Contains("\"name\":\"Alexis Melo\"", json);
+        Assert.Contains("\"name\":\"alexis\"", json);
         Assert.Contains("\"avatarUrl\":\"https://img.test/me.png\"", json);
         Assert.Contains("\"ratedRestaurantsCount\":2", json);
     }

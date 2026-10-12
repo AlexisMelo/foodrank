@@ -52,30 +52,30 @@ public class RatingResponseTests
     }
 
     /// <summary>
-    /// The full name is preferred over the user name, and the avatar is passed along.
+    /// The user name is displayed, and the avatar is passed along.
     /// </summary>
     [Fact]
-    public void From_FullProfile_UsesFullNameAndAvatar()
+    public void From_FullProfile_UsesUsernameAndAvatar()
     {
-        Profile profile = new() { Id = "user-1", FullName = "Alex Dupont", Username = "alex", AvatarUrl = "https://img.test/a.png" };
+        Profile profile = new() { Id = "user-1", Username = "alex", AvatarUrl = "https://img.test/a.png" };
 
         RatingResponse response = RatingResponse.From(SampleRating, profile);
 
-        Assert.Equal("Alex Dupont", response.UserName);
+        Assert.Equal("alex", response.UserName);
         Assert.Equal("https://img.test/a.png", response.UserAvatarUrl);
     }
 
     /// <summary>
-    /// Without a full name, the user name is displayed.
+    /// A missing or blank user name is shown as anonymous.
     /// </summary>
     [Theory]
     [InlineData(null)]
     [InlineData("  ")]
-    public void From_NoFullName_UsesUsername(string? fullName)
+    public void From_BlankUsername_IsAnonymous(string? username)
     {
-        Profile profile = new() { Id = "user-1", FullName = fullName, Username = "alex" };
+        Profile profile = new() { Id = "user-1", Username = username };
 
-        Assert.Equal("alex", RatingResponse.From(SampleRating, profile).UserName);
+        Assert.Equal(Profile.AnonymousName, RatingResponse.From(SampleRating, profile).UserName);
     }
 
     /// <summary>

@@ -1,3 +1,5 @@
+using api.Common;
+using api.Models;
 using Supabase.Gotrue;
 using Supabase.Gotrue.Exceptions;
 
@@ -9,10 +11,34 @@ namespace api.Services;
 /// <param name="auth">GoTrue client scoped to the current request.</param>
 public class SupabaseAuthService(Supabase.Gotrue.Client auth) : ISupabaseAuthService
 {
-    public async Task<string?> SignUpAsync(string email, string password)
+    /// <summary>
+    /// Error returned when signing up with the email of an existing account.
+    /// </summary>
+    public static Error EmailTaken { get; } = new(ErrorType.Conflict, "An account with this email already exists.");
+
+    /// <summary>
+    /// Error returned when the account was created without session (Supabase requires an email confirmation first).
+    /// </summary>
+    public static Error NoSession { get; } = new(ErrorType.Unauthorized, "The account was created but no session could be opened.");
+
+    /// <inheritdoc />
+    public async Task<Result<AuthSession>> SignUpAsync(string email, string password)
     {
-        Session? session = await auth.SignUp(email, password);
-        return session?.AccessToken;
+        try
+        {
+            Session? session = await auth.SignUp(email, password);
+            return session?.User?.Id is { } userId && !string.IsNullOrEmpty(session.AccessToken)
+                ? Result<AuthSession>.Success(new AuthSession(userId, session.AccessToken))
+                : Result<AuthSession>.Failure(NoSession);
+        }
+        catch (GotrueException ex) when (ex.Reason == FailureHint.Reason.UserAlreadyRegistered)
+        {
+            return Result<AuthSession>.Failure(EmailTaken);
+        }
+        catch (GotrueException ex) when (ex.Reason is FailureHint.Reason.UserBadEmailAddress or FailureHint.Reason.UserBadPassword)
+        {
+            return Result<AuthSession>.Failure(new Error(ErrorType.Validation, "The email address or the password was refused."));
+        }
     }
 
     /// <summary>

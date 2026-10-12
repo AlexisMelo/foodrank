@@ -1,10 +1,23 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
+import AuthView from '@/views/AuthView.vue'
+import type { PageAccess } from '@/utils/auth'
+import { signupStepGuard } from '@/router/signupStepGuard'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    /** Who can open the page (see PageAccess); pages without it are for logged-in users only */
+    access?: PageAccess
+  }
+}
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', component: HomeView },
+    // Login and sign up are tabs of the same card; the sign up continues on full pages (?step=2, ?step=3)
+    { path: '/login', component: AuthView, meta: { access: 'guest' } },
+    { path: '/signup', component: AuthView, meta: { access: 'guest' } },
     { path: '/profile', component: () => import('@/views/ProfileView.vue') },
     { path: '/explore', component: () => import('@/views/ExploreView.vue') },
     { path: '/restaurant/:id', component: () => import('@/views/RestaurantView.vue') },
@@ -17,8 +30,14 @@ const router = createRouter({
     { path: '/search', component: () => import('@/views/SearchResultsView.vue') },
     { path: '/review/:id', component: () => import('@/views/NewReviewView.vue') },
     { path: '/settings', component: () => import('@/views/SettingsView.vue') },
-    { path: '/auth/reset-password', component: () => import('@/views/ResetPasswordView.vue') },
+    {
+      path: '/auth/reset-password',
+      component: () => import('@/views/ResetPasswordView.vue'),
+      meta: { access: 'public' },
+    },
   ],
 })
+
+router.beforeEach(signupStepGuard)
 
 export default router

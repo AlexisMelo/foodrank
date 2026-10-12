@@ -1,15 +1,22 @@
 using api.Common;
 using api.Models;
+using Supabase.Postgrest.Exceptions;
 using Supabase.Postgrest.Responses;
 
 namespace api.Services;
 
 /// <summary>
-/// Reads users' profiles from the "profiles" table, with the number of restaurants they rated from the "rating" table.
+/// Reads and saves users' profiles in the "profiles" table, with the number of restaurants they rated from the
+/// "rating" table.
 /// </summary>
 /// <param name="supabase">Client of the Supabase database.</param>
 public class UserService(Supabase.Client supabase) : IUserService
 {
+    /// <summary>
+    /// Error returned when saving a profile with the pseudonym of another user.
+    /// </summary>
+    public static Error UsernameTaken { get; } = new(ErrorType.Conflict, "This pseudonym is already taken.");
+
     /// <summary>
     /// Client of the Supabase database.
     /// </summary>
@@ -33,5 +40,31 @@ public class UserService(Supabase.Client supabase) : IUserService
 
         return Result<UserProfileResponse>.Success(
             UserProfileResponse.From(userId, profiles.Models.FirstOrDefault(), ratings.Models.Select(r => r.RestaurantId)));
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> IsUsernameTakenAsync(string username, CancellationToken cancellationToken)
+    {
+        ModeledResponse<Profile> profiles = await _supabase.From<Profile>()
+            .Select("id")
+            .Where(p => p.Username == username)
+            .Limit(1)
+            .Get(cancellationToken);
+        return profiles.Models.Count > 0;
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<Profile>> SaveProfileAsync(Profile profile, CancellationToken cancellationToken)
+    {
+        try
+        {
+            ModeledResponse<Profile> saved = await _supabase.From<Profile>().Upsert(profile, cancellationToken: cancellationToken);
+            return Result<Profile>.Success(saved.Models.FirstOrDefault() ?? profile);
+        }
+        catch (PostgrestException ex) when (PostgrestErrors.IsUniqueViolation(ex))
+        {
+            // Another user took the pseudonym since it was checked
+            return Result<Profile>.Failure(UsernameTaken);
+        }
     }
 }

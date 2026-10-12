@@ -229,7 +229,7 @@ public class RatingsControllerTests : IDisposable
     [Fact]
     public async Task GetRecent_WithProfile_ReturnsAuthorName()
     {
-        _factory.RatingService.Profiles["user-2"] = new Profile { Id = "user-2", FullName = "Camille", AvatarUrl = "https://img.test/c.png" };
+        _factory.RatingService.Profiles["user-2"] = new Profile { Id = "user-2", Username = "Camille", AvatarUrl = "https://img.test/c.png" };
         AddRating("user-2", new DateTime(2026, 3, 1), food: 72.5f);
 
         HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings");

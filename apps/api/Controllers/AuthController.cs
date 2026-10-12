@@ -3,34 +3,42 @@ using api.Models;
 using api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Supabase.Gotrue.Exceptions;
 
 namespace api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController(ISupabaseAuthService authService, IConfiguration configuration) : ControllerBase
+public class AuthController(ISupabaseAuthService authService, IUserService userService, IConfiguration configuration) : ControllerBase
 {
     private string FrontendUrl => configuration["Frontend:Url"]!;
 
+    /// <summary>
+    /// Creates the Supabase Auth account with its profile (pseudonym, birth year, identity), then opens its session.
+    /// </summary>
+    /// <param name="request">Email, password and personal data entered in the sign up steps.</param>
+    /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
+    /// <returns>200 with the session cookie, 400 for invalid values, 401 when no session could be opened, 409 when
+    /// the email or the pseudonym is already used.</returns>
     [HttpPost("signup")]
     [AllowAnonymous]
-    public async Task<IActionResult> Signup([FromBody] SignupRequest request)
+    public async Task<IActionResult> Signup([FromBody] SignupRequest request, CancellationToken cancellationToken)
     {
-        try
-        {
-            string? token = await authService.SignUpAsync(request.Email, request.Password);
+        // Checked before creating the account: an account whose profile cannot be saved would be left without
+        // pseudonym, and its email could not be used to sign up again
+        if (await userService.IsUsernameTakenAsync(request.Username, cancellationToken))
+            return Conflict(new { error = UserService.UsernameTaken.Message });
 
-            if (token is null)
-                return Unauthorized();
+        Result<AuthSession> session = await authService.SignUpAsync(request.Email, request.Password);
+        if (!session.IsSuccess)
+            return session.ToActionResult();
 
-            SetSessionCookie(token);
-            return Ok();
-        }
-        catch (GotrueException ex) when (ex.Reason == FailureHint.Reason.UserAlreadyRegistered)
-        {
-            return Conflict(new { error = "User already exists." });
-        }
+        Result<Profile> profile = await userService.SaveProfileAsync(
+            request.ToProfile(session.Value!.UserId, DateTime.UtcNow.Year), cancellationToken);
+        if (!profile.IsSuccess)
+            return profile.ToActionResult();
+
+        SetSessionCookie(session.Value.AccessToken);
+        return Ok();
     }
 
     /// <summary>

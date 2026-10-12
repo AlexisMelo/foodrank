@@ -1,7 +1,9 @@
 import axios from 'axios'
 import { ref, readonly } from 'vue'
-import type { User } from '@/types/user'
+import type { RouteLocationNormalized } from 'vue-router'
+import type { SignupData, User } from '@/types/user'
 import router from '@/router'
+import { sessionRedirect } from '@/utils/auth'
 
 const CURRENT_USER_ID = 'alex'
 
@@ -24,12 +26,21 @@ async function checkSession() {
 }
 
 /**
- * Go to the home page, then show the app. Navigating first keeps the route the user was on while
- * logged out (e.g. /settings after a logout) from being mounted, even for a frame.
+ * Leave the current page when the session does not allow it anymore: a private page after a logout or an expired
+ * session goes to the login page.
+ */
+async function leaveForbiddenPage() {
+  const target = sessionRedirect(router.currentRoute.value.meta.access, isLoggedIn.value)
+  if (target) await router.replace(target)
+}
+
+/**
+ * Show the app, then open the home page. Logged in first, so the navigation guard lets the home page open; the
+ * login or sign up page stays displayed until then.
  */
 async function enterApp() {
-  await router.replace('/')
   isLoggedIn.value = true
+  await router.replace('/')
 }
 
 /**
@@ -47,21 +58,22 @@ async function login(email: string, password: string) {
 }
 
 /**
- * Create an account using email & password, then open the home page
- * @param email
- * @param password
+ * Create the account with everything entered in the sign up steps, then open the home page
+ * @param data
  */
-async function signup(email: string, password: string) {
-  await axios.post(
-    `${import.meta.env.VITE_API_BASE_URL}/api/auth/signup`,
-    { email, password },
-    { withCredentials: true },
-  )
+async function signup(data: SignupData) {
+  await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/signup`, data, {
+    withCredentials: true,
+  })
   await enterApp()
 }
 
+/**
+ * Log out, then open the login page
+ */
 async function logout() {
   isLoggedIn.value = false
+  await leaveForbiddenPage()
   await axios
     .post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/logout`, null, { withCredentials: true })
     .catch(() => {})
@@ -69,14 +81,29 @@ async function logout() {
 
 /**
  * Show the login page as soon as the API rejects the session (e.g. the token expired while the app was open),
- * instead of leaving pages that cannot load their data.
+ * instead of leaving pages that cannot load their data. Login, sign up and public pages are left as they are, so
+ * they can show their own error.
  */
 axios.interceptors.response.use(undefined, (error) => {
-  if (axios.isAxiosError(error) && error.response?.status === 401) isLoggedIn.value = false
+  if (axios.isAxiosError(error) && error.response?.status === 401) {
+    isLoggedIn.value = false
+    void leaveForbiddenPage()
+  }
   return Promise.reject(error)
 })
 
-checkSession()
+// The session is only checked once: afterwards it changes through login, signup, logout and the 401 handler above
+const sessionChecked = checkSession()
+
+/**
+ * Navigation guard keeping each page to the users it is meant for (see sessionRedirect): logged-out users only see
+ * the login, sign up and public pages, logged-in users are sent from the login and sign up pages to the home page.
+ * Waits for the session check, so the first page is chosen knowing whether the user is logged in.
+ */
+export async function authGuard(to: RouteLocationNormalized) {
+  await sessionChecked
+  return sessionRedirect(to.meta.access, isLoggedIn.value) ?? true
+}
 
 export function useAuth() {
   return {
