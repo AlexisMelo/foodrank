@@ -215,6 +215,22 @@ describe('useAuth', () => {
     },
   )
 
+  it('lets the guard choose the first page when the session check is refused', async () => {
+    // The 401 of the session check reaches the error handler before the first navigation is done, while the current
+    // route is still the router's start location (a private page): it must not send the page being opened, e.g. the
+    // public reset password page, to the login page
+    let refuseSession: (error: unknown) => void = () => {}
+    vi.mocked(axios.get).mockReturnValue(new Promise((_, reject) => (refuseSession = reject)))
+    const { authGuard } = await loadAuthModule()
+
+    const decision = authGuard(page({ access: 'public' }))
+    await failApiCall(httpError(401))
+    refuseSession(httpError(401))
+
+    expect(await decision).toBe(true)
+    expect(router.replace).not.toHaveBeenCalled()
+  })
+
   it('stays logged in when an API call fails for another reason', async () => {
     vi.mocked(axios.get).mockResolvedValue({})
     const { isLoggedIn } = await loadUseAuth()

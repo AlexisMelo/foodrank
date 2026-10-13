@@ -98,11 +98,13 @@ async function deleteAccount(password: string) {
  * Show the login page as soon as the API rejects the session (e.g. the token expired while the app was open),
  * instead of leaving pages that cannot load their data. Login, sign up and public pages are left as they are, so
  * they can show their own error.
+ * The first session check is left to authGuard: its 401 arrives before the first navigation is done, while the current
+ * route is not the page being opened yet, so leaving it here would send e.g. the reset password page to the login page.
  */
 axios.interceptors.response.use(undefined, (error) => {
   if (axios.isAxiosError(error) && error.response?.status === 401) {
     isLoggedIn.value = false
-    void leaveForbiddenPage()
+    if (isReady.value) void leaveForbiddenPage()
   }
   return Promise.reject(error)
 })
