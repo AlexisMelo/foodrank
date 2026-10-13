@@ -10,6 +10,7 @@
 /.claude/skills/vue-best-practices
 /.claude/skills/*
 /skills-lock.json
+.mcp.json
 
 # ============================================================
 # Angular (Frontend)

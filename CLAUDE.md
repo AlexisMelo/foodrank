@@ -1,6 +1,6 @@
 # FoodRank
 
-A monorepo containing a Vue.js frontend and a .NET Core backend API.
+A monorepo containing an angular frontend and a .NET Core backend API.
 The point is to build a restaurant ranking application. Restaurants are rated based on 3 criterias : food, service, and the setting. User can optionnaly give a "favorite" bonus, that does not contribute to the note, but can show a particular interest for the restaurant.
 
 ## Repo structure
@@ -9,7 +9,8 @@ The point is to build a restaurant ranking application. Restaurants are rated ba
 foodrank/
 └── apps/
     ├── api/        # ASP.NET Core 10 Web API
-    └── frontend/   # Vue 3 + TypeScript SPA
+    └── frontend/   # Angular 22 + TypeScript SPA
+    └── frontend-vue/   # legacy Vue app, reference only, never modified.
 ```
 
 ## Apps
@@ -20,7 +21,7 @@ For any change in apps/api, load the dotnet-best-practices skill before writing 
 
 ### Frontend (`apps/frontend`)
 
-For any change in apps/frontend, load the vue-best-practices skill before writing code.
+For any change in apps/frontend, load the angular-developer skill before writing code.
 
 ### Workflow for every change (feature, bugfix, refactor)
 
