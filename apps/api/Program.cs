@@ -5,6 +5,8 @@ using api.Services.Places;
 using api.Services.Places.Osm;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Supabase.Gotrue;
+using Supabase.Gotrue.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +37,15 @@ builder.Services.AddScoped(_ => new Supabase.Gotrue.Client(new Supabase.Gotrue.C
     AutoRefreshToken = false,
     Headers = { ["apikey"] = builder.Configuration["Supabase:ServiceRoleKey"]! }
 }));
+
+// Admin client for the operations on any account (looking up its email, deleting it). It keeps no session, so it is shared.
+builder.Services.AddSingleton<IGotrueAdminClient<User>>(_ => new AdminClient(
+    builder.Configuration["Supabase:ServiceRoleKey"]!,
+    new Supabase.Gotrue.ClientOptions
+    {
+        Url = $"{builder.Configuration["Supabase:Url"]}/auth/v1",
+        Headers = { ["apikey"] = builder.Configuration["Supabase:ServiceRoleKey"]! }
+    }));
 
 builder.Services.AddScoped<ISupabaseAuthService, SupabaseAuthService>();
 

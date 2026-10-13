@@ -75,6 +75,31 @@ public class AuthController(ISupabaseAuthService authService, IUserService userS
     }
 
     /// <summary>
+    /// Deletes the account of the logged-in user once its password is confirmed, and logs it out. Only the Supabase
+    /// Auth account is deleted here: its profile, ratings and tierlists are deleted by the database in the same
+    /// transaction (ON DELETE CASCADE foreign keys to auth.users), so the account is never deleted without them.
+    /// </summary>
+    /// <param name="request">Current password of the user.</param>
+    /// <returns>200 and the session cookie deleted, 400 without password, 401 when not logged in, 403 when the
+    /// password is wrong, 503 when Supabase Auth fails (nothing is deleted then).</returns>
+    [HttpPost("delete-account")]
+    public async Task<IActionResult> DeleteAccount([FromBody] DeleteAccountRequest request)
+    {
+        string userId = User.GetUserId();
+
+        Result<bool> password = await authService.CheckPasswordAsync(userId, request.Password);
+        if (!password.IsSuccess)
+            return password.ToActionResult();
+
+        Result<bool> deleted = await authService.DeleteUserAsync(userId);
+        if (!deleted.IsSuccess)
+            return deleted.ToActionResult();
+
+        DeleteCookie();
+        return Ok();
+    }
+
+    /// <summary>
     /// Delete logged in user Cookie
     /// </summary>
     private void DeleteCookie()

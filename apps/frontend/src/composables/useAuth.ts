@@ -80,6 +80,21 @@ async function logout() {
 }
 
 /**
+ * Delete the account of the logged-in user with all its data, once its password is confirmed, then open the login
+ * page. Rethrows when the deletion fails (e.g. 403 for a wrong password), the user then stays logged in.
+ * @param password current password of the user
+ */
+async function deleteAccount(password: string) {
+  await axios.post(
+    `${import.meta.env.VITE_API_BASE_URL}/api/auth/delete-account`,
+    { password },
+    { withCredentials: true },
+  )
+  isLoggedIn.value = false
+  await leaveForbiddenPage()
+}
+
+/**
  * Show the login page as soon as the API rejects the session (e.g. the token expired while the app was open),
  * instead of leaving pages that cannot load their data. Login, sign up and public pages are left as they are, so
  * they can show their own error.
@@ -114,6 +129,7 @@ export function useAuth() {
     login,
     signup,
     logout,
+    deleteAccount,
     checkSession,
   }
 }

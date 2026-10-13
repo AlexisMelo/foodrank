@@ -166,6 +166,32 @@ describe('useAuth', () => {
     expect(router.replace).toHaveBeenCalledWith('/login')
   })
 
+  it('deletes the account with the password, then logs out and opens the login page', async () => {
+    vi.mocked(axios.get).mockResolvedValue({})
+    vi.mocked(axios.post).mockResolvedValue({})
+    const { isLoggedIn, deleteAccount } = await loadUseAuth()
+
+    await deleteAccount('secret')
+
+    expect(axios.post).toHaveBeenCalledWith(
+      expect.stringMatching(/\/api\/auth\/delete-account$/),
+      { password: 'secret' },
+      { withCredentials: true },
+    )
+    expect(isLoggedIn.value).toBe(false)
+    expect(router.replace).toHaveBeenCalledWith('/login')
+  })
+
+  it('stays logged in and rethrows when the account deletion fails', async () => {
+    vi.mocked(axios.get).mockResolvedValue({})
+    vi.mocked(axios.post).mockRejectedValue(httpError(403))
+    const { isLoggedIn, deleteAccount } = await loadUseAuth()
+
+    await expect(deleteAccount('wrong')).rejects.toBeInstanceOf(AxiosError)
+    expect(isLoggedIn.value).toBe(true)
+    expect(router.replace).not.toHaveBeenCalled()
+  })
+
   it('shows the login page when the API rejects the expired session', async () => {
     vi.mocked(axios.get).mockResolvedValue({})
     const { isLoggedIn } = await loadUseAuth()

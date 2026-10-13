@@ -5,8 +5,9 @@ using api.Services;
 namespace Api.Tests.Fakes;
 
 /// <summary>
-/// In-memory <see cref="ISupabaseAuthService"/>, replacing Supabase Auth in API tests. Only the token → user lookup and
-/// the sign up are implemented; the other operations are not used by the tested endpoints.
+/// In-memory <see cref="ISupabaseAuthService"/>, replacing Supabase Auth in API tests. Only the token → user lookup,
+/// the sign up, the password check and the account deletion are implemented; the other operations are not used by the
+/// tested endpoints.
 /// </summary>
 public class FakeSupabaseAuthService : ISupabaseAuthService
 {
@@ -31,9 +32,46 @@ public class FakeSupabaseAuthService : ISupabaseAuthService
     /// </summary>
     public Exception? SignUpException { get; set; }
 
+    /// <summary>
+    /// Passwords of the accounts, by user id; checking the password of an account missing here fails.
+    /// </summary>
+    public Dictionary<string, string> PasswordsByUserId { get; } = [];
+
+    /// <summary>
+    /// When true, deleting an account fails like an outage of Supabase Auth, and the account is kept.
+    /// </summary>
+    public bool DeleteUserFails { get; set; }
+
+    /// <summary>
+    /// Ids of the accounts deleted, in order.
+    /// </summary>
+    public List<string> DeletedUserIds { get; } = [];
+
     /// <inheritdoc />
     public Task<string?> GetUserIdAsync(string? accessToken)
         => Task.FromResult(accessToken is not null && UserIdsByToken.TryGetValue(accessToken, out string? userId) ? userId : null);
+
+    /// <inheritdoc />
+    public Task<Result<bool>> CheckPasswordAsync(string userId, string password)
+        => Task.FromResult(PasswordsByUserId.TryGetValue(userId, out string? expected) && expected == password
+            ? Result<bool>.Success(true)
+            : Result<bool>.Failure(SupabaseAuthService.WrongPassword));
+
+    /// <inheritdoc />
+    public Task<Result<bool>> DeleteUserAsync(string userId)
+    {
+        if (DeleteUserFails)
+            return Task.FromResult(Result<bool>.Failure(SupabaseAuthService.DeleteAccountUnavailable));
+
+        // Like Supabase, the tokens of a deleted account are refused
+        foreach (string token in UserIdsByToken.Where(t => t.Value == userId).Select(t => t.Key).ToList())
+            UserIdsByToken.Remove(token);
+        foreach (string email in UserIdsByEmail.Where(e => e.Value == userId).Select(e => e.Key).ToList())
+            UserIdsByEmail.Remove(email);
+        PasswordsByUserId.Remove(userId);
+        DeletedUserIds.Add(userId);
+        return Task.FromResult(Result<bool>.Success(true));
+    }
 
     /// <inheritdoc />
     public Task<string?> SignInAsync(string email, string password) => throw new NotImplementedException();

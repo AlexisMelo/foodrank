@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import { shallowRef } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import { useUserProfile } from '@/composables/useUserProfile'
 import UserBar from '@/components/UserBar.vue'
+import DeleteAccountModal from '@/components/DeleteAccountModal.vue'
 
 const { logout } = useAuth()
 const { profile } = useUserProfile()
+
+const deleteAccountOpen = shallowRef(false)
 </script>
 
 <template>
@@ -13,14 +17,16 @@ const { profile } = useUserProfile()
       <h1 class="title">Settings</h1>
     </div>
 
-    <!-- Log out stays available even if the profile could not be loaded -->
+    <!-- Log out and account deletion stay available even if the profile could not be loaded -->
     <div class="bottom-section">
       <UserBar v-if="profile" :profile="profile" class="settings-user-bar" />
       <button class="logout-btn" @click="logout">Log out</button>
+      <button class="delete-account-btn" @click="deleteAccountOpen = true">Delete account</button>
     </div>
+
+    <DeleteAccountModal v-if="deleteAccountOpen" @close="deleteAccountOpen = false" />
   </div>
 </template>
-
 <style scoped lang="scss">
 .settings {
   min-height: 100dvh;
@@ -76,5 +82,21 @@ const { profile } = useUserProfile()
 .logout-btn:hover {
   background: rgba(255, 107, 107, 0.08);
   border-color: rgba(255, 107, 107, 0.6);
+}
+
+.delete-account-btn {
+  margin: 0 auto;
+  padding: 6px 12px;
+  background: none;
+  border: none;
+  color: rgba(255, 107, 107, 0.6);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.delete-account-btn:hover {
+  color: #ff6b6b;
 }
 </style>

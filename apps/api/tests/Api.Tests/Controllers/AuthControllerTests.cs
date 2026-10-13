@@ -9,8 +9,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 namespace Api.Tests.Controllers;
 
 /// <summary>
-/// Tests the session and sign up endpoints of /api/auth through HTTP, and with them the cookie authentication of every
-/// endpoint. The sign up runs on the in-memory auth and user services.
+/// Tests the session, sign up and account deletion endpoints of /api/auth through HTTP, and with them the cookie
+/// authentication of every endpoint. They run on the in-memory auth and user services.
 /// </summary>
 public class AuthControllerTests : IDisposable
 {
@@ -46,9 +46,9 @@ public class AuthControllerTests : IDisposable
     /// <summary>
     /// Sends a request to <paramref name="url"/>, with the auth cookie when <paramref name="token"/> is given.
     /// </summary>
-    private Task<HttpResponseMessage> SendAsync(HttpMethod method, string url, string? token)
+    private Task<HttpResponseMessage> SendAsync(HttpMethod method, string url, string? token, object? body = null)
     {
-        HttpRequestMessage request = new(method, url);
+        HttpRequestMessage request = new(method, url) { Content = body is null ? null : JsonContent.Create(body) };
         if (token is not null)
             request.Headers.Add("Cookie", $"{SupabaseAuthenticationHandler.CookieName}={token}");
         return _client.SendAsync(request);
@@ -147,6 +147,88 @@ public class AuthControllerTests : IDisposable
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.True(DeletesCookie(response));
+    }
+
+    /// <summary>
+    /// With the right password, only the account of the user is deleted (its rows are deleted by the database
+    /// cascade), and the user is logged out: its token is refused afterwards.
+    /// </summary>
+    [Fact]
+    public async Task DeleteAccount_RightPassword_DeletesAccountAndLogsOut()
+    {
+        _factory.AuthService.PasswordsByUserId["user-1"] = "secret";
+
+        HttpResponseMessage response = await SendAsync(HttpMethod.Post, "/api/auth/delete-account", Token, new { password = "secret" });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(DeletesCookie(response));
+        Assert.Equal(["user-1"], _factory.AuthService.DeletedUserIds);
+
+        HttpResponseMessage me = await SendAsync(HttpMethod.Get, "/api/auth/me", Token);
+        Assert.Equal(HttpStatusCode.Unauthorized, me.StatusCode);
+    }
+
+    /// <summary>
+    /// A wrong password is refused with a 403 (not 401, which the frontend reads as an expired session), and the
+    /// account is kept.
+    /// </summary>
+    [Fact]
+    public async Task DeleteAccount_WrongPassword_Returns403AndKeepsAccount()
+    {
+        _factory.AuthService.PasswordsByUserId["user-1"] = "secret";
+
+        HttpResponseMessage response = await SendAsync(HttpMethod.Post, "/api/auth/delete-account", Token, new { password = "wrong" });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Contains("Incorrect password.", await response.Content.ReadAsStringAsync());
+        Assert.False(DeletesCookie(response));
+        Assert.Empty(_factory.AuthService.DeletedUserIds);
+        Assert.Contains(Token, _factory.AuthService.UserIdsByToken);
+    }
+
+    /// <summary>
+    /// A missing password is refused with a 400, and the account is kept.
+    /// </summary>
+    [Fact]
+    public async Task DeleteAccount_NoPassword_Returns400()
+    {
+        _factory.AuthService.PasswordsByUserId["user-1"] = "secret";
+
+        HttpResponseMessage response = await SendAsync(HttpMethod.Post, "/api/auth/delete-account", Token, new { });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Empty(_factory.AuthService.DeletedUserIds);
+        Assert.Contains(Token, _factory.AuthService.UserIdsByToken);
+    }
+
+    /// <summary>
+    /// Only a logged-in user can delete its account.
+    /// </summary>
+    [Fact]
+    public async Task DeleteAccount_NotLoggedIn_Returns401()
+    {
+        HttpResponseMessage response = await SendAsync(HttpMethod.Post, "/api/auth/delete-account", token: null, new { password = "secret" });
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Empty(_factory.AuthService.DeletedUserIds);
+    }
+
+    /// <summary>
+    /// When Supabase Auth fails to delete the account, nothing is deleted (the database rolls back the cascade with
+    /// the account): a 503 is returned and the user stays logged in, so it can try again.
+    /// </summary>
+    [Fact]
+    public async Task DeleteAccount_AccountDeletionFails_Returns503AndKeepsSession()
+    {
+        _factory.AuthService.PasswordsByUserId["user-1"] = "secret";
+        _factory.AuthService.DeleteUserFails = true;
+
+        HttpResponseMessage response = await SendAsync(HttpMethod.Post, "/api/auth/delete-account", Token, new { password = "secret" });
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.False(DeletesCookie(response));
+        Assert.Empty(_factory.AuthService.DeletedUserIds);
+        Assert.Contains(Token, _factory.AuthService.UserIdsByToken);
     }
 
     /// <summary>
