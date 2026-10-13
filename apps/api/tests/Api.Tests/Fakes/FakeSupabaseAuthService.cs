@@ -26,6 +26,11 @@ public class FakeSupabaseAuthService : ISupabaseAuthService
     /// </summary>
     public bool OpensSessionOnSignUp { get; set; } = true;
 
+    /// <summary>
+    /// When set, signing up throws this exception, like an unexpected failure of Supabase Auth.
+    /// </summary>
+    public Exception? SignUpException { get; set; }
+
     /// <inheritdoc />
     public Task<string?> GetUserIdAsync(string? accessToken)
         => Task.FromResult(accessToken is not null && UserIdsByToken.TryGetValue(accessToken, out string? userId) ? userId : null);
@@ -36,6 +41,8 @@ public class FakeSupabaseAuthService : ISupabaseAuthService
     /// <inheritdoc />
     public Task<Result<AuthSession>> SignUpAsync(string email, string password)
     {
+        if (SignUpException is not null)
+            throw SignUpException;
         if (UserIdsByEmail.ContainsKey(email))
             return Task.FromResult(Result<AuthSession>.Failure(SupabaseAuthService.EmailTaken));
 

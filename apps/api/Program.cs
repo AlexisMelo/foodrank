@@ -12,6 +12,10 @@ builder.Services.AddControllers()
     .AddNewtonsoftJson();
 builder.Services.AddOpenApi();
 
+// Unhandled exceptions are logged and answered with a generic 500, never with their stack trace.
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 builder.Services.AddSingleton(_ =>
 {
     Supabase.Client client = new(
@@ -81,6 +85,8 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {

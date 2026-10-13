@@ -9,7 +9,8 @@ namespace api.Services;
 /// Handles user authentication through Supabase Auth (GoTrue), with a per-request client so sessions never leak between requests.
 /// </summary>
 /// <param name="auth">GoTrue client scoped to the current request.</param>
-public class SupabaseAuthService(Supabase.Gotrue.Client auth) : ISupabaseAuthService
+/// <param name="logger">Logger keeping the details of the Supabase Auth failures hidden from the client.</param>
+public class SupabaseAuthService(Supabase.Gotrue.Client auth, ILogger<SupabaseAuthService> logger) : ISupabaseAuthService
 {
     /// <summary>
     /// Error returned when signing up with the email of an existing account.
@@ -20,6 +21,11 @@ public class SupabaseAuthService(Supabase.Gotrue.Client auth) : ISupabaseAuthSer
     /// Error returned when the account was created without session (Supabase requires an email confirmation first).
     /// </summary>
     public static Error NoSession { get; } = new(ErrorType.Unauthorized, "The account was created but no session could be opened.");
+
+    /// <summary>
+    /// Error returned when Supabase Auth fails for a reason the user cannot fix (database error, outage...).
+    /// </summary>
+    public static Error SignUpUnavailable { get; } = new(ErrorType.Unavailable, "The account could not be created. Please try again later.");
 
     /// <inheritdoc />
     public async Task<Result<AuthSession>> SignUpAsync(string email, string password)
@@ -38,6 +44,12 @@ public class SupabaseAuthService(Supabase.Gotrue.Client auth) : ISupabaseAuthSer
         catch (GotrueException ex) when (ex.Reason is FailureHint.Reason.UserBadEmailAddress or FailureHint.Reason.UserBadPassword)
         {
             return Result<AuthSession>.Failure(new Error(ErrorType.Validation, "The email address or the password was refused."));
+        }
+        catch (GotrueException ex)
+        {
+            // The message holds Supabase's error_id, needed to find the cause in the Supabase logs
+            logger.LogError(ex, "Supabase Auth sign up failed (HTTP {StatusCode}): {Message}", ex.StatusCode, ex.Message);
+            return Result<AuthSession>.Failure(SignUpUnavailable);
         }
     }
 

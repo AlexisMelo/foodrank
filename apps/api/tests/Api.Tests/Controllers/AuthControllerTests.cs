@@ -1,7 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using api.Common;
 using api.Models;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Api.Tests.Controllers;
 
@@ -233,6 +236,48 @@ public class AuthControllerTests : IDisposable
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Null(SessionCookie(response));
+    }
+
+    /// <summary>
+    /// An unexpected exception is answered with a generic 500 in the usual <c>{ error }</c> shape, without the
+    /// exception message nor its stack trace.
+    /// </summary>
+    [Fact]
+    public async Task Signup_UnhandledException_Returns500WithoutDetails()
+    {
+        _factory.AuthService.SignUpException = new InvalidOperationException("secret database detail");
+
+        HttpResponseMessage response = await SignupAsync();
+
+        await AssertGenericErrorAsync(response);
+        Assert.Empty(_factory.RatingService.Profiles);
+        Assert.Null(SessionCookie(response));
+    }
+
+    /// <summary>
+    /// In development, the generic 500 replaces ASP.NET's error page, which would show the stack trace to the user.
+    /// </summary>
+    [Fact]
+    public async Task Signup_UnhandledExceptionInDevelopment_Returns500WithoutDetails()
+    {
+        _factory.AuthService.SignUpException = new InvalidOperationException("secret database detail");
+        using WebApplicationFactory<Program> development = _factory.WithWebHostBuilder(builder => builder.UseEnvironment("Development"));
+
+        HttpResponseMessage response = await development.CreateClient().PostAsync("/api/auth/signup", JsonContent.Create(ValidSignup));
+
+        await AssertGenericErrorAsync(response);
+    }
+
+    /// <summary>
+    /// Checks <paramref name="response"/> is the generic 500 of <see cref="GlobalExceptionHandler"/>.
+    /// </summary>
+    private static async Task AssertGenericErrorAsync(HttpResponseMessage response)
+    {
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        string body = await response.Content.ReadAsStringAsync();
+        Assert.Equal(GlobalExceptionHandler.Message, JsonDocument.Parse(body).RootElement.GetProperty("error").GetString());
+        Assert.DoesNotContain("secret database detail", body);
+        Assert.DoesNotContain("InvalidOperationException", body);
     }
 
     /// <summary>
