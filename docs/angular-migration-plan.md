@@ -9,7 +9,7 @@ Do the steps in order: each one relies on the previous ones. Tick the box once t
 
 ## Progress
 
-- [ ] 0.1 Create the Angular app
+- [x] 0.1 Create the Angular app
 - [ ] 0.2 Lint and format
 - [ ] 0.3 Configuration, global styles, root scripts, `apps/frontend/CLAUDE.md`
 - [ ] 1.1 Models and business utils
