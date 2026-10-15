@@ -1,16 +1,28 @@
+/** A visit of the community mock data (core/api/data/community-ratings.json), not served by the API yet. */
 export interface Visit {
+  /** Id of the visit, e.g. "visit-1" */
   id: string;
+  /** Id of the restaurant visited */
   restaurantId: string;
+  /** Day of the visit, "yyyy-MM-dd" */
   date: string;
+  /** 0 to 100 */
   food: number;
+  /** 0 to 100 */
   service: number;
+  /** Setting, 0 to 100 (named setting in the API ratings) */
   decor: number;
 }
 
+/** A visit of the community mock data, with its author. */
 export interface CommunityVisit extends Visit {
+  /** Author of the visit */
   user: {
+    /** Id of the user, e.g. "alex" */
     id: string;
+    /** Name displayed for the user */
     name: string;
+    /** Avatar, an emoji */
     avatar: string;
   };
 }
@@ -35,7 +47,9 @@ export interface RatingInput {
  * A user rates a restaurant at most once per day: (userId, date) identifies a rating of a restaurant.
  */
 export interface RestaurantRating {
+  /** Id of the restaurant rated */
   restaurantId: string;
+  /** Id of the author */
   userId: string;
   /** Day of the rating, "yyyy-MM-dd" (no time, no time zone) */
   date: string;
@@ -77,8 +91,11 @@ export interface RatingSummary {
 
 /** A rating of a user, with the restaurant it rates (GET /api/users/:id/ratings). */
 export interface UserRating {
+  /** Id of the restaurant rated */
   restaurantId: string;
+  /** Name of the restaurant rated */
   restaurantName: string;
+  /** Emoji of the restaurant rated */
   restaurantEmoji: string;
   /** Empty when unknown */
   restaurantCuisine: string;
@@ -90,6 +107,7 @@ export interface UserRating {
   service: number;
   /** Setting (decor), 0 to 100 */
   setting: number;
+  /** "Instant crush" favorite bonus */
   bonus: boolean;
   /**
    * True for the user's latest rating of the restaurant, which is their score for it; false for the previous ones,

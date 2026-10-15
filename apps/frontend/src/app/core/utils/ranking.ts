@@ -2,12 +2,19 @@ import type { UserRating } from '@/core/models/rating.model';
 
 /** A restaurant rated by a user, with the scores of the user's active (latest) rating of it. */
 export interface RankedRestaurant {
+  /** Id of the restaurant */
   restaurantId: string;
+  /** Name of the restaurant */
   name: string;
+  /** Emoji of the restaurant */
   emoji: string;
+  /** Type of cuisine, empty when unknown */
   cuisine: string;
+  /** 0 to 100 */
   food: number;
+  /** 0 to 100 */
   service: number;
+  /** Setting (decor), 0 to 100 */
   setting: number;
   /** Score of the rating: mean of its three criteria */
   overall: number;

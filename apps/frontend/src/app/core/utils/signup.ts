@@ -7,13 +7,23 @@ export type SignupStep = 1 | 2 | 3;
 export const SIGNUP_STEP_COUNT = 3;
 
 // Same rules as the API (SignupRequest, StrongPasswordAttribute)
+
+/** Minimum length of a password */
 export const PASSWORD_MIN_LENGTH = 8;
+/** Minimum length of a pseudonym, once trimmed */
 export const USERNAME_MIN_LENGTH = 3;
+/** Maximum length of a pseudonym, once trimmed */
 export const USERNAME_MAX_LENGTH = 30;
+/** Maximum age in years */
 export const MAX_AGE = 120;
 
 /** Identities offered when signing up, with their label. */
-export const IDENTITIES: readonly { value: Identity; label: string }[] = [
+export const IDENTITIES: readonly {
+  /** Value sent to the API */
+  value: Identity;
+  /** Text shown to the user */
+  label: string;
+}[] = [
   { value: 'man', label: 'Man' },
   { value: 'woman', label: 'Woman' },
   { value: 'non_binary', label: 'Non-binary' },
@@ -21,7 +31,9 @@ export const IDENTITIES: readonly { value: Identity; label: string }[] = [
 
 /** A password rule shown on the password step, and whether the password follows it. */
 export interface PasswordCriterion {
+  /** Rule as shown to the user, e.g. "At least 1 number" */
   label: string;
+  /** True when the password follows the rule */
   met: boolean;
 }
 

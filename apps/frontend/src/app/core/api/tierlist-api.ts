@@ -5,8 +5,10 @@ import type { Tierlist, TierlistInput } from '@/core/models/tierlist.model';
 import { recoverOnStatus } from './recover-on-status';
 import { ME } from './user-api';
 
+/** Tierlists of the API (/api/tierlists, /api/users/:id/tierlists). */
 @Service()
 export class TierlistApi {
+  /** Sends the requests to the API */
   private readonly http = inject(HttpClient);
 
   /**

@@ -1,7 +1,10 @@
 /** The three criteria of a rating, each from 0 to 100. */
 interface RatingCriteria {
+  /** 0 to 100 */
   food: number;
+  /** 0 to 100 */
   service: number;
+  /** Setting (decor), 0 to 100 */
   setting: number;
 }
 

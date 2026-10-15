@@ -12,8 +12,10 @@ function locationParams(location?: UserLocation | null): Record<string, number> 
   return location ? { lat: location.lat, lon: location.lon } : {};
 }
 
+/** Restaurants of the API (/api/restaurants) and place search (/api/places). */
 @Service()
 export class RestaurantApi {
+  /** Sends the requests to the API */
   private readonly http = inject(HttpClient);
 
   /**

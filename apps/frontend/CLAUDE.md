@@ -10,6 +10,14 @@ Run from `apps/frontend`: `npm test` (Vitest, single run), `npm run lint`, `npm 
 
 Code style and tooling follow the Angular CLI defaults (ESLint from `angular-eslint`, Prettier with semicolons). Do not carry over Vue conventions.
 
+## Comments
+
+- **Every property has a `/** */` doc comment**, with no exception: class fields (public or private, including injected dependencies, signals, `input()`, `output()`, `model()`, queries), interface and type properties (models, inline object types), and `environment` values. Functions, methods and exported constants have one too.
+- Say what the code does not: meaning, unit or range (`0 to 100`), when it is `null`/`undefined`/empty, where the value comes from (API endpoint, route, mock data), and why it exists when that is not obvious. One line when it is enough.
+- When porting from Vue, keep the existing comments and add the missing ones.
+- When the code and the data disagree (e.g. a field the API never sends), say it in the comment and report it in the summary instead of changing the type silently.
+- Not enforced by the linter: check it yourself before proposing a change.
+
 ## Architecture decisions
 
 | Topic | Decision |
