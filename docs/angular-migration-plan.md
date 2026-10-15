@@ -16,7 +16,7 @@ Do the steps in order: each one relies on the previous ones. Tick the box once t
 - [x] 1.1 Models and business utils
 - [x] 1.2 HTTP layer and API services
 - [x] 1.3 Auth core (session, guards, 401 interceptor)
-- [ ] 1.4 Routes and app shell
+- [x] 1.4 Routes and app shell
 - [ ] 2.1 Login, sign up, forgot and reset password
 - [ ] 2.2 Home
 - [ ] 2.3 Restaurant page
