@@ -11,7 +11,7 @@ Do the steps in order: each one relies on the previous ones. Tick the box once t
 
 - [x] 0.1 Create the Angular app
 - [x] 0.2 Lint and format
-- [ ] 0.3 Configuration, global styles, root scripts, `apps/frontend/CLAUDE.md`
+- [x] 0.3 Configuration, global styles, root scripts, `apps/frontend/CLAUDE.md`
 - [ ] 1.1 Models and business utils
 - [ ] 1.2 HTTP layer and API services
 - [ ] 1.3 Auth core (session, guards, 401 interceptor)
