@@ -68,7 +68,7 @@ describe('isValidAge', () => {
     expect(isValidAge(120)).toBe(true);
   });
 
-  it.each([-1, 121, 30.5, Number.NaN, ''] as const)('refuses %j', (age) => {
+  it.each([-1, 121, 30.5, Number.NaN, null] as const)('refuses %j', (age) => {
     expect(isValidAge(age)).toBe(false);
   });
 });
@@ -87,7 +87,7 @@ describe('toSignupData', () => {
   it.each<Partial<SignupDraft>>([
     { username: '' },
     { username: 'ab' },
-    { age: '' },
+    { age: null },
     { age: -1 },
     { age: 121 },
     { identity: '' },

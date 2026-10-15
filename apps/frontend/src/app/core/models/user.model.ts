@@ -47,8 +47,8 @@ export interface SignupDraft {
   password: string;
   /** Pseudonym as typed, not trimmed yet */
   username: string;
-  /** '' while empty, like the value of an empty number input */
-  age: number | '';
+  /** Null while empty: the value Signal Forms gives an empty number input ('' in the Vue app) */
+  age: number | null;
   /** '' until an identity is chosen */
   identity: Identity | '';
 }

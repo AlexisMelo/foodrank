@@ -1,1 +1,19 @@
-<p>TODO: auth</p>
+@if (signupStep() === 2) {
+  <app-signup-password-step (continue)="goToSignupStep(3)" />
+} @else if (signupStep() === 3) {
+  <app-signup-profile-step />
+} @else {
+  <div class="auth">
+    <div class="auth-card">
+      <div class="logo">🍽️</div>
+      <h1 class="title">FoodRank</h1>
+      @if (signupStep() === 1) {
+        <app-signup-form (goToLogin)="goToLogin()" (continue)="goToSignupStep(2)" />
+      } @else if (showForgot()) {
+        <app-forgot-password-form (goToLogin)="goToLogin()" />
+      } @else {
+        <app-login-form (goToSignup)="goToSignup()" (goToForgot)="showForgot.set(true)" />
+      }
+    </div>
+  </div>
+}

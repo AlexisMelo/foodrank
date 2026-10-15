@@ -1,0 +1,42 @@
+<p class="subtitle">Track and rank your restaurant experiences.</p>
+
+<div class="tabs">
+  <button class="active" type="button">Sign in</button>
+  <button type="button" (click)="goToSignup.emit()">Sign up</button>
+</div>
+
+<form class="form" (submit)="submit($event)">
+  <label class="label" for="login-email">Email address</label>
+  <input
+    id="login-email"
+    class="input"
+    type="email"
+    placeholder="you@example.com"
+    autocomplete="email"
+    [formField]="form.email"
+  />
+
+  <label class="label" for="login-password">Password</label>
+  <input
+    id="login-password"
+    class="input"
+    type="password"
+    placeholder="Your password"
+    autocomplete="current-password"
+    [formField]="form.password"
+  />
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  <button class="btn-primary" type="submit" [disabled]="loading()">
+    @if (loading()) {
+      <span class="spinner"></span>
+    } @else {
+      <span>Sign in</span>
+    }
+  </button>
+
+  <button type="button" class="btn-link" (click)="goToForgot.emit()">Forgot your password?</button>
+</form>

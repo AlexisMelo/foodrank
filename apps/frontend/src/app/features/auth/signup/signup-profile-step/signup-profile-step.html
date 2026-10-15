@@ -1,0 +1,50 @@
+<app-signup-step-layout [step]="3" title="Enter your personal data" [backTo]="backTo">
+  <form class="form" (submit)="submit($event)">
+    <label class="label" for="signup-username">Pseudonym</label>
+    <input
+      id="signup-username"
+      class="input"
+      type="text"
+      placeholder="How others will see you"
+      autocomplete="nickname"
+      [formField]="form.username"
+    />
+    @if (usernameHint()) {
+      <p class="field-hint">{{ usernameHint() }}</p>
+    }
+
+    <label class="label" for="signup-age">Age</label>
+    <input
+      id="signup-age"
+      class="input"
+      type="number"
+      inputmode="numeric"
+      step="1"
+      placeholder="Your age"
+      [formField]="form.age"
+    />
+    @if (ageHint()) {
+      <p class="field-hint">{{ ageHint() }}</p>
+    }
+
+    <label class="label" for="signup-identity">Identity</label>
+    <select id="signup-identity" class="input select" [formField]="form.identity">
+      <option value="" disabled>Select your identity</option>
+      @for (identity of identities; track identity.value) {
+        <option [value]="identity.value">{{ identity.label }}</option>
+      }
+    </select>
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+
+    <button class="btn-primary" type="submit" [disabled]="loading() || incomplete()">
+      @if (loading()) {
+        <span class="spinner"></span>
+      } @else {
+        <span>Sign up</span>
+      }
+    </button>
+  </form>
+</app-signup-step-layout>

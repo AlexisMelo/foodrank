@@ -15,6 +15,16 @@ const CURRENT_USER_ID = 'alex';
  */
 export const SESSION_CHECK = new HttpContextToken<boolean>(() => false);
 
+/** Body of POST /api/auth/reset-password: the tokens of the reset password link and the new password. */
+export interface PasswordReset {
+  /** access_token of the link */
+  accessToken: string;
+  /** refresh_token of the link */
+  refreshToken: string;
+  /** New password */
+  password: string;
+}
+
 /** Session of the user: whether they are logged in, and the actions that log them in or out. */
 @Service()
 export class AuthStore {
@@ -83,6 +93,22 @@ export class AuthStore {
     await firstValueFrom(this.http.post('/api/auth/delete-account', { password }));
     this.loggedIn.set(false);
     await this.leaveForbiddenPage();
+  }
+
+  /**
+   * Ask the API to email a reset password link to `email`; it answers the same whether the account exists or not
+   * @throws the HttpErrorResponse when the request fails
+   */
+  async requestPasswordReset(email: string): Promise<void> {
+    await firstValueFrom(this.http.post('/api/auth/forgot-password', { email }));
+  }
+
+  /**
+   * Set a new password with the tokens of a reset password link. The session is not checked again here.
+   * @throws the HttpErrorResponse when the reset fails, e.g. the link expired
+   */
+  async resetPassword(reset: PasswordReset): Promise<void> {
+    await firstValueFrom(this.http.post('/api/auth/reset-password', reset));
   }
 
   /**

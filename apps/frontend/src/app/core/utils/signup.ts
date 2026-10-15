@@ -64,7 +64,7 @@ export function isValidUsername(username: string): boolean {
 }
 
 /** True when `age` is a whole number from 0 to {@link MAX_AGE}. */
-export function isValidAge(age: number | ''): age is number {
+export function isValidAge(age: number | null): age is number {
   return Number.isInteger(age) && (age as number) >= 0 && (age as number) <= MAX_AGE;
 }
 

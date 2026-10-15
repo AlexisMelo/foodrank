@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { accessGuard } from './core/auth/access-guard';
 import { Auth } from './features/auth/auth/auth';
+import { signupStepGuard } from './features/auth/signup-step-guard';
 import { Home } from './features/home/home/home';
 import { Shell } from './layout/shell/shell';
 
@@ -12,7 +13,14 @@ import { Shell } from './layout/shell/shell';
 export const routes: Routes = [
   // Login and sign up are tabs of the same card; the sign up continues on full pages (?step=2, ?step=3)
   { path: 'login', component: Auth, canActivate: [accessGuard], data: { access: 'guest' } },
-  { path: 'signup', component: Auth, canActivate: [accessGuard], data: { access: 'guest' } },
+  {
+    path: 'signup',
+    component: Auth,
+    canActivate: [accessGuard, signupStepGuard],
+    // The sign up steps only differ by ?step: the guards must run again when it changes
+    runGuardsAndResolvers: 'paramsOrQueryParamsChange',
+    data: { access: 'guest', signup: true },
+  },
   {
     path: 'auth/reset-password',
     loadComponent: () =>

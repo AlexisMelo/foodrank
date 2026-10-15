@@ -169,4 +169,26 @@ describe('AuthStore', () => {
     expect(store.isLoggedIn()).toBe(true);
     expect(router.url).toBe('/settings');
   });
+
+  it('asks for a reset password link', async () => {
+    const done = store.requestPasswordReset('me@test.fr');
+    const req = httpTesting.expectOne('/api/auth/forgot-password');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ email: 'me@test.fr' });
+    req.flush({});
+
+    await expect(done).resolves.toBeUndefined();
+  });
+
+  it('sets the new password with the tokens of the link, and rethrows when it fails', async () => {
+    const reset = { accessToken: 'access', refreshToken: 'refresh', password: 'abcdefg1' };
+
+    const done = store.resetPassword(reset);
+    const req = httpTesting.expectOne('/api/auth/reset-password');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(reset);
+    req.flush(null, { status: 400, statusText: 'Bad Request' });
+
+    await expect(done).rejects.toMatchObject({ name: 'HttpErrorResponse', status: 400 });
+  });
 });
