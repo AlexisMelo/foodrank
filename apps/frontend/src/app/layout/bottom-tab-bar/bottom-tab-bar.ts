@@ -2,7 +2,9 @@ import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NewReviewStore } from '@/features/review/new-review-store';
 
-/** Navigation bar fixed at the bottom of the private pages, with the button opening the new review sheet. */
+/**
+ * Navigation bar fixed at the bottom of the private pages, with the button opening the new review sheet.
+ */
 @Component({
   imports: [RouterLink, RouterLinkActive],
   selector: 'app-bottom-tab-bar',
@@ -10,10 +12,14 @@ import { NewReviewStore } from '@/features/review/new-review-store';
   templateUrl: './bottom-tab-bar.html',
 })
 export class BottomTabBar {
-  /** Opens the new review sheet from the Search button */
+  /**
+   * Opens the new review sheet from the Search button
+   */
   protected readonly newReview = inject(NewReviewStore);
 
-  /** A tab is active on its exact path only, whatever the query (e.g. not on /tierlists/42) */
+  /**
+   * A tab is active on its exact path only, whatever the query (e.g. not on /tierlists/42)
+   */
   protected readonly exactPath = {
     paths: 'exact',
     queryParams: 'ignored',

@@ -30,7 +30,9 @@ describe('SignupProfileStep', () => {
     await fixture.whenStable();
   });
 
-  /** Fills the personal data, valid unless overridden. */
+  /**
+   * Fills the personal data, valid unless overridden.
+   */
   async function fill({ username = 'alex', age = '30', identity = 'woman' } = {}): Promise<void> {
     await typeIn(fixture, '#signup-username', username);
     await typeIn(fixture, '#signup-age', age);

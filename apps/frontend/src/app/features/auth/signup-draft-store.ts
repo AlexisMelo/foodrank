@@ -1,7 +1,9 @@
 import { Service, signal } from '@angular/core';
 import type { SignupDraft } from '@/core/models/user.model';
 
-/** A draft with nothing entered yet. */
+/**
+ * A draft with nothing entered yet.
+ */
 function emptyDraft(): SignupDraft {
   return { email: '', password: '', username: '', age: null, identity: '' };
 }
@@ -18,7 +20,9 @@ export class SignupDraftStore {
    */
   readonly draft = signal<SignupDraft>(emptyDraft());
 
-  /** Empties the draft, once the account is created. */
+  /**
+   * Empties the draft, once the account is created.
+   */
   reset(): void {
     this.draft.set(emptyDraft());
   }

@@ -9,7 +9,9 @@ import { AuthStore } from './auth-store';
 describe('accessGuard', () => {
   let harness: RouterTestingHarness;
 
-  /** URL shown once `url` is opened, after the guard's redirection if any. */
+  /**
+   * URL shown once `url` is opened, after the guard's redirection if any.
+   */
   async function open(url: string): Promise<string> {
     await harness.navigateByUrl(url);
     return TestBed.inject(Router).url;

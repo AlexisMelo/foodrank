@@ -14,34 +14,62 @@ import { AuthStore } from '@/core/auth/auth-store';
   templateUrl: './reset-password-form.html',
 })
 export class ResetPasswordForm implements OnInit {
-  /** Sets the new password, then checks the session it opens */
+  /**
+   * Sets the new password, then checks the session it opens
+   */
   private readonly auth = inject(AuthStore);
-  /** Removes the tokens from the URL, then opens the home page */
+
+  /**
+   * Removes the tokens from the URL, then opens the home page
+   */
   protected readonly router = inject(Router);
-  /** Page route, whose fragment holds the tokens of the link */
+
+  /**
+   * Page route, whose fragment holds the tokens of the link
+   */
   private readonly route = inject(ActivatedRoute);
 
-  /** access_token of the link, empty until read */
+  /**
+   * access_token of the link, empty until read
+   */
   private accessToken = '';
-  /** refresh_token of the link, empty until read */
+
+  /**
+   * refresh_token of the link, empty until read
+   */
   private refreshToken = '';
 
-  /** True when the link has no tokens or is not a recovery link: the form is replaced by an explanation */
+  /**
+   * True when the link has no tokens or is not a recovery link: the form is replaced by an explanation
+   */
   protected readonly invalidLink = signal(false);
-  /** True while the request runs: the field and the button are disabled */
+
+  /**
+   * True while the request runs: the field and the button are disabled
+   */
   protected readonly loading = signal(false);
-  /** Message of the last failed reset, empty when there is none */
+
+  /**
+   * Message of the last failed reset, empty when there is none
+   */
   protected readonly error = signal('');
 
-  /** New password as typed */
+  /**
+   * New password as typed
+   */
   private readonly model = signal({ password: '' });
-  /** The new password field, required */
+
+  /**
+   * The new password field, required
+   */
   protected readonly form = form(this.model, (model) => {
     required(model.password);
     disabled(model.password, { when: () => this.loading() });
   });
 
-  /** Reads the tokens of the link, then removes them from the URL. */
+  /**
+   * Reads the tokens of the link, then removes them from the URL.
+   */
   ngOnInit(): void {
     const params = new URLSearchParams(this.route.snapshot.fragment ?? '');
     const token = params.get('access_token');
@@ -57,7 +85,9 @@ export class ResetPasswordForm implements OnInit {
     void this.router.navigate([], { relativeTo: this.route, replaceUrl: true });
   }
 
-  /** Sets the new password, then opens the home page with the session it opened; explains the failure otherwise. */
+  /**
+   * Sets the new password, then opens the home page with the session it opened; explains the failure otherwise.
+   */
   protected async submit(event: Event): Promise<void> {
     event.preventDefault();
     this.error.set('');

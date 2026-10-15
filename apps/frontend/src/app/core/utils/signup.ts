@@ -1,27 +1,46 @@
 import type { Identity, SignupData, SignupDraft } from '@/core/models/user.model';
 
-/** Sign up steps: 1 email (on the login card), 2 password, 3 personal data. */
+/**
+ * Sign up steps: 1 email (on the login card), 2 password, 3 personal data.
+ */
 export type SignupStep = 1 | 2 | 3;
 
-/** Number of sign up steps, for the progress bar. */
+/**
+ * Number of sign up steps, for the progress bar.
+ */
 export const SIGNUP_STEP_COUNT = 3;
 
 // Same rules as the API (SignupRequest, StrongPasswordAttribute)
 
-/** Minimum length of a password */
+/**
+ * Minimum length of a password
+ */
 export const PASSWORD_MIN_LENGTH = 8;
-/** Minimum length of a pseudonym, once trimmed */
+/**
+ * Minimum length of a pseudonym, once trimmed
+ */
 export const USERNAME_MIN_LENGTH = 3;
-/** Maximum length of a pseudonym, once trimmed */
+/**
+ * Maximum length of a pseudonym, once trimmed
+ */
 export const USERNAME_MAX_LENGTH = 30;
-/** Maximum age in years */
+/**
+ * Maximum age in years
+ */
 export const MAX_AGE = 120;
 
-/** Identities offered when signing up, with their label. */
+/**
+ * Identities offered when signing up, with their label.
+ */
 export const IDENTITIES: readonly {
-  /** Value sent to the API */
+  /**
+   * Value sent to the API
+   */
   value: Identity;
-  /** Text shown to the user */
+
+  /**
+   * Text shown to the user
+   */
   label: string;
 }[] = [
   { value: 'man', label: 'Man' },
@@ -29,11 +48,18 @@ export const IDENTITIES: readonly {
   { value: 'non_binary', label: 'Non-binary' },
 ];
 
-/** A password rule shown on the password step, and whether the password follows it. */
+/**
+ * A password rule shown on the password step, and whether the password follows it.
+ */
 export interface PasswordCriterion {
-  /** Rule as shown to the user, e.g. "At least 1 number" */
+  /**
+   * Rule as shown to the user, e.g. "At least 1 number"
+   */
   label: string;
-  /** True when the password follows the rule */
+
+  /**
+   * True when the password follows the rule
+   */
   met: boolean;
 }
 
@@ -52,18 +78,24 @@ export function passwordCriteria(password: string): PasswordCriterion[] {
   ];
 }
 
-/** True when `password` follows every rule of {@link passwordCriteria}. */
+/**
+ * True when `password` follows every rule of {@link passwordCriteria}.
+ */
 export function isValidPassword(password: string): boolean {
   return passwordCriteria(password).every((criterion) => criterion.met);
 }
 
-/** True when `username`, once trimmed, has an allowed length. */
+/**
+ * True when `username`, once trimmed, has an allowed length.
+ */
 export function isValidUsername(username: string): boolean {
   const length = username.trim().length;
   return length >= USERNAME_MIN_LENGTH && length <= USERNAME_MAX_LENGTH;
 }
 
-/** True when `age` is a whole number from 0 to {@link MAX_AGE}. */
+/**
+ * True when `age` is a whole number from 0 to {@link MAX_AGE}.
+ */
 export function isValidAge(age: number | null): age is number {
   return Number.isInteger(age) && (age as number) >= 0 && (age as number) <= MAX_AGE;
 }
@@ -100,7 +132,9 @@ export function reachableSignupStep(
   return step;
 }
 
-/** Route of a sign up step: /signup?step=N. */
+/**
+ * Route of a sign up step: /signup?step=N.
+ */
 export function signupStepRoute(step: SignupStep) {
   return { path: '/signup', query: { step: String(step) } };
 }

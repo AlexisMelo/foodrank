@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 
-/** Placeholder of the search results page (/search), ported in step 2.6. */
+/**
+ * Placeholder of the search results page (/search), ported in step 2.6.
+ */
 @Component({
   imports: [],
   selector: 'app-search-results',

@@ -25,22 +25,30 @@ describe('Sign up flow', () => {
     });
   });
 
-  /** Opens `path` in the app. */
+  /**
+   * Opens `path` in the app.
+   */
   async function openApp(path: string): Promise<void> {
     harness = await RouterTestingHarness.create(path);
   }
 
-  /** Current URL of the app, path and query. */
+  /**
+   * Current URL of the app, path and query.
+   */
   function url(): string {
     return TestBed.inject(Router).url;
   }
 
-  /** True when an element matches `selector`. */
+  /**
+   * True when an element matches `selector`.
+   */
   function exists(selector: string): boolean {
     return queryAll(harness.fixture, selector).length > 0;
   }
 
-  /** Clicks the back arrow of the sign up step and waits for the navigation. */
+  /**
+   * Clicks the back arrow of the sign up step and waits for the navigation.
+   */
   async function goBack(): Promise<void> {
     query(harness.fixture, '.back-link').click();
     await harness.fixture.whenStable();

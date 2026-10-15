@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 
-/** Placeholder of the settings page (/settings), ported in step 2.10. */
+/**
+ * Placeholder of the settings page (/settings), ported in step 2.10.
+ */
 @Component({
   imports: [],
   selector: 'app-settings',

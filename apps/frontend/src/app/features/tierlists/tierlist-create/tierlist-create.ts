@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 
-/** Placeholder of the tierlist creation page (/tierlists/new), ported in step 2.9. */
+/**
+ * Placeholder of the tierlist creation page (/tierlists/new), ported in step 2.9.
+ */
 @Component({
   imports: [],
   selector: 'app-tierlist-create',

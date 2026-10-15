@@ -25,7 +25,9 @@ describe('unauthorizedInterceptor', () => {
     httpTesting.verify();
   });
 
-  /** Sends an API request, the API answering it with the error `status` (0 for a network error). */
+  /**
+   * Sends an API request, the API answering it with the error `status` (0 for a network error).
+   */
   function failApiCall(status: number): Promise<unknown> {
     const result = firstValueFrom(http.get('/api/users/me'));
     const req = httpTesting.expectOne('/api/users/me');

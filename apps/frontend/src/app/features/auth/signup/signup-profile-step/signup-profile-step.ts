@@ -25,9 +25,13 @@ import {
 import { SignupDraftStore } from '../../signup-draft-store';
 import { SignupStepLayout } from '../signup-step-layout/signup-step-layout';
 
-/** Body of an API error response. */
+/**
+ * Body of an API error response.
+ */
 interface ApiError {
-  /** Explanation of the API, e.g. "This pseudonym is already taken." */
+  /**
+   * Explanation of the API, e.g. "This pseudonym is already taken."
+   */
   error?: unknown;
 }
 
@@ -46,7 +50,9 @@ function errorMessage(error: unknown): string {
   return 'Could not create account.';
 }
 
-/** Sign up step 3: pseudonym, age and identity, then the account is created with everything entered. */
+/**
+ * Sign up step 3: pseudonym, age and identity, then the account is created with everything entered.
+ */
 @Component({
   imports: [FormField, SignupStepLayout],
   selector: 'app-signup-profile-step',
@@ -54,22 +60,39 @@ function errorMessage(error: unknown): string {
   templateUrl: './signup-profile-step.html',
 })
 export class SignupProfileStep {
-  /** Creates the account */
+  /**
+   * Creates the account
+   */
   private readonly auth = inject(AuthStore);
-  /** Sign up being filled, emptied once the account is created */
+
+  /**
+   * Sign up being filled, emptied once the account is created
+   */
   private readonly draftStore = inject(SignupDraftStore);
 
-  /** True while the sign up request runs: the fields and the button are disabled */
+  /**
+   * True while the sign up request runs: the fields and the button are disabled
+   */
   protected readonly loading = signal(false);
-  /** Message of the last failed sign up, empty when there is none */
+
+  /**
+   * Message of the last failed sign up, empty when there is none
+   */
   protected readonly error = signal('');
 
-  /** Identities offered in the select */
+  /**
+   * Identities offered in the select
+   */
   protected readonly identities = IDENTITIES;
-  /** Route of the password step, opened by the back arrow */
+
+  /**
+   * Route of the password step, opened by the back arrow
+   */
   protected readonly backTo = signupStepRoute(2);
 
-  /** Personal data fields of the draft, with the same rules as toSignupData (and the API) */
+  /**
+   * Personal data fields of the draft, with the same rules as toSignupData (and the API)
+   */
   protected readonly form = form(this.draftStore.draft, (draft) => {
     // minLength, maxLength, min and max also set the attributes of the native fields, as in the Vue app
     required(draft.username);
@@ -91,23 +114,32 @@ export class SignupProfileStep {
     disabled(draft.identity, { when: () => this.loading() });
   });
 
-  // Hints only show once a field is filled, so an empty form is not shown in error
-  /** Explains an invalid pseudonym, empty while it is valid or empty */
+  /**
+   * Explains an invalid pseudonym, empty while it is valid or empty (an empty form is not shown in error)
+   */
   protected readonly usernameHint = computed(() => {
     const username = this.form.username();
     return username.value().trim() && username.invalid()
       ? `Between ${USERNAME_MIN_LENGTH} and ${USERNAME_MAX_LENGTH} characters.`
       : '';
   });
-  /** Explains an invalid age, empty while it is valid or empty */
+
+  /**
+   * Explains an invalid age, empty while it is valid or empty (an empty form is not shown in error)
+   */
   protected readonly ageHint = computed(() => {
     const age = this.form.age();
     return age.value() !== null && age.invalid() ? `Enter an age between 0 and ${MAX_AGE}.` : '';
   });
-  /** True while a field is missing or invalid: the Sign up button stays disabled */
+
+  /**
+   * True while a field is missing or invalid: the Sign up button stays disabled
+   */
   protected readonly incomplete = computed(() => toSignupData(this.draftStore.draft()) === null);
 
-  /** Creates the account, then empties the draft; explains the failure otherwise. */
+  /**
+   * Creates the account, then empties the draft; explains the failure otherwise.
+   */
   protected async submit(event: Event): Promise<void> {
     event.preventDefault();
     const data = toSignupData(this.draftStore.draft());

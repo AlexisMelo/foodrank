@@ -1,8 +1,15 @@
-/** A restaurant of a tierlist */
+/**
+ * A restaurant of a tierlist
+ */
 export interface TierlistEntry {
-  /** Id of the restaurant */
+  /**
+   * Id of the restaurant
+   */
   restaurantId: string;
-  /** When it was added to the tierlist, null when unknown */
+
+  /**
+   * When it was added to the tierlist, null when unknown
+   */
   addedAt: string | null;
 }
 
@@ -11,13 +18,24 @@ export interface TierlistEntry {
  * (emoji, name, description, pinned: see database.types.ts). It is created without restaurants.
  */
 export interface TierlistInput {
-  /** A single emoji, used as the tierlist picture */
+  /**
+   * A single emoji, used as the tierlist picture
+   */
   emoji: string;
-  /** Not blank, at most TIERLIST_NAME_MAX_LENGTH characters */
+
+  /**
+   * Not blank, at most TIERLIST_NAME_MAX_LENGTH characters
+   */
   name: string;
-  /** At most TIERLIST_DESCRIPTION_MAX_LENGTH characters, null when there is none */
+
+  /**
+   * At most TIERLIST_DESCRIPTION_MAX_LENGTH characters, null when there is none
+   */
   description: string | null;
-  /** Pinned to the user's profile */
+
+  /**
+   * Pinned to the user's profile
+   */
   pinned: boolean;
 }
 
@@ -26,22 +44,48 @@ export interface TierlistInput {
  * table with its restaurants in `tierlist_restaurant`.
  */
 export interface Tierlist {
-  /** Id of the tierlist, used in /tierlists/:id */
+  /**
+   * Id of the tierlist, used in /tierlists/:id
+   */
   id: number;
-  /** Id of the user who created it */
+
+  /**
+   * Id of the user who created it
+   */
   userId: string;
-  /** Not blank, at most TIERLIST_NAME_MAX_LENGTH characters */
+
+  /**
+   * Not blank, at most TIERLIST_NAME_MAX_LENGTH characters
+   */
   name: string;
-  /** Null when there is none */
+
+  /**
+   * Null when there is none
+   */
   description: string | null;
-  /** A single emoji, used as the tierlist picture */
+
+  /**
+   * A single emoji, used as the tierlist picture
+   */
   emoji: string;
-  /** Restaurants of the tierlist, oldest added first: only restaurants its owner rated */
+
+  /**
+   * Restaurants of the tierlist, oldest added first: only restaurants its owner rated
+   */
   restaurants: TierlistEntry[];
-  /** Creation date and time, ISO 8601 */
+
+  /**
+   * Creation date and time, ISO 8601
+   */
   createdAt: string;
-  /** Last time a restaurant was added, or the creation date when none was added since */
+
+  /**
+   * Last time a restaurant was added, or the creation date when none was added since
+   */
   updatedAt: string;
-  /** Pinned to its owner's profile */
+
+  /**
+   * Pinned to its owner's profile
+   */
   pinned: boolean;
 }

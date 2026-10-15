@@ -12,13 +12,19 @@ import mockCommunityRatings from './data/community-ratings.json';
 import { recoverOnStatus } from './recover-on-status';
 import { ME } from './user-api';
 
-/** Community visits not served by the API yet, read from local mock data shaped like the API responses */
+/**
+ * Community visits not served by the API yet, read from local mock data shaped like the API responses
+ */
 const communityVisits: CommunityVisit[] = mockCommunityRatings;
 
-/** Ratings of the API (/api/restaurants/:id/ratings, /api/users/:id/ratings), and the community mock data. */
+/**
+ * Ratings of the API (/api/restaurants/:id/ratings, /api/users/:id/ratings), and the community mock data.
+ */
 @Service()
 export class RatingApi {
-  /** Sends the requests to the API */
+  /**
+   * Sends the requests to the API
+   */
   private readonly http = inject(HttpClient);
 
   /**

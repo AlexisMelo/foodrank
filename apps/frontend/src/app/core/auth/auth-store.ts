@@ -5,7 +5,9 @@ import { firstValueFrom } from 'rxjs';
 import type { SignupData, User } from '@/core/models/user.model';
 import { type PageAccess, sessionRedirect } from '@/core/utils/auth';
 
-/** Id of the user in the community mock data, hardcoded until the API serves the community visits */
+/**
+ * Id of the user in the community mock data, hardcoded until the API serves the community visits
+ */
 const CURRENT_USER_ID = 'alex';
 
 /**
@@ -15,34 +17,64 @@ const CURRENT_USER_ID = 'alex';
  */
 export const SESSION_CHECK = new HttpContextToken<boolean>(() => false);
 
-/** Body of POST /api/auth/reset-password: the tokens of the reset password link and the new password. */
+/**
+ * Body of POST /api/auth/reset-password: the tokens of the reset password link and the new password.
+ */
 export interface PasswordReset {
-  /** access_token of the link */
+  /**
+   * access_token of the link
+   */
   accessToken: string;
-  /** refresh_token of the link */
+
+  /**
+   * refresh_token of the link
+   */
   refreshToken: string;
-  /** New password */
+
+  /**
+   * New password
+   */
   password: string;
 }
 
-/** Session of the user: whether they are logged in, and the actions that log them in or out. */
+/**
+ * Session of the user: whether they are logged in, and the actions that log them in or out.
+ */
 @Service()
 export class AuthStore {
-  /** Sends the auth requests to the API */
+  /**
+   * Sends the auth requests to the API
+   */
   private readonly http = inject(HttpClient);
-  /** Opens the page matching the session after each action */
+
+  /**
+   * Opens the page matching the session after each action
+   */
   private readonly router = inject(Router);
 
-  /** Writable state behind isLoggedIn */
+  /**
+   * Writable state behind isLoggedIn
+   */
   private readonly loggedIn = signal(false);
-  /** Writable state behind currentUser */
+
+  /**
+   * Writable state behind currentUser
+   */
   private readonly user = signal<User | null>(null);
 
-  /** True when the API accepts the session; known once checkSession has run (app initializer) */
+  /**
+   * True when the API accepts the session; known once checkSession has run (app initializer)
+   */
   readonly isLoggedIn = this.loggedIn.asReadonly();
-  /** Logged-in user; never set yet, always null (as in the Vue app) */
+
+  /**
+   * Logged-in user; never set yet, always null (as in the Vue app)
+   */
   readonly currentUser = this.user.asReadonly();
-  /** Id of the user in the community mock data, not the id of the logged-in user */
+
+  /**
+   * Id of the user in the community mock data, not the id of the logged-in user
+   */
   readonly currentUserId = CURRENT_USER_ID;
 
   /**

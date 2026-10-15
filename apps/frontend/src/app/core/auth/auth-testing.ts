@@ -10,11 +10,15 @@ import { unauthorizedInterceptor } from './unauthorized-interceptor';
 
 // Test helpers shared by the auth specs
 
-/** Empty page standing for the real pages of the app, which the auth tests do not need. */
+/**
+ * Empty page standing for the real pages of the app, which the auth tests do not need.
+ */
 @Component({ template: '' })
 class StubPage {}
 
-/** A guest, a public and a few private pages, each behind the access guard. */
+/**
+ * A guest, a public and a few private pages, each behind the access guard.
+ */
 const routes: Routes = [
   { path: 'login', component: StubPage, canActivate: [accessGuard], data: { access: 'guest' } },
   { path: 'signup', component: StubPage, canActivate: [accessGuard], data: { access: 'guest' } },
@@ -29,7 +33,9 @@ const routes: Routes = [
   { path: 'settings', component: StubPage, canActivate: [accessGuard] },
 ];
 
-/** Sets up the router with the test pages and HttpClient with the app interceptors, its backend faked. */
+/**
+ * Sets up the router with the test pages and HttpClient with the app interceptors, its backend faked.
+ */
 export function configureAuthTesting(providers: (Provider | EnvironmentProviders)[] = []): void {
   TestBed.configureTestingModule({
     providers: [
@@ -41,7 +47,9 @@ export function configureAuthTesting(providers: (Provider | EnvironmentProviders
   });
 }
 
-/** Runs the session check done when the app starts, the API answering it with `status`. */
+/**
+ * Runs the session check done when the app starts, the API answering it with `status`.
+ */
 export async function checkSession(status: 200 | 401): Promise<void> {
   const checked = TestBed.inject(AuthStore).checkSession();
   const req = TestBed.inject(HttpTestingController).expectOne('/api/auth/me');

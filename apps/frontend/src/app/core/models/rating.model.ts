@@ -1,28 +1,59 @@
-/** A visit of the community mock data (core/api/data/community-ratings.json), not served by the API yet. */
+/**
+ * A visit of the community mock data (core/api/data/community-ratings.json), not served by the API yet.
+ */
 export interface Visit {
-  /** Id of the visit, e.g. "visit-1" */
+  /**
+   * Id of the visit, e.g. "visit-1"
+   */
   id: string;
-  /** Id of the restaurant visited */
+
+  /**
+   * Id of the restaurant visited
+   */
   restaurantId: string;
-  /** Day of the visit, "yyyy-MM-dd" */
+
+  /**
+   * Day of the visit, "yyyy-MM-dd"
+   */
   date: string;
-  /** 0 to 100 */
+
+  /**
+   * 0 to 100
+   */
   food: number;
-  /** 0 to 100 */
+
+  /**
+   * 0 to 100
+   */
   service: number;
-  /** Setting, 0 to 100 (named setting in the API ratings) */
+
+  /**
+   * Setting, 0 to 100 (named setting in the API ratings)
+   */
   decor: number;
 }
 
-/** A visit of the community mock data, with its author. */
+/**
+ * A visit of the community mock data, with its author.
+ */
 export interface CommunityVisit extends Visit {
-  /** Author of the visit */
+  /**
+   * Author of the visit
+   */
   user: {
-    /** Id of the user, e.g. "alex" */
+    /**
+     * Id of the user, e.g. "alex"
+     */
     id: string;
-    /** Name displayed for the user */
+
+    /**
+     * Name displayed for the user
+     */
     name: string;
-    /** Avatar, an emoji */
+
+    /**
+     * Avatar, an emoji
+     */
     avatar: string;
   };
 }
@@ -32,13 +63,24 @@ export interface CommunityVisit extends Visit {
  * (food_rating, service_rating, setting_rating, bonus: see database.types.ts).
  */
 export interface RatingInput {
-  /** 0 to 100 */
+  /**
+   * 0 to 100
+   */
   food: number;
-  /** 0 to 100 */
+
+  /**
+   * 0 to 100
+   */
   service: number;
-  /** Setting (decor), 0 to 100 */
+
+  /**
+   * Setting (decor), 0 to 100
+   */
   setting: number;
-  /** "Instant crush" favorite bonus */
+
+  /**
+   * "Instant crush" favorite bonus
+   */
   bonus: boolean;
 }
 
@@ -47,28 +89,55 @@ export interface RatingInput {
  * A user rates a restaurant at most once per day: (userId, date) identifies a rating of a restaurant.
  */
 export interface RestaurantRating {
-  /** Id of the restaurant rated */
+  /**
+   * Id of the restaurant rated
+   */
   restaurantId: string;
-  /** Id of the author */
+
+  /**
+   * Id of the author
+   */
   userId: string;
-  /** Day of the rating, "yyyy-MM-dd" (no time, no time zone) */
+
+  /**
+   * Day of the rating, "yyyy-MM-dd" (no time, no time zone)
+   */
   date: string;
-  /** 0 to 100 */
+
+  /**
+   * 0 to 100
+   */
   food: number;
-  /** 0 to 100 */
+
+  /**
+   * 0 to 100
+   */
   service: number;
-  /** Setting (decor), 0 to 100 */
+
+  /**
+   * Setting (decor), 0 to 100
+   */
   setting: number;
-  /** "Instant crush" favorite bonus */
+
+  /**
+   * "Instant crush" favorite bonus
+   */
   bonus: boolean;
+
   /**
    * True for the user's latest rating of the restaurant, which is their score for it; false for the previous ones,
    * kept as history
    */
   isActive: boolean;
-  /** Full name or user name of the author, "Anonymous" when unknown */
+
+  /**
+   * Full name or user name of the author, "Anonymous" when unknown
+   */
   userName: string;
-  /** Profile picture of the author, null when there is none */
+
+  /**
+   * Profile picture of the author, null when there is none
+   */
   userAvatarUrl: string | null;
 }
 
@@ -77,38 +146,81 @@ export interface RestaurantRating {
  * The averages are null when nobody rated the restaurant yet.
  */
 export interface RatingSummary {
-  /** Number of active ratings averaged */
+  /**
+   * Number of active ratings averaged
+   */
   count: number;
-  /** 0 to 100 */
+
+  /**
+   * 0 to 100
+   */
   food: number | null;
-  /** 0 to 100 */
+
+  /**
+   * 0 to 100
+   */
   service: number | null;
-  /** Setting (decor), 0 to 100 */
+
+  /**
+   * Setting (decor), 0 to 100
+   */
   setting: number | null;
-  /** Average of every criterion of every active rating, 0 to 100 ("instant crush" bonus not included) */
+
+  /**
+   * Average of every criterion of every active rating, 0 to 100 ("instant crush" bonus not included)
+   */
   global: number | null;
 }
 
-/** A rating of a user, with the restaurant it rates (GET /api/users/:id/ratings). */
+/**
+ * A rating of a user, with the restaurant it rates (GET /api/users/:id/ratings).
+ */
 export interface UserRating {
-  /** Id of the restaurant rated */
+  /**
+   * Id of the restaurant rated
+   */
   restaurantId: string;
-  /** Name of the restaurant rated */
+
+  /**
+   * Name of the restaurant rated
+   */
   restaurantName: string;
-  /** Emoji of the restaurant rated */
+
+  /**
+   * Emoji of the restaurant rated
+   */
   restaurantEmoji: string;
-  /** Empty when unknown */
+
+  /**
+   * Empty when unknown
+   */
   restaurantCuisine: string;
-  /** Day of the rating, "yyyy-MM-dd" */
+
+  /**
+   * Day of the rating, "yyyy-MM-dd"
+   */
   date: string;
-  /** 0 to 100 */
+
+  /**
+   * 0 to 100
+   */
   food: number;
-  /** 0 to 100 */
+
+  /**
+   * 0 to 100
+   */
   service: number;
-  /** Setting (decor), 0 to 100 */
+
+  /**
+   * Setting (decor), 0 to 100
+   */
   setting: number;
-  /** "Instant crush" favorite bonus */
+
+  /**
+   * "Instant crush" favorite bonus
+   */
   bonus: boolean;
+
   /**
    * True for the user's latest rating of the restaurant, which is their score for it; false for the previous ones,
    * kept as history

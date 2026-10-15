@@ -6,20 +6,31 @@ import { AuthStore } from '@/core/auth/auth-store';
 import { query, queryAll, submitForm, textOf, typeIn } from '@/testing/dom-testing';
 import { ResetPasswordForm } from './reset-password-form';
 
-/** Empty page standing for the home page. */
+/**
+ * Empty page standing for the home page.
+ */
 @Component({ template: '' })
 class StubPage {}
 
-/** URL of a reset password link, as sent by email. */
+/**
+ * URL of a reset password link, as sent by email.
+ */
 const RESET_LINK = '/auth/reset-password#access_token=access&refresh_token=refresh&type=recovery';
 
 // Not in the Vue specs: reading the tokens of the link is done through the router in Angular
 describe('ResetPasswordForm', () => {
-  /** Fake of the AuthStore methods the form calls */
+  /**
+   * Fake of the AuthStore methods the form calls
+   */
   let auth: {
-    /** Fake of AuthStore.resetPassword */
+    /**
+     * Fake of AuthStore.resetPassword
+     */
     resetPassword: ReturnType<typeof vi.fn>;
-    /** Fake of AuthStore.checkSession */
+
+    /**
+     * Fake of AuthStore.checkSession
+     */
     checkSession: ReturnType<typeof vi.fn>;
   };
   let harness: RouterTestingHarness;

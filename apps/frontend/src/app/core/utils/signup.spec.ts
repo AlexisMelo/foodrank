@@ -9,7 +9,9 @@ import {
   toSignupData,
 } from './signup';
 
-/** A draft filled up to the personal data step, with `changes`. */
+/**
+ * A draft filled up to the personal data step, with `changes`.
+ */
 function draft(changes: Partial<SignupDraft> = {}): SignupDraft {
   return {
     email: 'me@test.fr',

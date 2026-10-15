@@ -2,7 +2,9 @@ import type { ComponentFixture } from '@angular/core/testing';
 
 // Test helpers acting on the rendered page like a user, then waiting for the page to update ("act, wait, assert")
 
-/** The element matching `selector`; fails the test when there is none. */
+/**
+ * The element matching `selector`; fails the test when there is none.
+ */
 export function query<T extends Element = HTMLElement>(
   fixture: ComponentFixture<unknown>,
   selector: string,
@@ -12,7 +14,9 @@ export function query<T extends Element = HTMLElement>(
   return element;
 }
 
-/** Every element matching `selector`. */
+/**
+ * Every element matching `selector`.
+ */
 export function queryAll<T extends Element = HTMLElement>(
   fixture: ComponentFixture<unknown>,
   selector: string,
@@ -20,12 +24,16 @@ export function queryAll<T extends Element = HTMLElement>(
   return Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<T>(selector));
 }
 
-/** Text of `element`, trimmed, its whitespace collapsed. */
+/**
+ * Text of `element`, trimmed, its whitespace collapsed.
+ */
 export function textOf(element: Element): string {
   return (element.textContent ?? '').replace(/\s+/g, ' ').trim();
 }
 
-/** Types `value` in the field (input or select) matching `selector`. */
+/**
+ * Types `value` in the field (input or select) matching `selector`.
+ */
 export async function typeIn(
   fixture: ComponentFixture<unknown>,
   selector: string,
@@ -37,7 +45,9 @@ export async function typeIn(
   await fixture.whenStable();
 }
 
-/** Submits the form matching `selector` (the only form by default), as the Enter key or a submit button would. */
+/**
+ * Submits the form matching `selector` (the only form by default), as the Enter key or a submit button would.
+ */
 export async function submitForm(
   fixture: ComponentFixture<unknown>,
   selector = 'form',
@@ -46,7 +56,9 @@ export async function submitForm(
   await fixture.whenStable();
 }
 
-/** Clicks the button whose text is `label`. */
+/**
+ * Clicks the button whose text is `label`.
+ */
 export async function clickButton(
   fixture: ComponentFixture<unknown>,
   label: string,

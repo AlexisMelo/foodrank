@@ -13,10 +13,26 @@ Code style and tooling follow the Angular CLI defaults (ESLint from `angular-esl
 ## Comments
 
 - **Every property has a `/** */` doc comment**, with no exception: class fields (public or private, including injected dependencies, signals, `input()`, `output()`, `model()`, queries), interface and type properties (models, inline object types), and `environment` values. Functions, methods and exported constants have one too.
-- Say what the code does not: meaning, unit or range (`0 to 100`), when it is `null`/`undefined`/empty, where the value comes from (API endpoint, route, mock data), and why it exists when that is not obvious. One line when it is enough.
+- Say what the code does not: meaning, unit or range (`0 to 100`), when it is `null`/`undefined`/empty, where the value comes from (API endpoint, route, mock data), and why it exists when that is not obvious.
 - When porting from Vue, keep the existing comments and add the missing ones.
 - When the code and the data disagree (e.g. a field the API never sends), say it in the comment and report it in the summary instead of changing the type silently.
-- Not enforced by the linter: check it yourself before proposing a change.
+- The presence of the comments is not enforced by the linter: check it yourself before proposing a change.
+
+## Comment and member layout
+
+Enforced by the local ESLint rules in `eslint-rules.js` (auto-fixable with `npm run lint -- --fix`):
+
+- **Doc comments are always written on three lines**, never `/** text */`, even when the text is short (`foodrank/multiline-doc-comment`):
+
+  ```ts
+  /**
+   * True while the login request runs: the fields and the button are disabled
+   */
+  protected readonly loading = signal(false);
+  ```
+
+- **One empty line between every member** of a class, an interface or a multi-line object type, so the next member's comment never touches the previous member (`foodrank/padded-members`). Except the first member, every member has an empty line above it.
+- **No groups of members**: no extra empty lines or `//` section comments to group `input()`s, `output()`s, `inject()`s, signals, etc. Explain the reason in each member's doc comment instead.
 
 ## Architecture decisions
 

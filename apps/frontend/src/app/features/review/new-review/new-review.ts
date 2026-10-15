@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 
-/** Placeholder of the rating form of a restaurant (/review/:id), ported in step 2.5. */
+/**
+ * Placeholder of the rating form of a restaurant (/review/:id), ported in step 2.5.
+ */
 @Component({
   imports: [],
   selector: 'app-new-review',
