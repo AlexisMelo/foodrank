@@ -1,0 +1,24 @@
+// The inner div is the flex item of the parent, as the root element was in the Vue app
+:host {
+  display: contents;
+}
+
+.rating-scores {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.score-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.score-label {
+  font-size: 12px;
+}
+.score-value {
+  font-size: 12px;
+  font-weight: 800;
+}

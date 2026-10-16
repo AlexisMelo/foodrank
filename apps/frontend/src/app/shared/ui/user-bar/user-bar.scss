@@ -1,0 +1,47 @@
+// The host takes the size the parent gives it through a class (the button had it in the Vue app); the button fills it
+:host {
+  display: flex;
+  min-width: 0;
+}
+
+.user-bar {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #1a1a1a;
+  border: 1.5px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 10px 14px;
+  cursor: pointer;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.2s;
+}
+.user-bar:hover {
+  background: #222;
+}
+.avatar {
+  font-size: 16px;
+  width: 38px;
+  height: 38px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.user-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: #ffffff;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.user-visited {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.35);
+  white-space: nowrap;
+}

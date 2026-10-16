@@ -1,0 +1,32 @@
+<a
+  [routerLink]="['/restaurant', restaurantId()]"
+  class="review-card"
+  [class.inactive]="!active()"
+  [attr.title]="active() ? null : 'Replaced by a more recent rating'"
+>
+  <div class="emoji-wrap">
+    <div class="emoji-circle">{{ emoji() }}</div>
+    <div class="avg-bubble" [style.background-color]="scoreColor(average())">
+      {{ average() }}
+    </div>
+  </div>
+  <span class="restaurant-name">{{ name() }}</span>
+  <span class="visit-date">{{ displayedDate() }}</span>
+  <div class="criteria">
+    @for (criterion of criteria(); track criterion.label) {
+      <div class="criterion">
+        <span class="criterion-label">{{ criterion.label }}</span>
+        <div class="criterion-bar-wrap">
+          <div
+            class="criterion-bar"
+            [style.width.%]="criterion.score"
+            [style.background-color]="scoreColor(criterion.score)"
+          ></div>
+        </div>
+        <span class="criterion-score" [style.color]="scoreColor(criterion.score)">{{
+          criterion.score
+        }}</span>
+      </div>
+    }
+  </div>
+</a>

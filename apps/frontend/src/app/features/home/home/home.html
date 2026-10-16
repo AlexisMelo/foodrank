@@ -1,1 +1,95 @@
-<p>TODO: home</p>
+<div class="home">
+  <div class="top-bar">
+    @if (user.profile(); as profile) {
+      <app-user-bar [profile]="profile" showCount class="home-user-bar" />
+    } @else {
+      <div class="home-user-bar user-bar-skeleton"></div>
+    }
+    <button type="button" class="settings-btn" (click)="openSettings()" aria-label="Settings">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="3" />
+        <path
+          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+        />
+      </svg>
+    </button>
+  </div>
+
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Recent reviews</h2>
+      <app-new-review-chip />
+    </div>
+    <div class="cards-row">
+      @if (recentRatings.loading()) {
+        @for (i of [1, 2, 3, 4, 5]; track i) {
+          <div class="card-skeleton"></div>
+        }
+      } @else if (recentRatings.loadError()) {
+        <p class="empty">Couldn't load your reviews</p>
+      } @else if (!recentRatings.ratings().length) {
+        <p class="empty">No review yet 🍽️</p>
+      } @else {
+        <!-- A user rates a restaurant at most once per day: restaurant + date identifies a rating -->
+        @for (rating of recentRatings.ratings(); track rating.restaurantId + '-' + rating.date) {
+          <app-recent-review-card
+            [restaurantId]="rating.restaurantId"
+            [emoji]="rating.restaurantEmoji"
+            [name]="rating.restaurantName"
+            [date]="rating.date"
+            [food]="rating.food"
+            [service]="rating.service"
+            [decor]="rating.setting"
+            [active]="rating.isActive"
+          />
+        }
+      }
+    </div>
+  </section>
+
+  @if (recentTierlists().length) {
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Tierlists</h2>
+        <a routerLink="/tierlists" class="see-all-chip">See all</a>
+      </div>
+      <div class="cards-row">
+        @for (t of recentTierlists(); track t.id) {
+          <app-tierlist-chip [id]="t.id" [name]="t.name" [emoji]="t.emoji" />
+        }
+      </div>
+    </section>
+  }
+
+  @if (topRestaurants().length) {
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Favorites</h2>
+        <a routerLink="/profile" class="see-all-chip">See all</a>
+      </div>
+      <div class="favorites-list">
+        @for (r of topRestaurants(); track r.id; let index = $index) {
+          <app-ranked-restaurant-item
+            [restaurantId]="r.id"
+            [emoji]="r.emoji"
+            [name]="r.name"
+            [cuisine]="r.cuisine"
+            [food]="r.scores.food"
+            [service]="r.scores.service"
+            [decor]="r.scores.decor"
+            [overall]="r.scores.overall"
+            [index]="index"
+          />
+        }
+      </div>
+    </section>
+  }
+</div>

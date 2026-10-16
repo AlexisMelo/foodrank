@@ -1,0 +1,38 @@
+<a
+  [routerLink]="['/restaurant', restaurantId()]"
+  class="list-item"
+  [class.list-item-first]="index() === 0"
+  [style.background]="background()"
+  [style.--item-bg]="background()"
+>
+  <div class="item-avatar">
+    <span class="item-emoji">{{ emoji() }}</span>
+  </div>
+  <div class="item-info">
+    <span class="item-name">{{ name() }}</span>
+    <span class="item-sub">{{ cuisine() }}</span>
+  </div>
+  <app-rating-scores [food]="food()" [service]="service()" [decor]="decor()" />
+  <div class="score-wrap">
+    <div class="item-avg" [style.background-color]="scoreColor(roundedOverall())">
+      {{ roundedOverall() }}
+    </div>
+    @if (myScore() !== undefined) {
+      <div class="my-score" [style.background-color]="scoreColor(roundedMyScore())">
+        {{ roundedMyScore() }}
+      </div>
+    } @else if (rateLink(); as rateLink) {
+      <!-- Inside the link to the restaurant page: a span with the button role, not a nested button -->
+      <span
+        class="my-score my-score-rate"
+        role="button"
+        tabindex="0"
+        aria-label="Rate this restaurant"
+        (click)="rate($event, rateLink)"
+        (keydown.enter)="rate($event, rateLink)"
+      >
+        <span class="rate-plus">+</span>
+      </span>
+    }
+  </div>
+</a>

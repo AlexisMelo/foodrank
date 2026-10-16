@@ -18,7 +18,7 @@ Do the steps in order: each one relies on the previous ones. Tick the box once t
 - [x] 1.3 Auth core (session, guards, 401 interceptor)
 - [x] 1.4 Routes and app shell
 - [x] 2.1 Login, sign up, forgot and reset password
-- [ ] 2.2 Home
+- [x] 2.2 Home
 - [ ] 2.3 Restaurant page
 - [ ] 2.4 New review: search sheet and user location
 - [ ] 2.5 New review: rating form
