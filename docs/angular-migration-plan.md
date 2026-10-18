@@ -22,7 +22,7 @@ Do the steps in order: each one relies on the previous ones. Tick the box once t
 - [x] 2.3 Restaurant page
 - [x] 2.4 New review: search sheet and user location
 - [x] 2.5 New review: rating form
-- [ ] 2.6 Explore and search results
+- [x] 2.6 Explore and search results
 - [ ] 2.7 Profile
 - [ ] 2.8 Tierlists: list and detail
 - [ ] 2.9 Tierlists: creation
