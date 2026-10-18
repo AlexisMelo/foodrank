@@ -19,7 +19,7 @@ Do the steps in order: each one relies on the previous ones. Tick the box once t
 - [x] 1.4 Routes and app shell
 - [x] 2.1 Login, sign up, forgot and reset password
 - [x] 2.2 Home
-- [ ] 2.3 Restaurant page
+- [x] 2.3 Restaurant page
 - [ ] 2.4 New review: search sheet and user location
 - [ ] 2.5 New review: rating form
 - [ ] 2.6 Explore and search results
@@ -304,6 +304,7 @@ In every step: replace the placeholder route, put shared components in `shared/u
 - **Source:** `views/NewReviewView.vue`, the largest file (666 lines). Read it entirely before planning.
 - **Target:** `features/review/new-review`. Split it into sub-components only where the Vue template has clear sections; the behavior stays the same. The form is built with Signal Forms.
 - **Tests:** `NewReviewView.spec` (5) → 5 tests. Add tests for any validation or score logic extracted from the component.
+  - Also finish `features/restaurant/restaurant-rating-flow.spec.ts` (ported in 2.3 before the form existed): replace its `submitRating` helper, which saves through the fake API, with the real form (sliders, `.crush-toggle`, `.submit-btn`), as in the Vue `RestaurantRatingFlow.spec`.
 - **Manual check:** rate all 3 criteria, with and without the favorite bonus; submit; check the error display and the redirection afterwards.
 - Commit: `feat (frontend): new review form`
 

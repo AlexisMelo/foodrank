@@ -1,0 +1,17 @@
+// The host keeps its box: the parent positions it through a class set on the component (RestaurantDetail .global-score)
+:host {
+  display: block;
+}
+
+.global-score {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid #0d0d0d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 900;
+  color: #0d0d0d;
+}
