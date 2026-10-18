@@ -68,3 +68,26 @@ export async function clickButton(
   button.click();
   await fixture.whenStable();
 }
+
+/**
+ * jsdom has no showModal() nor close() on <dialog>: adds minimal ones that only toggle `open` (close() also fires
+ * the close event), so components using a native dialog can be tested. No-op once the browser has them.
+ */
+export function stubDialogs(): void {
+  const dialog = HTMLDialogElement.prototype;
+  if (!('showModal' in dialog)) {
+    Object.assign(dialog, {
+      showModal(this: HTMLDialogElement) {
+        this.open = true;
+      },
+    });
+  }
+  if (!('close' in dialog)) {
+    Object.assign(dialog, {
+      close(this: HTMLDialogElement) {
+        this.open = false;
+        this.dispatchEvent(new Event('close'));
+      },
+    });
+  }
+}

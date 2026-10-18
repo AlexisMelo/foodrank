@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { NewReviewSheet } from '@/features/review/new-review-sheet/new-review-sheet';
 import { BottomTabBar } from '../bottom-tab-bar/bottom-tab-bar';
 
 /**
@@ -7,7 +8,7 @@ import { BottomTabBar } from '../bottom-tab-bar/bottom-tab-bar';
  * password are shown without it.
  */
 @Component({
-  imports: [RouterOutlet, BottomTabBar],
+  imports: [RouterOutlet, BottomTabBar, NewReviewSheet],
   selector: 'app-shell',
   templateUrl: './shell.html',
 })

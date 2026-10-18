@@ -20,7 +20,7 @@ Do the steps in order: each one relies on the previous ones. Tick the box once t
 - [x] 2.1 Login, sign up, forgot and reset password
 - [x] 2.2 Home
 - [x] 2.3 Restaurant page
-- [ ] 2.4 New review: search sheet and user location
+- [x] 2.4 New review: search sheet and user location
 - [ ] 2.5 New review: rating form
 - [ ] 2.6 Explore and search results
 - [ ] 2.7 Profile
