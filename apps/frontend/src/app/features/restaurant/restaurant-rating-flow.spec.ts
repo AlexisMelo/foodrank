@@ -2,13 +2,13 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { firstValueFrom, of } from 'rxjs';
+import { of } from 'rxjs';
 import { routes } from '@/app.routes';
 import { RatingApi } from '@/core/api/rating-api';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import { AuthStore } from '@/core/auth/auth-store';
 import type { RatingInput, RatingSummary, RestaurantRating } from '@/core/models/rating.model';
-import { query, queryAll, textOf } from '@/testing/dom-testing';
+import { query, queryAll, setValue, textOf } from '@/testing/dom-testing';
 
 /**
  * In-memory replacement of the API: ratings saved by rateRestaurant are returned by the fetch functions.
@@ -60,6 +60,13 @@ class FakeRatingApi {
       setting: average(active.map((r) => r.setting)),
       global: average(active.flatMap((r) => [r.food, r.service, r.setting])),
     });
+  }
+
+  /**
+   * No community visit: no past review is shown under the sliders
+   */
+  fetchCommunityVisitsByUserId() {
+    return of([]);
   }
 
   /**
@@ -117,6 +124,7 @@ describe('rating a restaurant from its page', () => {
           provide: RestaurantApi,
           useValue: {
             fetchRestaurantById: (id: string) => of({ id, name: 'Pizza Roma', emoji: '🍕' }),
+            fetchRestaurants: () => of([]),
           },
         },
       ],
@@ -139,12 +147,10 @@ describe('rating a restaurant from its page', () => {
   }
 
   /**
-   * Stands for the rating page (/review/:id), ported in step 2.5: saves the rating of r1 through the API as its
-   * submit button does, then goes back to the restaurant page like it.
+   * Clicks the element matching `selector`, then waits for the app to update.
    */
-  async function submitRating(rating: RatingInput): Promise<void> {
-    await firstValueFrom(TestBed.inject(RatingApi).rateRestaurant('r1', rating));
-    await harness.navigateByUrl('/restaurant/r1');
+  async function click(selector: string): Promise<void> {
+    query(harness.fixture, selector).click();
     await harness.fixture.whenStable();
   }
 
@@ -153,11 +159,18 @@ describe('rating a restaurant from its page', () => {
     expect(queryAll(harness.fixture, '.visit-card')).toHaveLength(1);
 
     // "New" → rating page
-    query(harness.fixture, '.add-chip').click();
-    await harness.fixture.whenStable();
+    await click('.add-chip');
     expect(url()).toBe('/review/r1');
 
-    await submitRating({ food: 92, service: 71, setting: 40, bonus: true });
+    const [food, service, decor] = queryAll<HTMLInputElement>(
+      harness.fixture,
+      'input[type="range"]',
+    );
+    await setValue(harness.fixture, food!, '92');
+    await setValue(harness.fixture, service!, '71');
+    await setValue(harness.fixture, decor!, '40');
+    await click('.crush-toggle');
+    await click('.submit-btn');
 
     // Back on the restaurant page, "My Visits" lists the new review first
     expect(url()).toBe('/restaurant/r1');
@@ -203,7 +216,15 @@ describe('rating a restaurant from its page', () => {
 
     // A new rating replaces the user's previous one in the averages
     await harness.navigateByUrl('/review/r1');
-    await submitRating({ food: 92, service: 71, setting: 40, bonus: false });
+    await harness.fixture.whenStable();
+    const [food, service, decor] = queryAll<HTMLInputElement>(
+      harness.fixture,
+      'input[type="range"]',
+    );
+    await setValue(harness.fixture, food!, '92');
+    await setValue(harness.fixture, service!, '71');
+    await setValue(harness.fixture, decor!, '40');
+    await click('.submit-btn');
 
     // (92 + 71 + 40 + 90 + 60 + 30) / 6 = 63.8
     expect(textOf(query(harness.fixture, '.global-score'))).toBe('64');

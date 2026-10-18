@@ -39,7 +39,17 @@ export async function typeIn(
   selector: string,
   value: string,
 ): Promise<void> {
-  const field = query<HTMLInputElement | HTMLSelectElement>(fixture, selector);
+  await setValue(fixture, query<HTMLInputElement | HTMLSelectElement>(fixture, selector), value);
+}
+
+/**
+ * Sets `value` in the field (input, range or select) `field`, as the user would.
+ */
+export async function setValue(
+  fixture: ComponentFixture<unknown>,
+  field: HTMLInputElement | HTMLSelectElement,
+  value: string,
+): Promise<void> {
   field.value = value;
   field.dispatchEvent(new Event('input'));
   await fixture.whenStable();
