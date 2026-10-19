@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import type { SignupData } from '@/core/models/user.model';
-import { checkSession, configureAuthTesting } from './auth-testing';
+import { SESSION_USER_ID, checkSession, configureAuthTesting } from './auth-testing';
 import { AuthStore } from './auth-store';
 
 const signupData: SignupData = {
@@ -30,14 +30,23 @@ describe('AuthStore', () => {
     httpTesting.verify();
   });
 
-  it('is logged in when the session check succeeds', async () => {
+  /**
+   * Answers the session check sent once logged in or signed up, which tells who the user is.
+   */
+  async function answerSessionCheck(): Promise<void> {
+    const req = await vi.waitFor(() => httpTesting.expectOne('/api/auth/me'));
+    req.flush({ id: SESSION_USER_ID });
+  }
+
+  it('is logged in as the user of the session when the session check succeeds', async () => {
     const checked = store.checkSession();
     const req = httpTesting.expectOne('/api/auth/me');
     expect(req.request.withCredentials).toBe(true);
-    req.flush({});
+    req.flush({ id: 'u1' });
     await checked;
 
     expect(store.isLoggedIn()).toBe(true);
+    expect(store.loggedInUserId()).toBe('u1');
   });
 
   it('is logged out but ready when the session check fails', async () => {
@@ -47,17 +56,20 @@ describe('AuthStore', () => {
     // Resolves anyway: the app initializer waiting for it must not fail
     await expect(checked).resolves.toBeUndefined();
     expect(store.isLoggedIn()).toBe(false);
+    expect(store.loggedInUserId()).toBeNull();
   });
 
-  it('logs in on successful login', async () => {
+  it('logs in as the user of the new session on successful login', async () => {
     await checkSession(401);
     await RouterTestingHarness.create('/login');
 
     const done = store.login('me@test.fr', 'secret');
     httpTesting.expectOne('/api/auth/login').flush({});
+    await answerSessionCheck();
     await done;
 
     expect(store.isLoggedIn()).toBe(true);
+    expect(store.loggedInUserId()).toBe(SESSION_USER_ID);
   });
 
   it('opens the home page on successful login, once logged in so the guard lets it open', async () => {
@@ -69,6 +81,7 @@ describe('AuthStore', () => {
     const req = httpTesting.expectOne('/api/auth/login');
     expect(req.request.body).toEqual({ email: 'me@test.fr', password: 'secret' });
     req.flush({});
+    await answerSessionCheck();
     await done;
 
     expect(navigate).toHaveBeenCalledWith('/', { replaceUrl: true });
@@ -86,10 +99,26 @@ describe('AuthStore', () => {
     expect(req.request.body).toEqual(signupData);
     expect(req.request.withCredentials).toBe(true);
     req.flush({});
+    await answerSessionCheck();
     await done;
 
     expect(router.url).toBe('/');
     expect(store.isLoggedIn()).toBe(true);
+    expect(store.loggedInUserId()).toBe(SESSION_USER_ID);
+  });
+
+  it('stays logged out on the login page when the session check after login fails', async () => {
+    await checkSession(401);
+    await RouterTestingHarness.create('/login');
+
+    const done = store.login('me@test.fr', 'secret');
+    httpTesting.expectOne('/api/auth/login').flush({});
+    const req = await vi.waitFor(() => httpTesting.expectOne('/api/auth/me'));
+    req.flush(null, { status: 401, statusText: 'Unauthorized' });
+    await done;
+
+    expect(store.isLoggedIn()).toBe(false);
+    expect(router.url).toBe('/login');
   });
 
   it('stays on the current page on failed signup', async () => {
@@ -137,6 +166,7 @@ describe('AuthStore', () => {
     await done;
 
     expect(store.isLoggedIn()).toBe(false);
+    expect(store.loggedInUserId()).toBeNull();
     expect(router.url).toBe('/login');
   });
 

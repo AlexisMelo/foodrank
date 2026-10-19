@@ -48,12 +48,17 @@ export function configureAuthTesting(providers: (Provider | EnvironmentProviders
 }
 
 /**
+ * Id of the user logged in by the session in the auth tests, as answered by GET /api/auth/me
+ */
+export const SESSION_USER_ID = 'u1';
+
+/**
  * Runs the session check done when the app starts, the API answering it with `status`.
  */
 export async function checkSession(status: 200 | 401): Promise<void> {
   const checked = TestBed.inject(AuthStore).checkSession();
   const req = TestBed.inject(HttpTestingController).expectOne('/api/auth/me');
-  if (status === 200) req.flush({});
+  if (status === 200) req.flush({ id: SESSION_USER_ID });
   else req.flush(null, { status, statusText: 'Unauthorized' });
   await checked;
 }

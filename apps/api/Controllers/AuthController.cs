@@ -60,11 +60,12 @@ public class AuthController(ISupabaseAuthService authService, IUserService userS
     }
 
     /// <summary>
-    /// Returns 200 when the session cookie holds a valid token; otherwise the authentication handler answers 401
-    /// and deletes the cookie.
+    /// Returns the logged-in user when the session cookie holds a valid token; otherwise the authentication handler
+    /// answers 401 and deletes the cookie.
     /// </summary>
+    /// <returns>200 with the id of the logged-in user, 401 when not logged in.</returns>
     [HttpGet("me")]
-    public IActionResult Me() => Ok();
+    public ActionResult<SessionUserResponse> Me() => Ok(new SessionUserResponse(User.GetUserId()));
 
     [HttpPost("logout")]
     [AllowAnonymous]

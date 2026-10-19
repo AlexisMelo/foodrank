@@ -1,5 +1,5 @@
 import { HttpClient, HttpContext, HttpContextToken } from '@angular/common/http';
-import { Service, inject, signal } from '@angular/core';
+import { Service, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import type { SignupData, User } from '@/core/models/user.model';
@@ -38,6 +38,16 @@ export interface PasswordReset {
 }
 
 /**
+ * Body of GET /api/auth/me: the user logged in by the session cookie.
+ */
+interface SessionUser {
+  /**
+   * Id of the logged-in user, the same as UserProfile.id and the userId of their ratings and tierlists
+   */
+  id: string;
+}
+
+/**
  * Session of the user: whether they are logged in, and the actions that log them in or out.
  */
 @Service()
@@ -53,9 +63,9 @@ export class AuthStore {
   private readonly router = inject(Router);
 
   /**
-   * Writable state behind isLoggedIn
+   * Writable state behind loggedInUserId and isLoggedIn: null when logged out
    */
-  private readonly loggedIn = signal(false);
+  private readonly sessionUserId = signal<string | null>(null);
 
   /**
    * Writable state behind currentUser
@@ -63,9 +73,15 @@ export class AuthStore {
   private readonly user = signal<User | null>(null);
 
   /**
+   * Id of the logged-in user, from GET /api/auth/me; null when logged out. Known once checkSession has run (app
+   * initializer), and again after a login or a sign up
+   */
+  readonly loggedInUserId = this.sessionUserId.asReadonly();
+
+  /**
    * True when the API accepts the session; known once checkSession has run (app initializer)
    */
-  readonly isLoggedIn = this.loggedIn.asReadonly();
+  readonly isLoggedIn = computed(() => this.sessionUserId() !== null);
 
   /**
    * Logged-in user; never set yet, always null (as in the Vue app)
@@ -78,16 +94,19 @@ export class AuthStore {
   readonly currentUserId = CURRENT_USER_ID;
 
   /**
-   * Check if the user is currently logged in by making a request to the backend.
+   * Check if the user is currently logged in, and who they are, by making a request to the backend. Never throws: a
+   * failed check means logged out.
    */
   async checkSession(): Promise<void> {
     try {
-      await firstValueFrom(
-        this.http.get('/api/auth/me', { context: new HttpContext().set(SESSION_CHECK, true) }),
+      const user = await firstValueFrom(
+        this.http.get<SessionUser>('/api/auth/me', {
+          context: new HttpContext().set(SESSION_CHECK, true),
+        }),
       );
-      this.loggedIn.set(true);
+      this.sessionUserId.set(user.id);
     } catch {
-      this.loggedIn.set(false);
+      this.sessionUserId.set(null);
     }
   }
 
@@ -111,7 +130,7 @@ export class AuthStore {
    * Log out, then open the login page
    */
   async logout(): Promise<void> {
-    this.loggedIn.set(false);
+    this.sessionUserId.set(null);
     await this.leaveForbiddenPage();
     await firstValueFrom(this.http.post('/api/auth/logout', null)).catch(() => undefined);
   }
@@ -123,7 +142,7 @@ export class AuthStore {
    */
   async deleteAccount(password: string): Promise<void> {
     await firstValueFrom(this.http.post('/api/auth/delete-account', { password }));
-    this.loggedIn.set(false);
+    this.sessionUserId.set(null);
     await this.leaveForbiddenPage();
   }
 
@@ -149,16 +168,17 @@ export class AuthStore {
    * they can show their own error.
    */
   async sessionRejected(): Promise<void> {
-    this.loggedIn.set(false);
+    this.sessionUserId.set(null);
     await this.leaveForbiddenPage();
   }
 
   /**
-   * Show the app, then open the home page. Logged in first, so the access guard lets the home page open; the
-   * login or sign up page stays displayed until then.
+   * Show the app, then open the home page. The session is checked again first, so the id of the user is known
+   * and the access guard lets the home page open; the login or sign up page stays displayed until then. Should that
+   * check fail, the user stays logged out and the guard keeps them on the login page.
    */
   private async enterApp(): Promise<void> {
-    this.loggedIn.set(true);
+    await this.checkSession();
     await this.router.navigateByUrl('/', { replaceUrl: true });
   }
 
@@ -170,7 +190,10 @@ export class AuthStore {
     let page = this.router.routerState.snapshot.root;
     while (page.firstChild) page = page.firstChild;
 
-    const target = sessionRedirect(page.data['access'] as PageAccess | undefined, this.loggedIn());
+    const target = sessionRedirect(
+      page.data['access'] as PageAccess | undefined,
+      this.isLoggedIn(),
+    );
     if (target) await this.router.navigateByUrl(target, { replaceUrl: true });
   }
 }

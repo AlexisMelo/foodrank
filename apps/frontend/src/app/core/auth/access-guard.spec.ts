@@ -3,7 +3,7 @@ import { ApplicationInitStatus, inject, provideAppInitializer } from '@angular/c
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { checkSession, configureAuthTesting } from './auth-testing';
+import { SESSION_USER_ID, checkSession, configureAuthTesting } from './auth-testing';
 import { AuthStore } from './auth-store';
 
 describe('accessGuard', () => {
@@ -43,7 +43,7 @@ describe('accessGuard', () => {
     const initStatus = TestBed.inject(ApplicationInitStatus);
 
     expect(initStatus.done).toBe(false);
-    TestBed.inject(HttpTestingController).expectOne('/api/auth/me').flush({});
+    TestBed.inject(HttpTestingController).expectOne('/api/auth/me').flush({ id: SESSION_USER_ID });
     await initStatus.donePromise;
     harness = await RouterTestingHarness.create();
 

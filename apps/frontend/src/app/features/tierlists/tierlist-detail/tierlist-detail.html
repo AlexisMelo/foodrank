@@ -1,1 +1,51 @@
-<p>TODO: tierlist-detail</p>
+<div class="detail-view">
+  @if (page(); as page) {
+    <div class="hero">
+      <div class="cover">{{ page.tierlist.emoji }}</div>
+      <h1 class="title">{{ page.tierlist.name }}</h1>
+      @if (page.tierlist.description) {
+        <p class="description">{{ page.tierlist.description }}</p>
+      }
+
+      @if (isOwner()) {
+        <app-tierlist-pin-button
+          [pinned]="page.tierlist.pinned"
+          [saving]="pinSaving()"
+          (pinToggle)="togglePin()"
+        />
+        @if (pinError()) {
+          <p class="pin-error" role="alert">Couldn't update the pin, try again.</p>
+        }
+      }
+    </div>
+
+    <div class="list-header">
+      @if (page.owner; as owner) {
+        <a [routerLink]="'/user/' + owner.id" class="owner">
+          <app-user-avatar [name]="owner.name" [avatarUrl]="owner.avatarUrl" class="owner-avatar" />
+          <span class="owner-name">{{ owner.name }}</span>
+        </a>
+      }
+      <span class="meta-chip">{{ restaurantCountLabel(rankedRestaurants().length) }}</span>
+    </div>
+
+    <div class="restaurant-list">
+      @for (r of rankedRestaurants(); track r.restaurantId; let index = $index) {
+        <app-ranked-restaurant-item
+          [restaurantId]="r.restaurantId"
+          [emoji]="r.emoji"
+          [name]="r.name"
+          [cuisine]="r.cuisine"
+          [food]="r.food"
+          [service]="r.service"
+          [decor]="r.setting"
+          [overall]="r.overall"
+          [index]="index"
+          [myScore]="r.myScore"
+        />
+      }
+    </div>
+  } @else {
+    <div class="loading">⏳</div>
+  }
+</div>

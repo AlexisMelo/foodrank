@@ -1,0 +1,36 @@
+.pin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border-radius: 100px;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s,
+    opacity 0.15s;
+}
+
+.pin-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.pin-btn svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.pin-btn.pinned {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #0d0d0d;
+}

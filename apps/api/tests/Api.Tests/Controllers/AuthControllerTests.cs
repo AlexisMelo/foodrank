@@ -102,15 +102,17 @@ public class AuthControllerTests : IDisposable
             && cookies.Any(cookie => cookie.StartsWith($"{SupabaseAuthenticationHandler.CookieName}=;") && cookie.Contains("expires=Thu, 01 Jan 1970"));
 
     /// <summary>
-    /// A valid cookie is accepted and kept.
+    /// A valid cookie is accepted and kept, and the logged-in user is returned.
     /// </summary>
     [Fact]
-    public async Task Me_ValidCookie_Returns200()
+    public async Task Me_ValidCookie_Returns200WithUserId()
     {
         HttpResponseMessage response = await SendAsync(HttpMethod.Get, "/api/auth/me", Token);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.False(DeletesCookie(response));
+        SessionUserResponse? user = await response.Content.ReadFromJsonAsync<SessionUserResponse>();
+        Assert.Equal("user-1", user?.Id);
     }
 
     /// <summary>

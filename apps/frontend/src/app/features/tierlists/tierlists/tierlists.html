@@ -1,1 +1,56 @@
-<p>TODO: tierlists</p>
+<div class="tierlists-view">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">My Tierlists</h1>
+      <p class="page-subtitle">Your personal restaurant collections</p>
+    </div>
+    <app-new-chip class="new-chip" (pressed)="createTierlist()" />
+  </header>
+
+  <div class="sort-row">
+    @for (opt of sortOptions; track opt.key) {
+      <button
+        type="button"
+        class="sort-chip"
+        [class.active]="sortBy() === opt.key"
+        [attr.aria-pressed]="sortBy() === opt.key"
+        (click)="sortBy.set(opt.key)"
+      >
+        {{ opt.label }}
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="list">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="skeleton"></div>
+      }
+    </div>
+  } @else if (loadError()) {
+    <div class="empty-state">
+      <p class="empty-title">Couldn't load your tierlists</p>
+      <p class="empty-desc">Check your connection, then come back to this page.</p>
+    </div>
+  } @else if (sortedTierlists().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon" aria-hidden="true">🏆</div>
+      <p class="empty-title">No tierlists yet</p>
+      <p class="empty-desc">
+        Create your first tierlist to start grouping your favorite restaurants.
+      </p>
+    </div>
+  } @else {
+    <div class="list">
+      @for (t of sortedTierlists(); track t.id) {
+        <app-tierlist-card
+          [id]="t.id"
+          [name]="t.name"
+          [emoji]="t.emoji"
+          [restaurantCount]="t.restaurants.length"
+          [pinned]="t.pinned"
+        />
+      }
+    </div>
+  }
+</div>

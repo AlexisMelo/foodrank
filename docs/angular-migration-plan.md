@@ -24,7 +24,7 @@ Do the steps in order: each one relies on the previous ones. Tick the box once t
 - [x] 2.5 New review: rating form
 - [x] 2.6 Explore and search results
 - [x] 2.7 Profile
-- [ ] 2.8 Tierlists: list and detail
+- [x] 2.8 Tierlists: list and detail
 - [ ] 2.9 Tierlists: creation
 - [ ] 2.10 Settings and account deletion
 - [ ] 3.1 Parity check
@@ -342,6 +342,7 @@ In every step: replace the placeholder route, put shared components in `shared/u
 - **Source:** `views/TierlistCreateView.vue`, `EmojiCoverPicker`, `ToggleSwitch` (goes to `shared/ui/`; it uses `defineModel`, which becomes `model()`), `utils/tierlist.ts` (already ported).
 - **Target:** `features/tierlists/tierlist-create`, with Signal Forms.
 - **Tests:** `TierlistCreateView.spec` (9) → 9 tests.
+  - Also finish `features/tierlists/tierlists/tierlists.spec.ts` (ported in 2.8 before the form existed): in "lists a tierlist right after its creation", replace the `createOnCreationPage` helper (and its `TODO(2.9)`), which saves through the fake API, with the real form (`#tierlist-name`, `.create-btn`), as in the Vue `TierlistsView.spec`.
 - **Manual check:** create a tierlist with an emoji cover, toggle the options, try the validation errors.
 - Commit: `feat (frontend): tierlist creation`
 
@@ -414,3 +415,4 @@ These come from the Vue app. Port them as they are and do not fix them during th
 - `ExploreView.vue`, which duplicated the geolocation code of `useUserLocation` (unified in 2.6).
 - GET /api/restaurants returns the database restaurant, which has no score and no tags, so those two fields are always undefined in the app.
 - The API sends lat and lng as null when unknown, but the frontend type says number.
+- If the tierlist page fails to load (a server error, not "not found"), it shows the ⏳ loader forever. There is no error message, as in Vue.
