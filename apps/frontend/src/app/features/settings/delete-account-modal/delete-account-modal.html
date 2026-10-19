@@ -1,0 +1,42 @@
+<!-- The overlay click is a mouse shortcut: Esc (cancel event) and the Cancel button are its keyboard equivalents -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+<dialog
+  #dialog
+  class="overlay"
+  aria-labelledby="delete-account-title"
+  animate.enter="fade-enter"
+  (cancel)="cancelOnEscape($event)"
+  (close)="closed.emit()"
+  (click)="cancelOnOverlay($event)"
+>
+  <form class="dialog" (submit)="confirm($event)">
+    <h2 id="delete-account-title" class="title">Delete your account ?</h2>
+    <p class="text">
+      Your profile, ratings and tierlists will be permanently deleted. This cannot be undone.
+    </p>
+
+    <label class="label" for="delete-account-password">Enter your password to confirm</label>
+    <input
+      #passwordInput
+      id="delete-account-password"
+      class="input"
+      type="password"
+      placeholder="Your password"
+      autocomplete="current-password"
+      [formField]="form.password"
+    />
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+
+    <div class="actions">
+      <button class="cancel-btn" type="button" [disabled]="loading()" (click)="cancel()">
+        Cancel
+      </button>
+      <button class="delete-btn" type="submit" [disabled]="!canConfirm()">
+        {{ loading() ? 'Deleting…' : 'Delete' }}
+      </button>
+    </div>
+  </form>
+</dialog>

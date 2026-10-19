@@ -26,7 +26,7 @@ Do the steps in order: each one relies on the previous ones. Tick the box once t
 - [x] 2.7 Profile
 - [x] 2.8 Tierlists: list and detail
 - [x] 2.9 Tierlists: creation
-- [ ] 2.10 Settings and account deletion
+- [x] 2.10 Settings and account deletion
 - [ ] 3.1 Parity check
 - [ ] 4.1 Decide for leftovers
 - [ ] 4.2 New tests
