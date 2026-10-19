@@ -1,0 +1,28 @@
+<div class="explore">
+  <div class="page-header">
+    <h1 class="page-title">Explore</h1>
+    <p class="page-subtitle">Places you haven't tried yet</p>
+  </div>
+
+  @if (loading()) {
+    <div class="loading" role="status" aria-label="Loading">🍽️</div>
+  } @else {
+    @if (locationDenied()) {
+      <div class="location-notice">📍 Enable location to sort by distance</div>
+    }
+
+    <div class="cards-scroll">
+      @for (restaurant of restaurants(); track restaurant.id) {
+        <button type="button" class="restaurant-card" (click)="openRestaurant(restaurant)">
+          <span class="card-emoji" aria-hidden="true">{{ restaurant.emoji }}</span>
+          <span class="card-name">{{ restaurant.name }}</span>
+          @if (restaurant.distance !== null) {
+            <span class="card-distance">📍 {{ formatDistance(restaurant.distance) }}</span>
+          } @else {
+            <span class="card-distance muted">{{ restaurant.cuisine }}</span>
+          }
+        </button>
+      }
+    </div>
+  }
+</div>

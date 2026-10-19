@@ -1,0 +1,7 @@
+<button type="button" class="user-bar" (click)="openProfile()">
+  <app-user-avatar [name]="profile().name" [avatarUrl]="profile().avatarUrl" class="avatar" />
+  <span class="user-name">{{ profile().name }}</span>
+  @if (showCount()) {
+    <span class="user-visited">{{ countLabel() }}</span>
+  }
+</button>

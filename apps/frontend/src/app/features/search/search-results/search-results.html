@@ -1,0 +1,55 @@
+<div class="page">
+  <!-- Title block -->
+  <div class="title-block">
+    <div class="query-label">Results for</div>
+    <h1 class="query">"{{ query() }}"</h1>
+    <p class="cta">Tap a restaurant to leave your review</p>
+  </div>
+
+  <!-- Skeleton -->
+  @if (loading()) {
+    <div class="list" role="status" aria-label="Loading">
+      @for (i of skeletons; track i) {
+        <div class="skeleton"></div>
+      }
+    </div>
+  } @else {
+    <!-- Results -->
+    <div class="list">
+      @for (r of results(); track r.placeId; let index = $index) {
+        <button type="button" class="list-item" (click)="selectPlace(r)">
+          <span class="item-index">{{ index + 1 }}</span>
+          <span class="item-emoji-wrap" aria-hidden="true">
+            <span class="item-emoji">🍽️</span>
+          </span>
+          <span class="item-info">
+            <span class="item-name">{{ r.name }}</span>
+            <span class="item-meta">{{ r.secondaryText }}</span>
+          </span>
+          <span class="item-arrow" aria-hidden="true">›</span>
+        </button>
+      }
+    </div>
+
+    @if (error()) {
+      <p class="hint">Search is unavailable right now</p>
+    } @else if (results().length === 0) {
+      <p class="hint">No restaurants found</p>
+    }
+
+    @if (!moreLoaded() && searchable()) {
+      <button type="button" class="load-more" [disabled]="loadingMore()" (click)="loadMore()">
+        {{ loadingMore() ? 'Loading…' : 'Load more' }}
+      </button>
+    }
+
+    @if (results().length) {
+      <p class="attribution">
+        ©
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">
+          OpenStreetMap contributors
+        </a>
+      </p>
+    }
+  }
+</div>

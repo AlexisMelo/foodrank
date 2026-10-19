@@ -1,0 +1,36 @@
+.search-area {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: -10px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.pin {
+  font-size: 12px;
+}
+
+.separator {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.enable-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.enable-btn:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.blocked {
+  color: rgba(255, 255, 255, 0.35);
+}

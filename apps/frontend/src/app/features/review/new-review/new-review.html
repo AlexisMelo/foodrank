@@ -1,0 +1,69 @@
+<div class="page">
+  @if (restaurant(); as restaurant) {
+    <div class="restaurant-hero">
+      <div class="emoji-circle" aria-hidden="true">{{ restaurant.emoji }}</div>
+      <h2 class="restaurant-name">{{ restaurant.name }}</h2>
+    </div>
+
+    <p class="section-label">Your verdict</p>
+
+    <app-criterion-slider
+      icon="🍽️"
+      criterion="Food"
+      question="Did the food blow your mind?"
+      [field]="ratingForm.food"
+      [markers]="foodMarkers()"
+    />
+
+    <app-criterion-slider
+      icon="🤝"
+      criterion="Service"
+      question="How was the team treating you?"
+      [field]="ratingForm.service"
+      [markers]="serviceMarkers()"
+    />
+
+    <app-criterion-slider
+      icon="✨"
+      criterion="Decor"
+      question="Would you Instagram this place?"
+      [field]="ratingForm.setting"
+      [markers]="decorMarkers()"
+    />
+
+    <div class="actions-card">
+      <button
+        type="button"
+        class="crush-toggle"
+        [class.crush-on]="instantCrush()"
+        [attr.aria-pressed]="instantCrush()"
+        (click)="toggleCrush()"
+      >
+        <span class="crush-heart" aria-hidden="true">{{ instantCrush() ? '❤️' : '🤍' }}</span>
+        <span class="crush-text">
+          <span class="crush-title">Instant Crush</span>
+          <span class="crush-sub">This place stole your heart !</span>
+        </span>
+        <span class="crush-pip" [class.crush-pip-on]="instantCrush()"></span>
+      </button>
+
+      <button type="button" class="submit-btn" [disabled]="saving()" (click)="submit()">
+        {{ saving() ? 'Saving...' : 'Lock it in' }}
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M5 12h14M13 6l6 6-6 6" />
+        </svg>
+      </button>
+      @if (saveError()) {
+        <p class="save-error" role="alert">{{ saveError() }}</p>
+      }
+    </div>
+  }
+</div>

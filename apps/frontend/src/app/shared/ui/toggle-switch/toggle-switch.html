@@ -1,0 +1,17 @@
+<!-- A native checkbox with the switch role: keyboard and screen readers work out of the box -->
+<label class="toggle-switch">
+  <span class="texts">
+    <span class="label">{{ label() }}</span>
+    @if (hint()) {
+      <span class="hint">{{ hint() }}</span>
+    }
+  </span>
+  <input
+    type="checkbox"
+    role="switch"
+    class="input"
+    [checked]="checked()"
+    (change)="onChange($event)"
+  />
+  <span class="track" aria-hidden="true"></span>
+</label>

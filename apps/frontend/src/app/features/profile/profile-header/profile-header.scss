@@ -1,0 +1,39 @@
+// The inner section is the item of the profile page: the host adds no box of its own
+:host {
+  display: contents;
+}
+
+.winner-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+}
+.winner-avatar-wrap {
+  position: relative;
+  margin-bottom: 14px;
+}
+.winner-avatar {
+  width: 110px;
+  height: 110px;
+  background: linear-gradient(135deg, #f9c74f33, #c77dff33);
+  border: 3px solid rgba(249, 199, 79, 0.5);
+  font-size: 44px;
+}
+.winner-name {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0 0 10px;
+  letter-spacing: -0.5px;
+  text-align: center;
+}
+.winner-tag {
+  display: block;
+  padding: 6px 18px;
+  border-radius: 100px;
+  background: rgba(144, 190, 109, 0.25);
+  color: #90be6d;
+  border: 1.5px solid #90be6d;
+  font-size: 14px;
+  font-weight: 700;
+}

@@ -1,0 +1,20 @@
+// The inner div is the item of the parent column: the host adds no box of its own
+:host {
+  display: contents;
+}
+
+.info-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #1a1a1a;
+  padding: 12px 16px;
+  border-radius: 14px;
+}
+.info-icon {
+  font-size: 18px;
+}
+.info-text {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.65);
+}

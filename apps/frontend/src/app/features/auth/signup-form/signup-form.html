@@ -1,0 +1,20 @@
+<p class="subtitle">Track and rank your restaurant experiences.</p>
+
+<div class="tabs">
+  <button type="button" (click)="goToLogin.emit()">Sign in</button>
+  <button class="active" type="button">Sign up</button>
+</div>
+
+<form class="form" (submit)="submit($event)">
+  <label class="label" for="signup-email">Email address</label>
+  <input
+    id="signup-email"
+    class="input"
+    type="email"
+    placeholder="you@example.com"
+    autocomplete="email"
+    [formField]="form.email"
+  />
+
+  <button class="btn-primary" type="submit">Create account</button>
+</form>

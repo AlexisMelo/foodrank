@@ -24,15 +24,9 @@ $sizes: (
 * Map for breakpoints
 */
 $breakpoints: (
-  'small': (
-    '(min-width: #{$mobile-landscape})',
-  ),
-  'medium': (
-    '(min-width: #{$tablet})',
-  ),
-  'large': (
-    '(min-width: #{$desktop})',
-  ),
+  'small': ('(min-width: #{$mobile-landscape})'),
+  'medium': ('(min-width: #{$tablet})'),
+  'large': ('(min-width: #{$desktop})'),
 );
 
 @mixin responsive($size) {

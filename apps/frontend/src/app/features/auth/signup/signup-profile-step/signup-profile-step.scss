@@ -1,0 +1,28 @@
+@use 'auth-forms';
+
+.field-hint {
+  font-size: 12px;
+  color: #ff6b6b;
+  margin: -4px 0 0;
+}
+
+.select {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 40px;
+  // Chevron drawn in the field, since the native one is hidden by appearance: none
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+
+  // Placeholder option still selected
+  &:invalid {
+    color: rgba(255, 255, 255, 0.2);
+  }
+
+  option {
+    background: #111111;
+    color: #ffffff;
+  }
+}

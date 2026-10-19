@@ -1,0 +1,104 @@
+.tierlist-create-view {
+  min-height: 100dvh;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  // Keeps the last field above the bottom tab bar
+  padding-bottom: 96px;
+}
+
+.create-btn {
+  padding: 8px 18px;
+  border-radius: 100px;
+  border: none;
+  background: #ffffff;
+  color: #0d0d0d;
+  font-size: 14px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    opacity 0.15s;
+}
+
+.create-btn:hover {
+  opacity: 0.9;
+}
+
+.create-btn:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.3);
+  cursor: default;
+  opacity: 1;
+}
+
+.save-error {
+  margin: -12px 0 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ff6b6b;
+  text-align: center;
+}
+
+.cover-picker {
+  margin-bottom: 28px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.field-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.optional {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+.field-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  background: #161616;
+  color: #ffffff;
+  // 16px at least, or iOS zooms on the page when the field gets the focus
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.field-input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.field-input:focus {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.description-input {
+  font-weight: 600;
+  line-height: 1.4;
+  resize: none;
+}
+
+.counter {
+  align-self: flex-end;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.3);
+}

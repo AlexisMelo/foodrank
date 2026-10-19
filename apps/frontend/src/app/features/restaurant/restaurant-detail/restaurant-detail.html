@@ -1,0 +1,55 @@
+<div class="page">
+  @if (loading()) {
+    <!-- Loading -->
+    <div class="loading">🍽️</div>
+  } @else if (loadError()) {
+    <!-- Error (e.g. place provider unavailable) -->
+    <div class="load-error">
+      <p>Couldn't load this restaurant</p>
+      <button type="button" class="back-btn" (click)="goBack()">Go back</button>
+    </div>
+  } @else if (restaurant(); as restaurant) {
+    <!-- Content -->
+    @let summary = ratings.summary();
+    @let globalScore = summary?.global ?? null;
+    <div class="hero">
+      <div class="emoji-wrap">
+        <span class="emoji">{{ restaurant.emoji || '🍽️' }}</span>
+        @if (globalScore !== null) {
+          <app-global-score-badge [score]="globalScore" class="global-score" />
+        }
+      </div>
+      @if (summary) {
+        <app-criteria-averages [summary]="summary" class="criteria-averages" />
+      }
+    </div>
+
+    <div class="content">
+      <div class="name-row">
+        <h1 class="name">{{ restaurant.name }}</h1>
+      </div>
+
+      @if (restaurant.cuisine) {
+        <div class="chips">
+          <app-cuisine-chip [cuisine]="restaurant.cuisine" />
+        </div>
+      }
+
+      @if (restaurant.description) {
+        <p class="description">{{ restaurant.description }}</p>
+      }
+
+      @if (restaurant.address) {
+        <app-restaurant-address [address]="restaurant.address" />
+      }
+
+      <app-restaurant-ratings-tabs
+        [restaurantId]="restaurant.id"
+        [myRatings]="ratings.myRatings()"
+        [recentRatings]="ratings.recentRatings()"
+        [loading]="ratings.loading()"
+        [loadError]="ratings.loadError()"
+      />
+    </div>
+  }
+</div>

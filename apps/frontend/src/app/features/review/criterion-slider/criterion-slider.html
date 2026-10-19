@@ -1,0 +1,38 @@
+<div class="criterion-header">
+  <span class="criterion-icon" aria-hidden="true">{{ icon() }}</span>
+  <div class="criterion-labels">
+    <span class="criterion-title">{{ criterion() }}</span>
+    <span class="criterion-label">{{ question() }}</span>
+  </div>
+  <span
+    class="rating-chip"
+    [style.background-color]="chipBackground()"
+    [style.color]="color()"
+    [style.border-color]="chipBorder()"
+    >{{ label() }}</span
+  >
+</div>
+<div class="slider-wrap">
+  <input
+    type="range"
+    class="slider"
+    [attr.aria-label]="criterion()"
+    [style.background]="gradient()"
+    [formField]="field()"
+  />
+  <div class="markers-overlay">
+    @for (t of thresholds; track t.label) {
+      <div class="marker threshold-marker" [style.left]="markerLeft(t.value)">
+        <div class="marker-bar"></div>
+        <span class="marker-name">{{ t.label }}</span>
+      </div>
+    }
+    @for (v of markers(); track v.id) {
+      <div class="marker" [style.left]="markerLeft(v.value)" [style.z-index]="v.value">
+        <div class="marker-bar"></div>
+        <span class="marker-emoji">{{ v.emoji }}</span>
+        <span class="marker-name">{{ v.name }}</span>
+      </div>
+    }
+  </div>
+</div>

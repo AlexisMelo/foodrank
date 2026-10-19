@@ -1,11 +1,5 @@
-import { createApp } from 'vue'
-import App from './App.vue'
-import router from './router'
-import { authGuard } from './composables/useAuth'
+import { bootstrapApplication } from '@angular/platform-browser';
+import { appConfig } from './app/app.config';
+import { App } from './app/app';
 
-const app = createApp(App)
-
-router.beforeEach(authGuard)
-app.use(router)
-
-app.mount('#app')
+bootstrapApplication(App, appConfig).catch((err) => console.error(err));

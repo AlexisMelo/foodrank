@@ -1,0 +1,41 @@
+<div class="visits-section">
+  <div class="tab-row">
+    <div class="tab-bar">
+      <button
+        type="button"
+        class="tab-btn tab-mine"
+        [class.tab-btn-active]="activeTab() === 'mine'"
+        [attr.aria-pressed]="activeTab() === 'mine'"
+        (click)="activeTab.set('mine')"
+      >
+        My Visits
+      </button>
+      <button
+        type="button"
+        class="tab-btn tab-recent"
+        [class.tab-btn-active]="activeTab() === 'recent'"
+        [attr.aria-pressed]="activeTab() === 'recent'"
+        (click)="activeTab.set('recent')"
+      >
+        Recent
+      </button>
+    </div>
+    <app-new-review-chip [restaurantId]="restaurantId()" />
+  </div>
+
+  @if (loading()) {
+    <div class="no-visits">Loading…</div>
+  } @else if (loadError()) {
+    <div class="no-visits load-error">Couldn't load the ratings</div>
+  } @else if (!ratings().length) {
+    <div class="no-visits">{{ emptyMessage() }}</div>
+  } @else if (activeTab() === 'mine') {
+    @for (rating of ratings(); track ratingKey(rating)) {
+      <app-my-rating-card [rating]="rating" />
+    }
+  } @else {
+    @for (rating of ratings(); track ratingKey(rating)) {
+      <app-recent-rating-card [rating]="rating" [own]="rating.userId === myUserId()" />
+    }
+  }
+</div>

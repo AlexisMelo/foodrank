@@ -1,0 +1,48 @@
+// The inner div is the item of the parent column: the host adds no box of its own
+:host {
+  display: contents;
+}
+
+.visits-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+.tab-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tab-bar {
+  display: flex;
+  gap: 8px;
+  background: #1a1a1a;
+  padding: 4px;
+  border-radius: 100px;
+  align-self: flex-start;
+}
+.tab-btn {
+  padding: 7px 18px;
+  border-radius: 100px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s;
+  font-family: inherit;
+}
+.tab-btn-active {
+  background: #ffffff;
+  color: #0d0d0d;
+}
+.no-visits {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+  text-align: center;
+  padding: 20px 0;
+}

@@ -1,6 +1,6 @@
 # FoodRank
 
-A monorepo containing a Vue.js frontend and a .NET Core backend API.
+A monorepo containing an angular frontend and a .NET Core backend API.
 The point is to build a restaurant ranking application. Restaurants are rated based on 3 criterias : food, service, and the setting. User can optionnaly give a "favorite" bonus, that does not contribute to the note, but can show a particular interest for the restaurant.
 
 ## Repo structure
@@ -9,7 +9,7 @@ The point is to build a restaurant ranking application. Restaurants are rated ba
 foodrank/
 └── apps/
     ├── api/        # ASP.NET Core 10 Web API
-    └── frontend/   # Vue 3 + TypeScript SPA
+    └── frontend/   # Angular 22 + TypeScript SPA
 ```
 
 ## Apps
@@ -18,9 +18,27 @@ foodrank/
 
 For any change in apps/api, load the dotnet-best-practices skill before writing code.
 
+**Prerequisites: check them before any change in apps/api, and abort if one is missing.** Before reading or writing any code, check that all of these are available:
+
+- the `dotnet-best-practices` skill (listed in the available skills);
+- an up-to-date .NET SDK: `dotnet --list-sdks` lists an SDK of the major version targeted by the projects (`<TargetFramework>` in `apps/api/api.csproj` and `apps/api/tests/Api.Tests/Api.Tests.csproj`, currently `net10.0`);
+- the NuGet packages: `dotnet restore apps/api` succeeds.
+
+If any of them is missing or out of date, **stop immediately**: make no change at all (no file created, edited or deleted), list what is missing and let the user install it. Never work around a missing prerequisite (no SDK downloaded or retargeted, no package version changed to match what is installed, no skill skipped).
+
 ### Frontend (`apps/frontend`)
 
-For any change in apps/frontend, load the vue-best-practices skill before writing code.
+For any change in apps/frontend, load the angular-developer skill before writing code.
+
+**Prerequisites: check them before any change in apps/frontend, and abort if one is missing.** Before reading or writing any code, check that all of these are available:
+
+- the `angular-developer` skill (listed in the available skills);
+- the `angular-new-app` skill (listed in the available skills);
+- the Angular CLI MCP server (its tools, e.g. `get_best_practices` and `search_documentation`, are available);
+- an up-to-date Node.js: `node -v` meets the minimum required by the installed Angular CLI;
+- an up-to-date Angular CLI: `npx ng version` runs from `apps/frontend` and matches the version in `apps/frontend/package.json`.
+
+If any of them is missing or out of date, **stop immediately**: make no change at all (no file created, edited or deleted), list what is missing and let the user install it. Never work around a missing prerequisite (no portable Node or CLI downloaded, no hand-written replacement for `ng generate`, no skill skipped).
 
 ### Workflow for every change (feature, bugfix, refactor)
 

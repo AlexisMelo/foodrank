@@ -1,0 +1,56 @@
+// The host keeps its box: the parent sizes it through a class set on the component (RestaurantDetail .criteria-averages)
+:host {
+  display: block;
+}
+
+.criteria-averages {
+  background: #1a1a1a;
+  border-radius: 18px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.no-rating {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+}
+.criterion {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.criterion-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.criterion-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+}
+.criterion-score {
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.8);
+}
+.criterion-bar-wrap {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.criterion-bar {
+  height: 100%;
+  border-radius: 100px;
+  transition: width 0.4s ease;
+}
+.rating-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: right;
+}

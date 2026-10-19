@@ -1,0 +1,8 @@
+<div class="rating-scores">
+  @for (item of scores(); track item.label) {
+    <div class="score-item">
+      <span class="score-label">{{ item.label }}</span>
+      <span class="score-value" [style.color]="item.color">{{ item.value }}</span>
+    </div>
+  }
+</div>

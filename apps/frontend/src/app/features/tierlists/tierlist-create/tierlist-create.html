@@ -1,0 +1,52 @@
+<!-- novalidate: the Create button stays disabled until the form is valid, no browser bubbles needed -->
+<form class="tierlist-create-view" novalidate (submit)="submit($event)">
+  <app-page-top-bar title="Create a tierlist" backTo="/tierlists">
+    <button type="submit" class="create-btn" [disabled]="tierlistForm().invalid() || saving()">
+      {{ saving() ? 'Creating...' : 'Create' }}
+    </button>
+  </app-page-top-bar>
+
+  @if (saveError()) {
+    <p class="save-error" role="alert">{{ saveError() }}</p>
+  }
+
+  <app-emoji-cover-picker
+    [formField]="tierlistForm.emoji"
+    [options]="emojis"
+    class="cover-picker"
+  />
+
+  <div class="field">
+    <label for="tierlist-name" class="field-label">Name</label>
+    <input
+      id="tierlist-name"
+      type="text"
+      class="field-input"
+      placeholder="My best burgers"
+      autocomplete="off"
+      [formField]="tierlistForm.name"
+    />
+  </div>
+
+  <div class="field">
+    <label for="tierlist-description" class="field-label">
+      Description <span class="optional">(optional)</span>
+    </label>
+    <textarea
+      id="tierlist-description"
+      class="field-input description-input"
+      rows="3"
+      placeholder="What brings these places together?"
+      [formField]="tierlistForm.description"
+    ></textarea>
+    <span class="counter"
+      >{{ tierlistForm.description().value().length }}/{{ descriptionMaxLength }}</span
+    >
+  </div>
+
+  <app-toggle-switch
+    [formField]="tierlistForm.pinned"
+    label="Pin to profile"
+    hint="Show this tierlist on your profile"
+  />
+</form>

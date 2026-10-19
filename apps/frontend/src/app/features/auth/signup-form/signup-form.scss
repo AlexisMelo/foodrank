@@ -1,0 +1,6 @@
+@use 'auth-forms';
+
+// Laid out by the auth card: the host adds no box of its own
+:host {
+  display: contents;
+}
