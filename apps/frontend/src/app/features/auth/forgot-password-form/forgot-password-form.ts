@@ -43,7 +43,7 @@ export class ForgotPasswordForm {
   protected readonly model = signal({ email: '' });
 
   /**
-   * The email field, required (the browser checks its format, as in the Vue app)
+   * The email field, required (the browser checks its format)
    */
   protected readonly form = form(this.model, (model) => {
     required(model.email);

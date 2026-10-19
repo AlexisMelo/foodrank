@@ -10,7 +10,6 @@ foodrank/
 └── apps/
     ├── api/        # ASP.NET Core 10 Web API
     └── frontend/   # Angular 22 + TypeScript SPA
-    └── frontend-vue/   # legacy Vue app, reference only, never modified.
 ```
 
 ## Apps

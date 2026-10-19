@@ -8,7 +8,7 @@
   padding: 20px;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
-  // Defaults of the native <dialog> reset, so it covers the screen like the Vue overlay
+  // Defaults of the native <dialog> reset, so it covers the whole screen
   width: auto;
   height: auto;
   max-width: none;
@@ -128,7 +128,7 @@
   }
 }
 
-// Opening (Vue <Transition name="fade" appear>): the overlay fades in; no closing animation, as in the Vue app
+// Opening: the overlay fades in; no closing animation
 .fade-enter {
   animation: fade-in 0.2s ease;
 }

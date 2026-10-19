@@ -1,4 +1,4 @@
-// The inner div is the item of the parent column, as the root element was in the Vue app
+// The inner div is the item of the parent column: the host adds no box of its own
 :host {
   display: contents;
 }

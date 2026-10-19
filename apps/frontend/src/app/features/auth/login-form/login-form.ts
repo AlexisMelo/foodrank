@@ -43,7 +43,7 @@ export class LoginForm {
   private readonly credentials = signal({ email: '', password: '' });
 
   /**
-   * Login fields, both required (the browser checks the email format, as in the Vue app)
+   * Login fields, both required (the browser checks the email format)
    */
   protected readonly form = form(this.credentials, (credentials) => {
     required(credentials.email);

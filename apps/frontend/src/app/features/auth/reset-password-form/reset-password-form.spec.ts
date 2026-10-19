@@ -17,7 +17,7 @@ class StubPage {}
  */
 const RESET_LINK = '/auth/reset-password#access_token=access&refresh_token=refresh&type=recovery';
 
-// Not in the Vue specs: reading the tokens of the link is done through the router in Angular
+// The tokens of the reset link are read from the URL fragment, through the router
 describe('ResetPasswordForm', () => {
   /**
    * Fake of the AuthStore methods the form calls

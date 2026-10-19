@@ -9,7 +9,7 @@
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  // Defaults of the native <dialog> reset, so it covers the screen like the Vue overlay
+  // Defaults of the native <dialog> reset, so it covers the whole screen
   height: auto;
   max-width: none;
   max-height: none;
@@ -140,7 +140,7 @@
   border-radius: 14px;
   cursor: pointer;
   transition: background 0.15s;
-  // The item is a button (an <li> in the Vue app): its defaults are reset
+  // The item is a button: its defaults are reset
   width: 100%;
   border: none;
   background: none;
@@ -192,7 +192,7 @@
   color: inherit;
 }
 
-// Opening and closing (Vue <Transition name="sheet">): the overlay fades, the sheet slides from the top.
+// Opening and closing: the overlay fades, the sheet slides from the top.
 // On closing, the overlay is removed once faded out, the sheet being invisible by then.
 .overlay-enter {
   animation: overlay-fade-in 0.25s ease;

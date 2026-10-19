@@ -85,7 +85,7 @@ describe('SignupProfileStep', () => {
     expect(fixture.nativeElement.querySelector('.field-hint')).toBeNull();
   });
 
-  // Not in the Vue specs: the identity options are rendered by @for, after the select gets its value
+  // The identity options are rendered by @for, after the select gets its value: the chosen one must still show
   it('shows what was entered when coming back to the step', async () => {
     draftStore.draft.update((draft) => ({
       ...draft,

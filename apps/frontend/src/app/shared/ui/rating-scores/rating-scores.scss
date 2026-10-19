@@ -1,4 +1,4 @@
-// The inner div is the flex item of the parent, as the root element was in the Vue app
+// The inner div is the flex item of the parent: the host adds no box of its own
 :host {
   display: contents;
 }

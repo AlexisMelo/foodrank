@@ -78,7 +78,7 @@ export interface SignupDraft {
   username: string;
 
   /**
-   * Null while empty: the value Signal Forms gives an empty number input ('' in the Vue app)
+   * Null while empty: the value Signal Forms gives an empty number input
    */
   age: number | null;
 

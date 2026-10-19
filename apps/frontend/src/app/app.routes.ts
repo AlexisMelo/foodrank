@@ -6,7 +6,7 @@ import { Home } from './features/home/home/home';
 import { Shell } from './layout/shell/shell';
 
 /**
- * Pages of the app, with the same paths as the Vue router. Login, sign up and reset password are shown without the
+ * Pages of the app. Login, sign up and reset password are shown without the
  * app navigation; the other pages are private and shown in the Shell. Who can open a page is declared in its data
  * `access` (see PageAccess) and checked by accessGuard.
  */

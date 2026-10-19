@@ -28,7 +28,7 @@ export class SignupForm {
   private readonly draft = inject(SignupDraftStore).draft;
 
   /**
-   * The email field of the draft, required (the browser checks its format, as in the Vue app)
+   * The email field of the draft, required (the browser checks its format)
    */
   protected readonly form = form(this.draft, (draft) => {
     required(draft.email);

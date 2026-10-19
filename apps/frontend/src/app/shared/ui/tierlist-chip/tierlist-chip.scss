@@ -1,4 +1,4 @@
-// The inner link is the item of the parent row, as the root element was in the Vue app
+// The inner link is the item of the parent row: the host adds no box of its own
 :host {
   display: contents;
 }

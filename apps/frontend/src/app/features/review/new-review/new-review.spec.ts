@@ -165,7 +165,7 @@ describe('NewReview', () => {
     await Promise.resolve();
     await harness.fixture.whenStable();
     expect(rateRestaurant).toHaveBeenCalledOnce();
-    // The real router leaves the page once saved (the Vue test checked the button again: see the 409 test)
+    // The real router leaves the page once saved (the button state is checked by the 409 test)
     expect(TestBed.inject(Router).url).toBe('/restaurant/r1');
   });
 

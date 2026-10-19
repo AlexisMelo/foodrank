@@ -15,7 +15,7 @@ import type { FormValueControl } from '@angular/forms/signals';
 })
 export class EmojiCoverPicker implements FormValueControl<string> {
   /**
-   * Emoji displayed as the cover (defineModel in the Vue app)
+   * Emoji displayed as the cover
    */
   readonly value = model.required<string>();
 

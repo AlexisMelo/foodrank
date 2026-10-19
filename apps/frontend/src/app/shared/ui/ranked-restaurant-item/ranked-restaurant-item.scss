@@ -1,4 +1,4 @@
-// The inner link is the item of the parent list, as the root element was in the Vue app
+// The inner link is the item of the parent list: the host adds no box of its own
 :host {
   display: contents;
 }

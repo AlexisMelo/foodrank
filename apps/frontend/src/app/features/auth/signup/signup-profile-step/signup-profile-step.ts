@@ -94,7 +94,7 @@ export class SignupProfileStep {
    * Personal data fields of the draft, with the same rules as toSignupData (and the API)
    */
   protected readonly form = form(this.draftStore.draft, (draft) => {
-    // minLength, maxLength, min and max also set the attributes of the native fields, as in the Vue app
+    // minLength, maxLength, min and max also set the attributes of the native fields
     required(draft.username);
     minLength(draft.username, USERNAME_MIN_LENGTH);
     maxLength(draft.username, USERNAME_MAX_LENGTH);

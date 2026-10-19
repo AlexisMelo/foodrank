@@ -22,7 +22,7 @@ export class TierlistPinButton {
   readonly saving = input(false);
 
   /**
-   * The user asks to pin, or unpin, the tierlist (named toggle in the Vue app; renamed so it does not clash with the
+   * The user asks to pin, or unpin, the tierlist (not named toggle, so it does not clash with the
    * native toggle event)
    */
   readonly pinToggle = output<void>();

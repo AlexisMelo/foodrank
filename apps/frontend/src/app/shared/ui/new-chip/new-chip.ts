@@ -11,7 +11,7 @@ import { Component, output } from '@angular/core';
 })
 export class NewChip {
   /**
-   * The button is clicked (named click in the Vue app; renamed so it does not clash with the native click event)
+   * The button is clicked (not named click, so it does not clash with the native click event)
    */
   readonly pressed = output<void>();
 }

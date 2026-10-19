@@ -34,7 +34,7 @@ export class SearchAreaHint {
 
   /**
    * City searches are centered on; null until the first answer and when the API fails. The previous city stays
-   * until the one of a new position is known, as in the Vue app
+   * until the one of a new position is known
    */
   private readonly area = linkedSignal<SearchArea | null | undefined, SearchArea | null>({
     // undefined while loading

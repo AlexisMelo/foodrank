@@ -1,4 +1,4 @@
-// The inner section is the item of the profile page, as the root element was in the Vue app
+// The inner section is the item of the profile page: the host adds no box of its own
 :host {
   display: contents;
 }
@@ -8,7 +8,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  // Set by the profile page in the Vue app (:deep(.pinned-section)); the section is only used there
+  // Spacing below the section on the profile page, the only page using it
   margin-bottom: 24px;
 }
 

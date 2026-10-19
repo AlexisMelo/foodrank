@@ -13,7 +13,7 @@ import type { FormCheckboxControl } from '@angular/forms/signals';
 })
 export class ToggleSwitch implements FormCheckboxControl {
   /**
-   * On / off state (defineModel in the Vue app)
+   * On / off state
    */
   readonly checked = model.required<boolean>();
 

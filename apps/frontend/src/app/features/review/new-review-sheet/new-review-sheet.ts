@@ -124,8 +124,7 @@ export class NewReviewSheet {
   );
 
   /**
-   * True when the query is long enough but there is no suggestion, including while the user is still typing (as in
-   * the Vue app)
+   * True when the query is long enough but there is no suggestion, including while the user is still typing
    */
   protected readonly noResults = computed(
     () => this.trimmedQuery().length >= PLACE_SEARCH_MIN_LENGTH && this.suggestions().length === 0,
