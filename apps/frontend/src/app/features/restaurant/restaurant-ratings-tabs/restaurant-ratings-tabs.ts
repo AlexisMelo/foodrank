@@ -53,6 +53,12 @@ export class RestaurantRatingsTabs {
   );
 
   /**
+   * Id of the logged-in user, read from their own ratings; undefined when they never rated the restaurant, so none of
+   * the recent ratings is theirs
+   */
+  protected readonly myUserId = computed(() => this.myRatings()[0]?.userId);
+
+  /**
    * Shown when the tab has no rating
    */
   protected readonly emptyMessage = computed(() =>

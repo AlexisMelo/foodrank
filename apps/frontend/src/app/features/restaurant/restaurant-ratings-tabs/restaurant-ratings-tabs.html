@@ -35,7 +35,7 @@
     }
   } @else {
     @for (rating of ratings(); track ratingKey(rating)) {
-      <app-recent-rating-card [rating]="rating" />
+      <app-recent-rating-card [rating]="rating" [own]="rating.userId === myUserId()" />
     }
   }
 </div>

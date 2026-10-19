@@ -1,0 +1,10 @@
+@if (pinned().length) {
+  <div class="pinned-section">
+    <h3 class="section-label">Pinned tierlists</h3>
+    <div class="row">
+      @for (t of pinned(); track t.id) {
+        <app-tierlist-chip [id]="t.id" [name]="t.name" [emoji]="t.emoji" />
+      }
+    </div>
+  </div>
+}

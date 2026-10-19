@@ -144,6 +144,20 @@ describe('RestaurantRatingsTabs', () => {
     expect(queryAll(fixture, '.visit-card')).toHaveLength(0);
   });
 
+  it("opens the author's profile from a recent rating, or my own profile from mine", async () => {
+    await render({
+      myRatings: [rating('Me', '2026-03-07')],
+      recentRatings: [rating('Camille', '2026-03-08'), rating('Me', '2026-03-07')],
+    });
+
+    await openRecentTab();
+
+    expect(queryAll(fixture, 'a.community-card').map((c) => c.getAttribute('href'))).toEqual([
+      '/user/camille',
+      '/profile',
+    ]);
+  });
+
   it("shows the author's picture when there is one", async () => {
     await render({
       recentRatings: [rating('Camille', '2026-03-08', { userAvatarUrl: 'https://img.test/c.png' })],

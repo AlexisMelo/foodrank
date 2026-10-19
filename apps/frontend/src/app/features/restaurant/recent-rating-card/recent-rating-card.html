@@ -1,4 +1,4 @@
-<div class="community-card">
+<a [routerLink]="profileLink()" class="community-card">
   <div class="community-user">
     @if (rating().userAvatarUrl; as avatarUrl) {
       <img [src]="avatarUrl" alt="" class="community-avatar community-avatar-img" />
@@ -25,4 +25,4 @@
       {{ average() }}
     </span>
   </div>
-</div>
+</a>

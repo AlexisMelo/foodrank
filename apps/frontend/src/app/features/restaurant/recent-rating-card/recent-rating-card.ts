@@ -1,14 +1,15 @@
 import { Component, computed, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import type { RestaurantRating } from '@/core/models/rating.model';
 import { formatRatingDate, ratingAverage, scoreColor } from '@/core/utils/rating';
 import { RatingScores } from '@/shared/ui/rating-scores/rating-scores';
 
 /**
  * Card of a recent rating of the restaurant by any user: the author, the day, the "instant crush" bonus, the scores
- * and the average.
+ * and the average. Opens the author's profile.
  */
 @Component({
-  imports: [RatingScores],
+  imports: [RouterLink, RatingScores],
   selector: 'app-recent-rating-card',
   styleUrl: './recent-rating-card.scss',
   templateUrl: './recent-rating-card.html',
@@ -18,6 +19,18 @@ export class RecentRatingCard {
    * Rating shown
    */
   readonly rating = input.required<RestaurantRating>();
+
+  /**
+   * True when the logged-in user wrote the rating: the card opens their own profile (/profile) instead of /user/:id
+   */
+  readonly own = input(false);
+
+  /**
+   * Profile of the author, opened by a click on the card
+   */
+  protected readonly profileLink = computed(() =>
+    this.own() ? '/profile' : ['/user', this.rating().userId],
+  );
 
   /**
    * Average of the three criteria, rounded, shown in the bubble

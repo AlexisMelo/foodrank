@@ -1,4 +1,4 @@
-// The inner div is the item of the parent column, as the root element was in the Vue app
+// The inner link is the item of the parent column, as the root element was in the Vue app
 :host {
   display: contents;
 }
@@ -11,6 +11,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.2s;
+}
+.community-card:hover {
+  background: #222;
 }
 .community-user {
   display: flex;

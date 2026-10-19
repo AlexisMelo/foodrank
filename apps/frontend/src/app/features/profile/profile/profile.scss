@@ -1,0 +1,41 @@
+.profile {
+  color: #ffffff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Loading */
+.loading {
+  font-size: 48px;
+  animation: pulse 1s ease-in-out infinite;
+  margin-top: 40%;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.9);
+  }
+}
+
+// The pinned tierlists spacing (:deep(.pinned-section) in the Vue app) is set by PinnedTierlists itself
+
+.empty {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+  padding: 20px 0;
+}
+
+.list {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

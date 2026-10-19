@@ -1,1 +1,41 @@
-<p>TODO: profile</p>
+<div class="profile">
+  @if (loading()) {
+    <div class="loading">👤</div>
+  } @else if (user.profile(); as profile) {
+    <app-profile-header [profile]="profile" />
+
+    <!-- Pinned tierlists -->
+    <app-pinned-tierlists [userId]="profile.id" />
+
+    <!-- Restaurants rated, best first -->
+    @if (!ranking.rankedRestaurants().length) {
+      <div class="empty">No restaurant rated yet 🍽️</div>
+    } @else {
+      <div class="list">
+        @for (
+          restaurant of ranking.rankedRestaurants();
+          track restaurant.restaurantId;
+          let index = $index
+        ) {
+          <app-ranked-restaurant-item
+            [restaurantId]="restaurant.restaurantId"
+            [emoji]="restaurant.emoji"
+            [name]="restaurant.name"
+            [cuisine]="restaurant.cuisine"
+            [food]="restaurant.food"
+            [service]="restaurant.service"
+            [decor]="restaurant.setting"
+            [overall]="restaurant.overall"
+            [index]="index"
+            [myScore]="restaurant.myScore"
+            [rateLink]="
+              !ranking.isOwnProfile() && restaurant.myScore === undefined
+                ? '/review/' + restaurant.restaurantId
+                : undefined
+            "
+          />
+        }
+      </div>
+    }
+  }
+</div>
