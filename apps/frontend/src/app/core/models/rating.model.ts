@@ -1,66 +1,6 @@
 /**
- * A visit of the community mock data (core/api/data/community-ratings.json), not served by the API yet.
- */
-export interface Visit {
-  /**
-   * Id of the visit, e.g. "visit-1"
-   */
-  id: string;
-
-  /**
-   * Id of the restaurant visited
-   */
-  restaurantId: string;
-
-  /**
-   * Day of the visit, "yyyy-MM-dd"
-   */
-  date: string;
-
-  /**
-   * 0 to 100
-   */
-  food: number;
-
-  /**
-   * 0 to 100
-   */
-  service: number;
-
-  /**
-   * Setting, 0 to 100 (named setting in the API ratings)
-   */
-  decor: number;
-}
-
-/**
- * A visit of the community mock data, with its author.
- */
-export interface CommunityVisit extends Visit {
-  /**
-   * Author of the visit
-   */
-  user: {
-    /**
-     * Id of the user, e.g. "alex"
-     */
-    id: string;
-
-    /**
-     * Name displayed for the user
-     */
-    name: string;
-
-    /**
-     * Avatar, an emoji
-     */
-    avatar: string;
-  };
-}
-
-/**
  * Rating sent by the rating page (POST /api/restaurants/:id/ratings), stored in the `rating` table
- * (food_rating, service_rating, setting_rating, bonus: see database.types.ts).
+ * (food_rating, service_rating, setting_rating, bonus).
  */
 export interface RatingInput {
   /**

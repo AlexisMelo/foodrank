@@ -45,6 +45,8 @@
         />
       }
     </div>
+  } @else if (loadError()) {
+    <p class="load-error" role="alert">Couldn't load the tierlist, try again.</p>
   } @else {
     <div class="loading">⏳</div>
   }

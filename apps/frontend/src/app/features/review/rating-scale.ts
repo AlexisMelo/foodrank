@@ -1,5 +1,3 @@
-import type { Visit } from '@/core/models/rating.model';
-
 /**
  * A word shown on the rating scale, from the score it starts at.
  */
@@ -26,6 +24,31 @@ export const THRESHOLD_MARKERS: readonly ThresholdMarker[] = [
   { value: 65, label: 'Great !' },
   { value: 90, label: 'Amazing !' },
 ];
+
+/**
+ * A past review of the user, shown as a landmark under the sliders.
+ */
+export interface PastReview {
+  /**
+   * Unique among the reviews shown
+   */
+  id: string;
+
+  /**
+   * 0 to 100
+   */
+  food: number;
+
+  /**
+   * 0 to 100
+   */
+  service: number;
+
+  /**
+   * Setting, 0 to 100 (named setting in the API ratings)
+   */
+  decor: number;
+}
 
 /**
  * Scores (0 to 100) around which a past review of the user is shown on the slider, at most one per target
@@ -76,7 +99,7 @@ export function markerLeft(value: number): string {
  * Past reviews of the user to show on the slider of a criterion, as landmarks: for each target score, the review
  * closest to it (within MARKER_TOLERANCE), each review shown once at most. In the order of the targets.
  */
-export function pickMarkers<T extends Visit>(
+export function pickMarkers<T extends PastReview>(
   reviews: readonly T[],
   key: 'food' | 'service' | 'decor',
 ): T[] {

@@ -2,13 +2,8 @@ import { HttpClient, HttpContext, HttpContextToken } from '@angular/common/http'
 import { Service, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import type { SignupData, User } from '@/core/models/user.model';
+import type { SignupData } from '@/core/models/user.model';
 import { type PageAccess, sessionRedirect } from '@/core/utils/auth';
-
-/**
- * Id of the user in the community mock data, hardcoded until the API serves the community visits
- */
-const CURRENT_USER_ID = 'alex';
 
 /**
  * Marks the session check request: its 401 means the user is logged out, not that their session was rejected, so
@@ -68,11 +63,6 @@ export class AuthStore {
   private readonly sessionUserId = signal<string | null>(null);
 
   /**
-   * Writable state behind currentUser
-   */
-  private readonly user = signal<User | null>(null);
-
-  /**
    * Id of the logged-in user, from GET /api/auth/me; null when logged out. Known once checkSession has run (app
    * initializer), and again after a login or a sign up
    */
@@ -82,16 +72,6 @@ export class AuthStore {
    * True when the API accepts the session; known once checkSession has run (app initializer)
    */
   readonly isLoggedIn = computed(() => this.sessionUserId() !== null);
-
-  /**
-   * Logged-in user; never set yet, always null (as in the Vue app)
-   */
-  readonly currentUser = this.user.asReadonly();
-
-  /**
-   * Id of the user in the community mock data, not the id of the logged-in user
-   */
-  readonly currentUserId = CURRENT_USER_ID;
 
   /**
    * Check if the user is currently logged in, and who they are, by making a request to the backend. Never throws: a

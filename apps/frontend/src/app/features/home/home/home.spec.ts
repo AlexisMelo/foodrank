@@ -44,13 +44,10 @@ describe('Home', () => {
       providers: [
         // The real routes, with a logged-in user
         provideRouter(routes, withComponentInputBinding()),
-        { provide: AuthStore, useValue: { isLoggedIn: signal(true), currentUserId: 'alex' } },
+        { provide: AuthStore, useValue: { isLoggedIn: signal(true) } },
         { provide: UserApi, useValue: { fetchUserProfile } },
-        {
-          provide: RatingApi,
-          useValue: { fetchUserRatings, fetchCommunityVisitsByUserId: () => of([]) },
-        },
-        { provide: RestaurantApi, useValue: { fetchRestaurants: () => of([]) } },
+        { provide: RatingApi, useValue: { fetchUserRatings } },
+        { provide: RestaurantApi, useValue: {} },
         { provide: TierlistApi, useValue: { fetchTierlistsByUserId: () => of([]) } },
       ],
     });
@@ -166,6 +163,58 @@ describe('Home', () => {
       await openHome();
 
       expect(textOf(query(harness.fixture, '.empty'))).toBe("Couldn't load your reviews");
+    });
+  });
+
+  describe('favorites', () => {
+    /**
+     * Builds the active rating of `restaurantId`, with the same score for the three criteria.
+     */
+    function scored(restaurantId: string, score: number): UserRating {
+      return {
+        ...rating(restaurantId, '2026-10-08'),
+        food: score,
+        service: score,
+        setting: score,
+      };
+    }
+
+    /**
+     * Names of the favorite restaurants shown, in order.
+     */
+    function favorites(): string[] {
+      return queryAll(harness.fixture, '.favorites-list .item-name').map(textOf);
+    }
+
+    it("shows the logged-in user's 3 best rated restaurants, best first", async () => {
+      fetchUserRatings.mockReturnValue(
+        of([scored('ok', 60), scored('top', 95), scored('low', 20), scored('good', 80)]),
+      );
+      await openHome();
+
+      expect(favorites()).toEqual(['Restaurant top', 'Restaurant good', 'Restaurant ok']);
+      expect(
+        queryAll(harness.fixture, '.favorites-list a.list-item').map((a) => a.getAttribute('href')),
+      ).toEqual(['/restaurant/top', '/restaurant/good', '/restaurant/ok']);
+    });
+
+    it('ranks a restaurant by its active rating, its previous ratings left out', async () => {
+      fetchUserRatings.mockReturnValue(
+        of([
+          scored('changed', 30),
+          { ...scored('changed', 100), date: '2026-01-01', isActive: false },
+          scored('steady', 70),
+        ]),
+      );
+      await openHome();
+
+      expect(favorites()).toEqual(['Restaurant steady', 'Restaurant changed']);
+    });
+
+    it('hides the section when the user has not rated any restaurant', async () => {
+      await openHome();
+
+      expect(textOf(harness.fixture.nativeElement)).not.toContain('Favorites');
     });
   });
 });

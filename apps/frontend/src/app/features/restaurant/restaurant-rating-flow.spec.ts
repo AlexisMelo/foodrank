@@ -63,9 +63,9 @@ class FakeRatingApi {
   }
 
   /**
-   * No community visit: no past review is shown under the sliders
+   * The logged-in user has no rating: no past review is shown under the sliders
    */
-  fetchCommunityVisitsByUserId() {
+  fetchUserRatings() {
     return of([]);
   }
 
@@ -118,13 +118,12 @@ describe('rating a restaurant from its page', () => {
       providers: [
         // The real routes, with a logged-in user
         provideRouter(routes, withComponentInputBinding()),
-        { provide: AuthStore, useValue: { isLoggedIn: signal(true), currentUserId: 'me' } },
+        { provide: AuthStore, useValue: { isLoggedIn: signal(true) } },
         { provide: RatingApi, useValue: api },
         {
           provide: RestaurantApi,
           useValue: {
             fetchRestaurantById: (id: string) => of({ id, name: 'Pizza Roma', emoji: '🍕' }),
-            fetchRestaurants: () => of([]),
           },
         },
       ],

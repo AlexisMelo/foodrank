@@ -80,7 +80,7 @@ describe('TierlistDetailView', () => {
         // The real routes, with u1 logged in
         {
           provide: AuthStore,
-          useValue: { isLoggedIn: signal(true), loggedInUserId: signal('u1'), currentUserId: 'me' },
+          useValue: { isLoggedIn: signal(true), loggedInUserId: signal('u1') },
         },
         {
           provide: TierlistApi,
@@ -184,5 +184,16 @@ describe('TierlistDetailView', () => {
     await openTierlist();
 
     expect(TestBed.inject(Router).url).toBe('/tierlists');
+  });
+
+  it('explains when the tierlist cannot be loaded, instead of loading forever', async () => {
+    fetchTierlistById.mockReturnValue(throwError(() => new Error('503')));
+    await openTierlist();
+
+    expect(queryAll(harness.fixture, '.loading')).toHaveLength(0);
+    const error = query(harness.fixture, '.load-error');
+    expect(error.getAttribute('role')).toBe('alert');
+    expect(textOf(error)).toBe("Couldn't load the tierlist, try again.");
+    expect(TestBed.inject(Router).url).toBe('/tierlists/7');
   });
 });

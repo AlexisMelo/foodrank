@@ -90,7 +90,7 @@ describe('TierlistsView', () => {
         provideRouter(routes, withComponentInputBinding()),
         {
           provide: AuthStore,
-          useValue: { isLoggedIn: signal(true), loggedInUserId: signal('u1'), currentUserId: 'me' },
+          useValue: { isLoggedIn: signal(true), loggedInUserId: signal('u1') },
         },
         { provide: TierlistApi, useValue: fakeTierlistApi },
         // Read by the tierlist page, opened from the list

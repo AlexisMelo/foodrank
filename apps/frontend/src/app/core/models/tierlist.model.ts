@@ -15,7 +15,7 @@ export interface TierlistEntry {
 
 /**
  * Tierlist sent by the creation page (POST /api/tierlists), stored in the `tierlists` table
- * (emoji, name, description, pinned: see database.types.ts). It is created without restaurants.
+ * (emoji, name, description, pinned). It is created without restaurants.
  */
 export interface TierlistInput {
   /**

@@ -43,14 +43,6 @@
         <app-restaurant-address [address]="restaurant.address" />
       }
 
-      @if (tags().length) {
-        <div class="tags">
-          @for (tag of tags(); track tag) {
-            <span class="tag">{{ tag }}</span>
-          }
-        </div>
-      }
-
       <app-restaurant-ratings-tabs
         [restaurantId]="restaurant.id"
         [myRatings]="ratings.myRatings()"

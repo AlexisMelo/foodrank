@@ -60,12 +60,12 @@ describe('ProfileView', () => {
       providers: [
         // The real routes, with a logged-in user
         provideRouter(routes, withComponentInputBinding()),
-        { provide: AuthStore, useValue: { isLoggedIn: signal(true), currentUserId: 'me' } },
+        { provide: AuthStore, useValue: { isLoggedIn: signal(true) } },
         { provide: UserApi, useValue: { fetchUserProfile } },
         {
           provide: RatingApi,
           // Community visits: read by the home page
-          useValue: { fetchUserRatings, fetchCommunityVisitsByUserId: () => of([]) },
+          useValue: { fetchUserRatings },
         },
         {
           provide: TierlistApi,

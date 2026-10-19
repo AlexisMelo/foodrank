@@ -148,17 +148,3 @@
   font-size: 14px;
   color: rgba(255, 255, 255, 0.65);
 }
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.tag {
-  padding: 5px 12px;
-  border-radius: 100px;
-  font-size: 12px;
-  font-weight: 600;
-  background: #1e1e1e;
-  color: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}

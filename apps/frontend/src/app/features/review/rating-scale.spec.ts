@@ -1,11 +1,17 @@
-import type { Visit } from '@/core/models/rating.model';
-import { markerLeft, pickMarkers, ratingLabel, sliderColor, sliderGradient } from './rating-scale';
+import {
+  type PastReview,
+  markerLeft,
+  pickMarkers,
+  ratingLabel,
+  sliderColor,
+  sliderGradient,
+} from './rating-scale';
 
 /**
- * Builds the visit `id` with a food score of `food`.
+ * Builds the past review `id` with a food score of `food`.
  */
-function visit(id: string, food: number): Visit {
-  return { id, restaurantId: `restaurant-${id}`, date: '2026-10-01', food, service: 0, decor: 0 };
+function review(id: string, food: number): PastReview {
+  return { id, food, service: 0, decor: 0 };
 }
 
 describe('rating scale', () => {
@@ -41,11 +47,11 @@ describe('rating scale', () => {
 
   it('shows the past review closest to each target, ignoring the far ones', () => {
     const reviews = [
-      visit('a', 25),
-      visit('b', 21),
-      visit('c', 45),
-      visit('d', 95),
-      visit('e', 33),
+      review('a', 25),
+      review('b', 21),
+      review('c', 45),
+      review('d', 95),
+      review('e', 33),
     ];
 
     // 22 → b (1 away, before a), 50 → c (5 away), 78 → none within 10 (d is 17 away)
@@ -54,8 +60,8 @@ describe('rating scale', () => {
 
   it('reads the score of the criterion asked, in the order of the targets', () => {
     const reviews = [
-      { ...visit('a', 50), decor: 80 },
-      { ...visit('b', 80), decor: 20 },
+      { ...review('a', 50), decor: 80 },
+      { ...review('b', 80), decor: 20 },
     ];
 
     // Decor: 22 → b, 78 → a; food would give 50 → a, 78 → b

@@ -20,11 +20,9 @@ function restaurant(id: string): Restaurant {
     id,
     name: `Restaurant ${id}`,
     cuisine: 'Italian',
-    score: 0,
     emoji: '🍕',
     address: '1 rue de la Paix',
     description: '',
-    tags: [],
     lat: 0,
     lng: 0,
   };
@@ -42,7 +40,7 @@ describe('RestaurantDetail', () => {
       providers: [
         // The real routes, with a logged-in user
         provideRouter(routes, withComponentInputBinding()),
-        { provide: AuthStore, useValue: { isLoggedIn: signal(true), currentUserId: 'me' } },
+        { provide: AuthStore, useValue: { isLoggedIn: signal(true) } },
         {
           provide: RestaurantApi,
           useValue: {
@@ -60,7 +58,6 @@ describe('RestaurantDetail', () => {
               of({ count: 0, food: null, service: null, setting: null, global: null }),
             // Read by the home page
             fetchUserRatings: () => of([]),
-            fetchCommunityVisitsByUserId: () => of([]),
           },
         },
         // Read by the home page

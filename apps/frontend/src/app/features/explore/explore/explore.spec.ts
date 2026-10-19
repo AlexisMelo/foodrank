@@ -5,7 +5,6 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { RatingApi } from '@/core/api/rating-api';
 import { RestaurantApi } from '@/core/api/restaurant-api';
-import { AuthStore } from '@/core/auth/auth-store';
 import { type LocationStatus, UserLocation } from '@/core/location/user-location';
 import type { UserLocation as UserPosition } from '@/core/models/location.model';
 import type { Restaurant } from '@/core/models/restaurant.model';
@@ -21,7 +20,7 @@ class StubPage {}
 /**
  * Builds the restaurant `id` at (`lat`, `lng`).
  */
-function restaurant(id: string, lat: number, lng: number): Restaurant {
+function restaurant(id: string, lat: number | null, lng: number | null): Restaurant {
   return {
     id,
     name: `Restaurant ${id}`,
@@ -31,46 +30,48 @@ function restaurant(id: string, lat: number, lng: number): Restaurant {
     description: '',
     lat,
     lng,
-  } as Restaurant;
+  };
 }
 
 describe('Explore', () => {
   let location: WritableSignal<UserPosition | null>;
   let status: WritableSignal<LocationStatus>;
   let requestLocation: ReturnType<typeof vi.fn>;
+  let fetchRestaurants: ReturnType<typeof vi.fn>;
   let harness: RouterTestingHarness;
 
   beforeEach(() => {
     location = signal(null);
     status = signal('pending');
     requestLocation = vi.fn();
+    // In the API order: far ones first; the user is in Caen (49.18, -0.37)
+    fetchRestaurants = vi.fn(() =>
+      of([
+        restaurant('paris', 48.85, 2.35),
+        restaurant('visited', 49.18, -0.37),
+        restaurant('mid', 49.2, -0.37),
+        restaurant('lyon', 45.76, 4.83),
+        restaurant('near', 49.185, -0.37),
+        restaurant('rouen', 49.44, 1.1),
+        restaurant('nice', 43.7, 7.27),
+      ]),
+    );
     TestBed.configureTestingModule({
       providers: [
         provideRouter([
           { path: 'explore', component: Explore },
           { path: '**', component: StubPage },
         ]),
-        { provide: AuthStore, useValue: { isLoggedIn: signal(true), currentUserId: 'alex' } },
-        {
-          provide: RestaurantApi,
-          useValue: {
-            // In the API order: far ones first; the user is in Caen (49.18, -0.37)
-            fetchRestaurants: () =>
-              of([
-                restaurant('paris', 48.85, 2.35),
-                restaurant('visited', 49.18, -0.37),
-                restaurant('mid', 49.2, -0.37),
-                restaurant('lyon', 45.76, 4.83),
-                restaurant('near', 49.185, -0.37),
-                restaurant('rouen', 49.44, 1.1),
-                restaurant('nice', 43.7, 7.27),
-              ]),
-          },
-        },
+        { provide: RestaurantApi, useValue: { fetchRestaurants } },
         {
           provide: RatingApi,
+          // The logged-in user rated "visited" twice
           useValue: {
-            fetchCommunityVisitsByUserId: () => of([{ id: 'v1', restaurantId: 'visited' }]),
+            fetchUserRatings: () =>
+              of([
+                { restaurantId: 'visited', isActive: true },
+                { restaurantId: 'visited', isActive: false },
+              ]),
           },
         },
         { provide: UserLocation, useValue: { location, status, requestLocation } },
@@ -143,5 +144,25 @@ describe('Explore', () => {
     await harness.fixture.whenStable();
 
     expect(TestBed.inject(Router).url).toBe('/restaurant/paris');
+  });
+
+  it('puts the restaurants without coordinates last, with their cuisine instead of a distance', async () => {
+    fetchRestaurants.mockReturnValue(
+      of([
+        restaurant('unknown', null, null),
+        restaurant('paris', 48.85, 2.35),
+        restaurant('near', 49.185, -0.37),
+      ]),
+    );
+    location.set({ lat: 49.18, lon: -0.37 });
+    status.set('granted');
+    await openExplore();
+
+    expect(names()).toEqual(['Restaurant near', 'Restaurant paris', 'Restaurant unknown']);
+    expect(queryAll(harness.fixture, '.card-distance').map(textOf)).toEqual([
+      '📍 556 m',
+      '📍 201.7 km',
+      'Cuisine unknown',
+    ]);
   });
 });

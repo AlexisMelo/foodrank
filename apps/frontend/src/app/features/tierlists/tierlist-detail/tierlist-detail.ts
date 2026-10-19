@@ -90,12 +90,16 @@ export class TierlistDetail {
   });
 
   /**
-   * The page data once loaded; undefined while loading, for an unknown tierlist, and when the API fails (the page
-   * then keeps showing the loader, as in the Vue app)
+   * The page data once loaded; undefined while loading, for an unknown tierlist, and when the API fails
    */
   protected readonly page = computed(() =>
     this.pageResource.hasValue() ? this.pageResource.value() : undefined,
   );
+
+  /**
+   * True when the page could not be loaded (e.g. the API is unavailable): an error replaces the loader
+   */
+  protected readonly loadError = computed(() => this.pageResource.status() === 'error');
 
   /**
    * True when the logged-in user owns the tierlist: they can pin it

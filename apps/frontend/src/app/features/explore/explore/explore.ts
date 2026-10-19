@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { RatingApi } from '@/core/api/rating-api';
 import { RestaurantApi } from '@/core/api/restaurant-api';
-import { AuthStore } from '@/core/auth/auth-store';
 import { UserLocation } from '@/core/location/user-location';
 import type { UserLocation as UserPosition } from '@/core/models/location.model';
 import type { Restaurant } from '@/core/models/restaurant.model';
@@ -19,7 +18,7 @@ const SUGGESTION_COUNT = 5;
  */
 interface RestaurantWithDistance extends Restaurant {
   /**
-   * Distance from the user in kilometers; null when the user's position is unknown
+   * Distance from the user in kilometers; null when the user's position or the restaurant's coordinates are unknown
    */
   distance: number | null;
 }
@@ -47,8 +46,8 @@ function formatDistance(km: number): string {
 
 /**
  * Suggested restaurants: the first SUGGESTION_COUNT not visited yet, nearest first when the position is known, in
- * the API order otherwise. A restaurant without coordinates (the API sends null) is measured from (0, 0), so it
- * comes last, as in the Vue app.
+ * the API order otherwise. A restaurant without coordinates has no distance and comes after every measured one, as
+ * in the API's place ranking.
  */
 function nearbyUnvisited(
   restaurants: readonly Restaurant[],
@@ -59,7 +58,10 @@ function nearbyUnvisited(
     .filter((r) => !visitedIds.has(r.id))
     .map((r) => ({
       ...r,
-      distance: position ? haversineKm(position.lat, position.lon, r.lat, r.lng) : null,
+      distance:
+        position && r.lat !== null && r.lng !== null
+          ? haversineKm(position.lat, position.lon, r.lat, r.lng)
+          : null,
     }));
   if (position) {
     withDistance.sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
@@ -82,17 +84,12 @@ export class Explore {
   private readonly router = inject(Router);
 
   /**
-   * Id of the user whose visits are left out
-   */
-  private readonly auth = inject(AuthStore);
-
-  /**
    * Reads every restaurant
    */
   private readonly restaurantApi = inject(RestaurantApi);
 
   /**
-   * Reads the user's visits (community mock data)
+   * Reads the logged-in user's ratings: the restaurants they rated are left out
    */
   private readonly ratingApi = inject(RatingApi);
 
@@ -102,13 +99,13 @@ export class Explore {
   private readonly userLocation = inject(UserLocation);
 
   /**
-   * Every restaurant and the user's visits, loaded together
+   * Every restaurant and the logged-in user's ratings, loaded together
    */
   private readonly dataResource = rxResource({
     stream: () =>
       forkJoin({
         restaurants: this.restaurantApi.fetchRestaurants(),
-        visits: this.ratingApi.fetchCommunityVisitsByUserId(this.auth.currentUserId),
+        ratings: this.ratingApi.fetchUserRatings(),
       }),
   });
 
@@ -136,8 +133,8 @@ export class Explore {
    */
   protected readonly restaurants = computed(() => {
     if (!this.dataResource.hasValue()) return [];
-    const { restaurants, visits } = this.dataResource.value();
-    const visitedIds = new Set(visits.map((v) => v.restaurantId));
+    const { restaurants, ratings } = this.dataResource.value();
+    const visitedIds = new Set(ratings.map((r) => r.restaurantId));
     return nearbyUnvisited(restaurants, visitedIds, this.userLocation.location());
   });
 

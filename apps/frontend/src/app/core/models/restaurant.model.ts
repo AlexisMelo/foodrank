@@ -18,11 +18,6 @@ export interface Restaurant {
   cuisine: string;
 
   /**
-   * Not sent by the API (its restaurant has no score): undefined at runtime
-   */
-  score: number;
-
-  /**
    * Emoji displayed next to the restaurant name
    */
   emoji: string;
@@ -38,19 +33,14 @@ export interface Restaurant {
   description: string;
 
   /**
-   * Not sent by the API (its restaurant has no tags): undefined at runtime
+   * Latitude in degrees; null when unknown
    */
-  tags: string[];
+  lat: number | null;
 
   /**
-   * Latitude in degrees; the API sends null when it is unknown
+   * Longitude in degrees; null when unknown
    */
-  lat: number;
-
-  /**
-   * Longitude in degrees; the API sends null when it is unknown
-   */
-  lng: number;
+  lng: number | null;
 }
 
 /**

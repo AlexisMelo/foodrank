@@ -7,6 +7,7 @@ import { Subject, of, throwError } from 'rxjs';
 import { RatingApi } from '@/core/api/rating-api';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import { AuthStore } from '@/core/auth/auth-store';
+import type { UserRating } from '@/core/models/rating.model';
 import { query, queryAll, setValue, textOf } from '@/testing/dom-testing';
 import { NewReview } from './new-review';
 
@@ -23,12 +24,32 @@ function httpError(status: number): HttpErrorResponse {
   return new HttpErrorResponse({ status });
 }
 
+/**
+ * Builds an active rating of `restaurantId` with these criteria scores.
+ */
+function rating(restaurantId: string, food: number, service: number, setting: number): UserRating {
+  return {
+    restaurantId,
+    restaurantName: `Restaurant ${restaurantId}`,
+    restaurantEmoji: '🍔',
+    restaurantCuisine: '',
+    date: '2026-10-01',
+    food,
+    service,
+    setting,
+    bonus: false,
+    isActive: true,
+  };
+}
+
 describe('NewReview', () => {
   let rateRestaurant: ReturnType<typeof vi.fn>;
+  let fetchUserRatings: ReturnType<typeof vi.fn>;
   let harness: RouterTestingHarness;
 
   beforeEach(() => {
     rateRestaurant = vi.fn();
+    fetchUserRatings = vi.fn(() => of([]));
     TestBed.configureTestingModule({
       providers: [
         provideRouter(
@@ -38,18 +59,14 @@ describe('NewReview', () => {
           ],
           withComponentInputBinding(),
         ),
-        { provide: AuthStore, useValue: { isLoggedIn: signal(true), currentUserId: 'alex' } },
+        { provide: AuthStore, useValue: { isLoggedIn: signal(true) } },
         {
           provide: RestaurantApi,
           useValue: {
             fetchRestaurantById: () => of({ id: 'r1', name: 'Pizza Roma', emoji: '🍕' }),
-            fetchRestaurants: () => of([]),
           },
         },
-        {
-          provide: RatingApi,
-          useValue: { fetchCommunityVisitsByUserId: () => of([]), rateRestaurant },
-        },
+        { provide: RatingApi, useValue: { fetchUserRatings, rateRestaurant } },
       ],
     });
   });
@@ -144,5 +161,44 @@ describe('NewReview', () => {
     expect(rateRestaurant).toHaveBeenCalledOnce();
     // The real router leaves the page once saved (the Vue test checked the button again: see the 409 test)
     expect(TestBed.inject(Router).url).toBe('/restaurant/r1');
+  });
+
+  it("shows the user's past reviews under the sliders, with their score of each criterion", async () => {
+    fetchUserRatings.mockReturnValue(
+      of([
+        rating('a', 20, 50, 80),
+        rating('b', 52, 75, 21),
+        // A previous rating, replaced by the active one: not shown
+        { ...rating('a', 78, 78, 78), date: '2026-01-01', isActive: false },
+      ]),
+    );
+    await openPage();
+
+    expect(fetchUserRatings).toHaveBeenCalledWith();
+    /**
+     * Names of the past reviews shown under the slider at `index`, from left to right.
+     */
+    const markers = (index: number) =>
+      Array.from(
+        queryAll(harness.fixture, '.markers-overlay')[index]!.querySelectorAll(
+          '.marker:not(.threshold-marker) .marker-name',
+        ),
+        textOf,
+      );
+    // Food: 22 → a, 50 → b; service: 50 → a, 78 → b; decor (the API's setting): 22 → b, 78 → a
+    expect(markers(0)).toEqual(['Restaurant a', 'Restaurant b']);
+    expect(markers(1)).toEqual(['Restaurant a', 'Restaurant b']);
+    expect(markers(2)).toEqual(['Restaurant b', 'Restaurant a']);
+  });
+
+  it('leaves the restaurant being rated out of the past reviews, only the other ones are shown', async () => {
+    // r1 is the restaurant being rated: alone at 78, it would be shown under every slider
+    fetchUserRatings.mockReturnValue(of([rating('r1', 78, 78, 78), rating('b', 50, 50, 50)]));
+    await openPage();
+
+    const names = queryAll(harness.fixture, '.marker:not(.threshold-marker) .marker-name').map(
+      textOf,
+    );
+    expect(names).toEqual(['Restaurant b', 'Restaurant b', 'Restaurant b']);
   });
 });

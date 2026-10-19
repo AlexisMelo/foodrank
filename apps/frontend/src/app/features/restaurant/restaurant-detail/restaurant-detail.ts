@@ -81,12 +81,6 @@ export class RestaurantDetail {
   );
 
   /**
-   * Tags of the restaurant; empty when there is none. The API never sends them (its restaurant has no tags), so
-   * Restaurant.tags is undefined at runtime
-   */
-  protected readonly tags = computed(() => this.restaurant()?.tags ?? []);
-
-  /**
    * Loaded once the restaurant is known, and again each time this page is opened (e.g. right after rating it)
    */
   protected readonly ratings = injectRestaurantRatings(() => this.restaurant()?.id ?? null);

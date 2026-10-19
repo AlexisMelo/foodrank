@@ -1,24 +1,17 @@
 import { HttpClient } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
-import { Observable, map, of } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import type {
-  CommunityVisit,
   RatingInput,
   RatingSummary,
   RestaurantRating,
   UserRating,
 } from '@/core/models/rating.model';
-import mockCommunityRatings from './data/community-ratings.json';
 import { recoverOnStatus } from './recover-on-status';
 import { ME } from './user-api';
 
 /**
- * Community visits not served by the API yet, read from local mock data shaped like the API responses
- */
-const communityVisits: CommunityVisit[] = mockCommunityRatings;
-
-/**
- * Ratings of the API (/api/restaurants/:id/ratings, /api/users/:id/ratings), and the community mock data.
+ * Ratings of the API (/api/restaurants/:id/ratings, /api/users/:id/ratings).
  */
 @Service()
 export class RatingApi {
@@ -72,23 +65,5 @@ export class RatingApi {
    */
   fetchUserRatings(userId: string = ME): Observable<UserRating[]> {
     return this.http.get<UserRating[]>(`/api/users/${encodeURIComponent(userId)}/ratings`);
-  }
-
-  /**
-   * Get every community visit from the mock data (not served by the API yet)
-   */
-  fetchAllCommunityVisits(): Observable<CommunityVisit[]> {
-    return of(communityVisits);
-  }
-
-  /**
-   * Get the community visits of a user from the mock data (not served by the API yet), most recent first
-   */
-  fetchCommunityVisitsByUserId(userId: string): Observable<CommunityVisit[]> {
-    return of(
-      communityVisits
-        .filter((v) => v.user.id === userId)
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    );
   }
 }

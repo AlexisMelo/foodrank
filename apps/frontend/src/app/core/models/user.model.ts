@@ -1,29 +1,4 @@
 /**
- * A user of the mock data, the type of AuthStore.currentUser (never set yet: always null).
- */
-export interface User {
-  /**
-   * Id of the user
-   */
-  id: string;
-
-  /**
-   * Name displayed for the user
-   */
-  name: string;
-
-  /**
-   * Avatar, an emoji in the mock data
-   */
-  avatar: string;
-
-  /**
-   * Short presentation written by the user
-   */
-  bio: string;
-}
-
-/**
  * Profile of a user (GET /api/users/:id or /api/users/me).
  */
 export interface UserProfile {

@@ -1,11 +1,9 @@
 import { Component, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
 import { RatingApi } from '@/core/api/rating-api';
-import { RestaurantApi } from '@/core/api/restaurant-api';
 import { TierlistApi } from '@/core/api/tierlist-api';
-import { AuthStore } from '@/core/auth/auth-store';
+import { rankRestaurants } from '@/core/utils/ranking';
 import { injectUserProfile } from '@/shared/data/user-profile';
 import { NewReviewChip } from '@/shared/ui/new-review-chip/new-review-chip';
 import { RankedRestaurantItem } from '@/shared/ui/ranked-restaurant-item/ranked-restaurant-item';
@@ -37,19 +35,9 @@ export class Home {
   private readonly router = inject(Router);
 
   /**
-   * Gives the id of the user in the community mock data (hardcoded "alex", not the logged-in user)
-   */
-  private readonly auth = inject(AuthStore);
-
-  /**
-   * Reads the community visits (mock data)
+   * Reads the logged-in user's ratings, which rank the favorites
    */
   private readonly ratingApi = inject(RatingApi);
-
-  /**
-   * Reads the restaurants of the favorites
-   */
-  private readonly restaurantApi = inject(RestaurantApi);
 
   /**
    * Reads the logged-in user's tierlists
@@ -67,15 +55,10 @@ export class Home {
   protected readonly recentRatings = injectMyRecentRatings(5);
 
   /**
-   * Community visits of the current user (mock data) and every restaurant, loaded together; the favorites stay
-   * hidden when it fails
+   * Every rating of the logged-in user; the favorites stay hidden when they cannot be loaded
    */
-  private readonly favoritesData = rxResource({
-    stream: () =>
-      forkJoin({
-        visits: this.ratingApi.fetchCommunityVisitsByUserId(this.auth.currentUserId),
-        restaurants: this.restaurantApi.fetchRestaurants(),
-      }),
+  private readonly myRatings = rxResource({
+    stream: () => this.ratingApi.fetchUserRatings(),
   });
 
   /**
@@ -96,26 +79,11 @@ export class Home {
   );
 
   /**
-   * The 3 visited restaurants with the best average of the user's visits, with their criteria averages (0 to 100)
+   * The logged-in user's 3 best rated restaurants, by the score of their active rating, as on their profile
    */
-  protected readonly topRestaurants = computed(() => {
-    const { visits, restaurants } = this.favoritesData.hasValue()
-      ? this.favoritesData.value()
-      : { visits: [], restaurants: [] };
-    const visitedIds = new Set(visits.map((v) => v.restaurantId));
-    return [...restaurants]
-      .filter((r) => visitedIds.has(r.id))
-      .map((r) => {
-        const restaurantVisits = visits.filter((v) => v.restaurantId === r.id);
-        const food = restaurantVisits.reduce((s, v) => s + v.food, 0) / restaurantVisits.length;
-        const service =
-          restaurantVisits.reduce((s, v) => s + v.service, 0) / restaurantVisits.length;
-        const decor = restaurantVisits.reduce((s, v) => s + v.decor, 0) / restaurantVisits.length;
-        return { ...r, scores: { food, service, decor, overall: (food + service + decor) / 3 } };
-      })
-      .sort((a, b) => b.scores.overall - a.scores.overall)
-      .slice(0, 3);
-  });
+  protected readonly topRestaurants = computed(() =>
+    rankRestaurants(this.myRatings.hasValue() ? this.myRatings.value() : []).slice(0, 3),
+  );
 
   /**
    * Opens the settings page

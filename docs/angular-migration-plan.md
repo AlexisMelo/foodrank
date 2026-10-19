@@ -29,7 +29,7 @@ Do the steps in order: each one relies on the previous ones. Tick the box once t
 - [x] 2.10 Settings and account deletion
 - [x] 3.1 Parity check
 - [x] 4.1 Decide for leftovers
-- [ ] 4.1b Apply leftover decisions
+- [x] 4.1b Apply leftover decisions
 - [ ] 4.2 New tests
 - [ ] 4.3 Chase mock data
 - [ ] 4.4 Project review

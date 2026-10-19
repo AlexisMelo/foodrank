@@ -26,7 +26,7 @@ describe('TierlistCreateView', () => {
         provideRouter(routes, withComponentInputBinding()),
         {
           provide: AuthStore,
-          useValue: { isLoggedIn: signal(true), loggedInUserId: signal('u1'), currentUserId: 'me' },
+          useValue: { isLoggedIn: signal(true), loggedInUserId: signal('u1') },
         },
         // The tierlists page is opened once the tierlist is created
         {

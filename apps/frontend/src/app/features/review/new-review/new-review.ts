@@ -6,21 +6,42 @@ import { Router } from '@angular/router';
 import { firstValueFrom, forkJoin, tap } from 'rxjs';
 import { RatingApi } from '@/core/api/rating-api';
 import { RestaurantApi } from '@/core/api/restaurant-api';
-import { AuthStore } from '@/core/auth/auth-store';
-import type { CommunityVisit, RatingInput } from '@/core/models/rating.model';
-import type { Restaurant } from '@/core/models/restaurant.model';
+import type { RatingInput, UserRating } from '@/core/models/rating.model';
 import { CriterionSlider, type ReviewMarker } from '../criterion-slider/criterion-slider';
-import { pickMarkers } from '../rating-scale';
+import { type PastReview, pickMarkers } from '../rating-scale';
 
 /**
- * A past review of the user, with its restaurant.
+ * A past review of the user, with the restaurant it rates.
  */
-type ReviewedVisit = CommunityVisit & {
+interface ReviewedRestaurant extends PastReview {
   /**
-   * Restaurant of the review
+   * Emoji of the restaurant reviewed
    */
-  restaurant: Restaurant;
-};
+  emoji: string;
+
+  /**
+   * Name of the restaurant reviewed
+   */
+  name: string;
+}
+
+/**
+ * The user's score of each other restaurant they rated (their active rating), as past reviews; the API's setting is
+ * the decor of the sliders
+ * @param ratedId restaurant being rated, left out: only the other restaurants are landmarks
+ */
+function pastReviews(ratings: readonly UserRating[], ratedId: string): ReviewedRestaurant[] {
+  return ratings
+    .filter((rating) => rating.isActive && rating.restaurantId !== ratedId)
+    .map((rating) => ({
+      id: rating.restaurantId,
+      food: rating.food,
+      service: rating.service,
+      decor: rating.setting,
+      emoji: rating.restaurantEmoji,
+      name: rating.restaurantName,
+    }));
+}
 
 /**
  * Message shown when saving the rating failed, depending on the API answer
@@ -49,17 +70,12 @@ export class NewReview {
   readonly id = input.required<string>();
 
   /**
-   * Id of the user whose past reviews are shown under the sliders
-   */
-  private readonly auth = inject(AuthStore);
-
-  /**
-   * Reads the restaurant rated and every restaurant (to name the past reviews)
+   * Reads the restaurant rated
    */
   private readonly restaurantApi = inject(RestaurantApi);
 
   /**
-   * Reads the past reviews and saves the rating
+   * Reads the user's past reviews and saves the rating
    */
   private readonly ratingApi = inject(RatingApi);
 
@@ -69,16 +85,15 @@ export class NewReview {
   private readonly router = inject(Router);
 
   /**
-   * The restaurant, the user's past reviews (community mock data) and every restaurant, loaded together; leaves for
-   * the home page when the restaurant does not exist
+   * The restaurant and the logged-in user's ratings, loaded together; leaves for the home page when the restaurant
+   * does not exist
    */
   private readonly pageResource = rxResource({
     params: () => this.id(),
     stream: ({ params: id }) =>
       forkJoin({
         restaurant: this.restaurantApi.fetchRestaurantById(id),
-        visits: this.ratingApi.fetchCommunityVisitsByUserId(this.auth.currentUserId),
-        restaurants: this.restaurantApi.fetchRestaurants(),
+        ratings: this.ratingApi.fetchUserRatings(),
       }).pipe(
         tap(({ restaurant }) => {
           if (!restaurant) void this.router.navigateByUrl('/', { replaceUrl: true });
@@ -94,17 +109,11 @@ export class NewReview {
   );
 
   /**
-   * Past reviews of the user whose restaurant is known; empty until loaded. The mock visits use restaurant ids
-   * (e.g. "bella-napoli") the API restaurants do not have, so it is empty with the real API
+   * Past reviews of the user, one per other restaurant they rated; empty until loaded
    */
-  private readonly userReviews = computed<ReviewedVisit[]>(() => {
-    if (!this.pageResource.hasValue()) return [];
-    const { visits, restaurants } = this.pageResource.value();
-    const restaurantMap = new Map(restaurants.map((r) => [r.id, r]));
-    return visits
-      .map((v) => ({ ...v, restaurant: restaurantMap.get(v.restaurantId)! }))
-      .filter((v) => v.restaurant);
-  });
+  private readonly userReviews = computed(() =>
+    this.pageResource.hasValue() ? pastReviews(this.pageResource.value().ratings, this.id()) : [],
+  );
 
   /**
    * Past reviews shown under the food slider
@@ -185,11 +194,11 @@ export class NewReview {
    * Past reviews shown under the slider of a criterion
    */
   private markers(key: 'food' | 'service' | 'decor'): ReviewMarker[] {
-    return pickMarkers(this.userReviews(), key).map((v) => ({
-      id: v.id,
-      value: v[key],
-      emoji: v.restaurant.emoji,
-      name: v.restaurant.name,
+    return pickMarkers(this.userReviews(), key).map((review) => ({
+      id: review.id,
+      value: review[key],
+      emoji: review.emoji,
+      name: review.name,
     }));
   }
 }
