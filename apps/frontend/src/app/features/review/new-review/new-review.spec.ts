@@ -45,11 +45,13 @@ function rating(restaurantId: string, food: number, service: number, setting: nu
 describe('NewReview', () => {
   let rateRestaurant: ReturnType<typeof vi.fn>;
   let fetchUserRatings: ReturnType<typeof vi.fn>;
+  let fetchRestaurantById: ReturnType<typeof vi.fn>;
   let harness: RouterTestingHarness;
 
   beforeEach(() => {
     rateRestaurant = vi.fn();
     fetchUserRatings = vi.fn(() => of([]));
+    fetchRestaurantById = vi.fn(() => of({ id: 'r1', name: 'Pizza Roma', emoji: '🍕' }));
     TestBed.configureTestingModule({
       providers: [
         provideRouter(
@@ -60,12 +62,7 @@ describe('NewReview', () => {
           withComponentInputBinding(),
         ),
         { provide: AuthStore, useValue: { isLoggedIn: signal(true) } },
-        {
-          provide: RestaurantApi,
-          useValue: {
-            fetchRestaurantById: () => of({ id: 'r1', name: 'Pizza Roma', emoji: '🍕' }),
-          },
-        },
+        { provide: RestaurantApi, useValue: { fetchRestaurantById } },
         { provide: RatingApi, useValue: { fetchUserRatings, rateRestaurant } },
       ],
     });
@@ -86,6 +83,15 @@ describe('NewReview', () => {
     query(harness.fixture, selector).click();
     await harness.fixture.whenStable();
   }
+
+  it('leaves for the home page when the restaurant does not exist', async () => {
+    fetchRestaurantById.mockReturnValue(of(undefined));
+    await openPage();
+
+    expect(fetchRestaurantById).toHaveBeenCalledWith('r1');
+    expect(TestBed.inject(Router).url).toBe('/');
+    expect(rateRestaurant).not.toHaveBeenCalled();
+  });
 
   it('saves the slider values and the instant crush, then opens the restaurant page', async () => {
     rateRestaurant.mockReturnValue(of(undefined));

@@ -118,4 +118,76 @@ describe('UserLocation', () => {
 
     expect(getCurrentPosition).toHaveBeenCalledTimes(1);
   });
+
+  it('asks again after the user closed the prompt', async () => {
+    const userLocation = stubGeolocation((_, error) => error(positionError(PERMISSION_DENIED)));
+    userLocation.requestLocation();
+    await flushPromises();
+
+    getCurrentPosition.mockImplementation((success: PositionCallback) =>
+      success({ coords: { latitude: 49.18, longitude: -0.37 } } as GeolocationPosition),
+    );
+    userLocation.requestLocation();
+
+    expect(getCurrentPosition).toHaveBeenCalledTimes(2);
+    expect(userLocation.status()).toBe('granted');
+  });
+
+  describe('when the permission changes in the browser settings', () => {
+    /**
+     * Permission of the fake Permissions API, which the service watches
+     */
+    let permission: { state: PermissionState; onchange: (() => void) | null };
+
+    /**
+     * A service whose first request is refused in the browser settings.
+     */
+    async function blockedLocation(): Promise<UserLocation> {
+      permission = { state: 'denied', onchange: null };
+      getCurrentPosition = vi.fn((_: PositionCallback, error: PositionErrorCallback) =>
+        error(positionError(PERMISSION_DENIED)),
+      );
+      const userLocation = withNavigator({
+        geolocation: { getCurrentPosition } as unknown as Geolocation,
+        permissions: { query: vi.fn().mockResolvedValue(permission) } as unknown as Permissions,
+      });
+      userLocation.requestLocation();
+      await flushPromises();
+      return userLocation;
+    }
+
+    /**
+     * The user changes the geolocation permission of the site to `state`.
+     */
+    function changePermission(state: PermissionState): void {
+      permission.state = state;
+      permission.onchange?.();
+    }
+
+    it('locates the user once the location is allowed', async () => {
+      const userLocation = await blockedLocation();
+      expect(userLocation.status()).toBe('blocked');
+
+      getCurrentPosition.mockImplementation((success: PositionCallback) =>
+        success({ coords: { latitude: 49.18, longitude: -0.37 } } as GeolocationPosition),
+      );
+      changePermission('granted');
+
+      expect(userLocation.status()).toBe('granted');
+      expect(userLocation.location()).toEqual({ lat: 49.18, lon: -0.37 });
+    });
+
+    it('forgets the position once the location is blocked again', async () => {
+      const userLocation = await blockedLocation();
+      getCurrentPosition.mockImplementation((success: PositionCallback) =>
+        success({ coords: { latitude: 49.18, longitude: -0.37 } } as GeolocationPosition),
+      );
+      changePermission('granted');
+
+      changePermission('denied');
+
+      expect(userLocation.status()).toBe('blocked');
+      expect(userLocation.location()).toBeNull();
+    });
+  });
 });

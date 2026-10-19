@@ -9,8 +9,11 @@ import { RestaurantApi } from '@/core/api/restaurant-api';
 import { TierlistApi } from '@/core/api/tierlist-api';
 import { UserApi } from '@/core/api/user-api';
 import { AuthStore } from '@/core/auth/auth-store';
+import { UserLocation } from '@/core/location/user-location';
 import type { UserRating } from '@/core/models/rating.model';
-import { query, queryAll, textOf } from '@/testing/dom-testing';
+import type { Tierlist } from '@/core/models/tierlist.model';
+import { NewReviewStore } from '@/features/review/new-review-store';
+import { query, queryAll, stubDialogs, textOf } from '@/testing/dom-testing';
 
 /**
  * Builds a rating of `restaurantId` given on `date`.
@@ -30,16 +33,37 @@ function rating(restaurantId: string, date: string): UserRating {
   };
 }
 
+/**
+ * Builds the tierlist `id` of the logged-in user, last updated on `updatedAt`.
+ */
+function tierlist(id: number, updatedAt: string): Tierlist {
+  return {
+    id,
+    userId: 'u1',
+    name: `Tierlist ${id}`,
+    description: null,
+    emoji: '🍕',
+    restaurants: [],
+    createdAt: '2026-01-01T10:00:00Z',
+    updatedAt,
+    pinned: false,
+  };
+}
+
 describe('Home', () => {
   let fetchUserProfile: ReturnType<typeof vi.fn>;
   let fetchUserRatings: ReturnType<typeof vi.fn>;
+  let fetchTierlistsByUserId: ReturnType<typeof vi.fn>;
   let harness: RouterTestingHarness;
 
   beforeEach(() => {
+    // The new review sheet of the app layout is a native dialog
+    stubDialogs();
     fetchUserProfile = vi.fn(() =>
       of({ id: 'u1', name: 'Alexis Melo', avatarUrl: null, ratedRestaurantsCount: 3 }),
     );
     fetchUserRatings = vi.fn(() => of([]));
+    fetchTierlistsByUserId = vi.fn(() => of([]));
     TestBed.configureTestingModule({
       providers: [
         // The real routes, with a logged-in user
@@ -47,8 +71,17 @@ describe('Home', () => {
         { provide: AuthStore, useValue: { isLoggedIn: signal(true) } },
         { provide: UserApi, useValue: { fetchUserProfile } },
         { provide: RatingApi, useValue: { fetchUserRatings } },
-        { provide: RestaurantApi, useValue: {} },
-        { provide: TierlistApi, useValue: { fetchTierlistsByUserId: () => of([]) } },
+        // Read by the search area hint of the new review sheet
+        {
+          provide: RestaurantApi,
+          useValue: { fetchSearchArea: () => of({ locality: 'Lyon', isDefault: true }) },
+        },
+        { provide: TierlistApi, useValue: { fetchTierlistsByUserId } },
+        // Asked for by the new review sheet
+        {
+          provide: UserLocation,
+          useValue: { location: signal(null), status: signal('idle'), requestLocation: vi.fn() },
+        },
       ],
     });
   });
@@ -103,6 +136,45 @@ describe('Home', () => {
       await harness.fixture.whenStable();
 
       expect(url()).toBe('/profile');
+    });
+
+    it('opens the settings page from the gear button', async () => {
+      await openHome();
+
+      query(harness.fixture, '.settings-btn').click();
+      await harness.fixture.whenStable();
+
+      expect(url()).toBe('/settings');
+    });
+  });
+
+  describe('new review', () => {
+    /**
+     * True while the new review sheet is shown.
+     */
+    function sheetOpen(): boolean {
+      return (harness.fixture.nativeElement as HTMLElement).querySelector('dialog')?.open ?? false;
+    }
+
+    it('opens the new review sheet from the "+ New" chip of the recent reviews', async () => {
+      await openHome();
+      expect(sheetOpen()).toBe(false);
+
+      query(harness.fixture, '.add-chip').click();
+      await harness.fixture.whenStable();
+
+      expect(TestBed.inject(NewReviewStore).isOpen()).toBe(true);
+      expect(sheetOpen()).toBe(true);
+      expect(url()).toBe('/');
+    });
+
+    it('opens the new review sheet from the button of the tab bar', async () => {
+      await openHome();
+
+      query(harness.fixture, '.tab-btn-add').click();
+      await harness.fixture.whenStable();
+
+      expect(sheetOpen()).toBe(true);
     });
   });
 
@@ -163,6 +235,61 @@ describe('Home', () => {
       await openHome();
 
       expect(textOf(query(harness.fixture, '.empty'))).toBe("Couldn't load your reviews");
+    });
+  });
+
+  describe('tierlists', () => {
+    /**
+     * Names of the tierlists shown, in order.
+     */
+    function tierlistNames(): string[] {
+      return queryAll(harness.fixture, '.tierlist-chip-name').map(textOf);
+    }
+
+    it("shows the logged-in user's 8 most recently updated tierlists, and opens the one clicked", async () => {
+      fetchTierlistsByUserId.mockReturnValue(
+        of(
+          Array.from({ length: 10 }, (_, i) =>
+            tierlist(i, `2026-10-${10 + ((i * 7) % 10)}T10:00:00Z`),
+          ),
+        ),
+      );
+      await openHome();
+
+      expect(fetchTierlistsByUserId).toHaveBeenCalledWith();
+      // Updated on the 19th (i = 7), 18th (i = 4), 17th (i = 1)… the 10th and 11th (i = 0, 3) left out
+      expect(tierlistNames()).toEqual([
+        'Tierlist 7',
+        'Tierlist 4',
+        'Tierlist 1',
+        'Tierlist 8',
+        'Tierlist 5',
+        'Tierlist 2',
+        'Tierlist 9',
+        'Tierlist 6',
+      ]);
+      expect(query(harness.fixture, '.see-all-chip').getAttribute('href')).toBe('/tierlists');
+
+      query(harness.fixture, '.tierlist-chip').click();
+      await harness.fixture.whenStable();
+
+      expect(url()).toBe('/tierlists/7');
+    });
+
+    it('hides the section when the user has no tierlist', async () => {
+      await openHome();
+
+      expect(tierlistNames()).toEqual([]);
+      expect(queryAll(harness.fixture, '.section-title').map(textOf)).not.toContain('Tierlists');
+    });
+
+    it('hides the section when the tierlists cannot be loaded, the rest of the page still shown', async () => {
+      fetchTierlistsByUserId.mockReturnValue(throwError(() => new Error('503')));
+      fetchUserRatings.mockReturnValue(of([rating('r1', '2026-10-08')]));
+      await openHome();
+
+      expect(tierlistNames()).toEqual([]);
+      expect(queryAll(harness.fixture, '.review-card')).toHaveLength(1);
     });
   });
 

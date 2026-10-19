@@ -1,10 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { Component, type WritableSignal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Subject, of, throwError } from 'rxjs';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import { UserLocation } from '@/core/location/user-location';
+import type { UserLocation as UserPosition } from '@/core/models/location.model';
 import type { PlaceSuggestion } from '@/core/models/restaurant.model';
 import { clickButton, query, queryAll, textOf } from '@/testing/dom-testing';
 import { SearchResults } from './search-results';
@@ -26,9 +27,11 @@ describe('SearchResults', () => {
   let autocompletePlaces: ReturnType<typeof vi.fn>;
   let searchPlaces: ReturnType<typeof vi.fn>;
   let requestLocation: ReturnType<typeof vi.fn>;
+  let location: WritableSignal<UserPosition | null>;
   let harness: RouterTestingHarness;
 
   beforeEach(async () => {
+    location = signal(null);
     autocompletePlaces = vi.fn((query: string) => of([place(`${query}-1`), place(`${query}-2`)]));
     searchPlaces = vi.fn();
     requestLocation = vi.fn();
@@ -44,7 +47,7 @@ describe('SearchResults', () => {
         { provide: RestaurantApi, useValue: { autocompletePlaces, searchPlaces } },
         {
           provide: UserLocation,
-          useValue: { location: signal(null), status: signal('idle'), requestLocation },
+          useValue: { location, status: signal('idle'), requestLocation },
         },
       ],
     });
@@ -108,6 +111,25 @@ describe('SearchResults', () => {
     expect(autocompletePlaces).not.toHaveBeenCalled();
     expect(hint()).toBe('No restaurants found');
     expect(queryAll(harness.fixture, '.load-more')).toHaveLength(0);
+  });
+
+  it('searches near the user once located', async () => {
+    searchPlaces.mockReturnValue(of([]));
+    location.set({ lat: 49.18, lon: -0.37 });
+    await open('/search?q=pizza');
+
+    await clickButton(harness.fixture, 'Load more');
+
+    expect(autocompletePlaces).toHaveBeenCalledWith('pizza', { lat: 49.18, lon: -0.37 });
+    expect(searchPlaces).toHaveBeenCalledWith('pizza', { lat: 49.18, lon: -0.37 });
+  });
+
+  it('tells when the search fails, instead of finding nothing', async () => {
+    autocompletePlaces.mockReturnValue(throwError(() => new Error('503')));
+    await open('/search?q=pizza');
+
+    expect(names()).toEqual([]);
+    expect(hint()).toBe('Search is unavailable right now');
   });
 
   it('loads more results, without the ones already shown', async () => {

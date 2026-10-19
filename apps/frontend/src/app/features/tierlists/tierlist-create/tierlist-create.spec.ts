@@ -83,6 +83,26 @@ describe('TierlistCreateView', () => {
     expect(createButton().disabled).toBe(true);
   });
 
+  it('stops the name at 50 characters and the description at 200, as the API does', async () => {
+    const name = query<HTMLInputElement>(harness.fixture, '#tierlist-name');
+    const description = query<HTMLTextAreaElement>(harness.fixture, '#tierlist-description');
+    // The browser stops the typing there
+    expect(name.maxLength).toBe(50);
+    expect(description.maxLength).toBe(200);
+
+    // A longer value set otherwise (e.g. pasted by a script) cannot be created
+    await typeIn(harness.fixture, '#tierlist-name', 'a'.repeat(51));
+    expect(createButton().disabled).toBe(true);
+    await typeIn(harness.fixture, '#tierlist-name', 'a'.repeat(50));
+    expect(createButton().disabled).toBe(false);
+
+    await typeIn(harness.fixture, '#tierlist-description', 'b'.repeat(201));
+    expect(createButton().disabled).toBe(true);
+    expect(textOf(query(harness.fixture, '.counter'))).toBe('201/200');
+    await typeIn(harness.fixture, '#tierlist-description', 'b'.repeat(200));
+    expect(createButton().disabled).toBe(false);
+  });
+
   it('creates an unpinned tierlist with the default emoji and the trimmed name, then opens the tierlists', async () => {
     createTierlist.mockReturnValue(of(undefined));
 
