@@ -1,0 +1,118 @@
+// Anchors the popup under the cover
+.emoji-cover-picker {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.cover {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    transform 0.15s,
+    border-color 0.15s;
+}
+
+.cover:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.cover:active {
+  transform: scale(0.97);
+}
+
+.cover-emoji {
+  font-size: 64px;
+  line-height: 1;
+}
+
+.cover-badge {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #0d0d0d;
+  border: 3px solid #0d0d0d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cover-badge svg {
+  width: 14px;
+  height: 14px;
+}
+
+.emoji-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+
+// Floats over the fields below instead of pushing them down
+.emoji-grid {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 50%;
+  z-index: 21;
+  display: grid;
+  grid-template-columns: repeat(8, 28px);
+  gap: 2px;
+  padding: 8px;
+  border-radius: 14px;
+  background: #1f1f1f;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  transform: translateX(-50%);
+  animation: pop-in 0.15s ease-out;
+}
+
+.emoji-option {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  border-radius: 8px;
+  border: 1.5px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.emoji-option:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.emoji-option.selected {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}

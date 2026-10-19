@@ -32,22 +32,26 @@ export function textOf(element: Element): string {
 }
 
 /**
- * Types `value` in the field (input or select) matching `selector`.
+ * Types `value` in the field (input, textarea or select) matching `selector`.
  */
 export async function typeIn(
   fixture: ComponentFixture<unknown>,
   selector: string,
   value: string,
 ): Promise<void> {
-  await setValue(fixture, query<HTMLInputElement | HTMLSelectElement>(fixture, selector), value);
+  await setValue(
+    fixture,
+    query<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(fixture, selector),
+    value,
+  );
 }
 
 /**
- * Sets `value` in the field (input, range or select) `field`, as the user would.
+ * Sets `value` in the field (input, range, textarea or select) `field`, as the user would.
  */
 export async function setValue(
   fixture: ComponentFixture<unknown>,
-  field: HTMLInputElement | HTMLSelectElement,
+  field: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
   value: string,
 ): Promise<void> {
   field.value = value;

@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { firstValueFrom, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { routes } from '@/app.routes';
 import { RatingApi } from '@/core/api/rating-api';
 import { RestaurantApi } from '@/core/api/restaurant-api';
@@ -10,7 +10,7 @@ import { TierlistApi } from '@/core/api/tierlist-api';
 import { UserApi } from '@/core/api/user-api';
 import { AuthStore } from '@/core/auth/auth-store';
 import type { Tierlist, TierlistInput } from '@/core/models/tierlist.model';
-import { query, queryAll, textOf } from '@/testing/dom-testing';
+import { query, queryAll, textOf, typeIn } from '@/testing/dom-testing';
 
 /**
  * In-memory replacement of the API: tierlists created by createTierlist are returned by fetchTierlistsByUserId
@@ -133,19 +133,6 @@ describe('TierlistsView', () => {
     await harness.fixture.whenStable();
   }
 
-  /**
-   * Stands for the creation page, not ported yet (step 2.9): saves the tierlist through the fake API, then goes back
-   * to the list like the creation page does.
-   * TODO(2.9): fill #tierlist-name and click .create-btn on the real creation page instead.
-   */
-  async function createOnCreationPage(name: string): Promise<void> {
-    await firstValueFrom(
-      fakeTierlistApi.createTierlist({ name, emoji: '🏆', description: null, pinned: false }),
-    );
-    await TestBed.inject(Router).navigateByUrl('/tierlists', { replaceUrl: true });
-    await harness.fixture.whenStable();
-  }
-
   it("lists the logged-in user's tierlists, most recently created first, with their restaurant count", async () => {
     addTierlist('Old favorites', '2026-01-01T10:00:00Z', '2026-01-01T10:00:00Z', 1);
     addTierlist('Fresh picks', '2026-09-01T10:00:00Z', '2026-09-01T10:00:00Z', 3);
@@ -215,7 +202,9 @@ describe('TierlistsView', () => {
     await harness.fixture.whenStable();
     expect(TestBed.inject(Router).url).toBe('/tierlists/new');
 
-    await createOnCreationPage('Sushi spots');
+    await typeIn(harness.fixture, '#tierlist-name', 'Sushi spots');
+    query(harness.fixture, '.create-btn').click();
+    await harness.fixture.whenStable();
 
     expect(TestBed.inject(Router).url).toBe('/tierlists');
     expect(listedNames()).toEqual(['Sushi spots', 'Old favorites']);

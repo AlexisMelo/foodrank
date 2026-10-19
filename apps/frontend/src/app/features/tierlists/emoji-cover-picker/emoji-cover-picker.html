@@ -1,0 +1,45 @@
+<div class="emoji-cover-picker">
+  <!-- type="button": the picker is used inside forms, opening it must not submit them -->
+  <button
+    type="button"
+    class="cover"
+    aria-label="Change the picture"
+    [attr.aria-expanded]="isOpen()"
+    (click)="isOpen.set(!isOpen())"
+  >
+    <span class="cover-emoji">{{ value() }}</span>
+    <span class="cover-badge" aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+      </svg>
+    </span>
+  </button>
+
+  @if (isOpen()) {
+    <!-- Invisible layer under the popup: a tap anywhere else closes it. A mouse shortcut: Esc is its keyboard
+         equivalent -->
+    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+    <div class="emoji-backdrop" (click)="isOpen.set(false)"></div>
+
+    <div class="emoji-grid" role="group" aria-label="Pick an emoji">
+      @for (option of options(); track option) {
+        <button
+          type="button"
+          class="emoji-option"
+          [class.selected]="option === value()"
+          [attr.aria-pressed]="option === value()"
+          (click)="pick(option)"
+        >
+          {{ option }}
+        </button>
+      }
+    </div>
+  }
+</div>
