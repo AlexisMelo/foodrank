@@ -13,16 +13,11 @@ import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormField, form } from '@angular/forms/signals';
 import { Router } from '@angular/router';
 import { map, of, switchMap, timer } from 'rxjs';
-import { RestaurantApi } from '@/core/api/restaurant-api';
+import { PLACE_SEARCH_MIN_LENGTH, RestaurantApi } from '@/core/api/restaurant-api';
 import { UserLocation } from '@/core/location/user-location';
 import type { PlaceSuggestion } from '@/core/models/restaurant.model';
 import { NewReviewStore } from '../new-review-store';
 import { SearchAreaHint } from '../search-area-hint/search-area-hint';
-
-/**
- * Shortest query sent to the place search; shorter ones show no suggestion
- */
-const MIN_QUERY_LENGTH = 3;
 
 /**
  * Time without typing before the suggestions are requested, in milliseconds
@@ -90,12 +85,12 @@ export class NewReviewSheet {
 
   /**
    * Query to search: the trimmed query once the user stopped typing for SEARCH_DEBOUNCE_MS, or '' right away when it
-   * is shorter than MIN_QUERY_LENGTH. Typing back a query already searched does not search again
+   * is shorter than PLACE_SEARCH_MIN_LENGTH. Typing back a query already searched does not search again
    */
   private readonly searchedQuery = toSignal(
     toObservable(this.trimmedQuery).pipe(
       switchMap((query) =>
-        query.length < MIN_QUERY_LENGTH ? of('') : timer(SEARCH_DEBOUNCE_MS).pipe(map(() => query)),
+        query.length < PLACE_SEARCH_MIN_LENGTH ? of('') : timer(SEARCH_DEBOUNCE_MS).pipe(map(() => query)),
       ),
     ),
     { initialValue: '' },
@@ -133,7 +128,7 @@ export class NewReviewSheet {
    * the Vue app)
    */
   protected readonly noResults = computed(
-    () => this.trimmedQuery().length >= MIN_QUERY_LENGTH && this.suggestions().length === 0,
+    () => this.trimmedQuery().length >= PLACE_SEARCH_MIN_LENGTH && this.suggestions().length === 0,
   );
 
   constructor() {

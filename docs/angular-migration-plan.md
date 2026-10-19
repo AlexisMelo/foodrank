@@ -31,7 +31,7 @@ Do the steps in order: each one relies on the previous ones. Tick the box once t
 - [x] 4.1 Decide for leftovers
 - [x] 4.1b Apply leftover decisions
 - [x] 4.2 New tests
-- [ ] 4.3 Chase mock data
+- [x] 4.3 Chase mock data
 - [ ] 4.4 Project review
 - [ ] 5.1 Remove the Vue app
 

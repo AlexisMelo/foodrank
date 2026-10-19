@@ -6,6 +6,12 @@ import type { PlaceSuggestion, Restaurant, SearchArea } from '@/core/models/rest
 import { recoverOnStatus } from './recover-on-status';
 
 /**
+ * Shortest query the place search answers, same as the API (PlaceSearchService.MinInputLength); shorter ones return
+ * no result.
+ */
+export const PLACE_SEARCH_MIN_LENGTH = 3;
+
+/**
  * Query params of the user position, none when it is unknown (the API then uses its default city)
  */
 function locationParams(location?: UserLocation | null): Record<string, number> {

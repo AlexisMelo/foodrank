@@ -1,14 +1,9 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { RestaurantApi } from '@/core/api/restaurant-api';
+import { PLACE_SEARCH_MIN_LENGTH, RestaurantApi } from '@/core/api/restaurant-api';
 import { UserLocation } from '@/core/location/user-location';
 import type { PlaceSuggestion } from '@/core/models/restaurant.model';
-
-/**
- * Shortest query searched; a shorter one shows no result
- */
-const MIN_QUERY_LENGTH = 3;
 
 /**
  * Search results page (/search?q=…), opened with Enter from the new review sheet: the place suggestions of the query,
@@ -48,7 +43,7 @@ export class SearchResults {
   /**
    * True when the query is long enough to be searched
    */
-  protected readonly searchable = computed(() => this.query().length >= MIN_QUERY_LENGTH);
+  protected readonly searchable = computed(() => this.query().length >= PLACE_SEARCH_MIN_LENGTH);
 
   /**
    * Suggestions of the query, reloaded each time it changes (an answer to an outdated query is ignored); idle when
