@@ -27,8 +27,9 @@ Do the steps in order: each one relies on the previous ones. Tick the box once t
 - [x] 2.8 Tierlists: list and detail
 - [x] 2.9 Tierlists: creation
 - [x] 2.10 Settings and account deletion
-- [ ] 3.1 Parity check
-- [ ] 4.1 Decide for leftovers
+- [x] 3.1 Parity check
+- [x] 4.1 Decide for leftovers
+- [ ] 4.1b Apply leftover decisions
 - [ ] 4.2 New tests
 - [ ] 4.3 Chase mock data
 - [ ] 4.4 Project review
@@ -370,12 +371,26 @@ In every step: replace the placeholder route, put shared components in `shared/u
 
 - Ask the user what to do with each "leftover" point at the bottom of the document
 
+### 4.1b Apply leftover decisions
+
+Apply the decisions recorded in [Leftovers to decide with the user](#leftovers-to-decide-with-the-user). Rules 1, 4, 5 (new tests for the new behavior), 6, 7 and 8 still apply; rules 2 and 3 (1:1 port) do not: the behavior changes on purpose here.
+
+- **Community mock → real ratings.** Delete `core/api/data/community-ratings.json`, `fetchAllCommunityVisits`, `fetchCommunityVisitsByUserId`, `CommunityVisit`/`Visit`, `CURRENT_USER_ID`/`AuthStore.currentUserId`, and the mock `User` type with `AuthStore.currentUser` (never set). Home (top 3 favorites), Explore (restaurants left out as visited) and New review (past reviews under the sliders) use the logged-in user's ratings from `GET /api/users/me/ratings` (`RatingApi.fetchUserRatings()`). Each `UserRating` already carries its restaurant, so the `fetchRestaurants()` join is only kept where every restaurant is needed (Explore). Map the API's `setting` to the `decor` the UI uses. Update the specs that fake `currentUserId` or the community visits.
+- **Unported Vue files.** Nothing to port: `AuthCallbackView.vue`, `database.types.ts`, `gen:types` and `supabase/` go with the Vue app in 5.1. Remove the "see database.types.ts" references from the Angular model comments (`rating.model.ts`, `tierlist.model.ts`).
+- **`score` and `tags`.** Remove both fields from the `Restaurant` model, and remove the tags section (template, `tags` computed, styles) from the restaurant page. The global score keeps coming from the ratings summary.
+- **Unknown coordinates.** Type `Restaurant.lat`/`lng` as `number | null`, as the API sends them. In Explore, a restaurant without coordinates gets `distance: null`: it sorts after every measured restaurant and its card shows the cuisine instead of a distance, the same rule as the API's `PlaceRanking` ("places without coordinates come last"). Add a test.
+- **Tierlist load error.** When the tierlist page fails to load with an error other than "not found", replace the ⏳ loader with a `role="alert"` message, `Couldn't load the tierlist, try again.`, styled like the pin error. Add a test.
+- Run `npm run test:front`, lint and build (rule 6).
+- Commit: `fix (frontend): apply leftover decisions`
+
 ### 4.2 New tests
 
 - Check all code and look for untested features
 - Add new tests to cover these testcases
 
 ### 4.3 Chase mock data
+
+The community mock and `CURRENT_USER_ID` are handled in 4.1b; check that nothing else of that kind is left.
 
 - Look for mock data (for example "community-ratings")
 - Delete all hard-coded data and ask the user what to do if it breaks anything
@@ -408,11 +423,13 @@ In every step: replace the placeholder route, put shared components in `shared/u
 
 These come from the Vue app. Port them as they are and do not fix them during the migration; ask the user once the migration is done.
 
-- `CURRENT_USER_ID = 'alex'`, hardcoded in `composables/useAuth.ts`.
-- The `data/community-ratings.json` mock, imported by `services/ratingService.ts`.
-- `views/AuthCallbackView.vue`, not referenced by any route (not ported).
-- `types/database.types.ts`, the `gen:types` script and the empty `supabase/` folder (not ported).
-- `ExploreView.vue`, which duplicated the geolocation code of `useUserLocation` (unified in 2.6).
-- GET /api/restaurants returns the database restaurant, which has no score and no tags, so those two fields are always undefined in the app.
-- The API sends lat and lng as null when unknown, but the frontend type says number.
-- If the tierlist page fails to load (a server error, not "not found"), it shows the ⏳ loader forever. There is no error message, as in Vue.
+Decided with the user in step 4.1, applied in step 4.1b:
+
+- `CURRENT_USER_ID = 'alex'`, hardcoded in `composables/useAuth.ts`. → **Delete**, with the mock below.
+- The `data/community-ratings.json` mock, imported by `services/ratingService.ts`. Its restaurant ids (`bella-napoli`…) match no API restaurant, so the sections using it are always empty with the real API. → **Replace with `GET /api/users/me/ratings`.**
+- `views/AuthCallbackView.vue`, not referenced by any route (not ported). → **Drop**: removed with the Vue app (5.1).
+- `types/database.types.ts`, the `gen:types` script and the empty `supabase/` folder (not ported). → **Drop**: removed with the Vue app (5.1); remove the comments that still point to `database.types.ts`.
+- `ExploreView.vue`, which duplicated the geolocation code of `useUserLocation` (unified in 2.6). → **Already resolved**, nothing to do.
+- GET /api/restaurants returns the database restaurant, which has no score and no tags, so those two fields are always undefined in the app. → **Remove both fields from the frontend** and the never-shown tags section; the score already comes from the ratings summary.
+- The API sends lat and lng as null when unknown, but the frontend type says number. JS turns `null` into `0`, so Explore measures the distance to (0, 0) and shows a fake one. → **Type as `number | null`**: no distance shown, sorted last, as the API's `PlaceRanking` does.
+- If the tierlist page fails to load (a server error, not "not found"), it shows the ⏳ loader forever. There is no error message, as in Vue. → **Show an error message** (`role="alert"`, no retry button).
