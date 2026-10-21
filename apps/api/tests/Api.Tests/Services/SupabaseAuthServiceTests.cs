@@ -183,6 +183,120 @@ public class SupabaseAuthServiceTests : IDisposable
     }
 
     /// <summary>
+    /// Access token of a reset password link of "user-1", valid for an hour: an unsigned JWT is enough, the client only
+    /// reads its expiry to choose between checking it and refreshing it.
+    /// </summary>
+    private static string RecoveryToken()
+    {
+        static string Encode(string json) => Convert.ToBase64String(Encoding.UTF8.GetBytes(json)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+        long expiry = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds();
+        return $"{Encode("""{"alg":"HS256","typ":"JWT"}""")}.{Encode($$"""{"sub":"user-1","exp":{{expiry}}}""")}.signature";
+    }
+
+    /// <summary>
+    /// The session of the link is opened with its token, then the new password is set on its account.
+    /// </summary>
+    [Fact]
+    public async Task ResetPassword_ValidLink_SetsPasswordAndReturnsToken()
+    {
+        string token = RecoveryToken();
+        Task<string[]> server = Task.Run(async () => new[]
+        {
+            await RespondAsync(200, User1),
+            await RespondAsync(200, User1)
+        });
+
+        Result<string> result = await CreateService().ResetPasswordAsync(token, "refresh", "abcdefg1");
+        string[] requests = await server;
+
+        Assert.Equal(token, result.Value);
+        Assert.Equal(["GET /user", "PUT /user"], requests);
+        Assert.Contains("\"password\":\"abcdefg1\"", _lastRequestBody.Replace(" ", ""));
+    }
+
+    /// <summary>
+    /// A token Supabase Auth refuses (link already used or expired) is an Unauthorized result, not an exception.
+    /// </summary>
+    [Fact]
+    public async Task ResetPassword_TokenRefused_ReturnsLinkExpired()
+    {
+        Task response = RespondAsync(403, """{"code":403,"error_code":"bad_jwt","msg":"invalid JWT: token is expired"}""");
+
+        Result<string> result = await CreateService().ResetPasswordAsync(RecoveryToken(), "refresh", "abcdefg1");
+        await response;
+
+        Assert.Equal(SupabaseAuthService.ResetLinkExpired, result.Error);
+        Assert.Equal(ErrorType.Unauthorized, result.Error!.Type);
+    }
+
+    /// <summary>
+    /// An access token that is not a JWT (altered link) is an Unauthorized result, without calling Supabase Auth.
+    /// </summary>
+    [Fact]
+    public async Task ResetPassword_MalformedToken_ReturnsLinkExpired()
+    {
+        Result<string> result = await CreateService().ResetPasswordAsync("not-a-jwt", "refresh", "abcdefg1");
+
+        Assert.Equal(SupabaseAuthService.ResetLinkExpired, result.Error);
+    }
+
+    /// <summary>
+    /// Supabase Auth refusing the current password as the new one is a Validation result telling why.
+    /// </summary>
+    [Fact]
+    public async Task ResetPassword_SamePassword_ReturnsSamePassword()
+    {
+        Task server = Task.Run(async () =>
+        {
+            await RespondAsync(200, User1);
+            await RespondAsync(422, """{"code":422,"error_code":"same_password","msg":"New password should be different from the old password."}""");
+        });
+
+        Result<string> result = await CreateService().ResetPasswordAsync(RecoveryToken(), "refresh", "abcdefg1");
+        await server;
+
+        Assert.Equal(SupabaseAuthService.SamePassword, result.Error);
+        Assert.Equal(ErrorType.Validation, result.Error!.Type);
+    }
+
+    /// <summary>
+    /// Supabase Auth refusing the password for its own policy is a Validation result.
+    /// </summary>
+    [Fact]
+    public async Task ResetPassword_WeakPasswordForSupabase_ReturnsPasswordRefused()
+    {
+        Task server = Task.Run(async () =>
+        {
+            await RespondAsync(200, User1);
+            await RespondAsync(422, """{"code":422,"error_code":"weak_password","msg":"Password should be at least 10 characters."}""");
+        });
+
+        Result<string> result = await CreateService().ResetPasswordAsync(RecoveryToken(), "refresh", "abcdefg1");
+        await server;
+
+        Assert.Equal(SupabaseAuthService.PasswordRefused, result.Error);
+    }
+
+    /// <summary>
+    /// A failure of Supabase Auth while setting the password becomes a 503 result instead of an exception.
+    /// </summary>
+    [Fact]
+    public async Task ResetPassword_SupabaseError_ReturnsUnavailable()
+    {
+        Task server = Task.Run(async () =>
+        {
+            await RespondAsync(200, User1);
+            await RespondAsync(500, """{"code":500,"error_code":"unexpected_failure","msg":"Database error updating user"}""");
+        });
+
+        Result<string> result = await CreateService().ResetPasswordAsync(RecoveryToken(), "refresh", "abcdefg1");
+        await server;
+
+        Assert.Equal(SupabaseAuthService.ResetPasswordUnavailable, result.Error);
+    }
+
+    /// <summary>
     /// A failure of Supabase Auth while deleting the account becomes a 503 result instead of an exception.
     /// </summary>
     [Fact]

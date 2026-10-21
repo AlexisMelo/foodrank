@@ -12,7 +12,7 @@ Tick the box once the step is merged. The steps are independent, except: step 7 
 
 - [x] 1. Loading, error and not-found states
 - [x] 2. Auth error messages
-- [ ] 3. Password rules on the password reset
+- [x] 3. Password rules on the password reset
 - [ ] 4. Logged-in user and duplicate requests
 - [ ] 5. Opening a restaurant from a search result
 - [ ] 6. Add restaurants to a tierlist: decisions and API
@@ -76,6 +76,7 @@ API + frontend. A reset password must follow the same rules as a signup password
 - **API**: add `[StrongPassword]` to `ResetPasswordRequest.Password`, so a weak password gets a 400. Turn a Supabase failure in `ResetPasswordAsync` into a proper status instead of a 500. Add tests in `AuthControllerTests`.
 - **Frontend**: in `ResetPasswordForm`, reuse `PasswordCriteria` and the `isValidPassword` validation of the signup password step, and keep the button disabled until the password is valid. Map the statuses to messages: 400 → the password rules, 401 → `The link may have expired`, anything else → a generic error.
 - Run `npm test` (API + front).
+- **Done**: an invalid or expired link → 401, a password Supabase refuses → 400 (`SamePassword` for the current password, `PasswordRefused` for its own policy), an outage → 503. On a 400 that carries an `{ error }` message (Supabase's refusal), the form shows that message instead of the password rules.
 - Commit: `fix (auth): apply the password rules to the password reset`
 
 ### 4. Logged-in user and duplicate requests (findings 5, 12)

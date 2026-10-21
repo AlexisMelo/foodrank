@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using api.Common;
 using api.Models;
+using api.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 
@@ -420,6 +421,106 @@ public class AuthControllerTests : IDisposable
     [InlineData("Man")]
     public async Task Signup_InvalidIdentity_Returns400(string? identity)
         => await AssertRefusedAsync(new() { ["identity"] = identity });
+
+    /// <summary>
+    /// Sends a password reset with the reset link "recovery-token" of "user-1", whose password is "old-pass1".
+    /// </summary>
+    private Task<HttpResponseMessage> ResetPasswordAsync(object body)
+    {
+        _factory.AuthService.UserIdsByRecoveryToken["recovery-token"] = "user-1";
+        _factory.AuthService.PasswordsByUserId["user-1"] = "old-pass1";
+        return _client.PostAsync("/api/auth/reset-password", JsonContent.Create(body));
+    }
+
+    /// <summary>
+    /// A valid reset sets the new password and opens the session of the user.
+    /// </summary>
+    [Fact]
+    public async Task ResetPassword_Valid_SetsPasswordAndOpensSession()
+    {
+        HttpResponseMessage response = await ResetPasswordAsync(new { accessToken = "recovery-token", refreshToken = "refresh", password = "abcdefg1" });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("abcdefg1", _factory.AuthService.PasswordsByUserId["user-1"]);
+        string? token = SessionCookie(response);
+        Assert.NotNull(token);
+        Assert.Equal("user-1", _factory.AuthService.UserIdsByToken[token]);
+    }
+
+    /// <summary>
+    /// A missing password, or one breaking the sign up rules (8 characters, a letter, a number), is refused with a
+    /// 400 before reaching Supabase: the password is kept and no session is opened.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("abcdef1")]
+    [InlineData("abcdefgh")]
+    [InlineData("12345678")]
+    public async Task ResetPassword_WeakPassword_Returns400(string? password)
+    {
+        HttpResponseMessage response = await ResetPasswordAsync(new { accessToken = "recovery-token", refreshToken = "refresh", password });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("old-pass1", _factory.AuthService.PasswordsByUserId["user-1"]);
+        Assert.Null(SessionCookie(response));
+    }
+
+    /// <summary>
+    /// A reset without the tokens of the link is refused with a 400.
+    /// </summary>
+    [Fact]
+    public async Task ResetPassword_MissingTokens_Returns400()
+    {
+        HttpResponseMessage response = await ResetPasswordAsync(new { password = "abcdefg1" });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("old-pass1", _factory.AuthService.PasswordsByUserId["user-1"]);
+    }
+
+    /// <summary>
+    /// An invalid or expired link is refused with a 401, without session.
+    /// </summary>
+    [Fact]
+    public async Task ResetPassword_ExpiredLink_Returns401()
+    {
+        HttpResponseMessage response = await ResetPasswordAsync(new { accessToken = "expired", refreshToken = "refresh", password = "abcdefg1" });
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Contains("The reset link is invalid or has expired.", await response.Content.ReadAsStringAsync());
+        Assert.Equal("old-pass1", _factory.AuthService.PasswordsByUserId["user-1"]);
+        Assert.Null(SessionCookie(response));
+    }
+
+    /// <summary>
+    /// A password following the rules but refused by Supabase (here the current password) is a 400 with the reason,
+    /// not a 500.
+    /// </summary>
+    [Fact]
+    public async Task ResetPassword_PasswordRefusedBySupabase_Returns400WithReason()
+    {
+        _factory.AuthService.ResetPasswordError = SupabaseAuthService.SamePassword;
+
+        HttpResponseMessage response = await ResetPasswordAsync(new { accessToken = "recovery-token", refreshToken = "refresh", password = "old-pass1" });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains(SupabaseAuthService.SamePassword.Message, await response.Content.ReadAsStringAsync());
+        Assert.Null(SessionCookie(response));
+    }
+
+    /// <summary>
+    /// When Supabase Auth fails, the reset answers 503 (not 500) and the password is kept.
+    /// </summary>
+    [Fact]
+    public async Task ResetPassword_SupabaseUnavailable_Returns503()
+    {
+        _factory.AuthService.ResetPasswordError = SupabaseAuthService.ResetPasswordUnavailable;
+
+        HttpResponseMessage response = await ResetPasswordAsync(new { accessToken = "recovery-token", refreshToken = "refresh", password = "abcdefg1" });
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.Equal("old-pass1", _factory.AuthService.PasswordsByUserId["user-1"]);
+        Assert.Null(SessionCookie(response));
+    }
 
     /// <summary>
     /// Sends a sign up with <paramref name="changes"/>, and checks it is refused with a 400 without creating anything.

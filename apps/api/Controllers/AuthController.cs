@@ -130,16 +130,18 @@ public class AuthController(ISupabaseAuthService authService, IUserService userS
     /// <summary>
     /// Validates the recovery token, updates the password, and opens a session.
     /// </summary>
+    /// <param name="request">Tokens of the reset password link and the new password.</param>
+    /// <returns>200 with the session cookie, 400 when the password breaks the rules (or Supabase refuses it) or a
+    /// token is missing, 401 when the link is invalid or expired, 503 when Supabase Auth fails.</returns>
     [HttpPost("reset-password")]
     [AllowAnonymous]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
-        string? token = await authService.ResetPasswordAsync(request.AccessToken, request.RefreshToken, request.Password);
+        Result<string> token = await authService.ResetPasswordAsync(request.AccessToken, request.RefreshToken, request.Password);
+        if (!token.IsSuccess)
+            return token.ToActionResult();
 
-        if (token is null)
-            return Unauthorized();
-
-        SetSessionCookie(token);
+        SetSessionCookie(token.Value!);
         return Ok();
     }
 
