@@ -1,6 +1,17 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, output, signal } from '@angular/core';
 import { FormField, disabled, form, required } from '@angular/forms/signals';
 import { AuthStore } from '@/core/auth/auth-store';
+
+/**
+ * Message shown when the login failed: the API answers 401 for a wrong email or password (400 for an invalid body);
+ * any other failure (server error, no network) is not the user's fault.
+ */
+function loginErrorMessage(error: unknown): string {
+  const status = error instanceof HttpErrorResponse ? error.status : undefined;
+  if (status === 401 || status === 400) return 'Invalid email or password.';
+  return 'Something went wrong. Please try again.';
+}
 
 /**
  * Login tab of the auth card: email and password, with links to the sign up and forgot password forms.
@@ -53,7 +64,7 @@ export class LoginForm {
   });
 
   /**
-   * Logs in with the trimmed email; shows an error when it fails.
+   * Logs in with the trimmed email; shows an error depending on why it fails.
    */
   protected async submit(event: Event): Promise<void> {
     event.preventDefault();
@@ -62,8 +73,8 @@ export class LoginForm {
     this.loading.set(true);
     try {
       await this.auth.login(email.trim(), password);
-    } catch {
-      this.error.set('Invalid email or password.');
+    } catch (error) {
+      this.error.set(loginErrorMessage(error));
     } finally {
       this.loading.set(false);
     }

@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { type SignupStep, reachableSignupStep, signupStepRoute } from '@/core/utils/signup';
 import { ForgotPasswordForm } from '../forgot-password-form/forgot-password-form';
@@ -18,7 +18,7 @@ import { SignupProfileStep } from '../signup/signup-profile-step/signup-profile-
   styleUrl: './auth.scss',
   templateUrl: './auth.html',
 })
-export class Auth {
+export class Auth implements OnDestroy {
   /**
    * True on /signup (route data), undefined on /login
    */
@@ -35,9 +35,14 @@ export class Auth {
   private readonly router = inject(Router);
 
   /**
-   * Sign up being filled, which decides the steps that can be shown
+   * Sign up being filled, which decides the steps that can be shown, and is emptied when leaving the sign up
    */
-  private readonly draft = inject(SignupDraftStore).draft;
+  private readonly draftStore = inject(SignupDraftStore);
+
+  /**
+   * What was entered in the sign up so far
+   */
+  private readonly draft = this.draftStore.draft;
 
   /**
    * Sign up step shown on /signup (kept valid by the step guard), null on /login.
@@ -50,6 +55,14 @@ export class Auth {
    * True while the login tab shows the forgot password form.
    */
   protected readonly showForgot = signal(false);
+
+  /**
+   * Empties the sign up draft when leaving /signup (Sign in tab, back button, another URL): /login and /signup are two
+   * routes, so leaving the sign up destroys this page, while the steps only change ?step and keep it.
+   */
+  ngOnDestroy() {
+    if (this.signup()) this.draftStore.reset();
+  }
 
   /**
    * Opens the login tab. Login and sign up are tabs of the same card: it replaces the URL instead of adding a history entry.

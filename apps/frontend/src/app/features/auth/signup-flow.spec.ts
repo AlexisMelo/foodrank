@@ -7,6 +7,11 @@ import { AuthStore } from '@/core/auth/auth-store';
 import { clickButton, query, queryAll, submitForm, textOf, typeIn } from '@/testing/dom-testing';
 import { SignupDraftStore } from './signup-draft-store';
 
+/**
+ * Draft of a sign up where nothing is entered
+ */
+const emptyDraft = { email: '', password: '', username: '', age: null, identity: '' };
+
 describe('Sign up flow', () => {
   let signup: ReturnType<typeof vi.fn>;
   let harness: RouterTestingHarness;
@@ -153,6 +158,32 @@ describe('Sign up flow', () => {
     await goBack();
     expect(url()).toBe('/signup?step=1');
     expect(query<HTMLInputElement>(harness.fixture, '#signup-email').value).toBe('me@test.fr');
+  });
+
+  it('empties the draft when leaving the sign up for the login tab', async () => {
+    await openApp('/signup?step=1');
+    await typeIn(harness.fixture, '#signup-email', 'me@test.fr');
+    await submitForm(harness.fixture);
+    await typeIn(harness.fixture, '#signup-password', 'abcdefg1');
+    await goBack();
+
+    await clickButton(harness.fixture, 'Sign in');
+
+    expect(url()).toBe('/login');
+    expect(TestBed.inject(SignupDraftStore).draft()).toEqual(emptyDraft);
+    await clickButton(harness.fixture, 'Sign up');
+    expect(query<HTMLInputElement>(harness.fixture, '#signup-email').value).toBe('');
+  });
+
+  it('empties the draft when leaving the sign up by another URL (e.g. the back button)', async () => {
+    await openApp('/signup?step=1');
+    await typeIn(harness.fixture, '#signup-email', 'me@test.fr');
+    await submitForm(harness.fixture);
+    await typeIn(harness.fixture, '#signup-password', 'abcdefg1');
+
+    await harness.navigateByUrl('/login');
+
+    expect(TestBed.inject(SignupDraftStore).draft()).toEqual(emptyDraft);
   });
 
   it('opens the first step missing when a later step is opened directly (e.g. after a reload)', async () => {

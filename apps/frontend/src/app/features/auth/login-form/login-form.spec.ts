@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AuthStore } from '@/core/auth/auth-store';
 import { clickButton, query, submitForm, typeIn } from '@/testing/dom-testing';
@@ -32,13 +33,39 @@ describe('LoginForm', () => {
     expect(fixture.nativeElement.querySelector('.error')).toBeNull();
   });
 
-  it('shows an error when the login fails', async () => {
-    login.mockRejectedValue(new Error('400'));
+  it('says the credentials are wrong when the API rejects them (401)', async () => {
+    login.mockRejectedValue(new HttpErrorResponse({ status: 401 }));
 
     await submit('me@test.fr', 'wrong');
 
     expect(query(fixture, '.error').textContent).toBe('Invalid email or password.');
     expect(query<HTMLButtonElement>(fixture, 'button[type="submit"]').disabled).toBe(false);
+  });
+
+  it('says the credentials are wrong when the API finds them invalid (400)', async () => {
+    login.mockRejectedValue(new HttpErrorResponse({ status: 400 }));
+
+    await submit('me@test.fr', 'wrong');
+
+    expect(query(fixture, '.error').textContent).toBe('Invalid email or password.');
+  });
+
+  it('shows a generic error when the server fails', async () => {
+    login.mockRejectedValue(new HttpErrorResponse({ status: 500 }));
+
+    await submit('me@test.fr', 'secret');
+
+    expect(query(fixture, '.error').textContent).toBe('Something went wrong. Please try again.');
+    expect(query<HTMLButtonElement>(fixture, 'button[type="submit"]').disabled).toBe(false);
+  });
+
+  it('shows a generic error when there is no network', async () => {
+    // HttpClient reports a request that never got an answer with status 0
+    login.mockRejectedValue(new HttpErrorResponse({ status: 0 }));
+
+    await submit('me@test.fr', 'secret');
+
+    expect(query(fixture, '.error').textContent).toBe('Something went wrong. Please try again.');
   });
 
   it('asks to switch to the sign up form', async () => {

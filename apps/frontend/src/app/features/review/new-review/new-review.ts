@@ -44,12 +44,12 @@ function pastReviews(ratings: readonly UserRating[], ratedId: string): ReviewedR
 }
 
 /**
- * Message shown when saving the rating failed, depending on the API answer
+ * Message shown when saving the rating failed, depending on the API answer. A 401 never gets here: the unauthorized
+ * interceptor already logs out and leaves the page.
  */
 function saveErrorMessage(error: unknown): string {
   const status = error instanceof HttpErrorResponse ? error.status : undefined;
   if (status === 409) return 'You already rated this restaurant today.';
-  if (status === 401) return 'Log in to rate this restaurant.';
   return 'Could not save your rating, try again.';
 }
 
