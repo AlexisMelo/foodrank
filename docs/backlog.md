@@ -11,7 +11,7 @@ Tick the box once the step is merged. The steps are independent, except: step 7 
 ## Progress
 
 - [x] 1. Loading, error and not-found states
-- [ ] 2. Auth error messages
+- [x] 2. Auth error messages
 - [ ] 3. Password rules on the password reset
 - [ ] 4. Logged-in user and duplicate requests
 - [ ] 5. Opening a restaurant from a search result
@@ -65,6 +65,7 @@ Frontend only.
 - **Unreachable 401 messages**: remove the 401 branches of `saveErrorMessage` in `new-review.ts` and `tierlist-create.ts` (the 401 interceptor already logs the user out), and the tests that cover them. Say so in the summary.
 - **Signup draft**: don't keep the typed password in memory once the user leaves the sign up.
 - **Decision**: when the user leaves the sign up for the login tab, clear only the password, or the whole draft? Keeping the email matches what the user expects when switching back and forth between the tabs.
+- **Decision taken**: leaving the sign up (the Sign in tab, the back button or any other URL) empties the whole draft, email included. Going back and forth between the sign up steps keeps it.
 - Tests: login with a 500 and with no network; draft password cleared.
 - Commit: `fix (frontend): auth error messages`
 

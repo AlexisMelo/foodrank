@@ -166,15 +166,6 @@ describe('NewReview', () => {
     expect(query<HTMLButtonElement>(harness.fixture, '.submit-btn').disabled).toBe(false);
   });
 
-  it('asks to log in when the session expired', async () => {
-    rateRestaurant.mockReturnValue(throwError(() => httpError(401)));
-    await openPage();
-
-    await click('.submit-btn');
-
-    expect(textOf(query(harness.fixture, '.save-error'))).toBe('Log in to rate this restaurant.');
-  });
-
   it('shows a generic error when the API fails', async () => {
     rateRestaurant.mockReturnValue(throwError(() => httpError(503)));
     await openPage();

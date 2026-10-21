@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormField, form, maxLength, required, validate } from '@angular/forms/signals';
@@ -13,16 +12,6 @@ import {
 import { PageTopBar } from '@/layout/page-top-bar/page-top-bar';
 import { ToggleSwitch } from '@/shared/ui/toggle-switch/toggle-switch';
 import { EmojiCoverPicker } from '../emoji-cover-picker/emoji-cover-picker';
-
-/**
- * Message shown when creating the tierlist failed, depending on the API answer
- */
-function saveErrorMessage(error: unknown): string {
-  if (error instanceof HttpErrorResponse && error.status === 401) {
-    return 'Log in to create a tierlist.';
-  }
-  return 'Could not create your tierlist, try again.';
-}
 
 /**
  * Tierlist creation page (/tierlists/new): cover emoji, name, optional description and pin to the profile. Goes
@@ -107,8 +96,9 @@ export class TierlistCreate {
       );
       // Replace: going back from the tierlists page must not reopen the submitted form
       void this.router.navigateByUrl('/tierlists', { replaceUrl: true });
-    } catch (error) {
-      this.saveError.set(saveErrorMessage(error));
+    } catch {
+      // A 401 never shows here: the unauthorized interceptor already logs out and leaves the page
+      this.saveError.set('Could not create your tierlist, try again.');
     } finally {
       this.saving.set(false);
     }

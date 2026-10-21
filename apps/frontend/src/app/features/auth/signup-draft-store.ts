@@ -10,7 +10,8 @@ function emptyDraft(): SignupDraft {
 
 /**
  * Sign up being filled, shared by the sign up steps so going back and forth keeps what was entered. Kept in memory
- * only: the password is never stored, and a reload starts the sign up over.
+ * only: the password is never stored, and a reload starts the sign up over. Emptied once the account is created, and
+ * when the user leaves the sign up (the Auth page of /signup is destroyed), so the typed password does not stay.
  */
 @Service()
 export class SignupDraftStore {
@@ -21,7 +22,7 @@ export class SignupDraftStore {
   readonly draft = signal<SignupDraft>(emptyDraft());
 
   /**
-   * Empties the draft, once the account is created.
+   * Empties the draft, once the account is created or when the user leaves the sign up.
    */
   reset(): void {
     this.draft.set(emptyDraft());

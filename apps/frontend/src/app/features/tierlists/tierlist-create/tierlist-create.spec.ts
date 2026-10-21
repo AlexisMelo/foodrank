@@ -169,16 +169,6 @@ describe('TierlistCreateView', () => {
     expect(createTierlist).not.toHaveBeenCalled();
   });
 
-  it('asks to log in when the session expired, and stays on the page', async () => {
-    createTierlist.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 401 })));
-
-    await typeIn(harness.fixture, '#tierlist-name', 'Top 10');
-    await clickCreate();
-
-    expect(textOf(query(harness.fixture, '.save-error'))).toBe('Log in to create a tierlist.');
-    expect(navigate).not.toHaveBeenCalled();
-  });
-
   it('shows a generic error when the API fails, keeping what the user typed', async () => {
     createTierlist.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
 

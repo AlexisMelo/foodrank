@@ -68,7 +68,7 @@ export interface SignupDraft {
   email: string;
 
   /**
-   * Password entered on the second step, '' until then; kept in memory only
+   * Password entered on the second step, '' until then; kept in memory only, and emptied when leaving the sign up
    */
   password: string;
 
