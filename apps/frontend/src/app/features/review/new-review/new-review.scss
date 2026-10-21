@@ -7,6 +7,62 @@
   overflow: hidden;
 }
 
+/* Loading and error */
+.loading {
+  font-size: 48px;
+  animation: pulse 1s ease-in-out infinite;
+  margin-top: 25dvh;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.9);
+  }
+}
+
+.load-error {
+  margin-top: 25dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+}
+.load-error p {
+  margin: 0;
+}
+.back-btn {
+  padding: 10px 20px;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: transparent;
+  color: #ffffff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.past-reviews-error {
+  width: 100%;
+
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ff6b6b;
+}
+
 .restaurant-hero {
   width: 100%;
 

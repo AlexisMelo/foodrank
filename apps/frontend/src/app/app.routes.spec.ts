@@ -7,6 +7,7 @@ import { routes } from './app.routes';
 import { apiInterceptor } from './core/api/api-interceptor';
 import { checkSession } from './core/auth/auth-testing';
 import { unauthorizedInterceptor } from './core/auth/unauthorized-interceptor';
+import { query, textOf } from './testing/dom-testing';
 
 describe('routes', () => {
   beforeEach(() => {
@@ -33,5 +34,24 @@ describe('routes', () => {
     await RouterTestingHarness.create('/login');
 
     expect(TestBed.inject(Router).url).toBe('/');
+  });
+
+  it('shows a "page not found" page for an unknown URL, with a link to the home page', async () => {
+    await checkSession(200);
+
+    const harness = await RouterTestingHarness.create('/foo/bar');
+    await harness.fixture.whenStable();
+
+    expect(TestBed.inject(Router).url).toBe('/foo/bar');
+    expect(textOf(query(harness.fixture, 'h1'))).toBe('Page not found');
+    expect(query(harness.fixture, '.home-link').getAttribute('href')).toBe('/');
+  });
+
+  it('sends a logged-out user opening an unknown URL to the login page', async () => {
+    await checkSession(401);
+
+    await RouterTestingHarness.create('/foo');
+
+    expect(TestBed.inject(Router).url).toBe('/login');
   });
 });

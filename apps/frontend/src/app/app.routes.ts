@@ -7,7 +7,7 @@ import { Shell } from './layout/shell/shell';
 
 /**
  * Pages of the app. Login, sign up and reset password are shown without the
- * app navigation; the other pages are private and shown in the Shell. Who can open a page is declared in its data
+ * app navigation; the other pages are private and shown in the Shell, as is the page for an unknown URL. Who can open a page is declared in its data
  * `access` (see PageAccess) and checked by accessGuard.
  */
 export const routes: Routes = [
@@ -95,6 +95,12 @@ export const routes: Routes = [
         path: 'settings',
         loadComponent: () =>
           import('./features/settings/settings/settings').then((m) => m.Settings),
+      },
+      // Any other URL; a logged-out user is sent to the login page by the guard of the Shell
+      {
+        path: '**',
+        loadComponent: () =>
+          import('./features/not-found/not-found/not-found').then((m) => m.NotFound),
       },
     ],
   },

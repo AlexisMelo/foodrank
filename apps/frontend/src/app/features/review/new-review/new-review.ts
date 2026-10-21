@@ -2,8 +2,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { form, max, min } from '@angular/forms/signals';
-import { Router } from '@angular/router';
-import { firstValueFrom, forkJoin, tap } from 'rxjs';
+import { Router, RouterLink } from '@angular/router';
+import { firstValueFrom, tap } from 'rxjs';
 import { RatingApi } from '@/core/api/rating-api';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import type { RatingInput, UserRating } from '@/core/models/rating.model';
@@ -58,7 +58,7 @@ function saveErrorMessage(error: unknown): string {
  * favorite bonus, and the button saving the rating.
  */
 @Component({
-  imports: [CriterionSlider],
+  imports: [CriterionSlider, RouterLink],
   selector: 'app-new-review',
   styleUrl: './new-review.scss',
   templateUrl: './new-review.html',
@@ -85,34 +85,52 @@ export class NewReview {
   private readonly router = inject(Router);
 
   /**
-   * The restaurant and the logged-in user's ratings, loaded together; leaves for the home page when the restaurant
-   * does not exist
+   * The restaurant rated; leaves for the home page when it does not exist
    */
-  private readonly pageResource = rxResource({
+  private readonly restaurantResource = rxResource({
     params: () => this.id(),
     stream: ({ params: id }) =>
-      forkJoin({
-        restaurant: this.restaurantApi.fetchRestaurantById(id),
-        ratings: this.ratingApi.fetchUserRatings(),
-      }).pipe(
-        tap(({ restaurant }) => {
+      this.restaurantApi.fetchRestaurantById(id).pipe(
+        tap((restaurant) => {
           if (!restaurant) void this.router.navigateByUrl('/', { replaceUrl: true });
         }),
       ),
   });
 
   /**
-   * The restaurant rated; undefined while loading, when it does not exist and when the API fails (nothing is shown)
+   * Every rating of the logged-in user, loaded apart from the restaurant: the page still works without them
+   */
+  private readonly ratingsResource = rxResource({
+    stream: () => this.ratingApi.fetchUserRatings(),
+  });
+
+  /**
+   * True while the restaurant loads
+   */
+  protected readonly loading = this.restaurantResource.isLoading;
+
+  /**
+   * True when the restaurant could not be loaded: the page cannot be used, only left
+   */
+  protected readonly loadError = computed(() => this.restaurantResource.status() === 'error');
+
+  /**
+   * True when the user's ratings could not be loaded: the sliders work, without the past reviews
+   */
+  protected readonly pastReviewsError = computed(() => this.ratingsResource.status() === 'error');
+
+  /**
+   * The restaurant rated; undefined while loading, when it does not exist and when the API fails
    */
   protected readonly restaurant = computed(() =>
-    this.pageResource.hasValue() ? this.pageResource.value().restaurant : undefined,
+    this.restaurantResource.hasValue() ? this.restaurantResource.value() : undefined,
   );
 
   /**
-   * Past reviews of the user, one per other restaurant they rated; empty until loaded
+   * Past reviews of the user, one per other restaurant they rated; empty until loaded and when the API fails
    */
   private readonly userReviews = computed(() =>
-    this.pageResource.hasValue() ? pastReviews(this.pageResource.value().ratings, this.id()) : [],
+    this.ratingsResource.hasValue() ? pastReviews(this.ratingsResource.value(), this.id()) : [],
   );
 
   /**

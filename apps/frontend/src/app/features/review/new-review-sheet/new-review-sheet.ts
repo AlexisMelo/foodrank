@@ -124,10 +124,15 @@ export class NewReviewSheet {
   );
 
   /**
-   * True when the query is long enough but there is no suggestion, including while the user is still typing
+   * True when the search of the query as typed found nothing; false while the user is still typing (the query is
+   * not searched yet), while loading and when the search failed
    */
   protected readonly noResults = computed(
-    () => this.trimmedQuery().length >= PLACE_SEARCH_MIN_LENGTH && this.suggestions().length === 0,
+    () =>
+      this.searchedQuery() !== '' &&
+      this.searchedQuery() === this.trimmedQuery() &&
+      this.suggestionsResource.hasValue() &&
+      this.suggestionsResource.value().length === 0,
   );
 
   constructor() {

@@ -10,7 +10,7 @@
 .loading {
   font-size: 48px;
   animation: pulse 1s ease-in-out infinite;
-  margin-top: 40%;
+  margin-top: 25dvh;
 }
 @keyframes pulse {
   0%,
@@ -22,6 +22,14 @@
     opacity: 0.5;
     transform: scale(0.9);
   }
+}
+
+.load-error {
+  margin: 25dvh 0 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
 }
 
 // The pinned tierlists spacing is set by PinnedTierlists itself

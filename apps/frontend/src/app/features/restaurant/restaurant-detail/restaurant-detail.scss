@@ -10,7 +10,7 @@
 .loading {
   font-size: 48px;
   animation: pulse 1s ease-in-out infinite;
-  margin-top: 40%;
+  margin-top: 25dvh;
 }
 @keyframes pulse {
   0%,
@@ -26,7 +26,7 @@
 
 /* Error */
 .load-error {
-  margin-top: 40%;
+  margin-top: 25dvh;
   display: flex;
   flex-direction: column;
   align-items: center;

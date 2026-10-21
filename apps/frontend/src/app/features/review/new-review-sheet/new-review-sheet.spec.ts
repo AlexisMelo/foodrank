@@ -138,6 +138,23 @@ describe('NewReviewSheet', () => {
     expect(hint()).toBe('Search is unavailable right now');
   });
 
+  it('only says nothing was found once the query as typed has been searched', async () => {
+    autocompletePlaces.mockReturnValue(of([]));
+    await open();
+
+    await typeIn(fixture, '.search-input', 'zzzz');
+    // Debounce running: not searched yet
+    expect(hint()).toBeNull();
+    await wait(500);
+    expect(hint()).toBe('No restaurants found');
+
+    // A new query, not searched yet: the previous answer does not apply to it
+    await typeIn(fixture, '.search-input', 'zzzzz');
+    expect(hint()).toBeNull();
+    await wait(500);
+    expect(hint()).toBe('No restaurants found');
+  });
+
   it('opens the restaurant page of the place picked, and closes', async () => {
     autocompletePlaces.mockReturnValue(of([place('node/42', 'Pizza Roma')]));
     await open();

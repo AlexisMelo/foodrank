@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { routes } from '@/app.routes';
 import { RatingApi } from '@/core/api/rating-api';
 import { RestaurantApi } from '@/core/api/restaurant-api';
@@ -137,6 +137,25 @@ describe('ProfileView', () => {
     await open('/profile');
 
     expect(textOf(query(harness.fixture, '.empty'))).toContain('No restaurant rated yet');
+  });
+
+  it('explains when the profile cannot be loaded, instead of a blank page', async () => {
+    fetchUserProfile.mockReturnValue(throwError(() => new Error('503')));
+    await open('/profile');
+
+    expect(textOf(query(harness.fixture, '[role="alert"]'))).toBe(
+      "Couldn't load this profile, try again.",
+    );
+    expect(queryAll(harness.fixture, '.loading')).toHaveLength(0);
+  });
+
+  it('explains when the ratings cannot be loaded, instead of saying none were given', async () => {
+    fetchUserRatings.mockReturnValue(throwError(() => new Error('503')));
+    await open('/profile');
+
+    expect(textOf(query(harness.fixture, '.winner-name'))).toBe('Alexis Melo');
+    expect(textOf(query(harness.fixture, '.empty'))).toBe("Couldn't load the ratings");
+    expect(textOf(harness.fixture.nativeElement)).not.toContain('No restaurant rated yet');
   });
 
   it("shows another user's profile with my own score, or a link to rate", async () => {
