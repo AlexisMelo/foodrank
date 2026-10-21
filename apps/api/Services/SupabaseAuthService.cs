@@ -55,6 +55,27 @@ public class SupabaseAuthService(Supabase.Gotrue.Client auth, IGotrueAdminClient
     /// </summary>
     public static Error DeleteAccountUnavailable { get; } = new(ErrorType.Unavailable, "The account could not be deleted. Please try again later.");
 
+    /// <summary>
+    /// Error returned when the tokens of a reset password link are refused: the link was already used, has expired
+    /// or was altered.
+    /// </summary>
+    public static Error ResetLinkExpired { get; } = new(ErrorType.Unauthorized, "The reset link is invalid or has expired.");
+
+    /// <summary>
+    /// Error returned when Supabase refuses the new password of a reset (its own password policy).
+    /// </summary>
+    public static Error PasswordRefused { get; } = new(ErrorType.Validation, "The new password was refused.");
+
+    /// <summary>
+    /// Error returned when the new password of a reset is the current password of the account.
+    /// </summary>
+    public static Error SamePassword { get; } = new(ErrorType.Validation, "The new password must be different from the current one.");
+
+    /// <summary>
+    /// Error returned when Supabase Auth fails while resetting the password.
+    /// </summary>
+    public static Error ResetPasswordUnavailable { get; } = new(ErrorType.Unavailable, "The password could not be reset. Please try again later.");
+
     /// <inheritdoc />
     public async Task<Result<AuthSession>> SignUpAsync(string email, string password)
     {
@@ -163,13 +184,46 @@ public class SupabaseAuthService(Supabase.Gotrue.Client auth, IGotrueAdminClient
         });
     }
 
-    public async Task<string?> ResetPasswordAsync(string accessToken, string refreshToken, string newPassword)
+    /// <inheritdoc />
+    public async Task<Result<string>> ResetPasswordAsync(string accessToken, string refreshToken, string newPassword)
     {
-        Session? session = await _auth.SetSession(accessToken, refreshToken);
-        if (session?.User == null)
-            return null;
+        Session? session;
+        try
+        {
+            session = await _auth.SetSession(accessToken, refreshToken);
+        }
+        catch (GotrueException ex) when (ex.StatusCode >= StatusCodes.Status500InternalServerError)
+        {
+            _logger.LogError(ex, "Supabase Auth failed to open the reset password session (HTTP {StatusCode}): {Message}", ex.StatusCode, ex.Message);
+            return Result<string>.Failure(ResetPasswordUnavailable);
+        }
+        catch (Exception ex) when (ex is GotrueException or ArgumentException)
+        {
+            // Tokens refused by Supabase, or an access token that is not a JWT (ArgumentException when decoding it)
+            return Result<string>.Failure(ResetLinkExpired);
+        }
 
-        await _auth.Update(new UserAttributes { Password = newPassword });
-        return session.AccessToken;
+        if (session?.User is null || string.IsNullOrEmpty(session.AccessToken))
+            return Result<string>.Failure(ResetLinkExpired);
+
+        try
+        {
+            await _auth.Update(new UserAttributes { Password = newPassword });
+            return Result<string>.Success(session.AccessToken);
+        }
+        catch (GotrueException ex) when (ex.StatusCode is StatusCodes.Status401Unauthorized or StatusCodes.Status403Forbidden)
+        {
+            return Result<string>.Failure(ResetLinkExpired);
+        }
+        catch (GotrueException ex) when (ex.StatusCode is StatusCodes.Status400BadRequest or StatusCodes.Status422UnprocessableEntity)
+        {
+            // The message holds Supabase's answer, whose error_code tells the old password apart from a weak one
+            return Result<string>.Failure(ex.Message.Contains("same_password") ? SamePassword : PasswordRefused);
+        }
+        catch (GotrueException ex)
+        {
+            _logger.LogError(ex, "Supabase Auth failed to update the password (HTTP {StatusCode}): {Message}", ex.StatusCode, ex.Message);
+            return Result<string>.Failure(ResetPasswordUnavailable);
+        }
     }
 }

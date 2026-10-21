@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
@@ -74,17 +75,83 @@ describe('ResetPasswordForm', () => {
     expect(TestBed.inject(Router).url).toBe('/');
   });
 
-  it('explains a failed reset and stays on the page', async () => {
-    auth.resetPassword.mockRejectedValue(new Error('401'));
+  it('ticks the password rules while typing, and only submits once all are met', async () => {
+    harness = await RouterTestingHarness.create(RESET_LINK);
+    const button = () => query<HTMLButtonElement>(harness.fixture, 'button[type="submit"]');
+    const metCriteria = () => queryAll(harness.fixture, '.criterion.met').map(textOf);
+
+    expect(queryAll(harness.fixture, '.criterion').map(textOf)).toEqual([
+      '• At least 8 characters',
+      '• At least 1 letter',
+      '• At least 1 number',
+    ]);
+    expect(button().disabled).toBe(true);
+
+    await typeIn(harness.fixture, '#new-password', 'abcdefgh');
+    expect(metCriteria()).toEqual(['✓ At least 8 characters', '✓ At least 1 letter']);
+    expect(button().disabled).toBe(true);
+    await submitForm(harness.fixture);
+    expect(auth.resetPassword).not.toHaveBeenCalled();
+
+    await typeIn(harness.fixture, '#new-password', 'abcdefg1');
+    expect(metCriteria()).toHaveLength(3);
+    expect(button().disabled).toBe(false);
+  });
+
+  /**
+   * Opens the reset link, types a valid password and submits it, the reset failing with `error`.
+   */
+  async function failReset(error: HttpErrorResponse): Promise<void> {
+    auth.resetPassword.mockRejectedValue(error);
     harness = await RouterTestingHarness.create(RESET_LINK);
 
     await typeIn(harness.fixture, '#new-password', 'abcdefg1');
     await submitForm(harness.fixture);
+  }
+
+  it('says the link may have expired when the API refuses it (401), and stays on the page', async () => {
+    await failReset(new HttpErrorResponse({ status: 401 }));
 
     expect(textOf(query(harness.fixture, '.error'))).toBe(
       'Could not reset password. The link may have expired.',
     );
     expect(auth.checkSession).not.toHaveBeenCalled();
     expect(TestBed.inject(Router).url).toBe('/auth/reset-password');
+    expect(query<HTMLButtonElement>(harness.fixture, 'button[type="submit"]').disabled).toBe(false);
+  });
+
+  it('recalls the password rules when the API finds the password invalid (400)', async () => {
+    // Body of an ASP.NET validation error: no { error } message
+    await failReset(new HttpErrorResponse({ status: 400, error: { errors: { Password: ['…'] } } }));
+
+    expect(textOf(query(harness.fixture, '.error'))).toBe(
+      'The password must follow the rules above. Please choose another one.',
+    );
+  });
+
+  it('shows why the API refused the password when it says so (400)', async () => {
+    await failReset(
+      new HttpErrorResponse({
+        status: 400,
+        error: { error: 'The new password must be different from the current one.' },
+      }),
+    );
+
+    expect(textOf(query(harness.fixture, '.error'))).toBe(
+      'The new password must be different from the current one.',
+    );
+  });
+
+  it('shows a generic error when the server fails', async () => {
+    await failReset(new HttpErrorResponse({ status: 503 }));
+
+    expect(textOf(query(harness.fixture, '.error'))).toBe('Something went wrong. Please try again.');
+  });
+
+  it('shows a generic error when there is no network', async () => {
+    // HttpClient reports a request that never got an answer with status 0
+    await failReset(new HttpErrorResponse({ status: 0 }));
+
+    expect(textOf(query(harness.fixture, '.error'))).toBe('Something went wrong. Please try again.');
   });
 });

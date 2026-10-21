@@ -6,8 +6,8 @@ namespace Api.Tests.Fakes;
 
 /// <summary>
 /// In-memory <see cref="ISupabaseAuthService"/>, replacing Supabase Auth in API tests. Only the token → user lookup,
-/// the sign up, the password check and the account deletion are implemented; the other operations are not used by the
-/// tested endpoints.
+/// the sign up, the password check and reset, and the account deletion are implemented; the other operations are not
+/// used by the tested endpoints.
 /// </summary>
 public class FakeSupabaseAuthService : ISupabaseAuthService
 {
@@ -46,6 +46,18 @@ public class FakeSupabaseAuthService : ISupabaseAuthService
     /// Ids of the accounts deleted, in order.
     /// </summary>
     public List<string> DeletedUserIds { get; } = [];
+
+    /// <summary>
+    /// Access tokens of the valid reset password links, mapped to the id of their user; resetting with another token
+    /// fails like an expired link.
+    /// </summary>
+    public Dictionary<string, string> UserIdsByRecoveryToken { get; } = [];
+
+    /// <summary>
+    /// When set, resetting the password with a valid link fails with this error (password refused by Supabase,
+    /// outage), and the password is kept.
+    /// </summary>
+    public Error? ResetPasswordError { get; set; }
 
     /// <inheritdoc />
     public Task<string?> GetUserIdAsync(string? accessToken)
@@ -98,5 +110,16 @@ public class FakeSupabaseAuthService : ISupabaseAuthService
     public Task SendPasswordResetEmailAsync(string email, string redirectUrl) => throw new NotImplementedException();
 
     /// <inheritdoc />
-    public Task<string?> ResetPasswordAsync(string accessToken, string refreshToken, string newPassword) => throw new NotImplementedException();
+    public Task<Result<string>> ResetPasswordAsync(string accessToken, string refreshToken, string newPassword)
+    {
+        if (!UserIdsByRecoveryToken.TryGetValue(accessToken, out string? userId))
+            return Task.FromResult(Result<string>.Failure(SupabaseAuthService.ResetLinkExpired));
+        if (ResetPasswordError is not null)
+            return Task.FromResult(Result<string>.Failure(ResetPasswordError));
+
+        PasswordsByUserId[userId] = newPassword;
+        string token = $"token-{userId}";
+        UserIdsByToken[token] = userId;
+        return Task.FromResult(Result<string>.Success(token));
+    }
 }

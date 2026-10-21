@@ -41,5 +41,14 @@ public interface ISupabaseAuthService
     Task<Result<bool>> DeleteUserAsync(string userId);
 
     Task SendPasswordResetEmailAsync(string email, string redirectUrl);
-    Task<string?> ResetPasswordAsync(string accessToken, string refreshToken, string newPassword);
+
+    /// <summary>
+    /// Opens the session of a reset password link, then sets the new password of its account.
+    /// </summary>
+    /// <param name="accessToken">access_token of the reset password link.</param>
+    /// <param name="refreshToken">refresh_token of the reset password link.</param>
+    /// <param name="newPassword">New password of the account.</param>
+    /// <returns>The access token of the session opened; an Unauthorized failure when the link is invalid or expired,
+    /// a Validation failure when Supabase refuses the password, an Unavailable failure when Supabase Auth fails.</returns>
+    Task<Result<string>> ResetPasswordAsync(string accessToken, string refreshToken, string newPassword);
 }
