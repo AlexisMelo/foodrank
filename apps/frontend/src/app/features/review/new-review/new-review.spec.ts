@@ -93,6 +93,42 @@ describe('NewReview', () => {
     expect(rateRestaurant).not.toHaveBeenCalled();
   });
 
+  it('explains when the restaurant cannot be loaded, and links back to the restaurant page', async () => {
+    fetchRestaurantById.mockReturnValue(throwError(() => httpError(503)));
+    await openPage();
+
+    expect(textOf(query(harness.fixture, '[role="alert"]'))).toBe(
+      "Couldn't load this restaurant, try again later.",
+    );
+    expect(queryAll(harness.fixture, 'input[type="range"]')).toHaveLength(0);
+    expect(query(harness.fixture, '.back-btn').getAttribute('href')).toBe('/restaurant/r1');
+
+    await click('.back-btn');
+
+    expect(TestBed.inject(Router).url).toBe('/restaurant/r1');
+  });
+
+  it('still rates the restaurant when the past reviews cannot be loaded, telling they are missing', async () => {
+    fetchUserRatings.mockReturnValue(throwError(() => httpError(503)));
+    rateRestaurant.mockReturnValue(of(undefined));
+    await openPage();
+
+    expect(textOf(query(harness.fixture, '.past-reviews-error'))).toBe(
+      "Couldn't load your past reviews, the sliders show no landmarks.",
+    );
+    expect(queryAll(harness.fixture, '.marker:not(.threshold-marker)')).toHaveLength(0);
+
+    await click('.submit-btn');
+
+    expect(rateRestaurant).toHaveBeenCalledWith('r1', {
+      food: 50,
+      service: 50,
+      setting: 50,
+      bonus: false,
+    });
+    expect(TestBed.inject(Router).url).toBe('/restaurant/r1');
+  });
+
   it('saves the slider values and the instant crush, then opens the restaurant page', async () => {
     rateRestaurant.mockReturnValue(of(undefined));
     await openPage();

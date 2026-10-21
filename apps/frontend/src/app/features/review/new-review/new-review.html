@@ -1,11 +1,24 @@
 <div class="page">
-  @if (restaurant(); as restaurant) {
+  @if (loading()) {
+    <div class="loading" role="status" aria-label="Loading">🍽️</div>
+  } @else if (loadError()) {
+    <div class="load-error">
+      <p role="alert">Couldn't load this restaurant, try again later.</p>
+      <a class="back-btn" [routerLink]="['/restaurant', id()]">Go back</a>
+    </div>
+  } @else if (restaurant(); as restaurant) {
     <div class="restaurant-hero">
       <div class="emoji-circle" aria-hidden="true">{{ restaurant.emoji }}</div>
       <h2 class="restaurant-name">{{ restaurant.name }}</h2>
     </div>
 
     <p class="section-label">Your verdict</p>
+
+    @if (pastReviewsError()) {
+      <p class="past-reviews-error" role="alert">
+        Couldn't load your past reviews, the sliders show no landmarks.
+      </p>
+    }
 
     <app-criterion-slider
       icon="🍽️"

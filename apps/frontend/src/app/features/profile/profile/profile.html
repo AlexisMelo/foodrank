@@ -1,6 +1,8 @@
 <div class="profile">
   @if (loading()) {
     <div class="loading">👤</div>
+  } @else if (user.loadError()) {
+    <p class="load-error" role="alert">Couldn't load this profile, try again.</p>
   } @else if (user.profile(); as profile) {
     <app-profile-header [profile]="profile" />
 
@@ -8,7 +10,9 @@
     <app-pinned-tierlists [userId]="profile.id" />
 
     <!-- Restaurants rated, best first -->
-    @if (!ranking.rankedRestaurants().length) {
+    @if (ranking.loadError()) {
+      <div class="empty" role="alert">Couldn't load the ratings</div>
+    } @else if (!ranking.rankedRestaurants().length) {
       <div class="empty">No restaurant rated yet 🍽️</div>
     } @else {
       <div class="list">

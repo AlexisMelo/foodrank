@@ -129,6 +129,16 @@ describe('Home', () => {
       expect(textOf(query(harness.fixture, '.user-visited'))).toBe('1 restaurant');
     });
 
+    it('explains when the profile cannot be loaded, instead of loading forever', async () => {
+      fetchUserProfile.mockReturnValue(throwError(() => new Error('503')));
+      await openHome();
+
+      expect(textOf(query(harness.fixture, '.user-bar-error'))).toBe("Couldn't load your profile");
+      expect(queryAll(harness.fixture, '.user-bar-skeleton')).toHaveLength(0);
+      // The rest of the top bar still works
+      expect(queryAll(harness.fixture, '.settings-btn')).toHaveLength(1);
+    });
+
     it('opens the profile page when clicked', async () => {
       await openHome();
 

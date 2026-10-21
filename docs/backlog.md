@@ -10,7 +10,7 @@ Tick the box once the step is merged. The steps are independent, except: step 7 
 
 ## Progress
 
-- [ ] 1. Loading, error and not-found states
+- [x] 1. Loading, error and not-found states
 - [ ] 2. Auth error messages
 - [ ] 3. Password rules on the password reset
 - [ ] 4. Logged-in user and duplicate requests
@@ -49,6 +49,11 @@ Frontend only. Every page must end up showing its content, an error or a redirec
   - `Home`: when the profile fails, hide the user bar or show an error?
   - `**` route: redirect to `/` (the access guard then sends logged-out users to `/login`), or a "page not found" page?
   - Explore: show the list unsorted right away and sort it once the position arrives, or wait for the position with a timeout?
+- **Decisions taken**:
+  - `NewReview`: the restaurant and the ratings load separately. A failing restaurant shows `Couldn't load this restaurant, try again later.` (`role="alert"`) with a "Go back" link to the page of the restaurant being rated. Failing ratings don't block the page: the sliders work without markers, and a notice says the past reviews couldn't be loaded.
+  - `Home`: when the profile fails, show an error in place of the user bar.
+  - `**` route: a "page not found" page with a link to the home page.
+  - Explore: wait for the position for at most 3 seconds, then show the list in the API order (it is still sorted if the position arrives later).
 - Tests: one per changed behavior (error message shown, unknown URL redirected, no "No restaurants found" during the debounce, Explore list shown without a position).
 - Commit: `fix (frontend): loading, error and not-found states`
 

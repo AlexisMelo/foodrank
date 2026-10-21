@@ -79,6 +79,10 @@ describe('Explore', () => {
     });
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   /**
    * Opens the explore page and waits for it to load.
    */
@@ -116,6 +120,37 @@ describe('Explore', () => {
       '📍 556 m',
       '📍 2.2 km',
     ]);
+    expect(queryAll(harness.fixture, '.location-notice')).toHaveLength(0);
+  });
+
+  it('shows the restaurants in the API order when the location is not answered within 3 seconds', async () => {
+    // Only the timer of the wait (rxjs uses setInterval): Angular keeps scheduling its rendering with setTimeout
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    await openExplore();
+
+    await vi.advanceTimersByTimeAsync(2999);
+    await harness.fixture.whenStable();
+    expect(queryAll(harness.fixture, '.loading')).toHaveLength(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+    await harness.fixture.whenStable();
+    expect(queryAll(harness.fixture, '.loading')).toHaveLength(0);
+    expect(names()).toEqual([
+      'Restaurant paris',
+      'Restaurant mid',
+      'Restaurant lyon',
+      'Restaurant near',
+      'Restaurant rouen',
+    ]);
+    expect(textOf(query(harness.fixture, '.location-notice'))).toBe(
+      '📍 Enable location to sort by distance',
+    );
+
+    // Allowed later: sorted by distance
+    location.set({ lat: 49.18, lon: -0.37 });
+    status.set('granted');
+    await harness.fixture.whenStable();
+    expect(names()[0]).toBe('Restaurant near');
     expect(queryAll(harness.fixture, '.location-notice')).toHaveLength(0);
   });
 

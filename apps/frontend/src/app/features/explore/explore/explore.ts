@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, map, timer } from 'rxjs';
 import { RatingApi } from '@/core/api/rating-api';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import { UserLocation } from '@/core/location/user-location';
@@ -12,6 +12,13 @@ import type { Restaurant } from '@/core/models/restaurant.model';
  * Number of restaurants suggested.
  */
 const SUGGESTION_COUNT = 5;
+
+/**
+ * Longest wait for the user's position before showing the suggestions unsorted, in milliseconds. The browser only
+ * starts its own timeout once the permission is granted: without this one, an unanswered prompt would keep the page
+ * loading forever.
+ */
+const LOCATION_WAIT_MS = 3000;
 
 /**
  * A restaurant suggested, with its distance from the user.
@@ -110,10 +117,17 @@ export class Explore {
   });
 
   /**
-   * True until the location is answered (allowed, refused or unavailable)
+   * True once LOCATION_WAIT_MS have passed since the page opened
    */
-  private readonly locating = computed(() =>
-    ['idle', 'pending'].includes(this.userLocation.status()),
+  private readonly locationWaitOver = toSignal(timer(LOCATION_WAIT_MS).pipe(map(() => true)), {
+    initialValue: false,
+  });
+
+  /**
+   * True until the location is answered (allowed, refused or unavailable), or for LOCATION_WAIT_MS at most
+   */
+  private readonly locating = computed(
+    () => ['idle', 'pending'].includes(this.userLocation.status()) && !this.locationWaitOver(),
   );
 
   /**
@@ -122,7 +136,8 @@ export class Explore {
   protected readonly loading = computed(() => this.dataResource.isLoading() || this.locating());
 
   /**
-   * True when the position could not be obtained (refused, blocked or unavailable): the restaurants are not sorted
+   * True when the position is not known once the wait is over (refused, blocked, unavailable or still not answered):
+   * the restaurants are not sorted
    */
   protected readonly locationDenied = computed(
     () => !this.locating() && this.userLocation.status() !== 'granted',
