@@ -13,7 +13,7 @@ Tick the box once the step is merged. The steps are independent, except: step 7 
 - [x] 1. Loading, error and not-found states
 - [x] 2. Auth error messages
 - [x] 3. Password rules on the password reset
-- [ ] 4. Logged-in user and duplicate requests
+- [x] 4. Logged-in user and duplicate requests
 - [ ] 5. Opening a restaurant from a search result
 - [ ] 6. Add restaurants to a tierlist: decisions and API
 - [ ] 7. Add restaurants to a tierlist: frontend
@@ -88,6 +88,7 @@ Frontend only. Recognize the logged-in user through `AuthStore.loggedInUserId`, 
 - **`Home`**: one `/users/me/ratings` request, shared by the recent reviews and the favorites.
 - **`TierlistDetail`**: when I own the tierlist, reuse the owner's ratings as my ratings instead of requesting them twice.
 - **Decision**: for `/user/<my id>`, redirect to `/profile` (one URL for my profile), or render it as my own profile in place?
+- **Decision taken**: redirect to `/profile`, with a functional guard (`ownProfileGuard`) on the `user/:id` route.
 - Tests: request counts (`HttpTestingController` or the call counts of the fakes), own profile reached by its id.
 - Commit: `fix (frontend): recognize the logged-in user and drop duplicate requests`
 

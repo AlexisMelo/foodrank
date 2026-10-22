@@ -61,7 +61,10 @@ describe('NewReview', () => {
           ],
           withComponentInputBinding(),
         ),
-        { provide: AuthStore, useValue: { isLoggedIn: signal(true) } },
+        {
+          provide: AuthStore,
+          useValue: { isLoggedIn: signal(true), loggedInUserId: signal('u1') },
+        },
         { provide: RestaurantApi, useValue: { fetchRestaurantById } },
         { provide: RatingApi, useValue: { fetchUserRatings, rateRestaurant } },
       ],

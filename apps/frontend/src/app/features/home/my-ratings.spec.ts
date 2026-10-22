@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { RatingApi } from '@/core/api/rating-api';
 import type { UserRating } from '@/core/models/rating.model';
-import { injectMyRecentRatings } from './my-recent-ratings';
+import { injectMyRatings } from './my-ratings';
 
 /**
  * Builds a rating of `restaurantId` given on `date`.
@@ -23,7 +23,7 @@ function rating(restaurantId: string, date: string): UserRating {
   };
 }
 
-describe('injectMyRecentRatings', () => {
+describe('injectMyRatings', () => {
   let fetchUserRatings: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -45,9 +45,7 @@ describe('injectMyRecentRatings', () => {
       of([rating('r1', '2026-10-08'), rating('r2', '2026-10-07'), rating('r3', '2026-10-06')]),
     );
 
-    const { ratings, loading, loadError } = TestBed.runInInjectionContext(() =>
-      injectMyRecentRatings(2),
-    );
+    const { ratings, loading, loadError } = TestBed.runInInjectionContext(() => injectMyRatings(2));
     expect(loading()).toBe(true);
     await settle();
 
@@ -57,23 +55,21 @@ describe('injectMyRecentRatings', () => {
     expect(loadError()).toBe(false);
   });
 
-  it('keeps 5 ratings by default', async () => {
+  it('keeps every rating without a limit', async () => {
     fetchUserRatings.mockReturnValue(
       of(Array.from({ length: 7 }, (_, i) => rating(`r${i}`, '2026-10-08'))),
     );
 
-    const { ratings } = TestBed.runInInjectionContext(() => injectMyRecentRatings());
+    const { ratings } = TestBed.runInInjectionContext(() => injectMyRatings());
     await settle();
 
-    expect(ratings()).toHaveLength(5);
+    expect(ratings()).toHaveLength(7);
   });
 
   it('reports an error when the API fails', async () => {
     fetchUserRatings.mockReturnValue(throwError(() => new Error('503')));
 
-    const { ratings, loading, loadError } = TestBed.runInInjectionContext(() =>
-      injectMyRecentRatings(),
-    );
+    const { ratings, loading, loadError } = TestBed.runInInjectionContext(() => injectMyRatings());
     await settle();
 
     expect(ratings()).toEqual([]);

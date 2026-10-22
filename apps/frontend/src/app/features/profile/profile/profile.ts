@@ -8,8 +8,8 @@ import { ProfileHeader } from '../profile-header/profile-header';
 import { injectProfileRanking } from '../profile-ranking';
 
 /**
- * Profile page: the logged-in user's on /profile, another user's on /user/:id. Shows the user, their pinned
- * tierlists and the restaurants they rated, best first.
+ * Profile page: the logged-in user's on /profile, another user's on /user/:id (ownProfileGuard sends the logged-in
+ * user's own id to /profile). Shows the user, their pinned tierlists and the restaurants they rated, best first.
  */
 @Component({
   imports: [PinnedTierlists, ProfileHeader, RankedRestaurantItem],

@@ -80,7 +80,10 @@ describe('ProfileView', () => {
       providers: [
         // The real routes, with a logged-in user
         provideRouter(routes, withComponentInputBinding()),
-        { provide: AuthStore, useValue: { isLoggedIn: signal(true) } },
+        {
+          provide: AuthStore,
+          useValue: { isLoggedIn: signal(true), loggedInUserId: signal('u1') },
+        },
         { provide: UserApi, useValue: { fetchUserProfile } },
         // Ratings of the user shown and of the logged-in user, also read by the home and rating pages
         { provide: RatingApi, useValue: { fetchUserRatings } },
@@ -203,6 +206,24 @@ describe('ProfileView', () => {
     // The id of the profile loaded, not the "me" of the API url
     expect(fetchPinnedTierlistsByUserId).toHaveBeenCalledWith('u1');
     expect(textOf(harness.fixture.nativeElement)).not.toContain('Pinned tierlists');
+  });
+
+  it('opens my own profile on /profile when reached by my id, loading my ratings once', async () => {
+    await open('/user/u1');
+
+    expect(TestBed.inject(Router).url).toBe('/profile');
+    expect(textOf(query(harness.fixture, '.winner-name'))).toBe('Alexis Melo');
+    // My own profile: no "my score", no rate button, and only my ratings are requested
+    expect(queryAll(harness.fixture, '.my-score')).toHaveLength(0);
+    expect(queryAll(harness.fixture, '.my-score-rate')).toHaveLength(0);
+    expect(fetchUserProfile.mock.calls).toEqual([['me']]);
+    expect(fetchUserRatings.mock.calls).toEqual([['me']]);
+  });
+
+  it("loads my ratings once more on another user's profile, for my own scores", async () => {
+    await open('/user/u2');
+
+    expect(fetchUserRatings.mock.calls).toEqual([['u2'], ['me']]);
   });
 
   it('goes back home for an unknown user', async () => {
