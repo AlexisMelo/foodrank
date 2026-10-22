@@ -69,11 +69,13 @@ function tierlistOf(userId: string): Tierlist {
 describe('TierlistDetailView', () => {
   let fetchTierlistById: ReturnType<typeof vi.fn>;
   let setTierlistPinned: ReturnType<typeof vi.fn>;
+  let fetchUserRatings: ReturnType<typeof vi.fn>;
   let harness: RouterTestingHarness;
 
   beforeEach(async () => {
     fetchTierlistById = vi.fn();
     setTierlistPinned = vi.fn();
+    fetchUserRatings = vi.fn((id = 'me') => of(ratings[id] ?? []));
     TestBed.configureTestingModule({
       providers: [
         provideRouter(routes, withComponentInputBinding()),
@@ -88,10 +90,7 @@ describe('TierlistDetailView', () => {
           useValue: { fetchTierlistById, setTierlistPinned, fetchTierlistsByUserId: () => of([]) },
         },
         { provide: UserApi, useValue: { fetchUserProfile: (id: string) => of(profiles[id]) } },
-        {
-          provide: RatingApi,
-          useValue: { fetchUserRatings: (id = 'me') => of(ratings[id] ?? []) },
-        },
+        { provide: RatingApi, useValue: { fetchUserRatings } },
         { provide: RestaurantApi, useValue: {} },
       ],
     });
@@ -140,6 +139,7 @@ describe('TierlistDetailView', () => {
     )!;
     expect(textOf(r1.querySelector('.my-score')!)).toBe('40');
     expect(queryAll(harness.fixture, '.pin-btn')).toHaveLength(0);
+    expect(fetchUserRatings.mock.calls).toEqual([['u2'], ['me']]);
   });
 
   it('lets the owner pin their tierlist, without showing their score twice', async () => {
@@ -148,6 +148,14 @@ describe('TierlistDetailView', () => {
 
     expect(textOf(query(harness.fixture, '.pin-btn'))).toBe('Pinned to profile');
     expect(queryAll(harness.fixture, '.my-score')).toHaveLength(0);
+  });
+
+  it('requests my ratings once on my own tierlist, as its owner', async () => {
+    fetchTierlistById.mockReturnValue(of(tierlistOf('u1')));
+    await openTierlist();
+
+    expect(fetchUserRatings.mock.calls).toEqual([['u1']]);
+    expect(textOf(query(harness.fixture, '.item-name'))).toBe('Restaurant r1');
   });
 
   it('saves the pin when the owner unpins then pins their tierlist again', async () => {

@@ -3,6 +3,7 @@ import { accessGuard } from './core/auth/access-guard';
 import { Auth } from './features/auth/auth/auth';
 import { signupStepGuard } from './features/auth/signup-step-guard';
 import { Home } from './features/home/home/home';
+import { ownProfileGuard } from './features/profile/own-profile-guard';
 import { Shell } from './layout/shell/shell';
 
 /**
@@ -61,6 +62,8 @@ export const routes: Routes = [
       {
         path: 'user/:id',
         loadComponent: () => import('./features/profile/profile/profile').then((m) => m.Profile),
+        // The logged-in user's own id opens /profile
+        canActivate: [ownProfileGuard],
       },
       {
         path: 'tierlists',

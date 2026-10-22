@@ -1,5 +1,7 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { AuthStore } from '@/core/auth/auth-store';
 import type { RestaurantRating } from '@/core/models/rating.model';
 import { query, queryAll, textOf } from '@/testing/dom-testing';
 import { RestaurantRatingsTabs } from './restaurant-ratings-tabs';
@@ -57,8 +59,14 @@ describe('RestaurantRatingsTabs', () => {
   let fixture: ComponentFixture<RestaurantRatingsTabs>;
 
   beforeEach(() => {
-    // The "New" chip needs the router; it is not what is tested here
-    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    TestBed.configureTestingModule({
+      providers: [
+        // The "New" chip needs the router; it is not what is tested here
+        provideRouter([]),
+        // "Me" (user id "me") is logged in
+        { provide: AuthStore, useValue: { loggedInUserId: signal('me') } },
+      ],
+    });
   });
 
   /**
@@ -155,6 +163,19 @@ describe('RestaurantRatingsTabs', () => {
     expect(queryAll(fixture, 'a.community-card').map((c) => c.getAttribute('href'))).toEqual([
       '/user/camille',
       '/profile',
+    ]);
+  });
+
+  it('opens my own profile from my recent rating even when my own ratings are not given', async () => {
+    await render({
+      recentRatings: [rating('Me', '2026-03-07'), rating('Camille', '2026-03-06')],
+    });
+
+    await openRecentTab();
+
+    expect(queryAll(fixture, 'a.community-card').map((c) => c.getAttribute('href'))).toEqual([
+      '/profile',
+      '/user/camille',
     ]);
   });
 

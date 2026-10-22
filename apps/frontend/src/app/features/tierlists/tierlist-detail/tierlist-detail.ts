@@ -35,7 +35,8 @@ interface TierlistPage {
   ownerRatings: UserRating[];
 
   /**
-   * Every rating of the logged-in user, which gives their own score on someone else's tierlist
+   * Every rating of the logged-in user, which gives their own score on someone else's tierlist; the owner's ratings
+   * when the logged-in user owns the tierlist
    */
   myRatings: UserRating[];
 }
@@ -67,7 +68,7 @@ export class TierlistDetail {
   private readonly tierlistApi = inject(TierlistApi);
 
   /**
-   * Tells who is logged in, to know whether they own the tierlist
+   * Tells who is logged in, to know whether they own the tierlist (pin, ratings requested once)
    */
   private readonly auth = inject(AuthStore);
 
@@ -139,8 +140,9 @@ export class TierlistDetail {
   protected readonly restaurantCountLabel = restaurantCountLabel;
 
   /**
-   * Loads the tierlist, then its owner and the ratings of the owner and of the logged-in user. Leaves for the
-   * tierlists page when the tierlist does not exist.
+   * Loads the tierlist, then its owner and the ratings of the owner and of the logged-in user; the owner's ratings are
+   * requested once when the logged-in user owns the tierlist. Leaves for the tierlists page when the tierlist does not
+   * exist.
    */
   private loadPage(id: string): Observable<TierlistPage | undefined> {
     return this.tierlistApi.fetchTierlistById(id).pipe(
@@ -149,16 +151,18 @@ export class TierlistDetail {
           void this.router.navigateByUrl('/tierlists', { replaceUrl: true });
           return of(undefined);
         }
+        const ownedByMe = found.userId === this.auth.loggedInUserId();
         return forkJoin({
           owner: this.userApi.fetchUserProfile(found.userId),
           ownerRatings: this.ratingApi.fetchUserRatings(found.userId),
-          myRatings: this.ratingApi.fetchUserRatings(ME),
+          // My ratings are the owner's on my own tierlist
+          myRatings: ownedByMe ? of(undefined) : this.ratingApi.fetchUserRatings(ME),
         }).pipe(
           map(({ owner, ownerRatings, myRatings }) => ({
             tierlist: found,
             owner: owner ?? null,
             ownerRatings,
-            myRatings,
+            myRatings: myRatings ?? ownerRatings,
           })),
         );
       }),

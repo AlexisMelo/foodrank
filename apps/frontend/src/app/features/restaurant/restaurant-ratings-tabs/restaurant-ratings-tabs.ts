@@ -1,4 +1,5 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
+import { AuthStore } from '@/core/auth/auth-store';
 import type { RestaurantRating } from '@/core/models/rating.model';
 import { NewReviewChip } from '@/shared/ui/new-review-chip/new-review-chip';
 import { MyRatingCard } from '../my-rating-card/my-rating-card';
@@ -53,10 +54,9 @@ export class RestaurantRatingsTabs {
   );
 
   /**
-   * Id of the logged-in user, read from their own ratings; undefined when they never rated the restaurant, so none of
-   * the recent ratings is theirs
+   * Id of the logged-in user, which tells their own recent ratings apart; null when logged out
    */
-  protected readonly myUserId = computed(() => this.myRatings()[0]?.userId);
+  protected readonly myUserId = inject(AuthStore).loggedInUserId;
 
   /**
    * Shown when the tab has no rating

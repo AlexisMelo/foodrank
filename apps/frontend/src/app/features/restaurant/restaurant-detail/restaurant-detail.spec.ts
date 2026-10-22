@@ -40,7 +40,10 @@ describe('RestaurantDetail', () => {
       providers: [
         // The real routes, with a logged-in user
         provideRouter(routes, withComponentInputBinding()),
-        { provide: AuthStore, useValue: { isLoggedIn: signal(true) } },
+        {
+          provide: AuthStore,
+          useValue: { isLoggedIn: signal(true), loggedInUserId: signal('u1') },
+        },
         {
           provide: RestaurantApi,
           useValue: {

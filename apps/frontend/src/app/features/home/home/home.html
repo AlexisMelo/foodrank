@@ -31,17 +31,17 @@
       <app-new-review-chip />
     </div>
     <div class="cards-row">
-      @if (recentRatings.loading()) {
+      @if (myRatings.loading()) {
         @for (i of [1, 2, 3, 4, 5]; track i) {
           <div class="card-skeleton"></div>
         }
-      } @else if (recentRatings.loadError()) {
+      } @else if (myRatings.loadError()) {
         <p class="empty">Couldn't load your reviews</p>
-      } @else if (!recentRatings.ratings().length) {
+      } @else if (!recentRatings().length) {
         <p class="empty">No review yet 🍽️</p>
       } @else {
         <!-- A user rates a restaurant at most once per day: restaurant + date identifies a rating -->
-        @for (rating of recentRatings.ratings(); track rating.restaurantId + '-' + rating.date) {
+        @for (rating of recentRatings(); track rating.restaurantId + '-' + rating.date) {
           <app-recent-review-card
             [restaurantId]="rating.restaurantId"
             [emoji]="rating.restaurantEmoji"

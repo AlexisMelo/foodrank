@@ -68,7 +68,10 @@ describe('Home', () => {
       providers: [
         // The real routes, with a logged-in user
         provideRouter(routes, withComponentInputBinding()),
-        { provide: AuthStore, useValue: { isLoggedIn: signal(true) } },
+        {
+          provide: AuthStore,
+          useValue: { isLoggedIn: signal(true), loggedInUserId: signal('u1') },
+        },
         { provide: UserApi, useValue: { fetchUserProfile } },
         { provide: RatingApi, useValue: { fetchUserRatings } },
         // Read by the search area hint of the new review sheet
@@ -349,6 +352,22 @@ describe('Home', () => {
     });
 
     it('hides the section when the user has not rated any restaurant', async () => {
+      await openHome();
+
+      expect(textOf(harness.fixture.nativeElement)).not.toContain('Favorites');
+    });
+
+    it('shares a single request of my ratings with the recent reviews', async () => {
+      fetchUserRatings.mockReturnValue(of([scored('top', 95), scored('ok', 60)]));
+      await openHome();
+
+      expect(fetchUserRatings.mock.calls).toEqual([['me']]);
+      expect(queryAll(harness.fixture, '.review-card')).toHaveLength(2);
+      expect(favorites()).toEqual(['Restaurant top', 'Restaurant ok']);
+    });
+
+    it('hides the section when my ratings cannot be loaded', async () => {
+      fetchUserRatings.mockReturnValue(throwError(() => new Error('503')));
       await openHome();
 
       expect(textOf(harness.fixture.nativeElement)).not.toContain('Favorites');
