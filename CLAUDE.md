@@ -40,6 +40,10 @@ For any change in apps/frontend, load the angular-developer skill before writing
 
 If any of them is missing or out of date, **stop immediately**: make no change at all (no file created, edited or deleted), list what is missing and let the user install it. Never work around a missing prerequisite (no portable Node or CLI downloaded, no hand-written replacement for `ng generate`, no skill skipped).
 
+### GitHub issues
+
+When asked to work on a GitHub issue, create a dedicated branch **before reading or changing any code**: `git switch main`, `git pull`, then `git switch -c <type>/<issue-number>-<short-slug>` (type: `feat`, `fix`, `refactor` or `chore`; e.g. `fix/42-rating-rounding`). If the working tree is not clean, stop and ask. Never commit issue work on `main`.
+
 ### Workflow for every change (feature, bugfix, refactor)
 
 1. **Write the tests with the code**, in the same task: new behavior → new tests; changed behavior → updated tests; bugfix → first a test that reproduces the bug.
@@ -50,4 +54,4 @@ If any of them is missing or out of date, **stop immediately**: make no change a
 ### What to test
 
 - Test behavior that can break: business rules, validation, error handling, mapping, ranking, state changes. Do not test purely presentational components or framework code.
-- No new test library without asking: fakes are hand-written, no mocking or assertion library.
+- No new test library without asking: fakes are hand-written, no mocking or assertion library. The test runner's built-in helpers are fine (Vitest's `vi.fn()`).
