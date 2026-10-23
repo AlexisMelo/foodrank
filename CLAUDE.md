@@ -42,7 +42,27 @@ If any of them is missing or out of date, **stop immediately**: make no change a
 
 ### GitHub issues
 
-When asked to work on a GitHub issue, create a dedicated branch **before reading or changing any code**: `git switch main`, `git pull`, then `git switch -c <type>/<issue-number>-<short-slug>` (type: `feat`, `fix`, `refactor` or `chore`; e.g. `fix/42-rating-rounding`). If the working tree is not clean, stop and ask.
+When asked to work on a GitHub issue:
+
+1. **Create the branch from the issue, before reading or changing any code.** If the working tree is not clean, stop and ask. Otherwise create the branch with `gh`, so that GitHub links it to the issue (it shows in the issue's "Development" section):
+
+   ```sh
+   git switch main
+   git pull
+   gh issue develop <issue-number> --name <type>/<issue-number>-<short-slug> --base main --checkout
+   ```
+
+   Type: `feat`, `fix`, `refactor` or `chore` (e.g. `fix/42-rating-rounding`). Never use `git switch -c` for issue work: a branch created locally is not linked to the issue.
+
+2. **Create the pull request as soon as the branch has commits.** Claude never commits (see [Commits](#commits)) and GitHub refuses a pull request without commits, so: in the final summary, give the commit message to use, and ask the user to commit and push. When the user says it is done, check that the branch is pushed and ahead of `main` (`git fetch`, then `git log --oneline origin/main..origin/<branch>`), and create the pull request without being asked again:
+
+   ```sh
+   gh pr create --base main --head <branch> --title "<commit message subject>" --body-file <file>
+   ```
+
+   If the branch already has a pull request (`gh pr view <branch>`), update its description with `gh pr edit <branch> --body-file <file>` instead of creating a second one.
+
+3. **The pull request closes the issue.** Its description holds a short summary of the changes, the tests added or changed and their result, the manual checks to do in the browser, and ends with the line `Closes #<issue-number>`, so that merging the pull request into `main` closes the issue. Write the body file in the scratchpad, not in the repo.
 
 ### Commits
 
