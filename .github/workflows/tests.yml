@@ -1,0 +1,38 @@
+name: Tests
+
+on:
+  push: # every push, on any branch
+  pull_request: # also on PRs, so the check shows on the PR page
+    branches: [main]
+
+# If you push again before the run ends, the old run is cancelled
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API tests (.NET)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet test apps/api -c Release
+
+  frontend:
+    name: Frontend tests (Angular / Vitest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/frontend/package-lock.json
+      - run: npm ci
+      - run: npm test
