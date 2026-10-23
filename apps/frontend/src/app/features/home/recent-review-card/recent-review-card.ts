@@ -1,6 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { formatRatingDate, scoreColor } from '@/core/utils/rating';
+import { formatRatingDate, ratingAverage, scoreColor } from '@/core/utils/rating';
 
 /**
  * Card of a rating given by the logged-in user: the restaurant, the day, the average and a bar per criterion. Opens
@@ -57,7 +57,7 @@ export class RecentReviewCard {
    * Average of the three criteria, rounded, shown in the bubble
    */
   protected readonly average = computed(() =>
-    Math.round((this.food() + this.service() + this.decor()) / 3),
+    ratingAverage({ food: this.food(), service: this.service(), setting: this.decor() }),
   );
 
   /**

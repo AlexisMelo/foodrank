@@ -12,7 +12,7 @@ import { AuthStore } from '@/core/auth/auth-store';
 import { UserLocation } from '@/core/location/user-location';
 import type { UserRating } from '@/core/models/rating.model';
 import type { Tierlist } from '@/core/models/tierlist.model';
-import { NewReviewStore } from '@/features/review/new-review-store';
+import { NewReviewStore } from '@/core/review/new-review-store';
 import { query, queryAll, stubDialogs, textOf } from '@/testing/dom-testing';
 
 /**

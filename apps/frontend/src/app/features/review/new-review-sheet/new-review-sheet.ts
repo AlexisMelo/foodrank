@@ -17,7 +17,7 @@ import { PLACE_SEARCH_MIN_LENGTH, RestaurantApi } from '@/core/api/restaurant-ap
 import { UserLocation } from '@/core/location/user-location';
 import type { PlaceSuggestion } from '@/core/models/restaurant.model';
 import { injectOpenPlace } from '@/shared/data/open-place';
-import { NewReviewStore } from '../new-review-store';
+import { NewReviewStore } from '@/core/review/new-review-store';
 import { SearchAreaHint } from '../search-area-hint/search-area-hint';
 
 /**
