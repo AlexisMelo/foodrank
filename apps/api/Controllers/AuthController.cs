@@ -6,10 +6,20 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers;
 
+/// <summary>
+/// Endpoints for accounts and sessions: sign up, log in and out, password reset and account deletion. The session is
+/// kept in an HttpOnly cookie holding the Supabase access token.
+/// </summary>
+/// <param name="authService">Accounts and sessions of Supabase Auth.</param>
+/// <param name="userService">Saves the profile created at sign up and checks the pseudonym is free.</param>
+/// <param name="configuration">Application settings, holding the frontend URL (Frontend:Url).</param>
 [ApiController]
 [Route("api/auth")]
 public class AuthController(ISupabaseAuthService authService, IUserService userService, IConfiguration configuration) : ControllerBase
 {
+    /// <summary>
+    /// URL of the frontend, where the reset password links lead.
+    /// </summary>
     private string FrontendUrl => configuration["Frontend:Url"]!;
 
     /// <summary>
@@ -67,6 +77,10 @@ public class AuthController(ISupabaseAuthService authService, IUserService userS
     [HttpGet("me")]
     public ActionResult<SessionUserResponse> Me() => Ok(new SessionUserResponse(User.GetUserId()));
 
+    /// <summary>
+    /// Logs out by deleting the session cookie. Allowed without a valid session, so an expired one can still log out.
+    /// </summary>
+    /// <returns>200, the session cookie deleted.</returns>
     [HttpPost("logout")]
     [AllowAnonymous]
     public IActionResult Logout()

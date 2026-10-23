@@ -102,13 +102,7 @@ public class SupabaseAuthService(Supabase.Gotrue.Client auth, IGotrueAdminClient
         }
     }
 
-    /// <summary>
-    /// Sign in user
-    /// </summary>
-    /// <see cref="https://supabase-community.github.io/gotrue-csharp/api/Supabase.Gotrue.StatelessClient.html?q=signin#Supabase_Gotrue_StatelessClient_SignIn_System_String_System_String_Supabase_Gotrue_StatelessClient_StatelessClientOptions_"/>
-    /// <param name="email"></param>
-    /// <param name="password"></param>
-    /// <returns></returns>
+    /// <inheritdoc />
     public async Task<string?> SignInAsync(string email, string password)
     {
         Session? session = await _auth.SignIn(email, password);
@@ -176,6 +170,7 @@ public class SupabaseAuthService(Supabase.Gotrue.Client auth, IGotrueAdminClient
         }
     }
 
+    /// <inheritdoc />
     public async Task SendPasswordResetEmailAsync(string email, string redirectUrl)
     {
         await _auth.ResetPasswordForEmail(new ResetPasswordForEmailOptions(email)

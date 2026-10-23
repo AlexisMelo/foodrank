@@ -3,8 +3,19 @@ using api.Models;
 
 namespace api.Services;
 
+/// <summary>
+/// Accounts and sessions of Supabase Auth: sign up, sign in, session check, password reset and account deletion.
+/// </summary>
 public interface ISupabaseAuthService
 {
+    /// <summary>
+    /// Signs in with an email and a password (see
+    /// <see href="https://supabase-community.github.io/gotrue-csharp/api/Supabase.Gotrue.StatelessClient.html">the
+    /// gotrue-csharp SignIn documentation</see>).
+    /// </summary>
+    /// <param name="email">Email address of the account.</param>
+    /// <param name="password">Password of the account.</param>
+    /// <returns>The access token of the session opened, or null when Supabase Auth opened none.</returns>
     Task<string?> SignInAsync(string email, string password);
 
     /// <summary>
@@ -40,6 +51,12 @@ public interface ISupabaseAuthService
     /// <returns>Success once deleted; an Unavailable failure when Supabase Auth fails.</returns>
     Task<Result<bool>> DeleteUserAsync(string userId);
 
+    /// <summary>
+    /// Asks Supabase Auth to email a reset password link to <paramref name="email"/>.
+    /// </summary>
+    /// <param name="email">Email address of the account.</param>
+    /// <param name="redirectUrl">Frontend page the link opens, with the tokens of the reset password session.</param>
+    /// <returns>A task completed once Supabase Auth accepted the request.</returns>
     Task SendPasswordResetEmailAsync(string email, string redirectUrl);
 
     /// <summary>
