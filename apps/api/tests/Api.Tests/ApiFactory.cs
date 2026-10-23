@@ -50,6 +50,7 @@ public class ApiFactory : WebApplicationFactory<Program>
     public ApiFactory()
     {
         RatingService = new FakeRatingService(RestaurantService);
+        RestaurantService.RatedRestaurantIds = userId => RatingService.Ratings.Where(r => r.UserId == userId).Select(r => r.RestaurantId);
         UserService = new FakeUserService(RatingService);
     }
 

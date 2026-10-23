@@ -33,14 +33,29 @@ export interface Restaurant {
   description: string;
 
   /**
-   * Latitude in degrees; null when unknown
+   * Latitude in degrees, always known (required by the database)
    */
-  lat: number | null;
+  lat: number;
 
   /**
-   * Longitude in degrees; null when unknown
+   * Longitude in degrees, always known (required by the database)
    */
-  lng: number | null;
+  lng: number;
+}
+
+/**
+ * A restaurant the logged-in user has not rated yet, suggested on the Explore page (GET /api/restaurants/suggestions).
+ */
+export interface RestaurantSuggestion {
+  /**
+   * The suggested restaurant
+   */
+  restaurant: Restaurant;
+
+  /**
+   * Distance from the user in kilometers, computed by the API; null when the user's position was not sent
+   */
+  distanceKm: number | null;
 }
 
 /**

@@ -69,8 +69,8 @@ public partial class PhotonPlaceProvider(HttpClient httpClient, NominatimClient 
 
         PhotonResponse? payload = await response.Content.ReadFromJsonAsync<PhotonResponse>(OsmJson.Options, cancellationToken);
         List<PlaceDetails> places = (payload?.Features ?? [])
-            .Where(f => !string.IsNullOrWhiteSpace(f.Properties.Name))
             .Select(ToDetails)
+            .OfType<PlaceDetails>()
             .ToList();
 
         cache.Set(url, (IReadOnlyList<PlaceDetails>)places, SearchCacheDuration);
@@ -142,17 +142,21 @@ public partial class PhotonPlaceProvider(HttpClient httpClient, NominatimClient 
     /// <summary>
     /// Maps a Photon GeoJSON feature to provider-agnostic details.
     /// </summary>
-    private static PlaceDetails ToDetails(PhotonFeature feature)
+    /// <returns>The details, or null for a feature without name or position: it is dropped here, so the rest of the
+    /// API never handles a place it cannot show or measure.</returns>
+    private static PlaceDetails? ToDetails(PhotonFeature feature)
     {
         PhotonProperties p = feature.Properties;
-        List<double>? coordinates = feature.Geometry?.Coordinates;
-        bool hasCoordinates = coordinates is { Count: 2 };
+        // GeoJSON order: [lon, lat]
+        if (string.IsNullOrWhiteSpace(p.Name) || feature.Geometry?.Coordinates is not [double lon, double lat])
+            return null;
+
         return new PlaceDetails(
             $"{p.OsmType}{p.OsmId}",
-            p.Name!,
+            p.Name,
             OsmAddress.Format(p.Housenumber, p.Street, p.Postcode, p.City),
-            hasCoordinates ? coordinates![1] : null,
-            hasCoordinates ? coordinates![0] : null);
+            lat,
+            lon);
     }
 
     /// <summary>

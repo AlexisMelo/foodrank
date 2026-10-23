@@ -1,7 +1,9 @@
 using api.Common;
 using api.Models;
 using api.Services.Places;
+using Supabase.Postgrest;
 using Supabase.Postgrest.Exceptions;
+using Supabase.Postgrest.Interfaces;
 using Supabase.Postgrest.Responses;
 
 namespace api.Services;
@@ -9,7 +11,11 @@ namespace api.Services;
 /// <summary>
 /// Reads restaurants from the database and creates them from places selected in the search.
 /// </summary>
-public class RestaurantService(Supabase.Client supabase, IPlaceProvider placeProvider) : IRestaurantService
+/// <param name="supabase">Client of the database.</param>
+/// <param name="placeProvider">Looks up the details of a place selected in the search.</param>
+/// <param name="configuration">Application settings, holding the default city suggestions are sorted from
+/// (Places:DefaultLocation).</param>
+public class RestaurantService(Supabase.Client supabase, IPlaceProvider placeProvider, IConfiguration configuration) : IRestaurantService
 {
     /// <summary>
     /// Emoji given to restaurants created from a place, until the cuisine type is handled.
@@ -75,6 +81,34 @@ public class RestaurantService(Supabase.Client supabase, IPlaceProvider placePro
             ? Result<RestaurantFromPlaceResponse>.Failure(new Error(ErrorType.Unavailable, "Could not save the restaurant."))
             : Result<RestaurantFromPlaceResponse>.Success(new RestaurantFromPlaceResponse(saved, created));
     }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<RestaurantSuggestionResponse>> GetSuggestionsAsync(string userId, double? lat, double? lon, int limit, CancellationToken cancellationToken)
+    {
+        ModeledResponse<Rating> rated = await supabase.From<Rating>()
+            .Select("id_restaurant")
+            .Where(r => r.UserId == userId)
+            .Get(cancellationToken);
+        List<string> ratedIds = rated.Models.Select(r => r.RestaurantId).Distinct().ToList();
+
+        // PostgREST cannot sort by a computed distance: the unrated restaurants are read and ranked here, so only the
+        // suggestions are sent to the client.
+        ModeledResponse<Restaurant> unrated = await UnratedRestaurantsQuery(supabase.From<Restaurant>(), ratedIds).Get(cancellationToken);
+        GeoPoint? userPosition = SearchPosition.FromQuery(lat, lon);
+        return RestaurantSuggestionResponse.Rank(unrated.Models, userPosition ?? SearchPosition.Default(configuration), userPosition is not null, limit);
+    }
+
+    /// <summary>
+    /// Query of the restaurants whose id is not in <paramref name="ratedIds"/>.
+    /// </summary>
+    /// <param name="restaurants">Query on the "restaurants" table to filter.</param>
+    /// <param name="ratedIds">Database ids of the restaurants the user rated; every restaurant is kept when empty
+    /// (PostgREST rejects an empty "not in" list).</param>
+    /// <returns>The filtered query, ready to send.</returns>
+    public static IPostgrestTable<Restaurant> UnratedRestaurantsQuery(IPostgrestTable<Restaurant> restaurants, IReadOnlyList<string> ratedIds)
+        => ratedIds.Count == 0
+            ? restaurants
+            : restaurants.Not("id", Constants.Operator.In, ratedIds.ToList());
 
     /// <summary>
     /// Looks up a restaurant by its OpenStreetMap identifier.

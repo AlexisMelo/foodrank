@@ -12,14 +12,18 @@
     }
 
     <div class="cards-scroll">
-      @for (restaurant of restaurants(); track restaurant.id) {
-        <button type="button" class="restaurant-card" (click)="openRestaurant(restaurant)">
-          <span class="card-emoji" aria-hidden="true">{{ restaurant.emoji }}</span>
-          <span class="card-name">{{ restaurant.name }}</span>
-          @if (restaurant.distance !== null) {
-            <span class="card-distance">📍 {{ formatDistance(restaurant.distance) }}</span>
+      @for (suggestion of suggestions(); track suggestion.restaurant.id) {
+        <button
+          type="button"
+          class="restaurant-card"
+          (click)="openRestaurant(suggestion.restaurant)"
+        >
+          <span class="card-emoji" aria-hidden="true">{{ suggestion.restaurant.emoji }}</span>
+          <span class="card-name">{{ suggestion.restaurant.name }}</span>
+          @if (suggestion.distanceKm !== null) {
+            <span class="card-distance">📍 {{ formatDistance(suggestion.distanceKm) }}</span>
           } @else {
-            <span class="card-distance muted">{{ restaurant.cuisine }}</span>
+            <span class="card-distance muted">{{ suggestion.restaurant.cuisine }}</span>
           }
         </button>
       }

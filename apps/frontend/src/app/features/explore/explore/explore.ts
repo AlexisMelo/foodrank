@@ -1,11 +1,9 @@
 import { Component, computed, inject } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { forkJoin, map, timer } from 'rxjs';
-import { RatingApi } from '@/core/api/rating-api';
+import { map, timer } from 'rxjs';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import { UserLocation } from '@/core/location/user-location';
-import type { UserLocation as UserPosition } from '@/core/models/location.model';
 import type { Restaurant } from '@/core/models/restaurant.model';
 
 /**
@@ -14,34 +12,11 @@ import type { Restaurant } from '@/core/models/restaurant.model';
 const SUGGESTION_COUNT = 5;
 
 /**
- * Longest wait for the user's position before showing the suggestions unsorted, in milliseconds. The browser only
- * starts its own timeout once the permission is granted: without this one, an unanswered prompt would keep the page
- * loading forever.
+ * Longest wait for the user's position before showing the suggestions sorted from the API's default city, in
+ * milliseconds. The browser only starts its own timeout once the permission is granted: without this one, an
+ * unanswered prompt would keep the page loading forever.
  */
 const LOCATION_WAIT_MS = 3000;
-
-/**
- * A restaurant suggested, with its distance from the user.
- */
-interface RestaurantWithDistance extends Restaurant {
-  /**
-   * Distance from the user in kilometers; null when the user's position or the restaurant's coordinates are unknown
-   */
-  distance: number | null;
-}
-
-/**
- * Great-circle distance between two points, in kilometers.
- */
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 /**
  * A distance for display: "850 m" under 1 km, "2.3 km" above.
@@ -49,31 +24,6 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
 function formatDistance(km: number): string {
   if (km < 1) return `${Math.round(km * 1000)} m`;
   return `${km.toFixed(1)} km`;
-}
-
-/**
- * Suggested restaurants: the first SUGGESTION_COUNT not visited yet, nearest first when the position is known, in
- * the API order otherwise. A restaurant without coordinates has no distance and comes after every measured one, as
- * in the API's place ranking.
- */
-function nearbyUnvisited(
-  restaurants: readonly Restaurant[],
-  visitedIds: ReadonlySet<string>,
-  position: UserPosition | null,
-): RestaurantWithDistance[] {
-  const withDistance: RestaurantWithDistance[] = restaurants
-    .filter((r) => !visitedIds.has(r.id))
-    .map((r) => ({
-      ...r,
-      distance:
-        position && r.lat !== null && r.lng !== null
-          ? haversineKm(position.lat, position.lon, r.lat, r.lng)
-          : null,
-    }));
-  if (position) {
-    withDistance.sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
-  }
-  return withDistance.slice(0, SUGGESTION_COUNT);
 }
 
 /**
@@ -91,30 +41,14 @@ export class Explore {
   private readonly router = inject(Router);
 
   /**
-   * Reads every restaurant
+   * Reads the suggestions of the logged-in user
    */
   private readonly restaurantApi = inject(RestaurantApi);
-
-  /**
-   * Reads the logged-in user's ratings: the restaurants they rated are left out
-   */
-  private readonly ratingApi = inject(RatingApi);
 
   /**
    * Position of the user, asked for when the page opens
    */
   private readonly userLocation = inject(UserLocation);
-
-  /**
-   * Every restaurant and the logged-in user's ratings, loaded together
-   */
-  private readonly dataResource = rxResource({
-    stream: () =>
-      forkJoin({
-        restaurants: this.restaurantApi.fetchRestaurants(),
-        ratings: this.ratingApi.fetchUserRatings(),
-      }),
-  });
 
   /**
    * True once LOCATION_WAIT_MS have passed since the page opened
@@ -131,27 +65,35 @@ export class Explore {
   );
 
   /**
-   * True while the restaurants or the location are loading
+   * Suggestions of the API (GET /api/restaurants/suggestions). Idle while locating, so they are asked once with the
+   * position when it is answered in time; asked again, sorted, if the position becomes known later
    */
-  protected readonly loading = computed(() => this.dataResource.isLoading() || this.locating());
+  private readonly suggestionsResource = rxResource({
+    params: () => (this.locating() ? undefined : { location: this.userLocation.location() }),
+    stream: ({ params }) => this.restaurantApi.fetchSuggestions(params.location, SUGGESTION_COUNT),
+  });
+
+  /**
+   * True while the location or the suggestions are loading
+   */
+  protected readonly loading = computed(
+    () => this.locating() || this.suggestionsResource.isLoading(),
+  );
 
   /**
    * True when the position is not known once the wait is over (refused, blocked, unavailable or still not answered):
-   * the restaurants are not sorted
+   * the restaurants are sorted from the API's default city and shown with their cuisine instead of a distance
    */
   protected readonly locationDenied = computed(
     () => !this.locating() && this.userLocation.status() !== 'granted',
   );
 
   /**
-   * Restaurants suggested; empty while loading and when the API fails. Re-sorted if the position becomes known later
+   * Restaurants suggested, in the API order; empty while loading and when the API fails
    */
-  protected readonly restaurants = computed(() => {
-    if (!this.dataResource.hasValue()) return [];
-    const { restaurants, ratings } = this.dataResource.value();
-    const visitedIds = new Set(ratings.map((r) => r.restaurantId));
-    return nearbyUnvisited(restaurants, visitedIds, this.userLocation.location());
-  });
+  protected readonly suggestions = computed(() =>
+    this.suggestionsResource.hasValue() ? this.suggestionsResource.value() : [],
+  );
 
   /**
    * Formats the distance shown on a card

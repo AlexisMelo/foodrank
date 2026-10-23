@@ -74,14 +74,23 @@ describe('RestaurantApi', () => {
     });
   });
 
-  describe('fetchRestaurants', () => {
-    it('gets every restaurant', async () => {
-      const result = firstValueFrom(api.fetchRestaurants());
-      const req = httpTesting.expectOne('http://api.test/api/restaurants');
+  describe('fetchSuggestions', () => {
+    it('sends the limit and the user position', async () => {
+      const result = firstValueFrom(api.fetchSuggestions({ lat: 49.18, lon: -0.37 }, 5));
+      const req = httpTesting.expectOne(
+        'http://api.test/api/restaurants/suggestions?limit=5&lat=49.18&lon=-0.37',
+      );
       expect(req.request.method).toBe('GET');
-      req.flush([{ id: 'r1' }, { id: 'r2' }]);
+      req.flush([{ restaurant: { id: 'r1' }, distanceKm: 0.556 }]);
 
-      expect((await result).map((r) => r.id)).toEqual(['r1', 'r2']);
+      expect(await result).toEqual([{ restaurant: { id: 'r1' }, distanceKm: 0.556 }]);
+    });
+
+    it('omits the position when unknown, so the API sorts from its default city', async () => {
+      const result = firstValueFrom(api.fetchSuggestions(null, 5));
+      httpTesting.expectOne('http://api.test/api/restaurants/suggestions?limit=5').flush([]);
+
+      expect(await result).toEqual([]);
     });
   });
 

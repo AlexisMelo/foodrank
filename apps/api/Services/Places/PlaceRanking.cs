@@ -17,14 +17,14 @@ public static class PlaceRanking
     /// <summary>
     /// Orders places in two groups, each sorted from nearest to farthest from <paramref name="origin"/>:
     /// first those whose name contains every word of <paramref name="query"/> (ignoring case and accents),
-    /// then the approximate matches. Places without coordinates come last in their group.
+    /// then the approximate matches.
     /// </summary>
     public static IEnumerable<PlaceDetails> Rank(IEnumerable<PlaceDetails> places, string query, GeoPoint origin)
     {
         string[] words = Normalize(query).Split(' ', StringSplitOptions.RemoveEmptyEntries);
         return places
             .OrderByDescending(p => ContainsAllWords(p.Name, words))
-            .ThenBy(p => p.Lat is null || p.Lng is null ? double.MaxValue : DistanceKm(origin, p.Lat.Value, p.Lng.Value));
+            .ThenBy(p => DistanceKm(origin, p.Lat, p.Lng));
     }
 
     /// <summary>
@@ -54,7 +54,11 @@ public static class PlaceRanking
     /// <summary>
     /// Great-circle distance in kilometers between <paramref name="origin"/> and a point (haversine formula).
     /// </summary>
-    private static double DistanceKm(GeoPoint origin, double lat, double lon)
+    /// <param name="origin">Position the distance is measured from.</param>
+    /// <param name="lat">Latitude of the point, in degrees.</param>
+    /// <param name="lon">Longitude of the point, in degrees.</param>
+    /// <returns>The distance in kilometers.</returns>
+    public static double DistanceKm(GeoPoint origin, double lat, double lon)
     {
         double dLat = ToRadians(lat - origin.Lat);
         double dLon = ToRadians(lon - origin.Lon);
