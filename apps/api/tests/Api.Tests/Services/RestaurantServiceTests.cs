@@ -1,7 +1,5 @@
-using api.Common;
 using api.Models;
 using api.Services;
-using api.Services.Places;
 using Supabase.Postgrest.Interfaces;
 
 namespace Api.Tests.Services;
@@ -38,34 +36,4 @@ public class RestaurantServiceTests
         Assert.DoesNotContain("id=", url);
     }
 
-    /// <summary>
-    /// A place with coordinates becomes a restaurant at the same position, linked to the place.
-    /// </summary>
-    [Fact]
-    public void ToRestaurant_WithCoordinates_MapsThePlace()
-    {
-        Result<Restaurant> restaurant = RestaurantService.ToRestaurant(new PlaceDetails("N42", "Novità", "1 rue Écuyère, Caen", 49.18, -0.37));
-
-        Assert.True(restaurant.IsSuccess);
-        Assert.Equal("N42", restaurant.Value!.OsmId);
-        Assert.Equal("Novità", restaurant.Value.Name);
-        Assert.Equal("1 rue Écuyère, Caen", restaurant.Value.Address);
-        Assert.Equal(49.18, restaurant.Value.Lat);
-        Assert.Equal(-0.37, restaurant.Value.Lng);
-    }
-
-    /// <summary>
-    /// A place the provider gave without a full position is not saved: the coordinates of a restaurant are required.
-    /// </summary>
-    [Theory]
-    [InlineData(null, null)]
-    [InlineData(49.18, null)]
-    [InlineData(null, -0.37)]
-    public void ToRestaurant_WithoutCoordinates_Fails(double? lat, double? lng)
-    {
-        Result<Restaurant> restaurant = RestaurantService.ToRestaurant(new PlaceDetails("N42", "Novità", "", lat, lng));
-
-        Assert.False(restaurant.IsSuccess);
-        Assert.Equal(ErrorType.Unavailable, restaurant.Error!.Type);
-    }
 }

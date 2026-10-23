@@ -60,25 +60,30 @@ public class NominatimClient(HttpClient httpClient, ILogger<NominatimClient> log
 
             List<NominatimPlace>? places = await response.Content.ReadFromJsonAsync<List<NominatimPlace>>(OsmJson.Options, cancellationToken);
             NominatimPlace? place = places?.FirstOrDefault();
-            if (place is null || string.IsNullOrWhiteSpace(place.Name))
-                return Result<PlaceDetails>.Failure(new Error(ErrorType.NotFound, "Place not found."));
-
-            return Result<PlaceDetails>.Success(ToDetails(osmId, place));
+            PlaceDetails? details = place is null ? null : ToDetails(osmId, place);
+            return details is null
+                ? Result<PlaceDetails>.Failure(new Error(ErrorType.NotFound, "Place not found."))
+                : Result<PlaceDetails>.Success(details);
         }
     }
 
     /// <summary>
     /// Maps a Nominatim place to provider-agnostic details.
     /// </summary>
-    private static PlaceDetails ToDetails(string osmId, NominatimPlace place)
+    /// <returns>The details, or null for a place without name or position: it is dropped here, so the rest of the API
+    /// never handles a place it cannot show or measure.</returns>
+    private static PlaceDetails? ToDetails(string osmId, NominatimPlace place)
     {
+        if (string.IsNullOrWhiteSpace(place.Name) || place is not { Lat: double lat, Lon: double lon })
+            return null;
+
         NominatimAddress? address = place.Address;
         string? city = address?.City ?? address?.Town ?? address?.Village;
         return new PlaceDetails(
             osmId,
-            place.Name!,
+            place.Name,
             OsmAddress.Format(address?.HouseNumber, address?.Road, address?.Postcode, city),
-            place.Lat,
-            place.Lon);
+            lat,
+            lon);
     }
 }

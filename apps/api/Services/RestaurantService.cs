@@ -59,10 +59,6 @@ public class RestaurantService(Supabase.Client supabase, IPlaceProvider placePro
         if (!details.IsSuccess)
             return Result<RestaurantFromPlaceResponse>.Failure(details.Error!);
 
-        Result<Restaurant> restaurant = ToRestaurant(details.Value!);
-        if (!restaurant.IsSuccess)
-            return Result<RestaurantFromPlaceResponse>.Failure(restaurant.Error!);
-
         // Insert, not upsert: postgrest-csharp always sends the primary key on upserts ("id": "", rejected by the uuid
         // column), while an insert lets the database generate it. If another request created the same restaurant
         // in the meantime, the unique index on osm_id rejects this insert and we read the existing row instead: that
@@ -71,7 +67,7 @@ public class RestaurantService(Supabase.Client supabase, IPlaceProvider placePro
         bool created;
         try
         {
-            ModeledResponse<Restaurant> inserted = await supabase.From<Restaurant>().Insert(restaurant.Value!, cancellationToken: cancellationToken);
+            ModeledResponse<Restaurant> inserted = await supabase.From<Restaurant>().Insert(ToRestaurant(details.Value!), cancellationToken: cancellationToken);
             saved = inserted.Models.FirstOrDefault() ?? await FindByOsmIdAsync(placeId, cancellationToken);
             created = true;
         }
@@ -129,22 +125,13 @@ public class RestaurantService(Supabase.Client supabase, IPlaceProvider placePro
     /// <summary>
     /// Maps place details to a new restaurant row.
     /// </summary>
-    /// <param name="details">Details of the place selected in the search.</param>
-    /// <returns>The restaurant to insert, or an Unavailable failure when the provider gave no coordinates: the
-    /// "lat" and "lng" columns are required.</returns>
-    public static Result<Restaurant> ToRestaurant(PlaceDetails details)
+    private static Restaurant ToRestaurant(PlaceDetails details) => new()
     {
-        if (details.Lat is not double lat || details.Lng is not double lng)
-            return Result<Restaurant>.Failure(new Error(ErrorType.Unavailable, "The position of this place is unknown: it cannot be saved."));
-
-        return Result<Restaurant>.Success(new Restaurant
-        {
-            OsmId = details.PlaceId,
-            Name = details.Name,
-            Address = details.Address,
-            Lat = lat,
-            Lng = lng,
-            Emoji = DefaultEmoji
-        });
-    }
+        OsmId = details.PlaceId,
+        Name = details.Name,
+        Address = details.Address,
+        Lat = details.Lat,
+        Lng = details.Lng,
+        Emoji = DefaultEmoji
+    };
 }

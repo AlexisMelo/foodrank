@@ -54,18 +54,4 @@ public class PlaceRankingTests
 
         Assert.Equal(["caen", "paris", "ny"], ranked.Select(p => p.PlaceId));
     }
-
-    /// <summary>
-    /// Places without coordinates come last in their group.
-    /// </summary>
-    [Fact]
-    public void Rank_PutsPlacesWithoutCoordinatesLastInTheirGroup()
-    {
-        PlaceDetails noCoordinates = new("unknown", "Novita", "", null, null);
-        PlaceDetails farAway = new("ny", "Novita", "", 40.71, -74.00);
-
-        List<PlaceDetails> ranked = PlaceRanking.Rank([noCoordinates, farAway], "novita", Caen).ToList();
-
-        Assert.Equal(["ny", "unknown"], ranked.Select(p => p.PlaceId));
-    }
 }
