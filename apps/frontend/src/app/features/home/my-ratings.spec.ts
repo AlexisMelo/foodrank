@@ -42,7 +42,7 @@ describe('injectMyRatings', () => {
 
   it("keeps the logged-in user's first ratings, in the API order (most recent first)", async () => {
     fetchUserRatings.mockReturnValue(
-      of([rating('r1', '2026-10-08'), rating('r2', '2026-10-07'), rating('r3', '2026-10-06')]),
+      of([rating('r1', '2026-10-08T12:00:00+00:00'), rating('r2', '2026-10-07T12:00:00+00:00'), rating('r3', '2026-10-06T12:00:00+00:00')]),
     );
 
     const { ratings, loading, loadError } = TestBed.runInInjectionContext(() => injectMyRatings(2));
@@ -57,7 +57,7 @@ describe('injectMyRatings', () => {
 
   it('keeps every rating without a limit', async () => {
     fetchUserRatings.mockReturnValue(
-      of(Array.from({ length: 7 }, (_, i) => rating(`r${i}`, '2026-10-08'))),
+      of(Array.from({ length: 7 }, (_, i) => rating(`r${i}`, '2026-10-08T12:00:00+00:00'))),
     );
 
     const { ratings } = TestBed.runInInjectionContext(() => injectMyRatings());

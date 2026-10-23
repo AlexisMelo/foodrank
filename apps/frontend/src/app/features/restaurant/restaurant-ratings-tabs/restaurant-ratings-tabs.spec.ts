@@ -104,8 +104,8 @@ describe('RestaurantRatingsTabs', () => {
 
   it("shows the user's own ratings first, with their date and scores", async () => {
     await render({
-      myRatings: [rating('Me', '2026-03-07', { bonus: true }), rating('Me', '2026-01-02')],
-      recentRatings: [rating('Camille', '2026-03-08')],
+      myRatings: [rating('Me', '2026-03-07T12:00:00+00:00', { bonus: true }), rating('Me', '2026-01-02T12:00:00+00:00')],
+      recentRatings: [rating('Camille', '2026-03-08T12:00:00+00:00')],
     });
 
     const cards = queryAll(fixture, '.visit-card');
@@ -125,7 +125,7 @@ describe('RestaurantRatingsTabs', () => {
 
   it('dims my previous ratings, replaced by a more recent one', async () => {
     await render({
-      myRatings: [rating('Me', '2026-03-07'), rating('Me', '2026-01-02', { isActive: false })],
+      myRatings: [rating('Me', '2026-03-07T12:00:00+00:00'), rating('Me', '2026-01-02T12:00:00+00:00', { isActive: false })],
     });
 
     expect(queryAll(fixture, '.visit-card').map((c) => c.classList.contains('inactive'))).toEqual([
@@ -136,8 +136,8 @@ describe('RestaurantRatingsTabs', () => {
 
   it('shows the recent ratings of every user under "Recent"', async () => {
     await render({
-      myRatings: [rating('Me', '2026-03-07')],
-      recentRatings: [rating('Camille', '2026-03-08'), rating('Me', '2026-03-07')],
+      myRatings: [rating('Me', '2026-03-07T12:00:00+00:00')],
+      recentRatings: [rating('Camille', '2026-03-08T12:00:00+00:00'), rating('Me', '2026-03-07T12:00:00+00:00')],
     });
 
     await openRecentTab();
@@ -154,8 +154,8 @@ describe('RestaurantRatingsTabs', () => {
 
   it("opens the author's profile from a recent rating, or my own profile from mine", async () => {
     await render({
-      myRatings: [rating('Me', '2026-03-07')],
-      recentRatings: [rating('Camille', '2026-03-08'), rating('Me', '2026-03-07')],
+      myRatings: [rating('Me', '2026-03-07T12:00:00+00:00')],
+      recentRatings: [rating('Camille', '2026-03-08T12:00:00+00:00'), rating('Me', '2026-03-07T12:00:00+00:00')],
     });
 
     await openRecentTab();
@@ -168,7 +168,7 @@ describe('RestaurantRatingsTabs', () => {
 
   it('opens my own profile from my recent rating even when my own ratings are not given', async () => {
     await render({
-      recentRatings: [rating('Me', '2026-03-07'), rating('Camille', '2026-03-06')],
+      recentRatings: [rating('Me', '2026-03-07T12:00:00+00:00'), rating('Camille', '2026-03-06T12:00:00+00:00')],
     });
 
     await openRecentTab();
@@ -181,7 +181,7 @@ describe('RestaurantRatingsTabs', () => {
 
   it("shows the author's picture when there is one", async () => {
     await render({
-      recentRatings: [rating('Camille', '2026-03-08', { userAvatarUrl: 'https://img.test/c.png' })],
+      recentRatings: [rating('Camille', '2026-03-08T12:00:00+00:00', { userAvatarUrl: 'https://img.test/c.png' })],
     });
 
     await openRecentTab();
@@ -192,7 +192,7 @@ describe('RestaurantRatingsTabs', () => {
   });
 
   it('explains when there is no rating in the selected tab', async () => {
-    await render({ recentRatings: [rating('Camille', '2026-03-08')] });
+    await render({ recentRatings: [rating('Camille', '2026-03-08T12:00:00+00:00')] });
 
     expect(textOf(fixture.nativeElement)).toContain('No visits yet');
 

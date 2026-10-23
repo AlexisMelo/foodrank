@@ -13,7 +13,7 @@ const SUMMARY: RatingSummary = { count: 2, food: 80, service: 70, setting: 60, g
 /**
  * Builds a rating of `restaurantId` by `userId`.
  */
-function rating(restaurantId: string, userId: string, date = '2026-03-07'): RestaurantRating {
+function rating(restaurantId: string, userId: string, date = '2026-03-07T12:00:00+00:00'): RestaurantRating {
   return {
     restaurantId,
     userId,

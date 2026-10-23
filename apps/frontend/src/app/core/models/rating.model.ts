@@ -40,7 +40,7 @@ export interface RestaurantRating {
   userId: string;
 
   /**
-   * Day of the rating, "yyyy-MM-dd" (no time, no time zone)
+   * Moment of the rating, ISO 8601 in UTC (e.g. "2026-03-07T21:30:00+00:00"); see `formatRatingDate`
    */
   date: string;
 
@@ -137,7 +137,7 @@ export interface UserRating {
   restaurantCuisine: string;
 
   /**
-   * Day of the rating, "yyyy-MM-dd"
+   * Moment of the rating, ISO 8601 in UTC (e.g. "2026-03-07T21:30:00+00:00"); see `formatRatingDate`
    */
   date: string;
 

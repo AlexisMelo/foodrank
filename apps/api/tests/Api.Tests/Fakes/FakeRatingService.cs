@@ -32,7 +32,7 @@ public class FakeRatingService(FakeRestaurantService restaurants) : IRatingServi
         {
             RestaurantId = restaurantId,
             UserId = userId,
-            Date = DateTime.UtcNow.Date,
+            Date = DateTimeOffset.UtcNow,
             FoodRating = request.Food,
             ServiceRating = request.Service,
             SettingRating = request.Setting,

@@ -7,7 +7,7 @@ namespace api.Models;
 /// <param name="RestaurantName">Name of the rated restaurant.</param>
 /// <param name="RestaurantEmoji">Emoji of the rated restaurant.</param>
 /// <param name="RestaurantCuisine">Type of cuisine of the rated restaurant, empty when unknown.</param>
-/// <param name="Date">Day of the rating, formatted "yyyy-MM-dd" (no time, no time zone).</param>
+/// <param name="Date">Moment of the rating, in UTC.</param>
 /// <param name="Food">Food rating, from 0 to 100.</param>
 /// <param name="Service">Service rating, from 0 to 100.</param>
 /// <param name="Setting">Setting (decor) rating, from 0 to 100.</param>
@@ -19,7 +19,7 @@ public record UserRatingResponse(
     string RestaurantName,
     string RestaurantEmoji,
     string RestaurantCuisine,
-    string Date,
+    DateTimeOffset Date,
     float Food,
     float Service,
     float Setting,
@@ -37,7 +37,7 @@ public record UserRatingResponse(
         restaurant.Name,
         restaurant.Emoji,
         restaurant.Cuisine,
-        Rating.FormatDate(rating.Date),
+        rating.Date.ToUniversalTime(),
         rating.FoodRating,
         rating.ServiceRating,
         rating.SettingRating,

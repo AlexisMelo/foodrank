@@ -22,19 +22,30 @@ describe('formatRatingDate', () => {
   });
 
   it('displays the day of the rating', () => {
-    expect(formatRatingDate('2026-03-07')).toBe('March 7, 2026');
+    vi.stubEnv('TZ', 'Europe/Paris');
+
+    expect(formatRatingDate('2026-03-07T12:00:00+00:00')).toBe('March 7, 2026');
   });
 
-  it('keeps the same day in time zones behind UTC', () => {
-    // Read as UTC midnight, '2026-03-07' would be March 6 in New York
+  it('displays the day in the local time zone, ahead of UTC', () => {
+    // 23:30 UTC is already 00:30 the next day in Paris
+    vi.stubEnv('TZ', 'Europe/Paris');
+
+    expect(formatRatingDate('2026-03-07T23:30:00+00:00')).toBe('March 8, 2026');
+  });
+
+  it('displays the day in the local time zone, behind UTC', () => {
+    // 02:00 UTC is still 21:00 the day before in New York
     vi.stubEnv('TZ', 'America/New_York');
 
-    expect(formatRatingDate('2026-03-07')).toBe('March 7, 2026');
+    expect(formatRatingDate('2026-03-08T02:00:00+00:00')).toBe('March 7, 2026');
   });
 
   it('displays only the requested parts', () => {
     vi.stubEnv('TZ', 'America/New_York');
 
-    expect(formatRatingDate('2026-03-07', { month: 'short', day: 'numeric' })).toBe('Mar 7');
+    expect(formatRatingDate('2026-03-07T12:00:00+00:00', { month: 'short', day: 'numeric' })).toBe(
+      'Mar 7',
+    );
   });
 });

@@ -159,7 +159,7 @@ public class RatingsControllerTests : IDisposable
     }
 
     /// <summary>
-    /// Stores a rating of <paramref name="restaurantId"/> by <paramref name="userId"/> on <paramref name="date"/>,
+    /// Stores a rating of <paramref name="restaurantId"/> by <paramref name="userId"/> at <paramref name="date"/> (UTC),
     /// active unless <paramref name="isActive"/> is false.
     /// </summary>
     private void AddRating(string userId, DateTime date, float food = 50, string restaurantId = RestaurantId, bool isActive = true,
@@ -168,7 +168,7 @@ public class RatingsControllerTests : IDisposable
         {
             RestaurantId = restaurantId,
             UserId = userId,
-            Date = date,
+            Date = new DateTimeOffset(date, TimeSpan.Zero),
             FoodRating = food,
             ServiceRating = service,
             SettingRating = setting,
@@ -191,7 +191,7 @@ public class RatingsControllerTests : IDisposable
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         List<RatingResponse> ratings = (await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!;
-        Assert.Equal(["2026-03-07", "2026-03-06", "2026-03-05", "2026-03-04", "2026-03-03"], ratings.Select(r => r.Date));
+        Assert.Equal([7, 6, 5, 4, 3], ratings.Select(r => r.Date.Day));
         Assert.All(ratings, r => Assert.Equal(RestaurantId, r.RestaurantId));
     }
 
@@ -230,7 +230,7 @@ public class RatingsControllerTests : IDisposable
     public async Task GetRecent_WithProfile_ReturnsAuthorName()
     {
         _factory.RatingService.Profiles["user-2"] = new Profile { Id = "user-2", Username = "Camille", AvatarUrl = "https://img.test/c.png" };
-        AddRating("user-2", new DateTime(2026, 3, 1), food: 72.5f);
+        AddRating("user-2", new DateTime(2026, 3, 1, 21, 30, 0), food: 72.5f);
 
         HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings");
 
@@ -238,7 +238,8 @@ public class RatingsControllerTests : IDisposable
         Assert.Contains("\"userName\":\"Camille\"", json);
         Assert.Contains("\"userAvatarUrl\":\"https://img.test/c.png\"", json);
         Assert.Contains("\"food\":72.5", json);
-        Assert.Contains("\"date\":\"2026-03-01\"", json);
+        // ISO 8601 moment in UTC: the frontend displays its day in the browser's time zone
+        Assert.Contains("\"date\":\"2026-03-01T21:30:00+00:00\"", json);
     }
 
     /// <summary>
@@ -257,7 +258,7 @@ public class RatingsControllerTests : IDisposable
         HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings?limit=3");
 
         List<RatingResponse> ratings = (await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!;
-        Assert.Equal([("user-2", "2026-03-05"), (UserId, "2026-03-02"), ("user-3", "2026-03-01")], ratings.Select(r => (r.UserId, r.Date)));
+        Assert.Equal([("user-2", 5), (UserId, 2), ("user-3", 1)], ratings.Select(r => (r.UserId, r.Date.Day)));
         Assert.All(ratings, r => Assert.True(r.IsActive));
         Assert.Contains("\"isActive\":true", await response.Content.ReadAsStringAsync());
     }
@@ -365,7 +366,7 @@ public class RatingsControllerTests : IDisposable
         Assert.Equal(6, ratings.Count);
         Assert.All(ratings, r => Assert.Equal(UserId, r.UserId));
         Assert.All(ratings, r => Assert.Equal(RestaurantId, r.RestaurantId));
-        Assert.Equal("2026-03-06", ratings[0].Date);
+        Assert.Equal(6, ratings[0].Date.Day);
     }
 
     /// <summary>

@@ -28,7 +28,8 @@ public class RatingService(Supabase.Client supabase, IRestaurantService restaura
 
         // One request is one transaction: the previous active rating is deactivated (update on its primary key) and
         // the new one inserted together, so there is never zero or two active ratings. Two submits racing the same
-        // day both pass the check above; the second then overwrites the first's row, which stays consistent.
+        // day both pass the check above and, the date being a moment, both insert their own row: the database does not
+        // enforce the "once per day" rule.
         Rating newRating = rows.Value![^1];
         ModeledResponse<Rating> written = await supabase.From<Rating>().Upsert(rows.Value.ToList(), cancellationToken: cancellationToken);
         return Result<Rating>.Success(written.Models.LastOrDefault() ?? newRating);
@@ -167,14 +168,13 @@ public class RatingService(Supabase.Client supabase, IRestaurantService restaura
     }
 
     /// <summary>
-    /// Maps the request to a new rating row, dated today (UTC).
+    /// Maps the request to a new rating row, dated now.
     /// </summary>
     private static Rating ToRating(string restaurantId, string userId, RateRestaurantRequest request) => new()
     {
         RestaurantId = restaurantId,
         UserId = userId,
-        // Unspecified kind so the date is serialized without time zone ("2026-10-01T00:00:00") for the "date" column
-        Date = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Unspecified),
+        Date = DateTimeOffset.UtcNow,
         FoodRating = request.Food,
         ServiceRating = request.Service,
         SettingRating = request.Setting,

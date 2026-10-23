@@ -34,7 +34,7 @@ function rating(restaurantId: string, food: number, service: number, setting: nu
     restaurantName: `Restaurant ${restaurantId}`,
     restaurantEmoji: '🍔',
     restaurantCuisine: '',
-    date: '2026-10-01',
+    date: '2026-10-01T12:00:00+00:00',
     food,
     service,
     setting,
@@ -242,7 +242,7 @@ describe('NewReview', () => {
         rating('a', 20, 50, 80),
         rating('b', 52, 75, 21),
         // A previous rating, replaced by the active one: not shown
-        { ...rating('a', 78, 78, 78), date: '2026-01-01', isActive: false },
+        { ...rating('a', 78, 78, 78), date: '2026-01-01T12:00:00+00:00', isActive: false },
       ]),
     );
     await openPage();

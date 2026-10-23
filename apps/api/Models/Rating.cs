@@ -1,4 +1,3 @@
-using System.Globalization;
 using api.Common;
 using Supabase.Postgrest.Attributes;
 using Supabase.Postgrest.Models;
@@ -6,9 +5,10 @@ using Supabase.Postgrest.Models;
 namespace api.Models;
 
 /// <summary>
-/// A user's rating of a restaurant, stored in the "rating" table. A user can rate a restaurant at most once per day
-/// (primary key: restaurant, user, date). Only the latest rating of a user for a restaurant is active (it is the
-/// user's score for the restaurant, flagged in the "is_active" column); the previous ones are kept as history.
+/// A user's rating of a restaurant, stored in the "rating" table (primary key: restaurant, user, date). A user can rate
+/// a restaurant at most once per day, which the API checks (see <see cref="PlanNew"/>). Only the latest rating of a
+/// user for a restaurant is active (it is the user's score for the restaurant, flagged in the "is_active" column); the
+/// previous ones are kept as history.
 /// </summary>
 [Table("rating")]
 public class Rating : BaseModel
@@ -26,10 +26,11 @@ public class Rating : BaseModel
     public string UserId { get; set; } = string.Empty;
 
     /// <summary>
-    /// Day of the rating (UTC), without time.
+    /// Moment of the rating ("timestamptz" column). Part of the primary key: a row is written back with the exact
+    /// moment read from the database.
     /// </summary>
     [PrimaryKey("date", true)]
-    public DateTime Date { get; set; }
+    public DateTimeOffset Date { get; set; }
 
     /// <summary>
     /// Food rating, from 0 to 100.
@@ -63,13 +64,6 @@ public class Rating : BaseModel
     public bool IsActive { get; set; }
 
     /// <summary>
-    /// Formats a rating day for API responses.
-    /// </summary>
-    /// <param name="date">Day of the rating (its time is ignored).</param>
-    /// <returns>The day as "yyyy-MM-dd", without time nor time zone.</returns>
-    public static string FormatDate(DateTime date) => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-
-    /// <summary>
     /// Plans the rows to write so that <paramref name="newRating"/> becomes the active rating of its user for its
     /// restaurant. Writing them in a single upsert keeps exactly one active rating, as the request is one transaction.
     /// </summary>
@@ -77,10 +71,10 @@ public class Rating : BaseModel
     /// zero or one; every one of them is deactivated).</param>
     /// <param name="newRating">Rating being created.</param>
     /// <returns>The previous active ratings, deactivated, then <paramref name="newRating"/>, active; or a Conflict
-    /// failure when the user already rated the restaurant that day.</returns>
+    /// failure when the user already rated the restaurant the same day (UTC).</returns>
     public static Result<IReadOnlyList<Rating>> PlanNew(IReadOnlyList<Rating> currentActive, Rating newRating)
     {
-        if (currentActive.Any(r => r.Date.Date == newRating.Date.Date))
+        if (currentActive.Any(r => UtcDay(r.Date) == UtcDay(newRating.Date)))
             return Result<IReadOnlyList<Rating>>.Failure(new Error(ErrorType.Conflict, "You already rated this restaurant today."));
 
         List<Rating> rows = currentActive.Select(r => r.WithIsActive(false)).ToList();
@@ -89,14 +83,18 @@ public class Rating : BaseModel
     }
 
     /// <summary>
+    /// Day of a moment in UTC, the day the "once per day" rule is checked on.
+    /// </summary>
+    private static DateTime UtcDay(DateTimeOffset moment) => moment.UtcDateTime.Date;
+
+    /// <summary>
     /// Copies this rating with another active flag.
     /// </summary>
     private Rating WithIsActive(bool isActive) => new()
     {
         RestaurantId = RestaurantId,
         UserId = UserId,
-        // Unspecified kind so the date is serialized without time zone ("2026-10-01T00:00:00") for the "date" column
-        Date = DateTime.SpecifyKind(Date.Date, DateTimeKind.Unspecified),
+        Date = Date,
         FoodRating = FoodRating,
         ServiceRating = ServiceRating,
         SettingRating = SettingRating,

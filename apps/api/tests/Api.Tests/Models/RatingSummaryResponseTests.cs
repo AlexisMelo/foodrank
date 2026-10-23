@@ -14,7 +14,7 @@ public class RatingSummaryResponseTests
     {
         RestaurantId = "r1",
         UserId = Guid.NewGuid().ToString(),
-        Date = new DateTime(2026, 3, 7),
+        Date = new DateTimeOffset(2026, 3, 7, 12, 0, 0, TimeSpan.Zero),
         FoodRating = food,
         ServiceRating = service,
         SettingRating = setting,

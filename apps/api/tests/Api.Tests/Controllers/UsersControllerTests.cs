@@ -65,7 +65,7 @@ public class UsersControllerTests : IDisposable
     }
 
     /// <summary>
-    /// Stores a rating of <paramref name="restaurantId"/> by <paramref name="userId"/> on <paramref name="date"/>,
+    /// Stores a rating of <paramref name="restaurantId"/> by <paramref name="userId"/> at <paramref name="date"/> (UTC),
     /// active unless <paramref name="isActive"/> is false.
     /// </summary>
     private void AddRating(string userId, string restaurantId, DateTime date, float food = 50, bool isActive = true)
@@ -73,7 +73,7 @@ public class UsersControllerTests : IDisposable
         {
             RestaurantId = restaurantId,
             UserId = userId,
-            Date = date,
+            Date = new DateTimeOffset(date, TimeSpan.Zero),
             FoodRating = food,
             ServiceRating = 60,
             SettingRating = 70,
@@ -171,7 +171,7 @@ public class UsersControllerTests : IDisposable
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         List<UserRatingResponse> ratings = (await response.Content.ReadFromJsonAsync<List<UserRatingResponse>>())!;
-        Assert.Equal(["2026-03-05", "2026-03-01"], ratings.Select(r => r.Date));
+        Assert.Equal([5, 1], ratings.Select(r => r.Date.Day));
         UserRatingResponse pizza = ratings[1];
         Assert.Equal("r1", pizza.RestaurantId);
         Assert.Equal("Pizza Roma", pizza.RestaurantName);

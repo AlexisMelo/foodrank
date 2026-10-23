@@ -66,7 +66,7 @@ describe('RatingApi', () => {
 
   describe('fetchRecentRatings', () => {
     it('asks for the 5 most recent ratings by default, encoding the restaurant id', async () => {
-      const ratings = [{ userId: 'u1', date: '2026-03-07', userName: 'Camille' }];
+      const ratings = [{ userId: 'u1', date: '2026-03-07T12:00:00+00:00', userName: 'Camille' }];
 
       const result = firstValueFrom(api.fetchRecentRatings('a/b'));
       const req = httpTesting.expectOne('http://api.test/api/restaurants/a%2Fb/ratings?limit=5');
@@ -88,7 +88,7 @@ describe('RatingApi', () => {
 
   describe('fetchMyRatings', () => {
     it("returns the logged-in user's ratings, sending the session cookie", async () => {
-      const ratings = [{ userId: 'me', date: '2026-03-07' }];
+      const ratings = [{ userId: 'me', date: '2026-03-07T12:00:00+00:00' }];
 
       const result = firstValueFrom(api.fetchMyRatings('a/b'));
       const req = httpTesting.expectOne('http://api.test/api/restaurants/a%2Fb/ratings/mine');
@@ -120,7 +120,7 @@ describe('RatingApi', () => {
 
   describe('fetchUserRatings', () => {
     it("returns the logged-in user's ratings by default", async () => {
-      const ratings = [{ restaurantId: 'r1', date: '2026-03-07' }];
+      const ratings = [{ restaurantId: 'r1', date: '2026-03-07T12:00:00+00:00' }];
 
       const result = firstValueFrom(api.fetchUserRatings());
       const req = httpTesting.expectOne('http://api.test/api/users/me/ratings');

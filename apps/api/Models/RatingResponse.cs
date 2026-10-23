@@ -5,7 +5,7 @@ namespace api.Models;
 /// </summary>
 /// <param name="RestaurantId">Database identifier of the rated restaurant.</param>
 /// <param name="UserId">Supabase Auth identifier of the user who rated.</param>
-/// <param name="Date">Day of the rating, formatted "yyyy-MM-dd" (no time, no time zone).</param>
+/// <param name="Date">Moment of the rating, in UTC.</param>
 /// <param name="Food">Food rating, from 0 to 100.</param>
 /// <param name="Service">Service rating, from 0 to 100.</param>
 /// <param name="Setting">Setting (decor) rating, from 0 to 100.</param>
@@ -17,7 +17,7 @@ namespace api.Models;
 public record RatingResponse(
     string RestaurantId,
     string UserId,
-    string Date,
+    DateTimeOffset Date,
     float Food,
     float Service,
     float Setting,
@@ -35,7 +35,7 @@ public record RatingResponse(
     public static RatingResponse From(Rating rating, Profile? profile) => new(
         rating.RestaurantId,
         rating.UserId,
-        Rating.FormatDate(rating.Date),
+        rating.Date.ToUniversalTime(),
         rating.FoodRating,
         rating.ServiceRating,
         rating.SettingRating,

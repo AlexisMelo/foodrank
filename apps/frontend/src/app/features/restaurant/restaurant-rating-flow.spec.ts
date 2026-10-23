@@ -81,7 +81,7 @@ class FakeRatingApi {
     this.ratings.push({
       restaurantId,
       userId: 'me',
-      date: '2026-10-09',
+      date: '2026-10-09T12:00:00+00:00',
       food: rating.food,
       service: rating.service,
       setting: rating.setting,
@@ -104,7 +104,7 @@ describe('rating a restaurant from its page', () => {
       {
         restaurantId: 'r1',
         userId: 'me',
-        date: '2026-01-02',
+        date: '2026-01-02T12:00:00+00:00',
         food: 50,
         service: 50,
         setting: 50,
@@ -202,7 +202,7 @@ describe('rating a restaurant from its page', () => {
     api.ratings.push(
       { ...other, food: 90, service: 60, setting: 30 },
       // A previous rating of Camille, replaced: not counted
-      { ...other, date: '2025-12-01', food: 0, service: 0, setting: 0, isActive: false },
+      { ...other, date: '2025-12-01T12:00:00+00:00', food: 0, service: 0, setting: 0, isActive: false },
     );
 
     await openApp('/restaurant/r1');

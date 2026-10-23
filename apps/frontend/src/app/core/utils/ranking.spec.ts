@@ -17,7 +17,7 @@ function rating(
     restaurantName: `Name ${restaurantId}`,
     restaurantEmoji: '🍽️',
     restaurantCuisine: 'Italian',
-    date: '2026-03-07',
+    date: '2026-03-07T12:00:00+00:00',
     food,
     service,
     setting,

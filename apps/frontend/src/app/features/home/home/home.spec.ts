@@ -217,7 +217,7 @@ describe('Home', () => {
 
     it('dims a previous review, replaced by a more recent one of the same restaurant', async () => {
       fetchUserRatings.mockReturnValue(
-        of([rating('r1', '2026-10-08'), { ...rating('r1', '2026-10-01'), isActive: false }]),
+        of([rating('r1', '2026-10-08T12:00:00+00:00'), { ...rating('r1', '2026-10-01T12:00:00+00:00'), isActive: false }]),
       );
       await openHome();
 
@@ -227,7 +227,7 @@ describe('Home', () => {
     });
 
     it('opens the restaurant page when a review is clicked', async () => {
-      fetchUserRatings.mockReturnValue(of([rating('r1', '2026-10-08')]));
+      fetchUserRatings.mockReturnValue(of([rating('r1', '2026-10-08T12:00:00+00:00')]));
       await openHome();
 
       query(harness.fixture, '.review-card').click();
@@ -298,7 +298,7 @@ describe('Home', () => {
 
     it('hides the section when the tierlists cannot be loaded, the rest of the page still shown', async () => {
       fetchTierlistsByUserId.mockReturnValue(throwError(() => new Error('503')));
-      fetchUserRatings.mockReturnValue(of([rating('r1', '2026-10-08')]));
+      fetchUserRatings.mockReturnValue(of([rating('r1', '2026-10-08T12:00:00+00:00')]));
       await openHome();
 
       expect(tierlistNames()).toEqual([]);
@@ -312,7 +312,7 @@ describe('Home', () => {
      */
     function scored(restaurantId: string, score: number): UserRating {
       return {
-        ...rating(restaurantId, '2026-10-08'),
+        ...rating(restaurantId, '2026-10-08T12:00:00+00:00'),
         food: score,
         service: score,
         setting: score,
@@ -342,7 +342,7 @@ describe('Home', () => {
       fetchUserRatings.mockReturnValue(
         of([
           scored('changed', 30),
-          { ...scored('changed', 100), date: '2026-01-01', isActive: false },
+          { ...scored('changed', 100), date: '2026-01-01T12:00:00+00:00', isActive: false },
           scored('steady', 70),
         ]),
       );

@@ -14,7 +14,7 @@ function rating(restaurantId: string, score: number, isActive = true): UserRatin
     restaurantName: restaurantId,
     restaurantEmoji: '🍽️',
     restaurantCuisine: '',
-    date: '2026-03-07',
+    date: '2026-03-07T12:00:00+00:00',
     food: score,
     service: score,
     setting: score,

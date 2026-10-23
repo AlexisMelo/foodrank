@@ -14,7 +14,8 @@ public class RatingResponseTests
     {
         RestaurantId = "r1",
         UserId = "user-1",
-        Date = new DateTime(2026, 3, 7),
+        // 20:15 in Paris (UTC+2)
+        Date = new DateTimeOffset(2026, 3, 7, 20, 15, 0, TimeSpan.FromHours(2)),
         FoodRating = 80.5f,
         ServiceRating = 60,
         SettingRating = 40,
@@ -23,16 +24,17 @@ public class RatingResponseTests
     };
 
     /// <summary>
-    /// The scores, the bonus and the ids are copied, and the date is sent without time.
+    /// The scores, the bonus and the ids are copied, and the moment is sent in UTC.
     /// </summary>
     [Fact]
-    public void From_Rating_CopiesScoresAndFormatsDate()
+    public void From_Rating_CopiesScoresAndSendsMomentInUtc()
     {
         RatingResponse response = RatingResponse.From(SampleRating, null);
 
         Assert.Equal("r1", response.RestaurantId);
         Assert.Equal("user-1", response.UserId);
-        Assert.Equal("2026-03-07", response.Date);
+        Assert.Equal(new DateTimeOffset(2026, 3, 7, 18, 15, 0, TimeSpan.Zero), response.Date);
+        Assert.Equal(TimeSpan.Zero, response.Date.Offset);
         Assert.Equal(80.5f, response.Food);
         Assert.Equal(60, response.Service);
         Assert.Equal(40, response.Setting);
@@ -46,7 +48,7 @@ public class RatingResponseTests
     [Fact]
     public void From_PreviousRating_IsInactive()
     {
-        Rating previous = new() { RestaurantId = "r1", UserId = "user-1", Date = new DateTime(2026, 3, 1), IsActive = false };
+        Rating previous = new() { RestaurantId = "r1", UserId = "user-1", Date = new DateTimeOffset(2026, 3, 1, 12, 0, 0, TimeSpan.Zero), IsActive = false };
 
         Assert.False(RatingResponse.From(previous, null).IsActive);
     }
