@@ -6,6 +6,7 @@ import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom, tap } from 'rxjs';
 import { RatingApi } from '@/core/api/rating-api';
 import { RestaurantApi } from '@/core/api/restaurant-api';
+import { CelebrationStore } from '@/core/celebration/celebration-store';
 import type { RatingInput, UserRating } from '@/core/models/rating.model';
 import { CriterionSlider, type ReviewMarker } from '../criterion-slider/criterion-slider';
 import { type PastReview, pickMarkers } from '../rating-scale';
@@ -85,6 +86,11 @@ export class NewReview {
   private readonly router = inject(Router);
 
   /**
+   * Tells the restaurant page to congratulate the user after their first rating of the restaurant
+   */
+  private readonly celebrations = inject(CelebrationStore);
+
+  /**
    * The restaurant rated; leaves for the home page when it does not exist
    */
   private readonly restaurantResource = rxResource({
@@ -124,6 +130,16 @@ export class NewReview {
    */
   protected readonly restaurant = computed(() =>
     this.restaurantResource.hasValue() ? this.restaurantResource.value() : undefined,
+  );
+
+  /**
+   * True when the user never rated this restaurant before, whoever else did: saving then congratulates them. False
+   * while their ratings load and when the API fails
+   */
+  private readonly firstRating = computed(
+    () =>
+      this.ratingsResource.hasValue() &&
+      this.ratingsResource.value().every((rating) => rating.restaurantId !== this.id()),
   );
 
   /**
@@ -191,7 +207,7 @@ export class NewReview {
   }
 
   /**
-   * Save the rating, then go back to the restaurant page
+   * Save the rating, then go back to the restaurant page, which congratulates the user after their first rating of it
    */
   protected async submit(): Promise<void> {
     const restaurant = this.restaurant();
@@ -200,6 +216,7 @@ export class NewReview {
     this.saveError.set(null);
     try {
       await firstValueFrom(this.ratingApi.rateRestaurant(restaurant.id, this.rating()));
+      if (this.firstRating()) this.celebrations.celebrate(restaurant.id, 'first-review');
       void this.router.navigateByUrl(`/restaurant/${restaurant.id}`);
     } catch (error) {
       this.saveError.set(saveErrorMessage(error));

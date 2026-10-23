@@ -2,10 +2,11 @@ import { Location } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { Observable, of, tap } from 'rxjs';
+import { tap } from 'rxjs';
 import { RestaurantApi } from '@/core/api/restaurant-api';
-import type { Restaurant } from '@/core/models/restaurant.model';
+import { CelebrationStore } from '@/core/celebration/celebration-store';
 import { CriteriaAverages } from '../criteria-averages/criteria-averages';
+import { CelebrationDialog } from '../celebration-dialog/celebration-dialog';
 import { CuisineChip } from '../cuisine-chip/cuisine-chip';
 import { GlobalScoreBadge } from '../global-score-badge/global-score-badge';
 import { RestaurantAddress } from '../restaurant-address/restaurant-address';
@@ -13,12 +14,14 @@ import { RestaurantRatingsTabs } from '../restaurant-ratings-tabs/restaurant-rat
 import { injectRestaurantRatings } from '../restaurant-ratings';
 
 /**
- * Restaurant page (/restaurant/:id, /restaurant/place/:placeId): the restaurant, its global rating and criteria
- * averages, and its ratings.
+ * Restaurant page (/restaurant/:id): the restaurant, its global rating and criteria averages, and its ratings. A full
+ * page modal celebrates the user when they are the first to open the place from the search ("The explorer"), and
+ * right after their first rating of the restaurant ("Bravo").
  */
 @Component({
   imports: [
     CriteriaAverages,
+    CelebrationDialog,
     CuisineChip,
     GlobalScoreBadge,
     RestaurantAddress,
@@ -30,18 +33,12 @@ import { injectRestaurantRatings } from '../restaurant-ratings';
 })
 export class RestaurantDetail {
   /**
-   * Database id of the restaurant, from /restaurant/:id; undefined on /restaurant/place/:placeId
+   * Database id of the restaurant, from /restaurant/:id
    */
-  readonly id = input<string>();
+  readonly id = input.required<string>();
 
   /**
-   * Id of the place at the place provider, from /restaurant/place/:placeId (opened from the search); undefined on
-   * /restaurant/:id
-   */
-  readonly placeId = input<string>();
-
-  /**
-   * Replaces the URL once the restaurant of a place is known, or leaves an unknown restaurant
+   * Leaves an unknown restaurant for the home page
    */
   private readonly router = inject(Router);
 
@@ -51,16 +48,22 @@ export class RestaurantDetail {
   private readonly location = inject(Location);
 
   /**
-   * Reads the restaurant, or gets or creates the one of a place
+   * Reads the restaurant
    */
   private readonly restaurantApi = inject(RestaurantApi);
 
   /**
-   * The restaurant of the route, reloaded each time the route params change; undefined when it does not exist
+   * The restaurant of the route, reloaded each time the id changes; undefined when it does not exist, the page then
+   * leaves for the home page
    */
   private readonly restaurantResource = rxResource({
-    params: () => ({ id: this.id(), placeId: this.placeId() }),
-    stream: ({ params: { id, placeId } }) => this.loadRestaurant(id, placeId),
+    params: () => this.id(),
+    stream: ({ params: id }) =>
+      this.restaurantApi.fetchRestaurantById(id).pipe(
+        tap((found) => {
+          if (!found) void this.router.navigateByUrl('/', { replaceUrl: true });
+        }),
+      ),
   });
 
   /**
@@ -69,7 +72,7 @@ export class RestaurantDetail {
   protected readonly loading = this.restaurantResource.isLoading;
 
   /**
-   * True when the restaurant could not be loaded (e.g. place provider unavailable)
+   * True when the restaurant could not be loaded (e.g. API unavailable)
    */
   protected readonly loadError = computed(() => this.restaurantResource.status() === 'error');
 
@@ -81,31 +84,31 @@ export class RestaurantDetail {
   );
 
   /**
+   * Celebration handed by the search or the rating page, read each time the restaurant changes: opening another
+   * restaurant from the search keeps this page, only its id changes
+   */
+  private readonly celebrations = inject(CelebrationStore);
+
+  /**
+   * What the modal celebrates, once the restaurant is loaded and is the one celebrated; null when no modal shows
+   */
+  protected readonly celebration = computed(() => {
+    const celebration = this.celebrations.pending();
+    return celebration && celebration.restaurantId === this.restaurant()?.id
+      ? celebration.kind
+      : null;
+  });
+
+  /**
    * Loaded once the restaurant is known, and again each time this page is opened (e.g. right after rating it)
    */
   protected readonly ratings = injectRestaurantRatings(() => this.restaurant()?.id ?? null);
 
   /**
-   * Loads the restaurant from the route:
-   * - /restaurant/place/:placeId (opened from the search): gets or creates it in the database,
-   *   then replaces the URL with its stable /restaurant/:id
-   * - /restaurant/:id: reads it from the database, and leaves for the home page when it does not exist
+   * Removes the celebration modal once closed, for good
    */
-  private loadRestaurant(id?: string, placeId?: string): Observable<Restaurant | undefined> {
-    const found$: Observable<Restaurant | undefined> = placeId
-      ? this.restaurantApi.createRestaurantFromPlace(placeId).pipe(
-          tap((found) => {
-            void this.router.navigateByUrl(`/restaurant/${found.id}`, { replaceUrl: true });
-          }),
-        )
-      : id
-        ? this.restaurantApi.fetchRestaurantById(id)
-        : of(undefined);
-    return found$.pipe(
-      tap((found) => {
-        if (!found) void this.router.navigateByUrl('/', { replaceUrl: true });
-      }),
-    );
+  protected closeCelebration(): void {
+    this.celebrations.dismiss();
   }
 
   /**

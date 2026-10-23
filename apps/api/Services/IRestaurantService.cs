@@ -19,7 +19,8 @@ public interface IRestaurantService
     Task<Result<Restaurant>> GetByIdAsync(string id, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Returns the restaurant linked to <paramref name="placeId"/>, creating it from the place provider if it is not stored yet.
+    /// Returns the restaurant linked to <paramref name="placeId"/>, creating it from the place provider if it is not stored yet,
+    /// and whether this call created it.
     /// </summary>
-    Task<Result<Restaurant>> GetOrCreateFromPlaceAsync(string placeId, CancellationToken cancellationToken);
+    Task<Result<RestaurantFromPlaceResponse>> GetOrCreateFromPlaceAsync(string placeId, CancellationToken cancellationToken);
 }

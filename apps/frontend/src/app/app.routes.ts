@@ -51,14 +51,6 @@ export const routes: Routes = [
             (m) => m.RestaurantDetail,
           ),
       },
-      // Opened from the search: the page gets or creates the restaurant, then replaces the URL with /restaurant/:id
-      {
-        path: 'restaurant/place/:placeId',
-        loadComponent: () =>
-          import('./features/restaurant/restaurant-detail/restaurant-detail').then(
-            (m) => m.RestaurantDetail,
-          ),
-      },
       {
         path: 'user/:id',
         loadComponent: () => import('./features/profile/profile/profile').then((m) => m.Profile),

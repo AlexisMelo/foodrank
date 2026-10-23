@@ -7,6 +7,7 @@ import { Subject, of, throwError } from 'rxjs';
 import { RatingApi } from '@/core/api/rating-api';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import { AuthStore } from '@/core/auth/auth-store';
+import { CelebrationStore } from '@/core/celebration/celebration-store';
 import type { UserRating } from '@/core/models/rating.model';
 import { query, queryAll, setValue, textOf } from '@/testing/dom-testing';
 import { NewReview } from './new-review';
@@ -153,6 +154,42 @@ describe('NewReview', () => {
       bonus: true,
     });
     expect(TestBed.inject(Router).url).toBe('/restaurant/r1');
+  });
+
+  it('asks the restaurant page to congratulate the user after their first rating of it', async () => {
+    rateRestaurant.mockReturnValue(of(undefined));
+    // Only other restaurants rated so far
+    fetchUserRatings.mockReturnValue(of([rating('r2', 70, 60, 50)]));
+    await openPage();
+
+    await click('.submit-btn');
+
+    expect(TestBed.inject(CelebrationStore).pending()).toEqual({
+      restaurantId: 'r1',
+      kind: 'first-review',
+    });
+    expect(TestBed.inject(Router).url).toBe('/restaurant/r1');
+  });
+
+  it('does not congratulate a user who already rated the restaurant', async () => {
+    rateRestaurant.mockReturnValue(of(undefined));
+    fetchUserRatings.mockReturnValue(of([{ ...rating('r1', 70, 60, 50), isActive: false }]));
+    await openPage();
+
+    await click('.submit-btn');
+
+    expect(TestBed.inject(CelebrationStore).pending()).toBeNull();
+    expect(TestBed.inject(Router).url).toBe('/restaurant/r1');
+  });
+
+  it('does not congratulate when the past ratings cannot be loaded', async () => {
+    rateRestaurant.mockReturnValue(of(undefined));
+    fetchUserRatings.mockReturnValue(throwError(() => httpError(503)));
+    await openPage();
+
+    await click('.submit-btn');
+
+    expect(TestBed.inject(CelebrationStore).pending()).toBeNull();
   });
 
   it('stays on the page and explains when the restaurant was already rated today', async () => {

@@ -42,10 +42,19 @@
         } @else if (noResults()) {
           <div class="hint">No restaurants found</div>
         } @else if (suggestions().length) {
+          @if (places.failed()) {
+            <p class="open-error" role="alert">Couldn't open this restaurant, try again.</p>
+          }
           <ul class="suggestions">
             @for (s of suggestions(); track s.placeId) {
               <li>
-                <button type="button" class="suggestion-item" (click)="selectPlace(s)">
+                <button
+                  type="button"
+                  class="suggestion-item"
+                  [disabled]="places.opening() !== null"
+                  [attr.aria-busy]="places.opening() === s.placeId"
+                  (click)="selectPlace(s)"
+                >
                   <span class="suggestion-emoji" aria-hidden="true">🍽️</span>
                   <span class="suggestion-info">
                     <span class="suggestion-name">{{ s.name }}</span>

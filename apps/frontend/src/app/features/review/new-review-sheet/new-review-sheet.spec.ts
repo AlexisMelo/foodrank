@@ -1,10 +1,11 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import { UserLocation } from '@/core/location/user-location';
-import type { PlaceSuggestion } from '@/core/models/restaurant.model';
+import { CelebrationStore } from '@/core/celebration/celebration-store';
+import type { PlaceSuggestion, RestaurantFromPlace } from '@/core/models/restaurant.model';
 import { query, queryAll, stubDialogs, submitForm, textOf, typeIn } from '@/testing/dom-testing';
 import { NewReviewStore } from '../new-review-store';
 import { NewReviewSheet } from './new-review-sheet';
@@ -22,8 +23,28 @@ function place(placeId: string, name: string): PlaceSuggestion {
   return { placeId, name, secondaryText: `${name} street, Caen` };
 }
 
+/**
+ * Answer of POST /api/restaurants/from-place: the restaurant r9, `created` by this request or not.
+ */
+function stored(created: boolean): RestaurantFromPlace {
+  return {
+    restaurant: {
+      id: 'r9',
+      name: 'Pizza Roma',
+      cuisine: '',
+      emoji: '🍽️',
+      address: '',
+      description: '',
+      lat: null,
+      lng: null,
+    },
+    created,
+  };
+}
+
 describe('NewReviewSheet', () => {
   let autocompletePlaces: ReturnType<typeof vi.fn>;
+  let createRestaurantFromPlace: ReturnType<typeof vi.fn>;
   let requestLocation: ReturnType<typeof vi.fn>;
   let fixture: ComponentFixture<NewReviewSheet>;
   let store: NewReviewStore;
@@ -33,6 +54,7 @@ describe('NewReviewSheet', () => {
     // Only the timers of the debounce (rxjs uses setInterval): Angular keeps scheduling its rendering with setTimeout
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
     autocompletePlaces = vi.fn(() => of([place('N1', 'Pizza Roma'), place('N2', 'Pizza Napoli')]));
+    createRestaurantFromPlace = vi.fn(() => of(stored(true)));
     requestLocation = vi.fn();
     TestBed.configureTestingModule({
       providers: [
@@ -41,6 +63,7 @@ describe('NewReviewSheet', () => {
           provide: RestaurantApi,
           useValue: {
             autocompletePlaces,
+            createRestaurantFromPlace,
             fetchSearchArea: () => of({ locality: 'Lyon', isDefault: true }),
           },
         },
@@ -155,17 +178,75 @@ describe('NewReviewSheet', () => {
     expect(hint()).toBe('No restaurants found');
   });
 
-  it('opens the restaurant page of the place picked, and closes', async () => {
-    autocompletePlaces.mockReturnValue(of([place('node/42', 'Pizza Roma')]));
+  /**
+   * Opens the sheet and shows the suggestion of the place N42.
+   */
+  async function showSuggestion(): Promise<void> {
+    autocompletePlaces.mockReturnValue(of([place('N42', 'Pizza Roma')]));
     await open();
     await typeIn(fixture, '.search-input', 'pizza');
     await wait(500);
+  }
+
+  it('stores the restaurant of a place opened first, then opens its page with "The explorer", and closes', async () => {
+    await showSuggestion();
 
     query(fixture, '.suggestion-item').click();
     await fixture.whenStable();
 
-    expect(TestBed.inject(Router).url).toBe('/restaurant/place/node%2F42');
+    expect(createRestaurantFromPlace.mock.calls).toEqual([['N42']]);
+    expect(TestBed.inject(Router).url).toBe('/restaurant/r9');
+    expect(TestBed.inject(CelebrationStore).pending()).toEqual({
+      restaurantId: 'r9',
+      kind: 'explorer',
+    });
     expect(store.isOpen()).toBe(false);
+  });
+
+  it('opens the restaurant page of a place already stored, without "The explorer"', async () => {
+    createRestaurantFromPlace.mockReturnValue(of(stored(false)));
+    await showSuggestion();
+
+    query(fixture, '.suggestion-item').click();
+    await fixture.whenStable();
+
+    expect(TestBed.inject(Router).url).toBe('/restaurant/r9');
+    expect(TestBed.inject(CelebrationStore).pending()).toBeNull();
+  });
+
+  it('disables the suggestions while the place opens, so it is not sent twice', async () => {
+    const answer = new Subject<RestaurantFromPlace>();
+    createRestaurantFromPlace.mockReturnValue(answer);
+    await showSuggestion();
+
+    query(fixture, '.suggestion-item').click();
+    await fixture.whenStable();
+
+    const item = query<HTMLButtonElement>(fixture, '.suggestion-item');
+    expect(item.disabled).toBe(true);
+    expect(item.getAttribute('aria-busy')).toBe('true');
+    item.click();
+    expect(createRestaurantFromPlace).toHaveBeenCalledTimes(1);
+
+    answer.next(stored(false));
+    answer.complete();
+    // The sheet navigates after an await: let it start before waiting for the app to settle
+    await Promise.resolve();
+    await fixture.whenStable();
+    expect(TestBed.inject(Router).url).toBe('/restaurant/r9');
+  });
+
+  it('stays open and explains when the place cannot be opened', async () => {
+    createRestaurantFromPlace.mockReturnValue(throwError(() => new Error('503')));
+    await showSuggestion();
+
+    query(fixture, '.suggestion-item').click();
+    await fixture.whenStable();
+
+    expect(textOf(query(fixture, '.open-error'))).toBe("Couldn't open this restaurant, try again.");
+    expect(query<HTMLButtonElement>(fixture, '.suggestion-item').disabled).toBe(false);
+    expect(store.isOpen()).toBe(true);
+    expect(TestBed.inject(Router).url).toBe('/');
   });
 
   it('opens the search results on Enter, and closes', async () => {

@@ -15,9 +15,18 @@
     </div>
   } @else {
     <!-- Results -->
+    @if (places.failed()) {
+      <p class="open-error" role="alert">Couldn't open this restaurant, try again.</p>
+    }
     <div class="list">
       @for (r of results(); track r.placeId; let index = $index) {
-        <button type="button" class="list-item" (click)="selectPlace(r)">
+        <button
+          type="button"
+          class="list-item"
+          [disabled]="places.opening() !== null"
+          [attr.aria-busy]="places.opening() === r.placeId"
+          (click)="selectPlace(r)"
+        >
           <span class="item-index">{{ index + 1 }}</span>
           <span class="item-emoji-wrap" aria-hidden="true">
             <span class="item-emoji">🍽️</span>

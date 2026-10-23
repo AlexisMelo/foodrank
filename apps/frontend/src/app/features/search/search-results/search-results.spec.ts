@@ -6,7 +6,8 @@ import { Subject, of, throwError } from 'rxjs';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import { UserLocation } from '@/core/location/user-location';
 import type { UserLocation as UserPosition } from '@/core/models/location.model';
-import type { PlaceSuggestion } from '@/core/models/restaurant.model';
+import { CelebrationStore } from '@/core/celebration/celebration-store';
+import type { PlaceSuggestion, RestaurantFromPlace } from '@/core/models/restaurant.model';
 import { clickButton, query, queryAll, textOf } from '@/testing/dom-testing';
 import { SearchResults } from './search-results';
 
@@ -23,9 +24,29 @@ function place(placeId: string): PlaceSuggestion {
   return { placeId, name: `Place ${placeId}`, secondaryText: 'Caen' };
 }
 
+/**
+ * Answer of POST /api/restaurants/from-place: the restaurant r9, `created` by this request or not.
+ */
+function stored(created: boolean): RestaurantFromPlace {
+  return {
+    restaurant: {
+      id: 'r9',
+      name: 'Pizza Roma',
+      cuisine: '',
+      emoji: '🍽️',
+      address: '',
+      description: '',
+      lat: null,
+      lng: null,
+    },
+    created,
+  };
+}
+
 describe('SearchResults', () => {
   let autocompletePlaces: ReturnType<typeof vi.fn>;
   let searchPlaces: ReturnType<typeof vi.fn>;
+  let createRestaurantFromPlace: ReturnType<typeof vi.fn>;
   let requestLocation: ReturnType<typeof vi.fn>;
   let location: WritableSignal<UserPosition | null>;
   let harness: RouterTestingHarness;
@@ -34,6 +55,7 @@ describe('SearchResults', () => {
     location = signal(null);
     autocompletePlaces = vi.fn((query: string) => of([place(`${query}-1`), place(`${query}-2`)]));
     searchPlaces = vi.fn();
+    createRestaurantFromPlace = vi.fn(() => of(stored(true)));
     requestLocation = vi.fn();
     TestBed.configureTestingModule({
       providers: [
@@ -44,7 +66,10 @@ describe('SearchResults', () => {
           ],
           withComponentInputBinding(),
         ),
-        { provide: RestaurantApi, useValue: { autocompletePlaces, searchPlaces } },
+        {
+          provide: RestaurantApi,
+          useValue: { autocompletePlaces, searchPlaces, createRestaurantFromPlace },
+        },
         {
           provide: UserLocation,
           useValue: { location, status: signal('idle'), requestLocation },
@@ -168,13 +193,44 @@ describe('SearchResults', () => {
     expect(names()).toEqual(['Place pizza-1', 'Place pizza-2', 'Place pizza-3']);
   });
 
-  it('opens the restaurant page of the place picked', async () => {
-    autocompletePlaces.mockReturnValue(of([place('node/42')]));
+  it('stores the restaurant of a place opened first, then opens its page with "The explorer"', async () => {
+    autocompletePlaces.mockReturnValue(of([place('N42')]));
     await open('/search?q=pizza');
 
     query(harness.fixture, '.list-item').click();
     await harness.fixture.whenStable();
 
-    expect(TestBed.inject(Router).url).toBe('/restaurant/place/node%2F42');
+    expect(createRestaurantFromPlace.mock.calls).toEqual([['N42']]);
+    expect(TestBed.inject(Router).url).toBe('/restaurant/r9');
+    expect(TestBed.inject(CelebrationStore).pending()).toEqual({
+      restaurantId: 'r9',
+      kind: 'explorer',
+    });
+  });
+
+  it('opens the restaurant page of a place already stored, without "The explorer"', async () => {
+    createRestaurantFromPlace.mockReturnValue(of(stored(false)));
+    autocompletePlaces.mockReturnValue(of([place('N42')]));
+    await open('/search?q=pizza');
+
+    query(harness.fixture, '.list-item').click();
+    await harness.fixture.whenStable();
+
+    expect(TestBed.inject(Router).url).toBe('/restaurant/r9');
+    expect(TestBed.inject(CelebrationStore).pending()).toBeNull();
+  });
+
+  it('stays on the results and explains when the place cannot be opened', async () => {
+    createRestaurantFromPlace.mockReturnValue(throwError(() => new Error('503')));
+    autocompletePlaces.mockReturnValue(of([place('N42')]));
+    await open('/search?q=pizza');
+
+    query(harness.fixture, '.list-item').click();
+    await harness.fixture.whenStable();
+
+    expect(textOf(query(harness.fixture, '.open-error'))).toBe(
+      "Couldn't open this restaurant, try again.",
+    );
+    expect(TestBed.inject(Router).url).toBe('/search?q=pizza');
   });
 });

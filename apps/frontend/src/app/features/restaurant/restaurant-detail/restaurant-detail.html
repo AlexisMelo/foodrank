@@ -3,7 +3,7 @@
     <!-- Loading -->
     <div class="loading">🍽️</div>
   } @else if (loadError()) {
-    <!-- Error (e.g. place provider unavailable) -->
+    <!-- Error (e.g. API unavailable) -->
     <div class="load-error">
       <p>Couldn't load this restaurant</p>
       <button type="button" class="back-btn" (click)="goBack()">Go back</button>
@@ -51,5 +51,13 @@
         [loadError]="ratings.loadError()"
       />
     </div>
+
+    @if (celebration(); as kind) {
+      <app-celebration-dialog
+        [kind]="kind"
+        [restaurant]="restaurant"
+        (closed)="closeCelebration()"
+      />
+    }
   }
 </div>

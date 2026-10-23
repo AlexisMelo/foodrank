@@ -41,35 +41,39 @@ public class RestaurantService(Supabase.Client supabase, IPlaceProvider placePro
     }
 
     /// <inheritdoc />
-    public async Task<Result<Restaurant>> GetOrCreateFromPlaceAsync(string placeId, CancellationToken cancellationToken)
+    public async Task<Result<RestaurantFromPlaceResponse>> GetOrCreateFromPlaceAsync(string placeId, CancellationToken cancellationToken)
     {
         //Check if already in base
         Restaurant? existing = await FindByOsmIdAsync(placeId, cancellationToken);
         if (existing is not null)
-            return Result<Restaurant>.Success(existing);
+            return Result<RestaurantFromPlaceResponse>.Success(new RestaurantFromPlaceResponse(existing, Created: false));
 
         //Lookup on OSM
         Result<PlaceDetails> details = await placeProvider.GetDetailsAsync(placeId, cancellationToken);
         if (!details.IsSuccess)
-            return Result<Restaurant>.Failure(details.Error!);
+            return Result<RestaurantFromPlaceResponse>.Failure(details.Error!);
 
         // Insert, not upsert: postgrest-csharp always sends the primary key on upserts ("id": "", rejected by the uuid
         // column), while an insert lets the database generate it. If another request created the same restaurant
-        // in the meantime, the unique index on osm_id rejects this insert and we read the existing row instead.
+        // in the meantime, the unique index on osm_id rejects this insert and we read the existing row instead: that
+        // request was the first, not this one.
         Restaurant? saved;
+        bool created;
         try
         {
             ModeledResponse<Restaurant> inserted = await supabase.From<Restaurant>().Insert(ToRestaurant(details.Value!), cancellationToken: cancellationToken);
             saved = inserted.Models.FirstOrDefault() ?? await FindByOsmIdAsync(placeId, cancellationToken);
+            created = true;
         }
         catch (PostgrestException ex) when (PostgrestErrors.IsUniqueViolation(ex))
         {
             saved = await FindByOsmIdAsync(placeId, cancellationToken);
+            created = false;
         }
 
         return saved is null
-            ? Result<Restaurant>.Failure(new Error(ErrorType.Unavailable, "Could not save the restaurant."))
-            : Result<Restaurant>.Success(saved);
+            ? Result<RestaurantFromPlaceResponse>.Failure(new Error(ErrorType.Unavailable, "Could not save the restaurant."))
+            : Result<RestaurantFromPlaceResponse>.Success(new RestaurantFromPlaceResponse(saved, created));
     }
 
     /// <summary>

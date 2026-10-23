@@ -1,0 +1,142 @@
+// Full page modal: the defaults of the native <dialog> reset, so it covers the whole screen
+.celebration {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0 16px;
+  border: none;
+  box-sizing: border-box;
+  background: #0d0d0d;
+  color: #ffffff;
+}
+.celebration[open] {
+  display: flex;
+  justify-content: center;
+}
+.celebration::backdrop {
+  background: #0d0d0d;
+}
+
+.close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.content {
+  margin-top: 20dvh;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.emoji {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(249, 199, 79, 0.15), rgba(200, 100, 255, 0.15));
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+  margin-bottom: 8px;
+}
+.title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+}
+.lead {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+.restaurant-name {
+  color: #f9c74f;
+}
+.address {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+.hint {
+  margin: 8px 0 16px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.75);
+}
+.actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.primary-btn {
+  box-sizing: border-box;
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  width: 100%;
+  padding: 18px 20px;
+  border-radius: 16px;
+  border: none;
+  background: linear-gradient(135deg, #f9c74f, #f4845f);
+  color: #0d0d0d;
+  font-size: 16px;
+  font-weight: 900;
+  font-family: inherit;
+  cursor: pointer;
+  letter-spacing: -0.2px;
+}
+.primary-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.primary-btn:active {
+  transform: translateY(0);
+}
+.secondary-btn {
+  width: 100%;
+  padding: 16px 20px;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: transparent;
+  color: #ffffff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.secondary-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.copy-status {
+  margin: 0;
+  min-height: 1.4em;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.75);
+}

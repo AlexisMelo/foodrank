@@ -167,3 +167,17 @@
     opacity: 0.4;
   }
 }
+.list-item:disabled {
+  cursor: progress;
+}
+.list-item[aria-busy='true'] {
+  opacity: 0.6;
+}
+
+.open-error {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ff6b6b;
+  text-align: center;
+}

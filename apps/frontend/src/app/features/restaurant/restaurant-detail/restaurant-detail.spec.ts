@@ -10,7 +10,9 @@ import { TierlistApi } from '@/core/api/tierlist-api';
 import { UserApi } from '@/core/api/user-api';
 import { AuthStore } from '@/core/auth/auth-store';
 import type { Restaurant } from '@/core/models/restaurant.model';
-import { clickButton, query, textOf } from '@/testing/dom-testing';
+import { CelebrationStore } from '@/core/celebration/celebration-store';
+import { SHARE_NAVIGATOR } from '@/core/share/web-share';
+import { clickButton, query, queryAll, stubDialogs, textOf } from '@/testing/dom-testing';
 
 /**
  * Builds the restaurant `id` of the database.
@@ -30,12 +32,24 @@ function restaurant(id: string): Restaurant {
 
 describe('RestaurantDetail', () => {
   let fetchRestaurantById: ReturnType<typeof vi.fn>;
-  let createRestaurantFromPlace: ReturnType<typeof vi.fn>;
+  let fetchRecentRatings: ReturnType<typeof vi.fn>;
+  let fetchMyRatings: ReturnType<typeof vi.fn>;
+  let fetchRatingSummary: ReturnType<typeof vi.fn>;
+  let share: ReturnType<typeof vi.fn<(data?: ShareData) => Promise<void>>>;
+  let shareNavigator: { share?: Navigator['share']; clipboard?: Clipboard };
   let harness: RouterTestingHarness;
 
   beforeEach(async () => {
+    // The celebration modals are native dialogs
+    stubDialogs();
+    share = vi.fn(() => Promise.resolve());
+    shareNavigator = { share };
     fetchRestaurantById = vi.fn((id: string) => of(restaurant(id)));
-    createRestaurantFromPlace = vi.fn(() => of(restaurant('r9')));
+    fetchRecentRatings = vi.fn(() => of([]));
+    fetchMyRatings = vi.fn(() => of([]));
+    fetchRatingSummary = vi.fn(() =>
+      of({ count: 0, food: null, service: null, setting: null, global: null }),
+    );
     TestBed.configureTestingModule({
       providers: [
         // The real routes, with a logged-in user
@@ -48,17 +62,15 @@ describe('RestaurantDetail', () => {
           provide: RestaurantApi,
           useValue: {
             fetchRestaurantById,
-            createRestaurantFromPlace,
             fetchRestaurants: () => of([]),
           },
         },
         {
           provide: RatingApi,
           useValue: {
-            fetchRecentRatings: () => of([]),
-            fetchMyRatings: () => of([]),
-            fetchRatingSummary: () =>
-              of({ count: 0, food: null, service: null, setting: null, global: null }),
+            fetchRecentRatings,
+            fetchMyRatings,
+            fetchRatingSummary,
             // Read by the home page
             fetchUserRatings: () => of([]),
           },
@@ -66,6 +78,8 @@ describe('RestaurantDetail', () => {
         // Read by the home page
         { provide: UserApi, useValue: { fetchUserProfile: () => of(undefined) } },
         { provide: TierlistApi, useValue: { fetchTierlistsByUserId: () => of([]) } },
+        // Web Share API of the browser, read when the "Bravo" modal opens
+        { provide: SHARE_NAVIGATOR, useValue: shareNavigator },
       ],
     });
     harness = await RouterTestingHarness.create();
@@ -97,14 +111,6 @@ describe('RestaurantDetail', () => {
     expect(textOf(query(harness.fixture, '.info-text'))).toBe('1 rue de la Paix');
   });
 
-  it('gets or creates the restaurant of a place, then replaces the URL with its own', async () => {
-    await open('/restaurant/place/N123');
-
-    expect(createRestaurantFromPlace).toHaveBeenCalledWith('N123');
-    expect(url()).toBe('/restaurant/r9');
-    expect(textOf(query(harness.fixture, '.name'))).toBe('Restaurant r9');
-  });
-
   it('leaves for the home page when the restaurant does not exist', async () => {
     fetchRestaurantById.mockReturnValue(of(undefined));
 
@@ -114,10 +120,12 @@ describe('RestaurantDetail', () => {
   });
 
   it('explains when the restaurant cannot be loaded, and goes back', async () => {
-    createRestaurantFromPlace.mockReturnValue(throwError(() => new Error('503')));
+    fetchRestaurantById.mockImplementation((id: string) =>
+      id === 'r2' ? throwError(() => new Error('503')) : of(restaurant(id)),
+    );
     await open('/restaurant/r1');
 
-    await open('/restaurant/place/N123');
+    await open('/restaurant/r2');
     expect(textOf(query(harness.fixture, '.load-error p'))).toBe("Couldn't load this restaurant");
 
     // Going back in the history is asynchronous: wait for the router to follow it
@@ -127,5 +135,171 @@ describe('RestaurantDetail', () => {
     await clickButton(harness.fixture, 'Go back');
     await navigated;
     expect(url()).toBe('/restaurant/r1');
+  });
+
+  describe('when the user is the first to open the place', () => {
+    /**
+     * "The explorer" modal; undefined when it is not shown.
+     */
+    function explorer(): HTMLDialogElement | undefined {
+      return queryAll<HTMLDialogElement>(harness.fixture, 'dialog.celebration')[0];
+    }
+
+    beforeEach(() => {
+      TestBed.inject(CelebrationStore).celebrate('r1', 'explorer');
+    });
+
+    it('shows "The explorer" over the restaurant page, loading the restaurant and its ratings once', async () => {
+      await open('/restaurant/r1');
+
+      expect(explorer()?.open).toBe(true);
+      expect(textOf(query(harness.fixture, '.celebration .title'))).toBe('The explorer');
+      expect(textOf(query(harness.fixture, '.celebration .lead'))).toBe(
+        'You are the first to look up Restaurant r1',
+      );
+      expect(textOf(query(harness.fixture, '.celebration .address'))).toBe('1 rue de la Paix');
+      // The page under it
+      expect(textOf(query(harness.fixture, '.name'))).toBe('Restaurant r1');
+      expect(fetchRestaurantById.mock.calls).toEqual([['r1']]);
+      expect(fetchRecentRatings).toHaveBeenCalledTimes(1);
+      expect(fetchMyRatings).toHaveBeenCalledTimes(1);
+      expect(fetchRatingSummary).toHaveBeenCalledTimes(1);
+    });
+
+    it('opens the rating page from "Leave a review"', async () => {
+      await open('/restaurant/r1');
+
+      const review = query(harness.fixture, '.celebration a.primary-btn');
+      expect(textOf(review)).toBe('Leave a review');
+      expect(review.getAttribute('href')).toBe('/review/r1');
+    });
+
+    it('closes on the restaurant page from "See the restaurant", for good', async () => {
+      await open('/restaurant/r1');
+
+      await clickButton(harness.fixture, 'See the restaurant');
+
+      expect(explorer()).toBeUndefined();
+      expect(url()).toBe('/restaurant/r1');
+      await open('/');
+      await open('/restaurant/r1');
+      expect(explorer()).toBeUndefined();
+    });
+
+    it('closes from its cross, as "See the restaurant" does', async () => {
+      await open('/restaurant/r1');
+
+      query(harness.fixture, '.celebration .close-btn').click();
+      await harness.fixture.whenStable();
+
+      expect(explorer()).toBeUndefined();
+      expect(url()).toBe('/restaurant/r1');
+    });
+
+    it('shows "The explorer" when the place is opened from the page of another restaurant', async () => {
+      await open('/restaurant/r1');
+      await clickButton(harness.fixture, 'See the restaurant');
+
+      // The search stores r2 then opens its page: the router keeps this page, only its id changes
+      TestBed.inject(CelebrationStore).celebrate('r2', 'explorer');
+      await open('/restaurant/r2');
+
+      expect(explorer()?.open).toBe(true);
+      expect(textOf(query(harness.fixture, '.celebration .lead'))).toBe(
+        'You are the first to look up Restaurant r2',
+      );
+    });
+  });
+
+  describe('after the first rating of the restaurant', () => {
+    /**
+     * The "Bravo" modal; undefined when it is not shown.
+     */
+    function bravo(): HTMLDialogElement | undefined {
+      return queryAll<HTMLDialogElement>(harness.fixture, 'dialog.celebration')[0];
+    }
+
+    it('congratulates the user in a modal, which closes with its cross for good', async () => {
+      TestBed.inject(CelebrationStore).celebrate('r1', 'first-review');
+      await open('/restaurant/r1');
+
+      expect(bravo()?.open).toBe(true);
+      expect(textOf(query(harness.fixture, '.celebration .title'))).toBe('Bravo!');
+      expect(textOf(query(harness.fixture, '.celebration .lead'))).toBe(
+        'You just reviewed Restaurant r1 for the first time',
+      );
+
+      query(harness.fixture, '.celebration .close-btn').click();
+      await harness.fixture.whenStable();
+
+      expect(bravo()).toBeUndefined();
+      expect(textOf(query(harness.fixture, '.name'))).toBe('Restaurant r1');
+
+      // Shown once only
+      await open('/');
+      await open('/restaurant/r1');
+      expect(bravo()).toBeUndefined();
+    });
+
+    it('shares the restaurant page through the native share sheet', async () => {
+      TestBed.inject(CelebrationStore).celebrate('r1', 'first-review');
+      await open('/restaurant/r1');
+
+      await clickButton(harness.fixture, 'Share it');
+
+      expect(share).toHaveBeenCalledWith({
+        title: 'Restaurant r1',
+        text: 'I just rated Restaurant r1 on FoodRank, have a look!',
+        url: `${location.origin}/restaurant/r1`,
+      });
+    });
+
+    it('copies the link of the restaurant page when the browser cannot share', async () => {
+      const writeText = vi.fn(() => Promise.resolve());
+      delete shareNavigator.share;
+      shareNavigator.clipboard = { writeText } as unknown as Clipboard;
+      TestBed.inject(CelebrationStore).celebrate('r1', 'first-review');
+      await open('/restaurant/r1');
+
+      expect(textOf(query(harness.fixture, '.copy-status'))).toBe('');
+      await clickButton(harness.fixture, 'Copy link');
+
+      expect(writeText).toHaveBeenCalledWith(`${location.origin}/restaurant/r1`);
+      expect(textOf(query(harness.fixture, '.copy-status'))).toBe(
+        'Link copied! Paste it to your friends.',
+      );
+      expect(share).not.toHaveBeenCalled();
+    });
+
+    it('explains when the link cannot be copied', async () => {
+      delete shareNavigator.share;
+      shareNavigator.clipboard = {
+        writeText: () => Promise.reject(new DOMException('Denied', 'NotAllowedError')),
+      } as unknown as Clipboard;
+      TestBed.inject(CelebrationStore).celebrate('r1', 'first-review');
+      await open('/restaurant/r1');
+
+      await clickButton(harness.fixture, 'Copy link');
+
+      expect(textOf(query(harness.fixture, '.copy-status'))).toBe("Couldn't copy the link.");
+    });
+
+    it('offers neither button when the browser can neither share nor copy', async () => {
+      delete shareNavigator.share;
+      TestBed.inject(CelebrationStore).celebrate('r1', 'first-review');
+      await open('/restaurant/r1');
+
+      expect(bravo()?.open).toBe(true);
+      expect(queryAll(harness.fixture, '.share-btn')).toHaveLength(0);
+    });
+
+    it('does not congratulate on the page of another restaurant, nor without a rating', async () => {
+      await open('/restaurant/r1');
+      expect(bravo()).toBeUndefined();
+
+      TestBed.inject(CelebrationStore).celebrate('r2', 'first-review');
+      await open('/restaurant/r3');
+      expect(bravo()).toBeUndefined();
+    });
   });
 });
