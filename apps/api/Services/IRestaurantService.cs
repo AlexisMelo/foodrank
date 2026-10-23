@@ -25,8 +25,8 @@ public interface IRestaurantService
     Task<Result<RestaurantFromPlaceResponse>> GetOrCreateFromPlaceAsync(string placeId, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Returns the restaurants <paramref name="userId"/> has not rated yet, nearest first, those without coordinates
-    /// last. Without a valid position, they are sorted from the default city and returned without distance.
+    /// Returns the restaurants <paramref name="userId"/> has not rated yet, nearest first. Without a valid position,
+    /// they are sorted from the default city and returned without distance.
     /// </summary>
     /// <param name="userId">Supabase Auth id of the logged-in user.</param>
     /// <param name="lat">Latitude of the user in degrees, null when unknown.</param>

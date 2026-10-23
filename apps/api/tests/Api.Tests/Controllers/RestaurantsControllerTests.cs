@@ -105,15 +105,14 @@ public class RestaurantsControllerTests : IDisposable
     }
 
     /// <summary>
-    /// From the user's position, the restaurants they have not rated come nearest first with their distance, those
-    /// without coordinates last. Another user's rating does not leave a restaurant out.
+    /// From the user's position, the restaurants they have not rated come nearest first with their distance. Another
+    /// user's rating does not leave a restaurant out.
     /// </summary>
     [Fact]
     public async Task GetSuggestions_WithPosition_ReturnsUnratedRestaurantsNearestFirst()
     {
         AddRestaurant("paris", 48.85, 2.35);
         AddRestaurant("visited", 49.18, -0.37);
-        AddRestaurant("unknown", null, null);
         AddRestaurant("near", 49.185, -0.37);
         AddRestaurant("rated-by-other", 49.19, -0.37);
         AddRating(MeId, "visited", isActive: false);
@@ -124,9 +123,8 @@ public class RestaurantsControllerTests : IDisposable
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         List<(string Id, double? DistanceKm)> suggestions = await ReadSuggestionsAsync(response);
-        Assert.Equal(["near", "rated-by-other", "paris", "unknown"], suggestions.Select(s => s.Id));
+        Assert.Equal(["near", "rated-by-other", "paris"], suggestions.Select(s => s.Id));
         Assert.Equal(0.556, suggestions[0].DistanceKm!.Value, precision: 3);
-        Assert.Null(suggestions[3].DistanceKm);
     }
 
     /// <summary>
@@ -188,7 +186,7 @@ public class RestaurantsControllerTests : IDisposable
     /// <summary>
     /// Stores the restaurant <paramref name="id"/> at (<paramref name="lat"/>, <paramref name="lng"/>).
     /// </summary>
-    private void AddRestaurant(string id, double? lat, double? lng)
+    private void AddRestaurant(string id, double lat, double lng)
         => _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = id, Name = id, Lat = lat, Lng = lng });
 
     /// <summary>

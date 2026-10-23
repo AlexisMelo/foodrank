@@ -35,7 +35,7 @@ export class RestaurantApi {
   private readonly http = inject(HttpClient);
 
   /**
-   * Get the restaurants the logged-in user has not rated yet, nearest first, those without coordinates last
+   * Get the restaurants the logged-in user has not rated yet, nearest first
    * @param location user position; when unknown, the API sorts from its default city and returns no distance
    * @param limit maximum number of suggestions, 1 to 50
    */

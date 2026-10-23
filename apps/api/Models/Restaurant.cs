@@ -52,14 +52,14 @@ public class Restaurant : BaseModel
     public string Description { get; set; } = string.Empty;
 
     /// <summary>
-    /// Latitude in degrees, when known.
+    /// Latitude in degrees
     /// </summary>
     [Column("lat")]
-    public double? Lat { get; set; }
+    public double Lat { get; set; }
 
     /// <summary>
-    /// Longitude in degrees, when known.
+    /// Longitude in degrees
     /// </summary>
     [Column("lng")]
-    public double? Lng { get; set; }
+    public double Lng { get; set; }
 }

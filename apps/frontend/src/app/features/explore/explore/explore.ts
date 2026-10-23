@@ -12,9 +12,9 @@ import type { Restaurant } from '@/core/models/restaurant.model';
 const SUGGESTION_COUNT = 5;
 
 /**
- * Longest wait for the user's position before showing the suggestions unsorted, in milliseconds. The browser only
- * starts its own timeout once the permission is granted: without this one, an unanswered prompt would keep the page
- * loading forever.
+ * Longest wait for the user's position before showing the suggestions sorted from the API's default city, in
+ * milliseconds. The browser only starts its own timeout once the permission is granted: without this one, an
+ * unanswered prompt would keep the page loading forever.
  */
 const LOCATION_WAIT_MS = 3000;
 
@@ -82,7 +82,7 @@ export class Explore {
 
   /**
    * True when the position is not known once the wait is over (refused, blocked, unavailable or still not answered):
-   * the restaurants are not sorted
+   * the restaurants are sorted from the API's default city and shown with their cuisine instead of a distance
    */
   protected readonly locationDenied = computed(
     () => !this.locating() && this.userLocation.status() !== 'granted',

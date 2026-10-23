@@ -36,8 +36,8 @@ function stored(created: boolean): RestaurantFromPlace {
       emoji: '🍽️',
       address: '',
       description: '',
-      lat: null,
-      lng: null,
+      lat: 49.18,
+      lng: -0.37,
     },
     created,
   };

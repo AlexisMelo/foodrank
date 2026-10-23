@@ -17,7 +17,7 @@ import { Explore } from './explore';
 class StubPage {}
 
 /**
- * Builds the suggestion of the restaurant `id`, at `distanceKm` from the user (null: unknown).
+ * Builds the suggestion of the restaurant `id`, at `distanceKm` from the user (null: position not sent).
  */
 function suggestion(id: string, distanceKm: number | null): RestaurantSuggestion {
   return {
@@ -28,8 +28,8 @@ function suggestion(id: string, distanceKm: number | null): RestaurantSuggestion
       emoji: '🍕',
       address: '',
       description: '',
-      lat: null,
-      lng: null,
+      lat: 49.18,
+      lng: -0.37,
     },
     distanceKm,
   };
@@ -192,23 +192,6 @@ describe('Explore', () => {
     await harness.fixture.whenStable();
 
     expect(TestBed.inject(Router).url).toBe('/restaurant/paris');
-  });
-
-  it('shows the cuisine instead of a distance for a restaurant without coordinates', async () => {
-    // The API sorts the restaurants without coordinates last, without distance
-    fetchSuggestions.mockReturnValue(
-      of([suggestion('near', 0.556), suggestion('paris', 201.7), suggestion('unknown', null)]),
-    );
-    location.set(CAEN);
-    status.set('granted');
-    await openExplore();
-
-    expect(names()).toEqual(['Restaurant near', 'Restaurant paris', 'Restaurant unknown']);
-    expect(queryAll(harness.fixture, '.card-distance').map(textOf)).toEqual([
-      '📍 556 m',
-      '📍 201.7 km',
-      'Cuisine unknown',
-    ]);
   });
 
   it('shows no suggestion when the API fails', async () => {
