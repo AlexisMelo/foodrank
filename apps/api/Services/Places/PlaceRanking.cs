@@ -54,7 +54,11 @@ public static class PlaceRanking
     /// <summary>
     /// Great-circle distance in kilometers between <paramref name="origin"/> and a point (haversine formula).
     /// </summary>
-    private static double DistanceKm(GeoPoint origin, double lat, double lon)
+    /// <param name="origin">Position the distance is measured from.</param>
+    /// <param name="lat">Latitude of the point, in degrees.</param>
+    /// <param name="lon">Longitude of the point, in degrees.</param>
+    /// <returns>The distance in kilometers.</returns>
+    public static double DistanceKm(GeoPoint origin, double lat, double lon)
     {
         double dLat = ToRadians(lat - origin.Lat);
         double dLon = ToRadians(lon - origin.Lon);

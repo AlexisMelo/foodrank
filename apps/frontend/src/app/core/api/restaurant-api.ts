@@ -6,6 +6,7 @@ import type {
   PlaceSuggestion,
   Restaurant,
   RestaurantFromPlace,
+  RestaurantSuggestion,
   SearchArea,
 } from '@/core/models/restaurant.model';
 import { recoverOnStatus } from './recover-on-status';
@@ -34,10 +35,17 @@ export class RestaurantApi {
   private readonly http = inject(HttpClient);
 
   /**
-   * Get all restaurants
+   * Get the restaurants the logged-in user has not rated yet, nearest first, those without coordinates last
+   * @param location user position; when unknown, the API sorts from its default city and returns no distance
+   * @param limit maximum number of suggestions, 1 to 50
    */
-  fetchRestaurants(): Observable<Restaurant[]> {
-    return this.http.get<Restaurant[]>('/api/restaurants');
+  fetchSuggestions(
+    location: UserLocation | null,
+    limit: number,
+  ): Observable<RestaurantSuggestion[]> {
+    return this.http.get<RestaurantSuggestion[]>('/api/restaurants/suggestions', {
+      params: { limit, ...locationParams(location) },
+    });
   }
 
   /**

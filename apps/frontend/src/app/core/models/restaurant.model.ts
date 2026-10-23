@@ -44,6 +44,22 @@ export interface Restaurant {
 }
 
 /**
+ * A restaurant the logged-in user has not rated yet, suggested on the Explore page (GET /api/restaurants/suggestions).
+ */
+export interface RestaurantSuggestion {
+  /**
+   * The suggested restaurant
+   */
+  restaurant: Restaurant;
+
+  /**
+   * Distance from the user in kilometers, computed by the API; null when the user's position was not sent or the
+   * restaurant has no coordinates
+   */
+  distanceKm: number | null;
+}
+
+/**
  * Answer of POST /api/restaurants/from-place: the restaurant of a place selected in the search.
  */
 export interface RestaurantFromPlace {

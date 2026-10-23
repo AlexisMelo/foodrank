@@ -2,12 +2,11 @@ import { Component, WritableSignal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { of } from 'rxjs';
-import { RatingApi } from '@/core/api/rating-api';
+import { of, throwError } from 'rxjs';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import { type LocationStatus, UserLocation } from '@/core/location/user-location';
 import type { UserLocation as UserPosition } from '@/core/models/location.model';
-import type { Restaurant } from '@/core/models/restaurant.model';
+import type { RestaurantSuggestion } from '@/core/models/restaurant.model';
 import { query, queryAll, textOf } from '@/testing/dom-testing';
 import { Explore } from './explore';
 
@@ -18,43 +17,60 @@ import { Explore } from './explore';
 class StubPage {}
 
 /**
- * Builds the restaurant `id` at (`lat`, `lng`).
+ * Builds the suggestion of the restaurant `id`, at `distanceKm` from the user (null: unknown).
  */
-function restaurant(id: string, lat: number | null, lng: number | null): Restaurant {
+function suggestion(id: string, distanceKm: number | null): RestaurantSuggestion {
   return {
-    id,
-    name: `Restaurant ${id}`,
-    cuisine: `Cuisine ${id}`,
-    emoji: '🍕',
-    address: '',
-    description: '',
-    lat,
-    lng,
+    restaurant: {
+      id,
+      name: `Restaurant ${id}`,
+      cuisine: `Cuisine ${id}`,
+      emoji: '🍕',
+      address: '',
+      description: '',
+      lat: null,
+      lng: null,
+    },
+    distanceKm,
   };
 }
+
+/**
+ * Position of the user in the tests: Caen.
+ */
+const CAEN: UserPosition = { lat: 49.18, lon: -0.37 };
 
 describe('Explore', () => {
   let location: WritableSignal<UserPosition | null>;
   let status: WritableSignal<LocationStatus>;
   let requestLocation: ReturnType<typeof vi.fn>;
-  let fetchRestaurants: ReturnType<typeof vi.fn>;
+  let fetchSuggestions: ReturnType<typeof vi.fn>;
   let harness: RouterTestingHarness;
 
   beforeEach(() => {
     location = signal(null);
     status = signal('pending');
     requestLocation = vi.fn();
-    // In the API order: far ones first; the user is in Caen (49.18, -0.37)
-    fetchRestaurants = vi.fn(() =>
-      of([
-        restaurant('paris', 48.85, 2.35),
-        restaurant('visited', 49.18, -0.37),
-        restaurant('mid', 49.2, -0.37),
-        restaurant('lyon', 45.76, 4.83),
-        restaurant('near', 49.185, -0.37),
-        restaurant('rouen', 49.44, 1.1),
-        restaurant('nice', 43.7, 7.27),
-      ]),
+    // Like the API: nearest first with distances from the user's position, from the default city without distances
+    // otherwise
+    fetchSuggestions = vi.fn((position: UserPosition | null) =>
+      of(
+        position
+          ? [
+              suggestion('near', 0.556),
+              suggestion('mid', 2.224),
+              suggestion('rouen', 103.5),
+              suggestion('paris', 201.7),
+              suggestion('lyon', 541.2),
+            ]
+          : [
+              suggestion('paris', null),
+              suggestion('mid', null),
+              suggestion('lyon', null),
+              suggestion('near', null),
+              suggestion('rouen', null),
+            ],
+      ),
     );
     TestBed.configureTestingModule({
       providers: [
@@ -62,18 +78,7 @@ describe('Explore', () => {
           { path: 'explore', component: Explore },
           { path: '**', component: StubPage },
         ]),
-        { provide: RestaurantApi, useValue: { fetchRestaurants } },
-        {
-          provide: RatingApi,
-          // The logged-in user rated "visited" twice
-          useValue: {
-            fetchUserRatings: () =>
-              of([
-                { restaurantId: 'visited', isActive: true },
-                { restaurantId: 'visited', isActive: false },
-              ]),
-          },
-        },
+        { provide: RestaurantApi, useValue: { fetchSuggestions } },
         { provide: UserLocation, useValue: { location, status, requestLocation } },
       ],
     });
@@ -98,17 +103,20 @@ describe('Explore', () => {
     return queryAll(harness.fixture, '.card-name').map(textOf);
   }
 
-  it('sorts the restaurants not visited yet by distance once the location is allowed', async () => {
+  it('asks the API for the suggestions near the user once the location is allowed', async () => {
     await openExplore();
     expect(requestLocation).toHaveBeenCalledTimes(1);
-    // Waits for the location before showing anything
+    // Waits for the location before asking anything
     expect(queryAll(harness.fixture, '.loading')).toHaveLength(1);
+    expect(fetchSuggestions).not.toHaveBeenCalled();
     expect(names()).toEqual([]);
 
-    location.set({ lat: 49.18, lon: -0.37 });
+    location.set(CAEN);
     status.set('granted');
     await harness.fixture.whenStable();
 
+    expect(fetchSuggestions).toHaveBeenCalledTimes(1);
+    expect(fetchSuggestions).toHaveBeenCalledWith(CAEN, 5);
     expect(names()).toEqual([
       'Restaurant near',
       'Restaurant mid',
@@ -123,7 +131,7 @@ describe('Explore', () => {
     expect(queryAll(harness.fixture, '.location-notice')).toHaveLength(0);
   });
 
-  it('shows the restaurants in the API order when the location is not answered within 3 seconds', async () => {
+  it('asks without position when the location is not answered within 3 seconds', async () => {
     // Only the timer of the wait (rxjs uses setInterval): Angular keeps scheduling its rendering with setTimeout
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
     await openExplore();
@@ -131,10 +139,12 @@ describe('Explore', () => {
     await vi.advanceTimersByTimeAsync(2999);
     await harness.fixture.whenStable();
     expect(queryAll(harness.fixture, '.loading')).toHaveLength(1);
+    expect(fetchSuggestions).not.toHaveBeenCalled();
 
     await vi.advanceTimersByTimeAsync(1);
     await harness.fixture.whenStable();
     expect(queryAll(harness.fixture, '.loading')).toHaveLength(0);
+    expect(fetchSuggestions).toHaveBeenCalledWith(null, 5);
     expect(names()).toEqual([
       'Restaurant paris',
       'Restaurant mid',
@@ -146,18 +156,21 @@ describe('Explore', () => {
       '📍 Enable location to sort by distance',
     );
 
-    // Allowed later: sorted by distance
-    location.set({ lat: 49.18, lon: -0.37 });
+    // Allowed later: asked again, sorted by distance
+    location.set(CAEN);
     status.set('granted');
     await harness.fixture.whenStable();
+    expect(fetchSuggestions).toHaveBeenLastCalledWith(CAEN, 5);
     expect(names()[0]).toBe('Restaurant near');
     expect(queryAll(harness.fixture, '.location-notice')).toHaveLength(0);
   });
 
-  it('keeps the API order, with the cuisine and a notice, when the location is denied', async () => {
+  it('asks without position, and shows the cuisine and a notice, when the location is denied', async () => {
     status.set('dismissed');
     await openExplore();
 
+    expect(fetchSuggestions).toHaveBeenCalledTimes(1);
+    expect(fetchSuggestions).toHaveBeenCalledWith(null, 5);
     expect(names()).toEqual([
       'Restaurant paris',
       'Restaurant mid',
@@ -181,15 +194,12 @@ describe('Explore', () => {
     expect(TestBed.inject(Router).url).toBe('/restaurant/paris');
   });
 
-  it('puts the restaurants without coordinates last, with their cuisine instead of a distance', async () => {
-    fetchRestaurants.mockReturnValue(
-      of([
-        restaurant('unknown', null, null),
-        restaurant('paris', 48.85, 2.35),
-        restaurant('near', 49.185, -0.37),
-      ]),
+  it('shows the cuisine instead of a distance for a restaurant without coordinates', async () => {
+    // The API sorts the restaurants without coordinates last, without distance
+    fetchSuggestions.mockReturnValue(
+      of([suggestion('near', 0.556), suggestion('paris', 201.7), suggestion('unknown', null)]),
     );
-    location.set({ lat: 49.18, lon: -0.37 });
+    location.set(CAEN);
     status.set('granted');
     await openExplore();
 
@@ -199,5 +209,14 @@ describe('Explore', () => {
       '📍 201.7 km',
       'Cuisine unknown',
     ]);
+  });
+
+  it('shows no suggestion when the API fails', async () => {
+    fetchSuggestions.mockReturnValue(throwError(() => new Error('API down')));
+    status.set('unavailable');
+    await openExplore();
+
+    expect(queryAll(harness.fixture, '.loading')).toHaveLength(0);
+    expect(names()).toEqual([]);
   });
 });
