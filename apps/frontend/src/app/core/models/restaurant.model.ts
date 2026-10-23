@@ -44,6 +44,22 @@ export interface Restaurant {
 }
 
 /**
+ * Answer of POST /api/restaurants/from-place: the restaurant of a place selected in the search.
+ */
+export interface RestaurantFromPlace {
+  /**
+   * The restaurant, stored in our database
+   */
+  restaurant: Restaurant;
+
+  /**
+   * True when this request stored it: the user is the first to open the place. False when it already existed,
+   * including when another user stored it at the same moment
+   */
+  created: boolean;
+}
+
+/**
  * A restaurant returned by the place search (not necessarily stored in our database yet).
  */
 export interface PlaceSuggestion {

@@ -58,15 +58,20 @@ public class RestaurantsControllerTests : IDisposable
     }
 
     /// <summary>
-    /// Selecting a place returns its restaurant, created on first selection only.
+    /// Selecting a place returns its restaurant, created on first selection only, and tells which call created it.
     /// </summary>
     [Fact]
     public async Task FromPlace_CalledTwice_CreatesRestaurantOnce()
     {
-        await _client.PostAsJsonAsync("/api/restaurants/from-place", new { placeId = "N42" });
-        HttpResponseMessage response = await _client.PostAsJsonAsync("/api/restaurants/from-place", new { placeId = "N42" });
+        HttpResponseMessage first = await _client.PostAsJsonAsync("/api/restaurants/from-place", new { placeId = "N42" });
+        HttpResponseMessage second = await _client.PostAsJsonAsync("/api/restaurants/from-place", new { placeId = "N42" });
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Single(_factory.RestaurantService.Restaurants);
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+        Restaurant stored = Assert.Single(_factory.RestaurantService.Restaurants);
+        Assert.Contains("\"created\":true", await first.Content.ReadAsStringAsync());
+        string secondBody = await second.Content.ReadAsStringAsync();
+        Assert.Contains("\"created\":false", secondBody);
+        Assert.Contains($"\"id\":\"{stored.Id}\"", secondBody);
     }
 }

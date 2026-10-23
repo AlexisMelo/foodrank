@@ -2,7 +2,12 @@ import { HttpClient } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import type { UserLocation } from '@/core/models/location.model';
-import type { PlaceSuggestion, Restaurant, SearchArea } from '@/core/models/restaurant.model';
+import type {
+  PlaceSuggestion,
+  Restaurant,
+  RestaurantFromPlace,
+  SearchArea,
+} from '@/core/models/restaurant.model';
 import { recoverOnStatus } from './recover-on-status';
 
 /**
@@ -73,9 +78,10 @@ export class RestaurantApi {
   }
 
   /**
-   * Get the restaurant matching a search result, creating it in our database on first selection
+   * Get the restaurant matching a search result, creating it in our database on first selection; tells whether this
+   * request created it. When two users create the same restaurant at the same time, both get it.
    */
-  createRestaurantFromPlace(placeId: string): Observable<Restaurant> {
-    return this.http.post<Restaurant>('/api/restaurants/from-place', { placeId });
+  createRestaurantFromPlace(placeId: string): Observable<RestaurantFromPlace> {
+    return this.http.post<RestaurantFromPlace>('/api/restaurants/from-place', { placeId });
   }
 }

@@ -126,14 +126,14 @@ describe('RestaurantApi', () => {
   });
 
   describe('createRestaurantFromPlace', () => {
-    it('posts the place id and returns the restaurant', async () => {
+    it('posts the place id and returns the restaurant, and whether it was created', async () => {
       const result = firstValueFrom(api.createRestaurantFromPlace('N42'));
       const req = httpTesting.expectOne('http://api.test/api/restaurants/from-place');
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({ placeId: 'N42' });
-      req.flush({ id: 'r1' });
+      req.flush({ restaurant: { id: 'r1' }, created: true });
 
-      expect((await result).id).toBe('r1');
+      expect(await result).toEqual({ restaurant: { id: 'r1' }, created: true });
     });
   });
 });

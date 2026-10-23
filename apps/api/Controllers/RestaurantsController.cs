@@ -34,7 +34,8 @@ public class RestaurantsController(IRestaurantService restaurantService) : Contr
         => (await restaurantService.GetByIdAsync(id, cancellationToken)).ToActionResult();
 
     /// <summary>
-    /// Returns the restaurant matching a place selected in the search, creating it on first selection.
+    /// Returns the restaurant matching a place selected in the search, creating it on first selection, and whether this
+    /// request created it.
     /// </summary>
     [HttpPost("from-place")]
     [AllowAnonymous]

@@ -28,14 +28,14 @@ public class FakeRestaurantService : IRestaurantService
     }
 
     /// <inheritdoc />
-    public Task<Result<Restaurant>> GetOrCreateFromPlaceAsync(string placeId, CancellationToken cancellationToken)
+    public Task<Result<RestaurantFromPlaceResponse>> GetOrCreateFromPlaceAsync(string placeId, CancellationToken cancellationToken)
     {
         Restaurant? restaurant = Restaurants.FirstOrDefault(r => r.OsmId == placeId);
-        if (restaurant is null)
-        {
-            restaurant = new Restaurant { Id = Guid.NewGuid().ToString(), OsmId = placeId, Name = placeId };
-            Restaurants.Add(restaurant);
-        }
-        return Task.FromResult(Result<Restaurant>.Success(restaurant));
+        if (restaurant is not null)
+            return Task.FromResult(Result<RestaurantFromPlaceResponse>.Success(new RestaurantFromPlaceResponse(restaurant, Created: false)));
+
+        restaurant = new Restaurant { Id = Guid.NewGuid().ToString(), OsmId = placeId, Name = placeId };
+        Restaurants.Add(restaurant);
+        return Task.FromResult(Result<RestaurantFromPlaceResponse>.Success(new RestaurantFromPlaceResponse(restaurant, Created: true)));
     }
 }

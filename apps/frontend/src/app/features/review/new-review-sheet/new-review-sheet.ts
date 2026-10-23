@@ -16,6 +16,7 @@ import { map, of, switchMap, timer } from 'rxjs';
 import { PLACE_SEARCH_MIN_LENGTH, RestaurantApi } from '@/core/api/restaurant-api';
 import { UserLocation } from '@/core/location/user-location';
 import type { PlaceSuggestion } from '@/core/models/restaurant.model';
+import { injectOpenPlace } from '@/shared/data/open-place';
 import { NewReviewStore } from '../new-review-store';
 import { SearchAreaHint } from '../search-area-hint/search-area-hint';
 
@@ -51,9 +52,14 @@ export class NewReviewSheet {
   private readonly restaurantApi = inject(RestaurantApi);
 
   /**
-   * Opens the restaurant or the search results page
+   * Opens the search results page
    */
   private readonly router = inject(Router);
+
+  /**
+   * Opens the place picked, storing its restaurant on the first time
+   */
+  protected readonly places = injectOpenPlace();
 
   /**
    * The native dialog, shown as a modal once rendered; undefined while the sheet is closed
@@ -163,11 +169,11 @@ export class NewReviewSheet {
   }
 
   /**
-   * Opens the restaurant page, which gets or creates the restaurant in the database
+   * Opens the restaurant page of the place, storing it on the first time, then closes; stays open on failure, with the
+   * error shown
    */
-  protected selectPlace(place: PlaceSuggestion): void {
-    this.newReview.close();
-    void this.router.navigateByUrl(`/restaurant/place/${encodeURIComponent(place.placeId)}`);
+  protected async selectPlace(place: PlaceSuggestion): Promise<void> {
+    if (await this.places.open(place.placeId)) this.newReview.close();
   }
 
   /**

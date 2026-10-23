@@ -1,0 +1,54 @@
+<dialog #dialog class="celebration" aria-labelledby="celebration-title" (close)="closed.emit()">
+  <button type="button" class="close-btn" aria-label="Close" (click)="close()">✕</button>
+
+  <div class="content">
+    @switch (kind()) {
+      @case ('explorer') {
+        <span class="emoji" aria-hidden="true">🧭</span>
+        <h2 id="celebration-title" class="title">The explorer</h2>
+        <p class="lead">
+          You are the first to look up
+          <strong class="restaurant-name">{{ restaurant().name }}</strong>
+        </p>
+        @if (restaurant().address) {
+          <p class="address">{{ restaurant().address }}</p>
+        }
+        <p class="hint">
+          Uncharted territory: no foodie has set foot here yet. Grab your compass and your fork! 🍴
+        </p>
+
+        <div class="actions">
+          <a class="primary-btn" [routerLink]="['/review', restaurant().id]">Leave a review</a>
+          <button type="button" class="secondary-btn" (click)="close()">See the restaurant</button>
+        </div>
+      }
+      @case ('first-review') {
+        <span class="emoji" aria-hidden="true">🎉</span>
+        <h2 id="celebration-title" class="title">Bravo!</h2>
+        <p class="lead">
+          You just reviewed <strong class="restaurant-name">{{ restaurant().name }}</strong> for the
+          first time
+        </p>
+        <p class="hint">Found a good spot? Spread the word and send it to your friends!</p>
+
+        @if (webShare.supported) {
+          <button type="button" class="primary-btn share-btn" (click)="share()">Share it</button>
+        } @else if (webShare.canCopy) {
+          <button type="button" class="primary-btn share-btn" (click)="copyLink()">
+            Copy link
+          </button>
+          <p class="copy-status" role="status">
+            @switch (copyStatus()) {
+              @case ('copied') {
+                Link copied! Paste it to your friends.
+              }
+              @case ('failed') {
+                Couldn't copy the link.
+              }
+            }
+          </p>
+        }
+      }
+    }
+  </div>
+</dialog>

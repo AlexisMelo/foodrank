@@ -1,9 +1,9 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
 import { PLACE_SEARCH_MIN_LENGTH, RestaurantApi } from '@/core/api/restaurant-api';
 import { UserLocation } from '@/core/location/user-location';
 import type { PlaceSuggestion } from '@/core/models/restaurant.model';
+import { injectOpenPlace } from '@/shared/data/open-place';
 
 /**
  * Search results page (/search?q=…), opened with Enter from the new review sheet: the place suggestions of the query,
@@ -21,9 +21,9 @@ export class SearchResults {
   readonly q = input<string>();
 
   /**
-   * Opens the restaurant picked
+   * Opens the place picked, storing its restaurant on the first time
    */
-  private readonly router = inject(Router);
+  protected readonly places = injectOpenPlace();
 
   /**
    * Requests the suggestions and the longer search
@@ -125,9 +125,10 @@ export class SearchResults {
   }
 
   /**
-   * Opens the restaurant page, which gets or creates the restaurant in the database
+   * Opens the restaurant page of the place, storing it on the first time; stays on the results on failure, with the
+   * error shown
    */
   protected selectPlace(place: PlaceSuggestion): void {
-    void this.router.navigateByUrl(`/restaurant/place/${encodeURIComponent(place.placeId)}`);
+    void this.places.open(place.placeId);
   }
 }

@@ -14,7 +14,7 @@ Tick the box once the step is merged. The steps are independent, except: step 7 
 - [x] 2. Auth error messages
 - [x] 3. Password rules on the password reset
 - [x] 4. Logged-in user and duplicate requests
-- [ ] 5. Opening a restaurant from a search result
+- [x] 5. Opening a restaurant from a search result
 - [ ] 6. Add restaurants to a tierlist: decisions and API
 - [ ] 7. Add restaurants to a tierlist: frontend
 - [ ] 8. Explore suggestions from the API
@@ -102,7 +102,13 @@ Frontend only. Creating the restaurant (`POST /api/restaurants/from-place`) must
   - a functional guard on `restaurant/place/:placeId` that POSTs and returns a `UrlTree` to `/restaurant/:id` (no extra page instance, but the error then needs its own page or route);
   - or the search sheet and the search results create the restaurant before navigating (the `restaurant/place/:placeId` route goes away).
 - Tests: with `RouterTestingHarness`, one POST, one restaurant GET and one set of rating requests; the error case.
-- Commit: `refactor (frontend): create the restaurant from a place outside the page resource`
+- **Decisions taken** (a new workflow instead of the two options above, so the step touches the API too):
+  - The creation runs from the click on a search result (new review sheet or search results page), not in a page: `injectOpenPlace` (`shared/data/open-place.ts`) calls `POST /api/restaurants/from-place`, which now answers `{ restaurant, created }`, then opens `/restaurant/:id`. The `restaurant/place/:placeId` route is gone. While it runs, the results are disabled; on failure, `Couldn't open this restaurant, try again.` shows and the user stays on the search.
+  - `created` is true only for the request that stored the restaurant. Two users at the same time: the API returns the existing row on the unique `osm_id` conflict with `created: false`, so the second one simply gets the restaurant page, with no error and no message.
+  - "The explorer" 🧭 (the user is the first to open the place) and "Bravo" 🎉 (right after the user's own first rating of a restaurant, whoever rated it before) are full page modals over the restaurant page, in one component (`CelebrationDialog`, native `<dialog>`), closed by a top-right cross or Esc. The explorer modal links to the rating page ("Leave a review"); "See the restaurant" closes it, as the cross does.
+  - What to celebrate is handed to the restaurant page in memory (`CelebrationStore`), not in the URL: nobody else can open it, it shows once, and a reload does not show it again. The rating page tells a first rating from the user's own ratings.
+  - "Bravo" has a "Share it" button opening the native share sheet (Web Share API, wrapped in `core/share/web-share.ts`) with the absolute URL of the restaurant page. A browser without a share sheet gets "Copy link" instead, which copies it to the clipboard and says whether it worked; neither shows when the clipboard is not available either.
+- Commit: `feat (restaurant): create restaurants from the search, explorer and bravo modals`
 
 ### 6. Add restaurants to a tierlist: decisions and API (findings 1, 6)
 
