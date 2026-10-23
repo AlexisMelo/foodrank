@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { NewReviewStore } from '@/features/review/new-review-store';
+import { NewReviewStore } from '@/core/review/new-review-store';
 
 /**
  * Navigation bar fixed at the bottom of the private pages, with the button opening the new review sheet.

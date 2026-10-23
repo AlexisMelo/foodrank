@@ -42,7 +42,11 @@ If any of them is missing or out of date, **stop immediately**: make no change a
 
 ### GitHub issues
 
-When asked to work on a GitHub issue, create a dedicated branch **before reading or changing any code**: `git switch main`, `git pull`, then `git switch -c <type>/<issue-number>-<short-slug>` (type: `feat`, `fix`, `refactor` or `chore`; e.g. `fix/42-rating-rounding`). If the working tree is not clean, stop and ask. Never commit issue work on `main`.
+When asked to work on a GitHub issue, create a dedicated branch **before reading or changing any code**: `git switch main`, `git pull`, then `git switch -c <type>/<issue-number>-<short-slug>` (type: `feat`, `fix`, `refactor` or `chore`; e.g. `fix/42-rating-rounding`). If the working tree is not clean, stop and ask.
+
+### Commits
+
+**Never commit.** All commits are made manually by the user. Do not run any git command that creates or rewrites a commit (`commit`, `merge`, `cherry-pick`, `revert`, `rebase`, `am`, `commit-tree`); a `PreToolUse` hook (`.claude/hooks/block-git-commit.js`) blocks them. Leave the changes in the working tree (do not stage them). When an issue specifies a commit message, give it in the final summary for the user to use.
 
 ### Workflow for every change (feature, bugfix, refactor)
 

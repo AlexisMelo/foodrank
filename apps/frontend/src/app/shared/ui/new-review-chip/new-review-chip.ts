@@ -1,6 +1,6 @@
 import { Component, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
-import { NewReviewStore } from '@/features/review/new-review-store';
+import { NewReviewStore } from '@/core/review/new-review-store';
 import { NewChip } from '../new-chip/new-chip';
 
 /**

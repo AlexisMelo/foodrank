@@ -7,7 +7,7 @@ import { UserLocation } from '@/core/location/user-location';
 import { CelebrationStore } from '@/core/celebration/celebration-store';
 import type { PlaceSuggestion, RestaurantFromPlace } from '@/core/models/restaurant.model';
 import { query, queryAll, stubDialogs, submitForm, textOf, typeIn } from '@/testing/dom-testing';
-import { NewReviewStore } from '../new-review-store';
+import { NewReviewStore } from '@/core/review/new-review-store';
 import { NewReviewSheet } from './new-review-sheet';
 
 /**
