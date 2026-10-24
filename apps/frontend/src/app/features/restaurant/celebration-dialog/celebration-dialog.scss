@@ -111,12 +111,23 @@
   cursor: pointer;
   letter-spacing: -0.2px;
 }
-.primary-btn:hover {
+.primary-btn:hover:not(:disabled) {
   opacity: 0.9;
   transform: translateY(-1px);
 }
 .primary-btn:active {
   transform: translateY(0);
+}
+// "Leave a review" once the user reviewed a restaurant today
+.primary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.lock {
+  width: 14px;
+  height: 14px;
+  margin-left: 6px;
+  vertical-align: -2px;
 }
 .secondary-btn {
   width: 100%;

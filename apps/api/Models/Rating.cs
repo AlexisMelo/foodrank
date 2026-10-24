@@ -1,14 +1,13 @@
-using api.Common;
 using Supabase.Postgrest.Attributes;
 using Supabase.Postgrest.Models;
 
 namespace api.Models;
 
 /// <summary>
-/// A user's rating of a restaurant, stored in the "rating" table (primary key: restaurant, user, date). A user can rate
-/// a restaurant at most once per day, which the API checks (see <see cref="PlanNew"/>). Only the latest rating of a
-/// user for a restaurant is active (it is the user's score for the restaurant, flagged in the "is_active" column); the
-/// previous ones are kept as history.
+/// A user's rating of a restaurant, stored in the "rating" table (primary key: restaurant, user, date). A user rates at
+/// most one restaurant per day, which the API checks (see <see cref="RatingAllowanceResponse"/>). Only the latest rating
+/// of a user for a restaurant is active (it is the user's score for the restaurant, flagged in the "is_active" column);
+/// the previous ones are kept as history.
 /// </summary>
 [Table("rating")]
 public class Rating : BaseModel
@@ -69,23 +68,14 @@ public class Rating : BaseModel
     /// </summary>
     /// <param name="currentActive">Active ratings of the same restaurant and user, as read before writing (normally
     /// zero or one; every one of them is deactivated).</param>
-    /// <param name="newRating">Rating being created.</param>
-    /// <returns>The previous active ratings, deactivated, then <paramref name="newRating"/>, active; or a Conflict
-    /// failure when the user already rated the restaurant the same day (UTC).</returns>
-    public static Result<IReadOnlyList<Rating>> PlanNew(IReadOnlyList<Rating> currentActive, Rating newRating)
+    /// <param name="newRating">Rating being created, once <see cref="RatingAllowanceResponse"/> allows it.</param>
+    /// <returns>The previous active ratings, deactivated, then <paramref name="newRating"/>, active.</returns>
+    public static IReadOnlyList<Rating> PlanNew(IReadOnlyList<Rating> currentActive, Rating newRating)
     {
-        if (currentActive.Any(r => UtcDay(r.Date) == UtcDay(newRating.Date)))
-            return Result<IReadOnlyList<Rating>>.Failure(new Error(ErrorType.Conflict, "You already rated this restaurant today."));
-
         List<Rating> rows = currentActive.Select(r => r.WithIsActive(false)).ToList();
         rows.Add(newRating.WithIsActive(true));
-        return Result<IReadOnlyList<Rating>>.Success(rows);
+        return rows;
     }
-
-    /// <summary>
-    /// Day of a moment in UTC, the day the "once per day" rule is checked on.
-    /// </summary>
-    private static DateTime UtcDay(DateTimeOffset moment) => moment.UtcDateTime.Date;
 
     /// <summary>
     /// Copies this rating with another active flag.

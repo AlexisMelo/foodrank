@@ -12,6 +12,8 @@ import { AuthStore } from '@/core/auth/auth-store';
 import { UserLocation } from '@/core/location/user-location';
 import type { UserRating } from '@/core/models/rating.model';
 import type { Tierlist } from '@/core/models/tierlist.model';
+import { REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
+import { CAN_REVIEW, alreadyReviewed } from '@/core/review/daily-review-testing';
 import { NewReviewStore } from '@/core/review/new-review-store';
 import { query, queryAll, stubDialogs, textOf } from '@/testing/dom-testing';
 
@@ -53,6 +55,7 @@ function tierlist(id: number, updatedAt: string): Tierlist {
 describe('Home', () => {
   let fetchUserProfile: ReturnType<typeof vi.fn>;
   let fetchUserRatings: ReturnType<typeof vi.fn>;
+  let fetchRatingAllowance: ReturnType<typeof vi.fn>;
   let fetchTierlistsByUserId: ReturnType<typeof vi.fn>;
   let harness: RouterTestingHarness;
 
@@ -63,6 +66,7 @@ describe('Home', () => {
       of({ id: 'u1', name: 'Alexis Melo', avatarUrl: null, ratedRestaurantsCount: 3 }),
     );
     fetchUserRatings = vi.fn(() => of([]));
+    fetchRatingAllowance = vi.fn(() => of(CAN_REVIEW));
     fetchTierlistsByUserId = vi.fn(() => of([]));
     TestBed.configureTestingModule({
       providers: [
@@ -73,7 +77,8 @@ describe('Home', () => {
           useValue: { isLoggedIn: signal(true), loggedInUserId: signal('u1') },
         },
         { provide: UserApi, useValue: { fetchUserProfile } },
-        { provide: RatingApi, useValue: { fetchUserRatings } },
+        // The rating allowance locks the review buttons
+        { provide: RatingApi, useValue: { fetchUserRatings, fetchRatingAllowance } },
         // Read by the search area hint of the new review sheet
         {
           provide: RestaurantApi,
@@ -195,6 +200,43 @@ describe('Home', () => {
       await harness.fixture.whenStable();
 
       expect(sheetOpen()).toBe(true);
+    });
+
+    it('locks the "+ New" chip once a restaurant was reviewed today', async () => {
+      fetchRatingAllowance.mockReturnValue(of(alreadyReviewed()));
+      await openHome();
+
+      const chip = query<HTMLButtonElement>(harness.fixture, '.add-chip');
+      expect(chip.disabled).toBe(true);
+      expect(chip.title).toBe(REVIEW_LOCKED_REASON);
+      expect(chip.querySelector('app-lock-icon')).not.toBeNull();
+
+      chip.click();
+      await harness.fixture.whenStable();
+
+      expect(sheetOpen()).toBe(false);
+    });
+
+    it('still opens the search of the tab bar once a restaurant was reviewed today: it only leads to restaurant pages', async () => {
+      fetchRatingAllowance.mockReturnValue(of(alreadyReviewed()));
+      await openHome();
+
+      const tabButton = query<HTMLButtonElement>(harness.fixture, '.tab-btn-add');
+      expect(tabButton.disabled).toBe(false);
+      expect(tabButton.querySelector('app-lock-icon')).toBeNull();
+
+      tabButton.click();
+      await harness.fixture.whenStable();
+
+      expect(sheetOpen()).toBe(true);
+    });
+
+    it('shows no padlock while the user can review', async () => {
+      await openHome();
+
+      expect(fetchRatingAllowance).toHaveBeenCalledOnce();
+      expect(queryAll(harness.fixture, 'app-lock-icon')).toHaveLength(0);
+      expect(query<HTMLButtonElement>(harness.fixture, '.add-chip').disabled).toBe(false);
     });
   });
 

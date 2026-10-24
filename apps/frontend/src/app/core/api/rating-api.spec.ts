@@ -118,6 +118,20 @@ describe('RatingApi', () => {
     });
   });
 
+  describe('fetchRatingAllowance', () => {
+    it('asks whether the logged-in user can rate, with the session cookie', async () => {
+      const allowance = { canRate: false, nextRatingAt: '2026-10-25T00:00:00+00:00' };
+
+      const result = firstValueFrom(api.fetchRatingAllowance());
+      const req = httpTesting.expectOne('http://api.test/api/users/me/rating-allowance');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(allowance);
+
+      expect(await result).toEqual(allowance);
+    });
+  });
+
   describe('fetchUserRatings', () => {
     it("returns the logged-in user's ratings by default", async () => {
       const ratings = [{ restaurantId: 'r1', date: '2026-03-07T12:00:00+00:00' }];

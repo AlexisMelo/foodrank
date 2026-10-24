@@ -18,7 +18,14 @@
         </p>
 
         <div class="actions">
-          <a class="primary-btn" [routerLink]="['/review', restaurant().id]">Leave a review</a>
+          @if (dailyReview.locked()) {
+            <button type="button" class="primary-btn" disabled [title]="lockedReason">
+              Leave a review
+              <app-lock-icon class="lock" />
+            </button>
+          } @else {
+            <a class="primary-btn" [routerLink]="['/review', restaurant().id]">Leave a review</a>
+          }
           <button type="button" class="secondary-btn" (click)="close()">See the restaurant</button>
         </div>
       }

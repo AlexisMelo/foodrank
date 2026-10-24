@@ -6,8 +6,9 @@ namespace Api.Tests.Fakes;
 
 /// <summary>
 /// In-memory <see cref="IRatingService"/>, replacing the Supabase-backed one in API tests. Follows the same rules as the
-/// real service: the restaurant must exist, a user rates a restaurant at most once per day, and a new rating becomes
-/// the active one (written with <see cref="Rating.PlanNew"/>, like the real upsert).
+/// real service: the restaurant must exist, a user rates at most one restaurant per day (checked with
+/// <see cref="RatingAllowanceResponse.From"/>), and a new rating becomes the active one (written with
+/// <see cref="Rating.PlanNew"/>, like the real upsert).
 /// </summary>
 /// <param name="restaurants">Restaurants the ratings can be attached to.</param>
 public class FakeRatingService(FakeRestaurantService restaurants) : IRatingService
@@ -28,6 +29,9 @@ public class FakeRatingService(FakeRestaurantService restaurants) : IRatingServi
         if (restaurants.Restaurants.All(r => r.Id != restaurantId))
             return Task.FromResult(Result<Rating>.Failure(new Error(ErrorType.NotFound, "Restaurant not found.")));
 
+        if (!Allowance(userId).CanRate)
+            return Task.FromResult(Result<Rating>.Failure(RatingAllowanceResponse.AlreadyRatedToday));
+
         Rating rating = new()
         {
             RestaurantId = restaurantId,
@@ -39,17 +43,28 @@ public class FakeRatingService(FakeRestaurantService restaurants) : IRatingServi
             Bonus = request.Bonus
         };
         List<Rating> currentActive = Ratings.Where(r => r.RestaurantId == restaurantId && r.UserId == userId && r.IsActive).ToList();
-        Result<IReadOnlyList<Rating>> rows = Rating.PlanNew(currentActive, rating);
-        if (!rows.IsSuccess)
-            return Task.FromResult(Result<Rating>.Failure(rows.Error!));
+        IReadOnlyList<Rating> rows = Rating.PlanNew(currentActive, rating);
 
         // Upsert: replace the rows with the same primary key, add the others
-        foreach (Rating row in rows.Value!)
+        foreach (Rating row in rows)
         {
             Ratings.RemoveAll(r => r.RestaurantId == row.RestaurantId && r.UserId == row.UserId && r.Date == row.Date);
             Ratings.Add(row);
         }
-        return Task.FromResult(Result<Rating>.Success(rows.Value[^1]));
+        return Task.FromResult(Result<Rating>.Success(rows[^1]));
+    }
+
+    /// <inheritdoc />
+    public Task<Result<RatingAllowanceResponse>> GetAllowanceAsync(string userId, CancellationToken cancellationToken)
+        => Task.FromResult(Result<RatingAllowanceResponse>.Success(Allowance(userId)));
+
+    /// <summary>
+    /// Like the real service: the rule applied to the user's most recent rating, whatever the restaurant, as of now.
+    /// </summary>
+    private RatingAllowanceResponse Allowance(string userId)
+    {
+        DateTimeOffset? lastRatingDate = Ratings.Where(r => r.UserId == userId).Select(r => (DateTimeOffset?)r.Date).Max();
+        return RatingAllowanceResponse.From(lastRatingDate, DateTimeOffset.UtcNow);
     }
 
     /// <inheritdoc />

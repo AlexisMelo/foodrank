@@ -1,4 +1,3 @@
-using api.Common;
 using api.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -35,9 +34,9 @@ public class RatingTests
     [Fact]
     public void PlanNew_FirstRating_WritesItActive()
     {
-        Result<IReadOnlyList<Rating>> rows = Rating.PlanNew([], NewRating(March(9)));
+        IReadOnlyList<Rating> rows = Rating.PlanNew([], NewRating(March(9)));
 
-        Rating row = Assert.Single(rows.Value!);
+        Rating row = Assert.Single(rows);
         Assert.Equal(March(9), row.Date);
         Assert.True(row.IsActive);
     }
@@ -49,12 +48,11 @@ public class RatingTests
     [Fact]
     public void PlanNew_PreviousActiveRating_DeactivatesItAndActivatesNewOne()
     {
-        Result<IReadOnlyList<Rating>> rows = Rating.PlanNew([NewRating(March(1), isActive: true, food: 20)], NewRating(March(9), food: 90));
+        IReadOnlyList<Rating> rows = Rating.PlanNew([NewRating(March(1), isActive: true, food: 20)], NewRating(March(9), food: 90));
 
-        Assert.True(rows.IsSuccess);
         Assert.Equal(
             [(March(1), 20f, false), (March(9), 90f, true)],
-            rows.Value!.Select(r => (r.Date, r.FoodRating, r.IsActive)));
+            rows.Select(r => (r.Date, r.FoodRating, r.IsActive)));
     }
 
     /// <summary>
@@ -63,34 +61,9 @@ public class RatingTests
     [Fact]
     public void PlanNew_SeveralActiveRatings_DeactivatesThemAll()
     {
-        Result<IReadOnlyList<Rating>> rows = Rating.PlanNew([NewRating(March(1), isActive: true), NewRating(March(5), isActive: true)], NewRating(March(9)));
+        IReadOnlyList<Rating> rows = Rating.PlanNew([NewRating(March(1), isActive: true), NewRating(March(5), isActive: true)], NewRating(March(9)));
 
-        Assert.Equal([false, false, true], rows.Value!.Select(r => r.IsActive));
-    }
-
-    /// <summary>
-    /// A second rating the same day, even hours later, is refused.
-    /// </summary>
-    [Fact]
-    public void PlanNew_AlreadyRatedEarlierThatDay_FailsWithConflict()
-    {
-        Result<IReadOnlyList<Rating>> rows = Rating.PlanNew([NewRating(March(9, hour: 8), isActive: true)], NewRating(March(9, hour: 21)));
-
-        Assert.False(rows.IsSuccess);
-        Assert.Equal(ErrorType.Conflict, rows.Error!.Type);
-    }
-
-    /// <summary>
-    /// The day is the UTC day: 23:30 then 00:10 UTC are two days, even where it is the same local day.
-    /// </summary>
-    [Fact]
-    public void PlanNew_RatedTheUtcDayBefore_Succeeds()
-    {
-        Rating lateEvening = NewRating(new DateTimeOffset(2026, 3, 8, 23, 30, 0, TimeSpan.Zero), isActive: true);
-
-        Result<IReadOnlyList<Rating>> rows = Rating.PlanNew([lateEvening], NewRating(new DateTimeOffset(2026, 3, 9, 0, 10, 0, TimeSpan.Zero)));
-
-        Assert.True(rows.IsSuccess);
+        Assert.Equal([false, false, true], rows.Select(r => r.IsActive));
     }
 
     /// <summary>
@@ -105,9 +78,9 @@ public class RatingTests
         // 23:15 in Paris, already the next day in UTC
         DateTimeOffset now = new(2026, 3, 9, 23, 15, 0, TimeSpan.FromHours(1));
 
-        Result<IReadOnlyList<Rating>> rows = Rating.PlanNew([NewRating(previous, isActive: true)], NewRating(now));
+        IReadOnlyList<Rating> rows = Rating.PlanNew([NewRating(previous, isActive: true)], NewRating(now));
 
-        Assert.Equal([previous, now], await SentMoments(rows.Value!));
+        Assert.Equal([previous, now], await SentMoments(rows));
     }
 
     /// <summary>

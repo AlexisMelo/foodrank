@@ -1,6 +1,8 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { DailyReviewStore, REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
 import { scoreColor } from '@/core/utils/rating';
+import { LockIcon } from '../lock-icon/lock-icon';
 import { RatingScores } from '../rating-scores/rating-scores';
 
 /**
@@ -15,10 +17,11 @@ function itemBackground(index: number): string {
 
 /**
  * A restaurant of a ranking (favorites, profile, tierlist): its criteria scores, its overall score and, optionally,
- * the logged-in user's own score or a link to rate it. Opens the restaurant page.
+ * the logged-in user's own score or a link to rate it (a padlock instead once they reviewed a restaurant today). Opens
+ * the restaurant page.
  */
 @Component({
-  imports: [RouterLink, RatingScores],
+  imports: [LockIcon, RouterLink, RatingScores],
   selector: 'app-ranked-restaurant-item',
   styleUrl: './ranked-restaurant-item.scss',
   templateUrl: './ranked-restaurant-item.html',
@@ -76,9 +79,19 @@ export class RankedRestaurantItem {
 
   /**
    * Route of the rating page, linked from a "+" bubble next to the restaurant link when there is no myScore;
-   * undefined for no bubble
+   * undefined for no bubble. The bubble shows a padlock instead, not linked, once the user reviewed a restaurant today
    */
   readonly rateLink = input<string>();
+
+  /**
+   * Locks the "+" bubble once the user reviewed a restaurant today
+   */
+  protected readonly dailyReview = inject(DailyReviewStore);
+
+  /**
+   * Tooltip of the locked bubble
+   */
+  protected readonly lockedReason = REVIEW_LOCKED_REASON;
 
   /**
    * Background of the item, also exposed as --item-bg to its children

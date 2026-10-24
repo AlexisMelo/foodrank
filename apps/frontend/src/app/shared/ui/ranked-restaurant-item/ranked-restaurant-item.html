@@ -25,9 +25,20 @@
     </div>
   </a>
   @if (myScore() === undefined && rateLink()) {
-    <!-- Next to the link to the restaurant page, not inside it: a link cannot hold another one -->
-    <a class="my-score my-score-rate" [routerLink]="rateLink()" aria-label="Rate this restaurant">
-      <span class="rate-plus">+</span>
-    </a>
+    @if (dailyReview.locked()) {
+      <span
+        class="my-score my-score-rate my-score-locked"
+        role="img"
+        aria-label="Rate this restaurant: locked"
+        [title]="lockedReason"
+      >
+        <app-lock-icon class="rate-lock" />
+      </span>
+    } @else {
+      <!-- Next to the link to the restaurant page, not inside it: a link cannot hold another one -->
+      <a class="my-score my-score-rate" [routerLink]="rateLink()" aria-label="Rate this restaurant">
+        <span class="rate-plus">+</span>
+      </a>
+    }
   }
 </div>

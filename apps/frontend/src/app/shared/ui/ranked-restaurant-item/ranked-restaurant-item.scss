@@ -121,8 +121,18 @@
     box-shadow 0.15s;
 }
 
-.my-score-rate:hover {
+.my-score-rate:hover:not(.my-score-locked) {
   transform: scale(1.15);
   color: #ffffff;
   /* box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.9); */
+}
+
+// Not a link once the user reviewed a restaurant today
+.my-score-locked {
+  cursor: not-allowed;
+  color: rgba(255, 255, 255, 0.45);
+}
+.rate-lock {
+  width: 10px;
+  height: 10px;
 }

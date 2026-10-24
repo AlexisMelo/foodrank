@@ -235,6 +235,34 @@
   cursor: wait;
   transform: none;
 }
+// Once the user reviewed a restaurant today
+.submit-btn.submit-locked {
+  cursor: not-allowed;
+}
+.submit-lock {
+  width: 18px;
+  height: 18px;
+}
+
+.locked-notice {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(249, 199, 79, 0.35);
+  background: rgba(249, 199, 79, 0.08);
+  color: #f9c74f;
+  font-size: 13px;
+  font-weight: 700;
+}
+.locked-notice-icon {
+  width: 16px;
+  height: 16px;
+}
 
 .save-error {
   margin: 0;

@@ -113,6 +113,23 @@ export interface RatingSummary {
 }
 
 /**
+ * Whether the logged-in user can review a restaurant now (GET /api/users/me/rating-allowance). A user reviews at most
+ * one restaurant per day (UTC), as they can visit only one restaurant a day.
+ */
+export interface RatingAllowance {
+  /**
+   * True when the user has not reviewed any restaurant today (UTC)
+   */
+  canRate: boolean;
+
+  /**
+   * Moment the user can review again, the next midnight UTC, ISO 8601 (e.g. "2026-10-25T00:00:00+00:00"); null when
+   * canRate is true
+   */
+  nextRatingAt: string | null;
+}
+
+/**
  * A rating of a user, with the restaurant it rates (GET /api/users/:id/ratings).
  */
 export interface UserRating {

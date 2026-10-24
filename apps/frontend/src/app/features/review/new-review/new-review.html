@@ -12,6 +12,13 @@
       <h2 class="restaurant-name">{{ restaurant.name }}</h2>
     </div>
 
+    @if (locked()) {
+      <p class="locked-notice" role="status">
+        <app-lock-icon class="locked-notice-icon" />
+        {{ lockedReason }}
+      </p>
+    }
+
     <p class="section-label">Your verdict</p>
 
     @if (pastReviewsError()) {
@@ -60,21 +67,32 @@
         <span class="crush-pip" [class.crush-pip-on]="instantCrush()"></span>
       </button>
 
-      <button type="button" class="submit-btn" [disabled]="saving()" (click)="submit()">
+      <button
+        type="button"
+        class="submit-btn"
+        [class.submit-locked]="locked()"
+        [disabled]="saving() || locked()"
+        (click)="submit()"
+      >
         {{ saving() ? 'Saving...' : 'Lock it in' }}
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M5 12h14M13 6l6 6-6 6" />
-        </svg>
+        @if (locked()) {
+          <app-lock-icon class="submit-lock" />
+        } @else {
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        }
       </button>
-      @if (saveError()) {
+      <!-- Once locked, the notice above says why: the 409 error would repeat it -->
+      @if (saveError() && !locked()) {
         <p class="save-error" role="alert">{{ saveError() }}</p>
       }
     </div>

@@ -209,6 +209,62 @@ public class UsersControllerTests : IDisposable
     }
 
     /// <summary>
+    /// A user who never rated can rate, sent in camelCase for the frontend.
+    /// </summary>
+    [Fact]
+    public async Task GetMyRatingAllowance_NeverRated_CanRate()
+    {
+        HttpResponseMessage response = await GetAsync("/api/users/me/rating-allowance");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("""{"canRate":true,"nextRatingAt":null}""", await response.Content.ReadAsStringAsync());
+    }
+
+    /// <summary>
+    /// After rating a restaurant today, the user cannot rate until the next midnight UTC, sent as an ISO 8601 moment in
+    /// UTC.
+    /// </summary>
+    [Fact]
+    public async Task GetMyRatingAllowance_RatedToday_CannotRateUntilMidnightUtc()
+    {
+        AddRating(MeId, "r1", DateTime.UtcNow);
+
+        HttpResponseMessage response = await GetAsync("/api/users/me/rating-allowance");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        RatingAllowanceResponse allowance = (await response.Content.ReadFromJsonAsync<RatingAllowanceResponse>())!;
+        Assert.False(allowance.CanRate);
+        Assert.Equal(new DateTimeOffset(DateTime.UtcNow.Date.AddDays(1), TimeSpan.Zero), allowance.NextRatingAt);
+        Assert.Contains("T00:00:00+00:00", await response.Content.ReadAsStringAsync());
+    }
+
+    /// <summary>
+    /// Only the logged-in user's ratings of today count: their ratings of previous days and the other users' ratings of
+    /// today do not prevent rating.
+    /// </summary>
+    [Fact]
+    public async Task GetMyRatingAllowance_RatedYesterdayAndOtherUserToday_CanRate()
+    {
+        AddRating(MeId, "r1", DateTime.UtcNow.AddDays(-1));
+        AddRating(OtherId, "r2", DateTime.UtcNow);
+
+        RatingAllowanceResponse allowance = (await (await GetAsync("/api/users/me/rating-allowance")).Content.ReadFromJsonAsync<RatingAllowanceResponse>())!;
+
+        Assert.Equal(new RatingAllowanceResponse(true, null), allowance);
+    }
+
+    /// <summary>
+    /// Without the auth cookie, "me/rating-allowance" is refused with a 401.
+    /// </summary>
+    [Fact]
+    public async Task GetMyRatingAllowance_NoCookie_Returns401()
+    {
+        HttpResponseMessage response = await GetAsync("/api/users/me/rating-allowance", token: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    /// <summary>
     /// The ratings of another user are returned by its id.
     /// </summary>
     [Fact]

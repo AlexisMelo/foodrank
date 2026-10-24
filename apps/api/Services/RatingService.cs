@@ -19,21 +19,46 @@ public class RatingService(Supabase.Client supabase, IRestaurantService restaura
         if (!restaurant.IsSuccess)
             return Result<Rating>.Failure(restaurant.Error!);
 
+        RatingAllowanceResponse allowance = await AllowanceAsync(userId, cancellationToken);
+        if (!allowance.CanRate)
+            return Result<Rating>.Failure(RatingAllowanceResponse.AlreadyRatedToday);
+
         string id = restaurant.Value!.Id;
         ModeledResponse<Rating> currentActive = await ActiveRatingsQuery(supabase.From<Rating>(), id, userId).Get(cancellationToken);
-
-        Result<IReadOnlyList<Rating>> rows = Rating.PlanNew(currentActive.Models, ToRating(id, userId, request));
-        if (!rows.IsSuccess)
-            return Result<Rating>.Failure(rows.Error!);
+        IReadOnlyList<Rating> rows = Rating.PlanNew(currentActive.Models, ToRating(id, userId, request));
 
         // One request is one transaction: the previous active rating is deactivated (update on its primary key) and
         // the new one inserted together, so there is never zero or two active ratings. Two submits racing the same
         // day both pass the check above and, the date being a moment, both insert their own row: the database does not
-        // enforce the "once per day" rule.
-        Rating newRating = rows.Value![^1];
-        ModeledResponse<Rating> written = await supabase.From<Rating>().Upsert(rows.Value.ToList(), cancellationToken: cancellationToken);
-        return Result<Rating>.Success(written.Models.LastOrDefault() ?? newRating);
+        // enforce the "one restaurant per day" rule.
+        ModeledResponse<Rating> written = await supabase.From<Rating>().Upsert(rows.ToList(), cancellationToken: cancellationToken);
+        return Result<Rating>.Success(written.Models.LastOrDefault() ?? rows[^1]);
     }
+
+    /// <inheritdoc />
+    public async Task<Result<RatingAllowanceResponse>> GetAllowanceAsync(string userId, CancellationToken cancellationToken)
+        => Result<RatingAllowanceResponse>.Success(await AllowanceAsync(userId, cancellationToken));
+
+    /// <summary>
+    /// Applies the "one restaurant per day" rule to the latest rating of <paramref name="userId"/>, as of now.
+    /// </summary>
+    private async Task<RatingAllowanceResponse> AllowanceAsync(string userId, CancellationToken cancellationToken)
+    {
+        ModeledResponse<Rating> latest = await LatestRatingQuery(supabase.From<Rating>(), userId).Get(cancellationToken);
+        return RatingAllowanceResponse.From(latest.Models.FirstOrDefault()?.Date, DateTimeOffset.UtcNow);
+    }
+
+    /// <summary>
+    /// Query of the most recent rating of <paramref name="userId"/>, whatever the restaurant and the active flag.
+    /// </summary>
+    /// <param name="ratings">Query on the "rating" table to filter.</param>
+    /// <param name="userId">Supabase Auth id of the user.</param>
+    /// <returns>The filtered query, ready to send.</returns>
+    public static IPostgrestTable<Rating> LatestRatingQuery(IPostgrestTable<Rating> ratings, string userId)
+        => ratings
+            .Where(r => r.UserId == userId)
+            .Order("date", Constants.Ordering.Descending)
+            .Limit(1);
 
     /// <inheritdoc />
     public async Task<Result<IReadOnlyList<RatingResponse>>> GetRecentAsync(string restaurantId, int count, CancellationToken cancellationToken)

@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import type {
+  RatingAllowance,
   RatingInput,
   RatingSummary,
   RestaurantRating,
@@ -22,7 +23,8 @@ export class RatingApi {
 
   /**
    * Save the logged-in user's rating of a restaurant for today
-   * @throws the HttpErrorResponse: 401 when not logged in, 404 for an unknown restaurant, 409 when already rated today
+   * @throws the HttpErrorResponse: 401 when not logged in, 404 for an unknown restaurant, 409 when the user already
+   * rated a restaurant today
    */
   rateRestaurant(restaurantId: string, rating: RatingInput): Observable<void> {
     return this.http
@@ -58,6 +60,13 @@ export class RatingApi {
     return this.http
       .get<RestaurantRating[]>(`/api/restaurants/${encodeURIComponent(restaurantId)}/ratings/mine`)
       .pipe(recoverOnStatus(401, []));
+  }
+
+  /**
+   * Get whether the logged-in user can rate a restaurant now: a user rates at most one restaurant per day (UTC)
+   */
+  fetchRatingAllowance(): Observable<RatingAllowance> {
+    return this.http.get<RatingAllowance>(`/api/users/${ME}/rating-allowance`);
   }
 
   /**

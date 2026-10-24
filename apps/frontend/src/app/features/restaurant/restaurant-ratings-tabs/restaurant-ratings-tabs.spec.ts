@@ -1,8 +1,12 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { of } from 'rxjs';
+import { RatingApi } from '@/core/api/rating-api';
 import { AuthStore } from '@/core/auth/auth-store';
 import type { RestaurantRating } from '@/core/models/rating.model';
+import { REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
+import { CAN_REVIEW, alreadyReviewed } from '@/core/review/daily-review-testing';
 import { query, queryAll, textOf } from '@/testing/dom-testing';
 import { RestaurantRatingsTabs } from './restaurant-ratings-tabs';
 
@@ -57,14 +61,18 @@ interface TabsInputs {
 
 describe('RestaurantRatingsTabs', () => {
   let fixture: ComponentFixture<RestaurantRatingsTabs>;
+  let fetchRatingAllowance: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    fetchRatingAllowance = vi.fn(() => of(CAN_REVIEW));
     TestBed.configureTestingModule({
       providers: [
-        // The "New" chip needs the router; it is not what is tested here
+        // The "New" chip needs the router
         provideRouter([]),
         // "Me" (user id "me") is logged in
         { provide: AuthStore, useValue: { loggedInUserId: signal('me') } },
+        // The rating allowance locks the "New" chip
+        { provide: RatingApi, useValue: { fetchRatingAllowance } },
       ],
     });
   });
@@ -101,6 +109,27 @@ describe('RestaurantRatingsTabs', () => {
     query(fixture, '.tab-recent').click();
     await fixture.whenStable();
   }
+
+  it('links the "New" chip to the rating page of the restaurant', async () => {
+    await render();
+
+    const chip = query(fixture, '.add-chip');
+    expect(chip.tagName).toBe('A');
+    expect(chip.getAttribute('href')).toBe('/review/r1');
+    expect(chip.querySelector('app-lock-icon')).toBeNull();
+  });
+
+  it('locks the "New" chip once the user reviewed a restaurant today: no link to the rating page', async () => {
+    fetchRatingAllowance.mockReturnValue(of(alreadyReviewed()));
+    await render();
+
+    const chip = query<HTMLButtonElement>(fixture, '.add-chip');
+    expect(chip.tagName).toBe('BUTTON');
+    expect(chip.disabled).toBe(true);
+    expect(chip.title).toBe(REVIEW_LOCKED_REASON);
+    expect(chip.querySelector('app-lock-icon')).not.toBeNull();
+    expect(queryAll(fixture, 'a[href="/review/r1"]')).toHaveLength(0);
+  });
 
   it("shows the user's own ratings first, with their date and scores", async () => {
     await render({
