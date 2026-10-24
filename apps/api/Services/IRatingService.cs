@@ -11,9 +11,18 @@ public interface IRatingService
 {
     /// <summary>
     /// Saves today's rating of <paramref name="restaurantId"/> by <paramref name="userId"/> as their active rating,
-    /// deactivating the previous one. Fails with NotFound when the restaurant does not exist, and Conflict when the user already rated it today.
+    /// deactivating the previous one. Fails with NotFound when the restaurant does not exist, and Conflict when the user
+    /// already rated a restaurant today (see <see cref="RatingAllowanceResponse"/>).
     /// </summary>
     Task<Result<Rating>> CreateAsync(string restaurantId, string userId, RateRestaurantRequest request, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Tells whether <paramref name="userId"/> can rate a restaurant now: a user rates at most one restaurant per day (UTC).
+    /// </summary>
+    /// <param name="userId">Supabase Auth id of the user.</param>
+    /// <param name="cancellationToken">Cancels the database query.</param>
+    /// <returns>Whether the user can rate, and when they can rate again when they cannot.</returns>
+    Task<Result<RatingAllowanceResponse>> GetAllowanceAsync(string userId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Returns the <paramref name="count"/> most recent active ratings of <paramref name="restaurantId"/> (each user's

@@ -21,11 +21,19 @@
     border-color 0.2s,
     color 0.2s;
 }
-.add-chip:hover {
+.add-chip:hover:not(:disabled) {
   border-color: rgba(255, 255, 255, 0.4);
   color: rgba(255, 255, 255, 0.8);
 }
-.add-chip svg {
+.add-chip:disabled {
+  cursor: not-allowed;
+}
+.add-chip > svg {
   width: 14px;
   height: 14px;
+}
+.lock {
+  width: 11px;
+  height: 11px;
+  margin-left: 2px;
 }

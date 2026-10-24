@@ -11,6 +11,8 @@ import { UserApi } from '@/core/api/user-api';
 import { AuthStore } from '@/core/auth/auth-store';
 import type { Restaurant } from '@/core/models/restaurant.model';
 import { CelebrationStore } from '@/core/celebration/celebration-store';
+import { REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
+import { CAN_REVIEW, alreadyReviewed } from '@/core/review/daily-review-testing';
 import { SHARE_NAVIGATOR } from '@/core/share/web-share';
 import { clickButton, query, queryAll, stubDialogs, textOf } from '@/testing/dom-testing';
 
@@ -35,6 +37,7 @@ describe('RestaurantDetail', () => {
   let fetchRecentRatings: ReturnType<typeof vi.fn>;
   let fetchMyRatings: ReturnType<typeof vi.fn>;
   let fetchRatingSummary: ReturnType<typeof vi.fn>;
+  let fetchRatingAllowance: ReturnType<typeof vi.fn>;
   let share: ReturnType<typeof vi.fn<(data?: ShareData) => Promise<void>>>;
   let shareNavigator: { share?: Navigator['share']; clipboard?: Clipboard };
   let harness: RouterTestingHarness;
@@ -50,6 +53,7 @@ describe('RestaurantDetail', () => {
     fetchRatingSummary = vi.fn(() =>
       of({ count: 0, food: null, service: null, setting: null, global: null }),
     );
+    fetchRatingAllowance = vi.fn(() => of(CAN_REVIEW));
     TestBed.configureTestingModule({
       providers: [
         // The real routes, with a logged-in user
@@ -71,6 +75,8 @@ describe('RestaurantDetail', () => {
             fetchRecentRatings,
             fetchMyRatings,
             fetchRatingSummary,
+            // Locks the review buttons
+            fetchRatingAllowance,
             // Read by the home page
             fetchUserRatings: () => of([]),
           },
@@ -172,6 +178,23 @@ describe('RestaurantDetail', () => {
       const review = query(harness.fixture, '.celebration a.primary-btn');
       expect(textOf(review)).toBe('Leave a review');
       expect(review.getAttribute('href')).toBe('/review/r1');
+    });
+
+    it('locks "Leave a review" once the user reviewed a restaurant today, still closing from "See the restaurant"', async () => {
+      fetchRatingAllowance.mockReturnValue(of(alreadyReviewed()));
+      await open('/restaurant/r1');
+
+      const review = query<HTMLButtonElement>(harness.fixture, '.celebration .primary-btn');
+      expect(textOf(review)).toBe('Leave a review');
+      expect(review.tagName).toBe('BUTTON');
+      expect(review.disabled).toBe(true);
+      expect(review.title).toBe(REVIEW_LOCKED_REASON);
+      expect(review.querySelector('app-lock-icon')).not.toBeNull();
+      expect(queryAll(harness.fixture, 'a[href="/review/r1"]')).toHaveLength(0);
+
+      await clickButton(harness.fixture, 'See the restaurant');
+
+      expect(explorer()).toBeUndefined();
     });
 
     it('closes on the restaurant page from "See the restaurant", for good', async () => {

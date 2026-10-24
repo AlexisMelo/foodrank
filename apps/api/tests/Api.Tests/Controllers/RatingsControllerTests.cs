@@ -148,6 +148,51 @@ public class RatingsControllerTests : IDisposable
     }
 
     /// <summary>
+    /// A user rates at most one restaurant per day: rating another restaurant the same day is refused with a 409, and
+    /// nothing is saved for it.
+    /// </summary>
+    [Fact]
+    public async Task Create_OtherRestaurantSameDay_Returns409()
+    {
+        _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = "r2", Name = "Sushi Bar" });
+        await RateAsync(RestaurantId, new { food = 80, service = 80, setting = 80, bonus = false });
+
+        HttpResponseMessage response = await RateAsync("r2", new { food = 10, service = 10, setting = 10, bonus = false });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Contains("You already rated a restaurant today.", await response.Content.ReadAsStringAsync());
+        Assert.Equal(RestaurantId, Assert.Single(_factory.RatingService.Ratings).RestaurantId);
+    }
+
+    /// <summary>
+    /// A rating given the day before, of any restaurant, does not prevent rating today.
+    /// </summary>
+    [Fact]
+    public async Task Create_RatedAnotherRestaurantYesterday_SavesRating()
+    {
+        _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = "r2", Name = "Sushi Bar" });
+        AddRating(UserId, DateTime.UtcNow.AddDays(-1), restaurantId: "r2");
+
+        HttpResponseMessage response = await RateAsync(RestaurantId, new { food = 80, service = 80, setting = 80, bonus = false });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(2, _factory.RatingService.Ratings.Count);
+    }
+
+    /// <summary>
+    /// The rule is per user: another user's rating today does not prevent the logged-in user from rating.
+    /// </summary>
+    [Fact]
+    public async Task Create_OtherUserRatedToday_SavesRating()
+    {
+        AddRating("user-2", DateTime.UtcNow);
+
+        HttpResponseMessage response = await RateAsync(RestaurantId, new { food = 80, service = 80, setting = 80, bonus = false });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    /// <summary>
     /// Sends a GET to <paramref name="url"/>, with the auth cookie when <paramref name="token"/> is given.
     /// </summary>
     private Task<HttpResponseMessage> GetAsync(string url, string? token = Token)

@@ -9,6 +9,8 @@ import { RestaurantApi } from '@/core/api/restaurant-api';
 import { AuthStore } from '@/core/auth/auth-store';
 import { CelebrationStore } from '@/core/celebration/celebration-store';
 import type { UserRating } from '@/core/models/rating.model';
+import { REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
+import { CAN_REVIEW, alreadyReviewed } from '@/core/review/daily-review-testing';
 import { query, queryAll, setValue, textOf } from '@/testing/dom-testing';
 import { NewReview } from './new-review';
 
@@ -46,12 +48,14 @@ function rating(restaurantId: string, food: number, service: number, setting: nu
 describe('NewReview', () => {
   let rateRestaurant: ReturnType<typeof vi.fn>;
   let fetchUserRatings: ReturnType<typeof vi.fn>;
+  let fetchRatingAllowance: ReturnType<typeof vi.fn>;
   let fetchRestaurantById: ReturnType<typeof vi.fn>;
   let harness: RouterTestingHarness;
 
   beforeEach(() => {
     rateRestaurant = vi.fn();
     fetchUserRatings = vi.fn(() => of([]));
+    fetchRatingAllowance = vi.fn(() => of(CAN_REVIEW));
     fetchRestaurantById = vi.fn(() => of({ id: 'r1', name: 'Pizza Roma', emoji: '🍕' }));
     TestBed.configureTestingModule({
       providers: [
@@ -67,7 +71,10 @@ describe('NewReview', () => {
           useValue: { isLoggedIn: signal(true), loggedInUserId: signal('u1') },
         },
         { provide: RestaurantApi, useValue: { fetchRestaurantById } },
-        { provide: RatingApi, useValue: { fetchUserRatings, rateRestaurant } },
+        {
+          provide: RatingApi,
+          useValue: { fetchUserRatings, fetchRatingAllowance, rateRestaurant },
+        },
       ],
     });
   });
@@ -192,18 +199,57 @@ describe('NewReview', () => {
     expect(TestBed.inject(CelebrationStore).pending()).toBeNull();
   });
 
-  it('stays on the page and explains when the restaurant was already rated today', async () => {
+  it('is locked once the user reviewed a restaurant today: it says why and does not save', async () => {
+    fetchRatingAllowance.mockReturnValue(of(alreadyReviewed()));
+    await openPage();
+
+    expect(textOf(query(harness.fixture, '.locked-notice'))).toBe(REVIEW_LOCKED_REASON);
+    const submit = query<HTMLButtonElement>(harness.fixture, '.submit-btn');
+    expect(submit.disabled).toBe(true);
+    expect(submit.querySelector('app-lock-icon')).not.toBeNull();
+
+    await click('.submit-btn');
+
+    expect(rateRestaurant).not.toHaveBeenCalled();
+    expect(TestBed.inject(Router).url).toBe('/review/r1');
+  });
+
+  it('asks the rating allowance again once saved, so the review buttons lock', async () => {
+    rateRestaurant.mockReturnValue(of(undefined));
+    await openPage();
+    expect(queryAll(harness.fixture, '.locked-notice')).toHaveLength(0);
+    expect(fetchRatingAllowance).toHaveBeenCalledOnce();
+
+    await click('.submit-btn');
+
+    expect(fetchRatingAllowance).toHaveBeenCalledTimes(2);
+  });
+
+  it('stays on the page and locks it when the API says a restaurant was already reviewed today', async () => {
     rateRestaurant.mockReturnValue(throwError(() => httpError(409)));
     await openPage();
+    fetchRatingAllowance.mockReturnValue(of(alreadyReviewed()));
+
+    await click('.submit-btn');
+
+    expect(TestBed.inject(Router).url).toBe('/review/r1');
+    expect(textOf(query(harness.fixture, '.locked-notice'))).toBe(REVIEW_LOCKED_REASON);
+    expect(query<HTMLButtonElement>(harness.fixture, '.submit-btn').disabled).toBe(true);
+    // The notice says it already
+    expect(queryAll(harness.fixture, '.save-error')).toHaveLength(0);
+  });
+
+  it('explains a 409 when the rating allowance cannot be loaded again', async () => {
+    rateRestaurant.mockReturnValue(throwError(() => httpError(409)));
+    await openPage();
+    fetchRatingAllowance.mockReturnValue(throwError(() => httpError(503)));
 
     await click('.submit-btn');
 
     expect(textOf(query(harness.fixture, '.save-error'))).toBe(
-      'You already rated this restaurant today.',
+      'You already reviewed a restaurant today.',
     );
     expect(TestBed.inject(Router).url).toBe('/review/r1');
-    // The rating can be sent again
-    expect(query<HTMLButtonElement>(harness.fixture, '.submit-btn').disabled).toBe(false);
   });
 
   it('shows a generic error when the API fails', async () => {

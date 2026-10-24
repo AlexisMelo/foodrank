@@ -49,6 +49,15 @@ public class UsersController(IUserService userService, IRatingService ratingServ
         => (await _ratingService.GetByUserAsync(User.GetUserId(), cancellationToken)).ToActionResult();
 
     /// <summary>
+    /// Tells whether the logged-in user can rate a restaurant now: a user rates at most one restaurant per day (UTC).
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
+    /// <returns>200 with whether the user can rate and, when they cannot, when they can rate again; 401 when not logged in.</returns>
+    [HttpGet("me/rating-allowance")]
+    public async Task<IActionResult> GetMyRatingAllowance(CancellationToken cancellationToken)
+        => (await _ratingService.GetAllowanceAsync(User.GetUserId(), cancellationToken)).ToActionResult();
+
+    /// <summary>
     /// Returns every tierlist of the logged-in user, with its restaurants, most recently created first.
     /// </summary>
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>

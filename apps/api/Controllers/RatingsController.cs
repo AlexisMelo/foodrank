@@ -26,7 +26,8 @@ public class RatingsController(IRatingService ratingService) : ControllerBase
     /// <param name="restaurantId">Database id of the rated restaurant.</param>
     /// <param name="request">Food, service and setting ratings, and the favorite bonus.</param>
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
-    /// <returns>200 with the saved rating, 401 when not logged in, 404 for an unknown restaurant, 409 when already rated today.</returns>
+    /// <returns>200 with the saved rating, 401 when not logged in, 404 for an unknown restaurant, 409 when the user
+    /// already rated a restaurant today.</returns>
     [HttpPost]
     public async Task<IActionResult> Create(string restaurantId, [FromBody] RateRestaurantRequest request, CancellationToken cancellationToken)
         => (await _ratingService.CreateAsync(restaurantId, User.GetUserId(), request, cancellationToken)).ToActionResult();

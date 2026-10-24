@@ -12,19 +12,21 @@ import {
 import { RouterLink } from '@angular/router';
 import type { CelebrationKind } from '@/core/celebration/celebration-store';
 import type { Restaurant } from '@/core/models/restaurant.model';
+import { DailyReviewStore, REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
 import { WebShare } from '@/core/share/web-share';
+import { LockIcon } from '@/shared/ui/lock-icon/lock-icon';
 
 /**
  * Full page modal of the restaurant page, celebrating the logged-in user (see CelebrationKind):
- * - "The explorer", when they are the first to open the place from the search: leads to its rating page, or closes on
- *   the restaurant page
+ * - "The explorer", when they are the first to open the place from the search: leads to its rating page (locked once
+ *   they reviewed a restaurant today), or closes on the restaurant page
  * - "Bravo", right after their first rating of the restaurant: shares the restaurant page through the native share
  *   sheet, or copies its link when the browser has no share sheet
  *
  * Both close with their cross or the Esc key.
  */
 @Component({
-  imports: [RouterLink],
+  imports: [LockIcon, RouterLink],
   selector: 'app-celebration-dialog',
   styleUrl: './celebration-dialog.scss',
   templateUrl: './celebration-dialog.html',
@@ -49,6 +51,16 @@ export class CelebrationDialog {
    * Opens the native share sheet, or copies the link
    */
   protected readonly webShare = inject(WebShare);
+
+  /**
+   * Locks "Leave a review" once the user reviewed a restaurant today
+   */
+  protected readonly dailyReview = inject(DailyReviewStore);
+
+  /**
+   * Tooltip of the locked "Leave a review"
+   */
+  protected readonly lockedReason = REVIEW_LOCKED_REASON;
 
   /**
    * Builds the URL of the restaurant page, with the base href of the app

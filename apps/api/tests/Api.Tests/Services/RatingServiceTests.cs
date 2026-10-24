@@ -29,6 +29,22 @@ public class RatingServiceTests
     }
 
     /// <summary>
+    /// The query of a user's latest rating can be built (it is sent to check the "one restaurant per day" rule), and
+    /// keeps only the most recent rating of the user, whatever the restaurant and the active flag.
+    /// </summary>
+    [Fact]
+    public void LatestRatingQuery_KeepsMostRecentRatingOfUser()
+    {
+        string url = Uri.UnescapeDataString(RatingService.LatestRatingQuery(RatingTable(), "user-1").GenerateUrl());
+
+        Assert.Contains("id_user=eq.user-1", url);
+        Assert.Contains("order=date.desc", url);
+        Assert.Contains("limit=1", url);
+        Assert.DoesNotContain("id_restaurant", url);
+        Assert.DoesNotContain("is_active", url, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// The query of the "Recent" tab can be built, and keeps the restaurant's active ratings, most recent first.
     /// </summary>
     [Fact]

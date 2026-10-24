@@ -8,6 +8,7 @@ import { RatingApi } from '@/core/api/rating-api';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import { AuthStore } from '@/core/auth/auth-store';
 import type { RatingInput, RatingSummary, RestaurantRating } from '@/core/models/rating.model';
+import { CAN_REVIEW, alreadyReviewed } from '@/core/review/daily-review-testing';
 import { query, queryAll, setValue, textOf } from '@/testing/dom-testing';
 
 /**
@@ -70,9 +71,22 @@ class FakeRatingApi {
   }
 
   /**
+   * True once the logged-in user rated a restaurant through rateRestaurant ("today")
+   */
+  reviewedToday = false;
+
+  /**
+   * Like the API: a user rates at most one restaurant per day
+   */
+  fetchRatingAllowance() {
+    return of(this.reviewedToday ? alreadyReviewed() : CAN_REVIEW);
+  }
+
+  /**
    * Like the API, the new rating becomes the active one: the previous ones are kept, inactive
    */
   rateRestaurant(restaurantId: string, rating: RatingInput) {
+    this.reviewedToday = true;
     for (const previous of this.ratings) {
       if (previous.restaurantId === restaurantId && previous.userId === 'me') {
         previous.isActive = false;
@@ -196,6 +210,24 @@ describe('rating a restaurant from its page', () => {
     const recentCards = queryAll(harness.fixture, '.community-card');
     expect(recentCards).toHaveLength(1);
     expect(textOf(recentCards[0]!)).toContain('October 9, 2026');
+  });
+
+  it('locks every review button once the review is saved, one review a day', async () => {
+    await openApp('/review/r1');
+    await click('.submit-btn');
+
+    // Back on the restaurant page: "New" does not start another review, the search of the tab bar stays open
+    expect(url()).toBe('/restaurant/r1');
+    const chip = query<HTMLButtonElement>(harness.fixture, '.add-chip');
+    expect(chip.tagName).toBe('BUTTON');
+    expect(chip.disabled).toBe(true);
+    expect(query<HTMLButtonElement>(harness.fixture, '.tab-btn-add').disabled).toBe(false);
+
+    // The rating page of another restaurant, opened from its URL, is locked too
+    await harness.navigateByUrl('/review/r2');
+    await harness.fixture.whenStable();
+    expect(queryAll(harness.fixture, '.locked-notice')).toHaveLength(1);
+    expect(query<HTMLButtonElement>(harness.fixture, '.submit-btn').disabled).toBe(true);
   });
 
   it("shows the restaurant's global rating and criteria averages, updated after a new rating", async () => {

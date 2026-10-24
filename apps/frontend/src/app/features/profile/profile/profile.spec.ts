@@ -12,6 +12,8 @@ import { AuthStore } from '@/core/auth/auth-store';
 import type { UserRating } from '@/core/models/rating.model';
 import type { Tierlist } from '@/core/models/tierlist.model';
 import type { UserProfile } from '@/core/models/user.model';
+import { REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
+import { CAN_REVIEW, alreadyReviewed } from '@/core/review/daily-review-testing';
 import { query, queryAll, textOf } from '@/testing/dom-testing';
 
 /**
@@ -69,12 +71,14 @@ function pinnedTierlist(id: number, userId: string): Tierlist {
 describe('ProfileView', () => {
   let fetchUserProfile: ReturnType<typeof vi.fn>;
   let fetchUserRatings: ReturnType<typeof vi.fn>;
+  let fetchRatingAllowance: ReturnType<typeof vi.fn>;
   let fetchPinnedTierlistsByUserId: ReturnType<typeof vi.fn>;
   let harness: RouterTestingHarness;
 
   beforeEach(async () => {
     fetchUserProfile = vi.fn((id = 'me') => of(profiles[id]));
     fetchUserRatings = vi.fn((id = 'me') => of(ratings[id] ?? []));
+    fetchRatingAllowance = vi.fn(() => of(CAN_REVIEW));
     fetchPinnedTierlistsByUserId = vi.fn(() => of([]));
     TestBed.configureTestingModule({
       providers: [
@@ -85,8 +89,9 @@ describe('ProfileView', () => {
           useValue: { isLoggedIn: signal(true), loggedInUserId: signal('u1') },
         },
         { provide: UserApi, useValue: { fetchUserProfile } },
-        // Ratings of the user shown and of the logged-in user, also read by the home and rating pages
-        { provide: RatingApi, useValue: { fetchUserRatings } },
+        // Ratings of the user shown and of the logged-in user, also read by the home and rating pages; the rating
+        // allowance locks the "+" of a restaurant
+        { provide: RatingApi, useValue: { fetchUserRatings, fetchRatingAllowance } },
         {
           provide: TierlistApi,
           useValue: {
@@ -191,6 +196,20 @@ describe('ProfileView', () => {
     await harness.fixture.whenStable();
 
     expect(TestBed.inject(Router).url).toBe('/review/r3');
+  });
+
+  it('locks the "+" of a restaurant I never rated once I reviewed a restaurant today', async () => {
+    fetchRatingAllowance.mockReturnValue(of(alreadyReviewed()));
+    await open('/user/u2');
+
+    const locked = queryAll(harness.fixture, '.list-item')[0]!.querySelector<HTMLElement>(
+      '.my-score-rate',
+    )!;
+    expect(locked.tagName).toBe('SPAN');
+    expect(locked.getAttribute('aria-label')).toBe('Rate this restaurant: locked');
+    expect(locked.title).toBe(REVIEW_LOCKED_REASON);
+    expect(locked.querySelector('app-lock-icon')).not.toBeNull();
+    expect(queryAll(harness.fixture, 'a[href="/review/r3"]')).toHaveLength(0);
   });
 
   it('shows the tierlists pinned by the user shown, opening them', async () => {

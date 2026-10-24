@@ -8,6 +8,8 @@ import { RatingApi } from '@/core/api/rating-api';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import { CelebrationStore } from '@/core/celebration/celebration-store';
 import type { RatingInput, UserRating } from '@/core/models/rating.model';
+import { DailyReviewStore, REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
+import { LockIcon } from '@/shared/ui/lock-icon/lock-icon';
 import { CriterionSlider, type ReviewMarker } from '../criterion-slider/criterion-slider';
 import { type PastReview, pickMarkers } from '../rating-scale';
 
@@ -45,21 +47,27 @@ function pastReviews(ratings: readonly UserRating[], ratedId: string): ReviewedR
 }
 
 /**
+ * True when the API refused the rating because the user already rated a restaurant today (409)
+ */
+function isAlreadyRatedToday(error: unknown): boolean {
+  return error instanceof HttpErrorResponse && error.status === 409;
+}
+
+/**
  * Message shown when saving the rating failed, depending on the API answer. A 401 never gets here: the unauthorized
  * interceptor already logs out and leaves the page.
  */
 function saveErrorMessage(error: unknown): string {
-  const status = error instanceof HttpErrorResponse ? error.status : undefined;
-  if (status === 409) return 'You already rated this restaurant today.';
+  if (isAlreadyRatedToday(error)) return 'You already reviewed a restaurant today.';
   return 'Could not save your rating, try again.';
 }
 
 /**
  * Rating page of a restaurant (/review/:id): a slider per criterion (food, service, decor), the "Instant Crush"
- * favorite bonus, and the button saving the rating.
+ * favorite bonus, and the button saving the rating, locked once the user reviewed a restaurant today.
  */
 @Component({
-  imports: [CriterionSlider, RouterLink],
+  imports: [CriterionSlider, LockIcon, RouterLink],
   selector: 'app-new-review',
   styleUrl: './new-review.scss',
   templateUrl: './new-review.html',
@@ -89,6 +97,22 @@ export class NewReview {
    * Tells the restaurant page to congratulate the user after their first rating of the restaurant
    */
   private readonly celebrations = inject(CelebrationStore);
+
+  /**
+   * The "one review per day" rule: locks the page once the user reviewed a restaurant today, and is told about each
+   * review saved or refused
+   */
+  private readonly dailyReview = inject(DailyReviewStore);
+
+  /**
+   * True once the user reviewed a restaurant today: the rating cannot be saved, the page says why
+   */
+  protected readonly locked = this.dailyReview.locked;
+
+  /**
+   * Why the page is locked
+   */
+  protected readonly lockedReason = REVIEW_LOCKED_REASON;
 
   /**
    * The restaurant rated; leaves for the home page when it does not exist
@@ -207,19 +231,22 @@ export class NewReview {
   }
 
   /**
-   * Save the rating, then go back to the restaurant page, which congratulates the user after their first rating of it
+   * Save the rating, then go back to the restaurant page, which congratulates the user after their first rating of it.
+   * The review buttons of the app lock once it is saved, or when the API says the user already reviewed today
    */
   protected async submit(): Promise<void> {
     const restaurant = this.restaurant();
-    if (!restaurant || this.saving()) return;
+    if (!restaurant || this.saving() || this.locked()) return;
     this.saving.set(true);
     this.saveError.set(null);
     try {
       await firstValueFrom(this.ratingApi.rateRestaurant(restaurant.id, this.rating()));
+      this.dailyReview.refresh();
       if (this.firstRating()) this.celebrations.celebrate(restaurant.id, 'first-review');
       void this.router.navigateByUrl(`/restaurant/${restaurant.id}`);
     } catch (error) {
       this.saveError.set(saveErrorMessage(error));
+      if (isAlreadyRatedToday(error)) this.dailyReview.refresh();
     } finally {
       this.saving.set(false);
     }

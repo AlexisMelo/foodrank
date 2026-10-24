@@ -12,6 +12,7 @@ import { AuthStore } from '@/core/auth/auth-store';
 import type { UserRating } from '@/core/models/rating.model';
 import type { Tierlist } from '@/core/models/tierlist.model';
 import type { UserProfile } from '@/core/models/user.model';
+import { CAN_REVIEW } from '@/core/review/daily-review-testing';
 import { query, queryAll, textOf } from '@/testing/dom-testing';
 
 /**
@@ -90,7 +91,11 @@ describe('TierlistDetailView', () => {
           useValue: { fetchTierlistById, setTierlistPinned, fetchTierlistsByUserId: () => of([]) },
         },
         { provide: UserApi, useValue: { fetchUserProfile: (id: string) => of(profiles[id]) } },
-        { provide: RatingApi, useValue: { fetchUserRatings } },
+        // The rating allowance locks the "+" of the restaurants of a ranking
+        {
+          provide: RatingApi,
+          useValue: { fetchUserRatings, fetchRatingAllowance: () => of(CAN_REVIEW) },
+        },
         { provide: RestaurantApi, useValue: {} },
       ],
     });
