@@ -69,9 +69,10 @@
   transition:
     background 0.2s,
     transform 0.15s;
-  // The card is a button: its text defaults are reset
+  // The card is a link: no underline, and its text centered
   color: inherit;
-  font: inherit;
+  text-decoration: none;
+  text-align: center;
 }
 .restaurant-card:active {
   transform: scale(0.97);

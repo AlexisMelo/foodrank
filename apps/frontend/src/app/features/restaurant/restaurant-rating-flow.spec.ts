@@ -161,6 +161,7 @@ describe('rating a restaurant from its page', () => {
     expect(queryAll(harness.fixture, '.visit-card')).toHaveLength(1);
 
     // "New" → rating page
+    expect(query(harness.fixture, '.add-chip').getAttribute('href')).toBe('/review/r1');
     await click('.add-chip');
     expect(url()).toBe('/review/r1');
 
