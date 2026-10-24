@@ -1,6 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { TierlistApi } from '@/core/api/tierlist-api';
 import { rankRestaurants } from '@/core/utils/ranking';
 import { injectUserProfile } from '@/shared/data/user-profile';
@@ -28,11 +28,6 @@ import { RecentReviewCard } from '../recent-review-card/recent-review-card';
   templateUrl: './home.html',
 })
 export class Home {
-  /**
-   * Opens the settings page
-   */
-  private readonly router = inject(Router);
-
   /**
    * Reads the logged-in user's tierlists
    */
@@ -77,11 +72,4 @@ export class Home {
   protected readonly topRestaurants = computed(() =>
     rankRestaurants(this.myRatings.ratings()).slice(0, 3),
   );
-
-  /**
-   * Opens the settings page
-   */
-  protected openSettings(): void {
-    void this.router.navigateByUrl('/settings');
-  }
 }

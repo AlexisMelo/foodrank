@@ -1,5 +1,5 @@
-import { Component, computed, inject, input } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Component, computed, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { scoreColor } from '@/core/utils/rating';
 import { RatingScores } from '../rating-scores/rating-scores';
 
@@ -15,7 +15,7 @@ function itemBackground(index: number): string {
 
 /**
  * A restaurant of a ranking (favorites, profile, tierlist): its criteria scores, its overall score and, optionally,
- * the logged-in user's own score or a button to rate it. Opens the restaurant page.
+ * the logged-in user's own score or a link to rate it. Opens the restaurant page.
  */
 @Component({
   imports: [RouterLink, RatingScores],
@@ -75,14 +75,10 @@ export class RankedRestaurantItem {
   readonly myScore = input<number>();
 
   /**
-   * Route of the rating page, shown as a "+" bubble when there is no myScore; undefined for no button
+   * Route of the rating page, linked from a "+" bubble next to the restaurant link when there is no myScore;
+   * undefined for no bubble
    */
   readonly rateLink = input<string>();
-
-  /**
-   * Opens the rating page from the "+" bubble
-   */
-  private readonly router = inject(Router);
 
   /**
    * Background of the item, also exposed as --item-bg to its children
@@ -103,13 +99,4 @@ export class RankedRestaurantItem {
    * Color of a rounded 0-100 score
    */
   protected readonly scoreColor = scoreColor;
-
-  /**
-   * Opens the rating page instead of the restaurant page the whole item links to
-   */
-  protected rate(event: Event, rateLink: string): void {
-    event.preventDefault();
-    event.stopPropagation();
-    void this.router.navigateByUrl(rateLink);
-  }
 }

@@ -1,9 +1,14 @@
-// The inner link is the item of the parent list: the host adds no box of its own
+// The inner container is the item of the parent list: the host adds no box of its own
 :host {
   display: contents;
 }
 
+// Holds the link to the restaurant page, which fills it, and next to it the "+" link to rate it
 .list-item {
+  position: relative;
+  border-radius: 16px;
+}
+.item-link {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -98,7 +103,12 @@
   transform: translateY(-2px);
 }
 
+// Outside the restaurant link, so placed from the item where .my-score sits on the overall score: the score (34px
+// high) is centered in the item and ends 16px from its right edge
 .my-score-rate {
+  right: 8px;
+  bottom: calc(50% - 27px);
+  text-decoration: none;
   background: #2f2f2f;
   /* box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.35); */
   color: rgba(255, 255, 255, 0.65);

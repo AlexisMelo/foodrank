@@ -1,6 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
 import { TierlistApi } from '@/core/api/tierlist-api';
 import { NewChip } from '@/shared/ui/new-chip/new-chip';
 import { TierlistCard } from '../tierlist-card/tierlist-card';
@@ -20,7 +19,7 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
 ];
 
 /**
- * Tierlists page (/tierlists): the logged-in user's tierlists, sorted as they choose, and a button to create one.
+ * Tierlists page (/tierlists): the logged-in user's tierlists, sorted as they choose, and a link to create one.
  */
 @Component({
   imports: [NewChip, TierlistCard],
@@ -29,11 +28,6 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   templateUrl: './tierlists.html',
 })
 export class Tierlists {
-  /**
-   * Opens the creation page
-   */
-  private readonly router = inject(Router);
-
   /**
    * Reads the logged-in user's tierlists
    */
@@ -81,11 +75,4 @@ export class Tierlists {
     }
     return list.sort((a, b) => a.name.localeCompare(b.name));
   });
-
-  /**
-   * Opens the creation page
-   */
-  protected createTierlist(): void {
-    void this.router.navigateByUrl('/tierlists/new');
-  }
 }

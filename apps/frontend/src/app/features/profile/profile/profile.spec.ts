@@ -179,8 +179,15 @@ describe('ProfileView', () => {
 
   it('opens the rating page from the "+" of a restaurant I never rated, not the restaurant page', async () => {
     await open('/user/u2');
+    const rate = query(harness.fixture, '.my-score-rate');
+    expect(rate.getAttribute('href')).toBe('/review/r3');
+    // Next to the link to the restaurant page, not nested in it
+    expect(rate.parentElement!.closest('a')).toBeNull();
+    expect(query(harness.fixture, '.list-item a.item-link').getAttribute('href')).toBe(
+      '/restaurant/r3',
+    );
 
-    query(harness.fixture, '.my-score-rate').click();
+    rate.click();
     await harness.fixture.whenStable();
 
     expect(TestBed.inject(Router).url).toBe('/review/r3');

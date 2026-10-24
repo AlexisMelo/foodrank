@@ -142,19 +142,23 @@ describe('Home', () => {
       expect(queryAll(harness.fixture, '.settings-btn')).toHaveLength(1);
     });
 
-    it('opens the profile page when clicked', async () => {
+    it('links to the profile page from the user bar', async () => {
       await openHome();
+      const userBar = query(harness.fixture, '.user-bar');
+      expect(userBar.getAttribute('href')).toBe('/profile');
 
-      query(harness.fixture, '.user-bar').click();
+      userBar.click();
       await harness.fixture.whenStable();
 
       expect(url()).toBe('/profile');
     });
 
-    it('opens the settings page from the gear button', async () => {
+    it('links to the settings page from the gear', async () => {
       await openHome();
+      const settings = query(harness.fixture, '.settings-btn');
+      expect(settings.getAttribute('href')).toBe('/settings');
 
-      query(harness.fixture, '.settings-btn').click();
+      settings.click();
       await harness.fixture.whenStable();
 
       expect(url()).toBe('/settings');
@@ -172,8 +176,11 @@ describe('Home', () => {
     it('opens the new review sheet from the "+ New" chip of the recent reviews', async () => {
       await openHome();
       expect(sheetOpen()).toBe(false);
+      // An action, not a page: a button, not a link
+      const chip = query(harness.fixture, '.add-chip');
+      expect(chip.tagName).toBe('BUTTON');
 
-      query(harness.fixture, '.add-chip').click();
+      chip.click();
       await harness.fixture.whenStable();
 
       expect(TestBed.inject(NewReviewStore).isOpen()).toBe(true);
@@ -334,7 +341,7 @@ describe('Home', () => {
 
       expect(favorites()).toEqual(['Restaurant top', 'Restaurant good', 'Restaurant ok']);
       expect(
-        queryAll(harness.fixture, '.favorites-list a.list-item').map((a) => a.getAttribute('href')),
+        queryAll(harness.fixture, '.favorites-list a.item-link').map((a) => a.getAttribute('href')),
       ).toEqual(['/restaurant/top', '/restaurant/good', '/restaurant/ok']);
     });
 

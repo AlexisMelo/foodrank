@@ -13,11 +13,7 @@
 
     <div class="cards-scroll">
       @for (suggestion of suggestions(); track suggestion.restaurant.id) {
-        <button
-          type="button"
-          class="restaurant-card"
-          (click)="openRestaurant(suggestion.restaurant)"
-        >
+        <a class="restaurant-card" [routerLink]="['/restaurant', suggestion.restaurant.id]">
           <span class="card-emoji" aria-hidden="true">{{ suggestion.restaurant.emoji }}</span>
           <span class="card-name">{{ suggestion.restaurant.name }}</span>
           @if (suggestion.distanceKm !== null) {
@@ -25,7 +21,7 @@
           } @else {
             <span class="card-distance muted">{{ suggestion.restaurant.cuisine }}</span>
           }
-        </button>
+        </a>
       }
     </div>
   }

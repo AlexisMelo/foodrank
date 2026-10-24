@@ -197,8 +197,10 @@ describe('TierlistsView', () => {
   it('lists a tierlist right after its creation, back from the creation page', async () => {
     addTierlist('Old favorites', '2026-01-01T10:00:00Z');
     await open('/tierlists');
+    const newChip = query(harness.fixture, '.add-chip');
+    expect(newChip.getAttribute('href')).toBe('/tierlists/new');
 
-    query(harness.fixture, '.add-chip').click();
+    newChip.click();
     await harness.fixture.whenStable();
     expect(TestBed.inject(Router).url).toBe('/tierlists/new');
 

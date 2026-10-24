@@ -184,11 +184,13 @@ describe('Explore', () => {
     );
   });
 
-  it('opens the restaurant picked', async () => {
+  it('links each card to its restaurant page', async () => {
     status.set('blocked');
     await openExplore();
+    const card = query(harness.fixture, '.restaurant-card');
+    expect(card.getAttribute('href')).toBe('/restaurant/paris');
 
-    query(harness.fixture, '.restaurant-card').click();
+    card.click();
     await harness.fixture.whenStable();
 
     expect(TestBed.inject(Router).url).toBe('/restaurant/paris');

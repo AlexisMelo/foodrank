@@ -1,10 +1,9 @@
 import { Component, computed, inject } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { map, timer } from 'rxjs';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import { UserLocation } from '@/core/location/user-location';
-import type { Restaurant } from '@/core/models/restaurant.model';
 
 /**
  * Number of restaurants suggested.
@@ -30,16 +29,12 @@ function formatDistance(km: number): string {
  * Explore page (/explore): a few restaurants the user has not tried yet, nearest first when the location is allowed.
  */
 @Component({
+  imports: [RouterLink],
   selector: 'app-explore',
   styleUrl: './explore.scss',
   templateUrl: './explore.html',
 })
 export class Explore {
-  /**
-   * Opens a restaurant
-   */
-  private readonly router = inject(Router);
-
   /**
    * Reads the suggestions of the logged-in user
    */
@@ -102,12 +97,5 @@ export class Explore {
 
   constructor() {
     this.userLocation.requestLocation();
-  }
-
-  /**
-   * Opens the page of a restaurant
-   */
-  protected openRestaurant(restaurant: Restaurant): void {
-    void this.router.navigateByUrl(`/restaurant/${restaurant.id}`);
   }
 }
