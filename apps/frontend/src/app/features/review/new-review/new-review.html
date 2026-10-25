@@ -9,7 +9,12 @@
   } @else if (restaurant(); as restaurant) {
     <div class="restaurant-hero">
       <div class="emoji-circle" aria-hidden="true">{{ restaurant.emoji }}</div>
-      <h2 class="restaurant-name">{{ restaurant.name }}</h2>
+      <div class="restaurant-info">
+        <h2 class="restaurant-name">{{ restaurant.name }}</h2>
+        @if (restaurant.address) {
+          <p class="restaurant-address">{{ restaurant.address }}</p>
+        }
+      </div>
     </div>
 
     @if (locked()) {

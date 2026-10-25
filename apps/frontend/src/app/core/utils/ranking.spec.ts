@@ -17,7 +17,7 @@ function rating(
     restaurantName: `Name ${restaurantId}`,
     restaurantEmoji: '🍽️',
     restaurantCuisine: 'Italian',
-    restaurantAddress: '',
+    restaurantAddress: '1 rue de Caen',
     date: '2026-03-07T12:00:00+00:00',
     food,
     service,
@@ -36,7 +36,7 @@ describe('rankRestaurants', () => {
     ]);
 
     expect(ranked.map((r) => r.restaurantId)).toEqual(['great', 'good', 'meh']);
-    expect(ranked[0]).toMatchObject({ name: 'Name great', emoji: '🍽️', cuisine: 'Italian' });
+    expect(ranked[0]).toMatchObject({ name: 'Name great', emoji: '🍽️', address: '1 rue de Caen' });
   });
 
   it('lists a restaurant rated several times once, with its active rating only', () => {

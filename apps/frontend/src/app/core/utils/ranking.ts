@@ -20,9 +20,9 @@ export interface RankedRestaurant {
   emoji: string;
 
   /**
-   * Type of cuisine, empty when unknown
+   * Postal address, shown under the name; empty when unknown
    */
-  cuisine: string;
+  address: string;
 
   /**
    * 0 to 100
@@ -57,7 +57,7 @@ export function rankRestaurants(ratings: readonly UserRating[]): RankedRestauran
         restaurantId,
         restaurantName,
         restaurantEmoji,
-        restaurantCuisine,
+        restaurantAddress,
         food,
         service,
         setting,
@@ -65,7 +65,7 @@ export function rankRestaurants(ratings: readonly UserRating[]): RankedRestauran
         restaurantId,
         name: restaurantName,
         emoji: restaurantEmoji,
-        cuisine: restaurantCuisine,
+        address: restaurantAddress,
         food,
         service,
         setting,

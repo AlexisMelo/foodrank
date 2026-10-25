@@ -16,7 +16,8 @@ function itemBackground(index: number): string {
 }
 
 /**
- * A restaurant of a ranking (favorites, profile, tierlist): its criteria scores, its overall score and, optionally,
+ * A restaurant of a ranking (favorites, profile, tierlist): its address under its name, its criteria scores, its
+ * overall score and, optionally,
  * the logged-in user's own score or a link to rate it (a padlock instead once they reviewed a restaurant today). Opens
  * the restaurant page.
  */
@@ -43,9 +44,9 @@ export class RankedRestaurantItem {
   readonly name = input.required<string>();
 
   /**
-   * Type of cuisine, shown under the name; empty when unknown
+   * Postal address, shown under the name; empty when unknown, for no line under the name
    */
-  readonly cuisine = input.required<string>();
+  readonly address = input.required<string>();
 
   /**
    * Food score, 0 to 100, decimals allowed

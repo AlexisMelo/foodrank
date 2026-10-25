@@ -10,7 +10,9 @@
     </div>
     <div class="item-info">
       <span class="item-name">{{ name() }}</span>
-      <span class="item-sub">{{ cuisine() }}</span>
+      @if (address()) {
+        <span class="item-sub">{{ address() }}</span>
+      }
     </div>
     <app-rating-scores [food]="food()" [service]="service()" [decor]="decor()" />
     <div class="score-wrap">

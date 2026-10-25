@@ -128,6 +128,29 @@ describe('NewReview', () => {
     await harness.fixture.whenStable();
   }
 
+  it('shows the address of the restaurant under its name, when it is known', async () => {
+    fetchRestaurantById.mockReturnValue(
+      of({
+        id: 'r1',
+        name: 'Pizza Roma',
+        emoji: '🍕',
+        cuisine: 'Italian',
+        address: '1 rue de Caen',
+      }),
+    );
+    await openPage();
+
+    expect(textOf(query(harness.fixture, '.restaurant-name'))).toBe('Pizza Roma');
+    expect(textOf(query(harness.fixture, '.restaurant-address'))).toBe('1 rue de Caen');
+    expect(textOf(query(harness.fixture, '.restaurant-hero'))).not.toContain('Italian');
+  });
+
+  it('shows no line under the name of a restaurant without address', async () => {
+    await openPage();
+
+    expect(queryAll(harness.fixture, '.restaurant-address')).toHaveLength(0);
+  });
+
   it('leaves for the home page when the restaurant does not exist', async () => {
     fetchRestaurantById.mockReturnValue(of(undefined));
     await openPage();
