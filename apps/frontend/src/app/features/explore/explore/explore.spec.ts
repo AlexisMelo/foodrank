@@ -24,9 +24,8 @@ function suggestion(id: string, distanceKm: number | null): RestaurantSuggestion
     restaurant: {
       id,
       name: `Restaurant ${id}`,
-      cuisine: `Cuisine ${id}`,
       emoji: '🍕',
-      address: '',
+      address: `${id} street, Caen`,
       description: '',
       lat: 49.18,
       lng: -0.37,
@@ -165,7 +164,7 @@ describe('Explore', () => {
     expect(queryAll(harness.fixture, '.location-notice')).toHaveLength(0);
   });
 
-  it('asks without position, and shows the cuisine and a notice, when the location is denied', async () => {
+  it('asks without position, and shows the address and a notice, when the location is denied', async () => {
     status.set('dismissed');
     await openExplore();
 
@@ -178,10 +177,22 @@ describe('Explore', () => {
       'Restaurant near',
       'Restaurant rouen',
     ]);
-    expect(textOf(query(harness.fixture, '.card-distance.muted'))).toBe('Cuisine paris');
+    expect(textOf(query(harness.fixture, '.card-address'))).toBe('paris street, Caen');
     expect(textOf(query(harness.fixture, '.location-notice'))).toBe(
       '📍 Enable location to sort by distance',
     );
+  });
+
+  it('shows no line under the name of a restaurant without address, when the location is denied', async () => {
+    const paris = suggestion('paris', null);
+    fetchSuggestions.mockReturnValue(
+      of([{ ...paris, restaurant: { ...paris.restaurant, address: '' } }]),
+    );
+    status.set('dismissed');
+    await openExplore();
+
+    expect(names()).toEqual(['Restaurant paris']);
+    expect(queryAll(harness.fixture, '.card-distance')).toHaveLength(0);
   });
 
   it('links each card to its restaurant page', async () => {

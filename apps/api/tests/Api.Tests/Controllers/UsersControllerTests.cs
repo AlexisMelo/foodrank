@@ -42,7 +42,7 @@ public class UsersControllerTests : IDisposable
     public UsersControllerTests()
     {
         _client = _factory.CreateClient();
-        _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = "r1", Name = "Pizza Roma", Emoji = "🍕", Cuisine = "Italian", Address = "1 rue de Caen" });
+        _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = "r1", Name = "Pizza Roma", Emoji = "🍕", Address = "1 rue de Caen" });
         _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = "r2", Name = "Sushi Bar", Emoji = "🍣" });
         _factory.RatingService.Profiles[MeId] = new Profile { Id = MeId, Username = "alexis", AvatarUrl = "https://img.test/me.png" };
         _factory.AuthService.UserIdsByToken[Token] = MeId;
@@ -176,7 +176,6 @@ public class UsersControllerTests : IDisposable
         Assert.Equal("r1", pizza.RestaurantId);
         Assert.Equal("Pizza Roma", pizza.RestaurantName);
         Assert.Equal("🍕", pizza.RestaurantEmoji);
-        Assert.Equal("Italian", pizza.RestaurantCuisine);
         Assert.Equal("1 rue de Caen", pizza.RestaurantAddress);
         Assert.Equal(90, pizza.Food);
         Assert.Equal(60, pizza.Service);

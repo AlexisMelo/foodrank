@@ -38,7 +38,6 @@ function rating(restaurantId: string, food: number, service: number, setting: nu
     restaurantId,
     restaurantName: `Restaurant ${restaurantId}`,
     restaurantEmoji: '🍔',
-    restaurantCuisine: '',
     restaurantAddress: '',
     date: '2026-10-01T12:00:00+00:00',
     food,
@@ -134,7 +133,6 @@ describe('NewReview', () => {
         id: 'r1',
         name: 'Pizza Roma',
         emoji: '🍕',
-        cuisine: 'Italian',
         address: '1 rue de Caen',
       }),
     );
@@ -142,7 +140,6 @@ describe('NewReview', () => {
 
     expect(textOf(query(harness.fixture, '.restaurant-name'))).toBe('Pizza Roma');
     expect(textOf(query(harness.fixture, '.restaurant-address'))).toBe('1 rue de Caen');
-    expect(textOf(query(harness.fixture, '.restaurant-hero'))).not.toContain('Italian');
   });
 
   it('shows no line under the name of a restaurant without address', async () => {

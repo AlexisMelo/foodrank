@@ -23,7 +23,6 @@ function restaurant(id: string): Restaurant {
   return {
     id,
     name: `Restaurant ${id}`,
-    cuisine: 'Italian',
     emoji: '🍕',
     address: '1 rue de la Paix',
     description: '',
@@ -113,7 +112,6 @@ describe('RestaurantDetail', () => {
 
     expect(fetchRestaurantById).toHaveBeenCalledWith('r1');
     expect(textOf(query(harness.fixture, '.name'))).toBe('Restaurant r1');
-    expect(textOf(query(harness.fixture, '.chip-cuisine'))).toBe('Italian');
     expect(textOf(query(harness.fixture, '.info-text'))).toBe('1 rue de la Paix');
   });
 

@@ -31,7 +31,6 @@ function rating(restaurantId: string, score: number): UserRating {
     restaurantId,
     restaurantName: `Restaurant ${restaurantId}`,
     restaurantEmoji: '🍕',
-    restaurantCuisine: 'Italian',
     restaurantAddress: `${restaurantId} street, Caen`,
     date: '2026-03-07T12:00:00+00:00',
     food: score,
@@ -148,7 +147,7 @@ describe('TierlistDetailView', () => {
     expect(textOf(items[0]!.querySelector('.item-avg')!)).toBe('90');
   });
 
-  it('shows the address of each restaurant under its name, instead of its cuisine', async () => {
+  it('shows the address of each restaurant under its name', async () => {
     fetchTierlistById.mockReturnValue(of(tierlistOf('u2')));
     await openTierlist();
 
@@ -156,7 +155,6 @@ describe('TierlistDetailView', () => {
       'r2 street, Caen',
       'r1 street, Caen',
     ]);
-    expect(textOf(query(harness.fixture, '.restaurant-list'))).not.toContain('Italian');
   });
 
   it("shows my own score on someone else's tierlist, without letting me pin it", async () => {

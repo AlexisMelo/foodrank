@@ -23,7 +23,6 @@ function rating(
     restaurantId,
     restaurantName: name,
     restaurantEmoji: '🍕',
-    restaurantCuisine: '',
     restaurantAddress: address,
     date: `2026-10-${String(day).padStart(2, '0')}T12:00:00+00:00`,
     food: 50,

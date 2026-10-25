@@ -28,12 +28,6 @@ public class Restaurant : BaseModel
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Type of cuisine (e.g. "Italian").
-    /// </summary>
-    [Column("cuisine")]
-    public string Cuisine { get; set; } = string.Empty;
-
-    /// <summary>
     /// Emoji displayed next to the restaurant name.
     /// </summary>
     [Column("emoji")]

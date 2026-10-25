@@ -16,7 +16,6 @@ function rating(
     restaurantId,
     restaurantName: `Name ${restaurantId}`,
     restaurantEmoji: '🍽️',
-    restaurantCuisine: 'Italian',
     restaurantAddress: '1 rue de Caen',
     date: '2026-03-07T12:00:00+00:00',
     food,

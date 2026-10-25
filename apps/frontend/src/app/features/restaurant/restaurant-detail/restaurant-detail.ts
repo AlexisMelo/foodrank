@@ -8,7 +8,6 @@ import { CelebrationStore } from '@/core/celebration/celebration-store';
 import { AddToTierlistDialog } from '../add-to-tierlist-dialog/add-to-tierlist-dialog';
 import { CriteriaAverages } from '../criteria-averages/criteria-averages';
 import { CelebrationDialog } from '../celebration-dialog/celebration-dialog';
-import { CuisineChip } from '../cuisine-chip/cuisine-chip';
 import { GlobalScoreBadge } from '../global-score-badge/global-score-badge';
 import { RestaurantAddress } from '../restaurant-address/restaurant-address';
 import { RestaurantRatingsTabs } from '../restaurant-ratings-tabs/restaurant-ratings-tabs';
@@ -24,7 +23,6 @@ import { injectRestaurantRatings } from '../restaurant-ratings';
     AddToTierlistDialog,
     CriteriaAverages,
     CelebrationDialog,
-    CuisineChip,
     GlobalScoreBadge,
     RestaurantAddress,
     RestaurantRatingsTabs,

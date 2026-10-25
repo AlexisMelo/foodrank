@@ -111,21 +111,11 @@
   color: rgba(255, 255, 255, 0.5);
   white-space: nowrap;
 }
-.chips {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
 .chip {
   padding: 5px 14px;
   border-radius: 100px;
   font-size: 13px;
   font-weight: 700;
-}
-.chip-cuisine {
-  background: rgba(76, 201, 240, 0.15);
-  color: #4cc9f0;
-  border: 1.5px solid #4cc9f0;
 }
 .description {
   font-size: 15px;

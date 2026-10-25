@@ -29,12 +29,6 @@
         <h1 class="name">{{ restaurant.name }}</h1>
       </div>
 
-      @if (restaurant.cuisine) {
-        <div class="chips">
-          <app-cuisine-chip [cuisine]="restaurant.cuisine" />
-        </div>
-      }
-
       @if (restaurant.description) {
         <p class="description">{{ restaurant.description }}</p>
       }

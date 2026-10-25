@@ -149,11 +149,6 @@ export interface UserRating {
   restaurantEmoji: string;
 
   /**
-   * Empty when unknown
-   */
-  restaurantCuisine: string;
-
-  /**
    * Postal address of the restaurant rated, empty when unknown
    */
   restaurantAddress: string;
