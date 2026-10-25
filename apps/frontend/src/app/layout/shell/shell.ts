@@ -11,5 +11,6 @@ import { BottomTabBar } from '../bottom-tab-bar/bottom-tab-bar';
   imports: [RouterOutlet, BottomTabBar, NewReviewSheet],
   selector: 'app-shell',
   templateUrl: './shell.html',
+  styleUrl: './shell.scss',
 })
 export class Shell {}
