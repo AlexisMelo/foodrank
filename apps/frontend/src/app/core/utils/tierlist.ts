@@ -64,6 +64,15 @@ export function byLastUpdate(tierlists: readonly Tierlist[]): Tierlist[] {
 }
 
 /**
+ * Copy of `tierlists`, the ones holding the most restaurants first; the most recently updated first among the ones
+ * holding as many
+ */
+export function byRestaurantCount(tierlists: readonly Tierlist[]): Tierlist[] {
+  // The sort is stable: the tierlists holding as many restaurants keep the order of their last update
+  return byLastUpdate(tierlists).sort((a, b) => b.restaurants.length - a.restaurants.length);
+}
+
+/**
  * `ids` with `id` removed when it is in it, added at the end otherwise: a tierlist selected or unselected
  */
 export function toggleId(ids: readonly number[], id: number): number[] {

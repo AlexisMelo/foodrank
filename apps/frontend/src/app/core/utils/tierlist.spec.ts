@@ -3,6 +3,7 @@ import type { Tierlist } from '@/core/models/tierlist.model';
 import {
   addToTierlistErrorMessage,
   byLastUpdate,
+  byRestaurantCount,
   containsRestaurant,
   isAlreadyInTierlist,
   toggleId,
@@ -41,6 +42,20 @@ describe('byLastUpdate', () => {
 
     expect(byLastUpdate(tierlists).map((t) => t.id)).toEqual([2, 3, 1]);
     expect(tierlists.map((t) => t.id)).toEqual([1, 2, 3]);
+  });
+});
+
+describe('byRestaurantCount', () => {
+  it('sorts a copy of the tierlists, the most restaurants first, the most recently updated first among equals', () => {
+    const tierlists = [
+      tierlist(1, 'Two, old', '2026-01-01T10:00:00Z', ['r1', 'r2']),
+      tierlist(2, 'Empty', '2026-10-20T10:00:00Z'),
+      tierlist(3, 'Three', '2026-03-01T10:00:00Z', ['r1', 'r2', 'r3']),
+      tierlist(4, 'Two, new', '2026-05-01T10:00:00Z', ['r3', 'r4']),
+    ];
+
+    expect(byRestaurantCount(tierlists).map((t) => t.id)).toEqual([3, 4, 1, 2]);
+    expect(tierlists.map((t) => t.id)).toEqual([1, 2, 3, 4]);
   });
 });
 

@@ -1,21 +1,21 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { TierlistApi } from '@/core/api/tierlist-api';
-import { byLastUpdate } from '@/core/utils/tierlist';
+import { byLastUpdate, byRestaurantCount } from '@/core/utils/tierlist';
 import { NewChip } from '@/shared/ui/new-chip/new-chip';
 import { TierlistCard } from '../tierlist-card/tierlist-card';
 
 /**
- * Order of the tierlists: most recently created, most recently updated, or by name
+ * Order of the tierlists: most recently updated, most restaurants, or by name
  */
-type SortKey = 'recent' | 'az' | 'updated';
+type SortKey = 'updated' | 'count' | 'az';
 
 /**
  * Sort chips of the page, in display order
  */
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-  { key: 'recent', label: 'Recently created' },
   { key: 'updated', label: 'Recently updated' },
+  { key: 'count', label: 'Number of restaurants' },
   { key: 'az', label: 'A–Z' },
 ];
 
@@ -53,9 +53,9 @@ export class Tierlists {
   protected readonly loadError = computed(() => this.tierlistsResource.status() === 'error');
 
   /**
-   * Order chosen by the user, most recently created first by default
+   * Order chosen by the user, most recently updated first by default
    */
-  protected readonly sortBy = signal<SortKey>('recent');
+  protected readonly sortBy = signal<SortKey>('updated');
 
   /**
    * Sort chips of the page, in display order
@@ -66,12 +66,10 @@ export class Tierlists {
    * The tierlists in the chosen order; empty while loading and when the API fails
    */
   protected readonly sortedTierlists = computed(() => {
-    const list = [...(this.tierlistsResource.hasValue() ? this.tierlistsResource.value() : [])];
+    const list = this.tierlistsResource.hasValue() ? this.tierlistsResource.value() : [];
     const sortBy = this.sortBy();
-    if (sortBy === 'recent') {
-      return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    }
     if (sortBy === 'updated') return byLastUpdate(list);
-    return list.sort((a, b) => a.name.localeCompare(b.name));
+    if (sortBy === 'count') return byRestaurantCount(list);
+    return [...list].sort((a, b) => a.name.localeCompare(b.name));
   });
 }
