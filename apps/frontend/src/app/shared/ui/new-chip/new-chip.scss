@@ -1,3 +1,4 @@
+@use 'chip';
 @use 'hover';
 
 // The host takes the place the parent gives it through a class
@@ -6,17 +7,13 @@
 }
 
 .add-chip {
-  display: flex;
-  align-items: center;
+  @include chip.size;
   gap: 4px;
-  padding: 4px 10px 4px 6px;
-  border-radius: 100px;
-  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  // Less space before the "+", which has its own blank around it
+  padding-left: 6px;
+  border-color: rgba(255, 255, 255, 0.15);
   background: transparent;
   color: rgba(255, 255, 255, 0.45);
-  font-size: 12px;
-  font-weight: 700;
-  font-family: inherit;
   text-decoration: none;
   cursor: pointer;
   transition: background 0.2s;

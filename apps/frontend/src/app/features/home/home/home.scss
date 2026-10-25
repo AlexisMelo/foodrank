@@ -1,3 +1,4 @@
+@use 'chip';
 @use 'hover';
 
 .home {
@@ -92,14 +93,9 @@
 }
 
 .see-all-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 100px;
-  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  @include chip.size;
+  border-color: rgba(255, 255, 255, 0.15);
   color: rgba(255, 255, 255, 0.45);
-  font-size: 12px;
-  font-weight: 700;
   text-decoration: none;
   transition: background 0.2s;
 }

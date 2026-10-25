@@ -1,3 +1,4 @@
+@use 'chip';
 @use 'hover';
 
 .detail-view {
@@ -71,12 +72,11 @@
   line-height: 1.5;
 }
 
+// As high as the count next to it
 .owner {
-  display: inline-flex;
-  align-items: center;
+  @include chip.size;
   gap: 6px;
-  padding: 2px 8px 2px 2px;
-  border-radius: 100px;
+  padding-left: 2px;
   text-decoration: none;
   color: rgba(255, 255, 255, 0.45);
   transition: background 0.2s;
@@ -92,18 +92,10 @@
   color: #ffffff;
 }
 
-.owner-name {
-  font-size: 13px;
-  font-weight: 600;
-}
-
 .meta-chip {
-  font-size: 12px;
-  font-weight: 700;
+  @include chip.size;
   color: rgba(255, 255, 255, 0.6);
   background: rgba(255, 255, 255, 0.08);
-  padding: 4px 10px;
-  border-radius: 100px;
 }
 
 .pin-error,
