@@ -86,6 +86,25 @@
   }
 }
 
+// Full screen: the panel covers the overlay, the list taking the height left
+.overlay-full {
+  padding: 0;
+
+  .panel {
+    max-width: none;
+    max-height: none;
+    height: 100%;
+    padding: calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));
+    background: #0d0d0d;
+    border: none;
+    border-radius: 0;
+  }
+
+  .list {
+    flex: 1;
+  }
+}
+
 .list {
   min-height: 0;
   overflow-y: auto;

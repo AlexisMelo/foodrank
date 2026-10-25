@@ -9,13 +9,14 @@ import { query, queryAll, stubDialogs, textOf, typeIn } from '@/testing/dom-test
 import { AddRestaurantsDialog } from './add-restaurants-dialog';
 
 /**
- * Builds a rating by the owner of `restaurantId`, named `name` and located at `address`, given on `day` of October
- * 2026; the active one of the restaurant unless `isActive` is false.
+ * Builds a rating by the owner of `restaurantId`, named `name` and located at `address`, scored `score` for the three
+ * criteria on `day` of October 2026; the active one of the restaurant unless `isActive` is false.
  */
 function rating(
   restaurantId: string,
   name: string,
   address: string,
+  score: number,
   day: number,
   isActive = true,
 ): UserRating {
@@ -25,9 +26,9 @@ function rating(
     restaurantEmoji: '🍕',
     restaurantAddress: address,
     date: `2026-10-${String(day).padStart(2, '0')}T12:00:00+00:00`,
-    food: 50,
-    service: 50,
-    setting: 50,
+    food: score,
+    service: score,
+    setting: score,
     bonus: false,
     isActive,
   };
@@ -58,18 +59,20 @@ function httpError(status: number): Observable<never> {
 }
 
 /**
- * Ratings of the owner, the most recent first as the API sends them: Sushi Bar rated twice, Pizza Roma already in the
- * tierlist (see `open`)
+ * Ratings of the owner, the most recent first as the API sends them: Sushi Bar rated twice, its old rating the best one,
+ * and Pizza Roma already in the tierlist (see `open`)
  */
 const myRatings = [
-  rating('r3', 'Sushi Bar', '3 quai Vendeuvre, Caen', 20),
-  rating('r2', 'Crêperie du Port', '', 15),
-  rating('r1', 'Pizza Roma', '1 rue de Caen', 10),
-  rating('r3', 'Sushi Bar', '3 quai Vendeuvre, Caen', 5, false),
+  rating('r3', 'Sushi Bar', '3 quai Vendeuvre, Caen', 70, 20),
+  rating('r4', 'Arepas', '', 60, 18),
+  rating('r2', 'Crêperie du Port', '', 90, 15),
+  rating('r1', 'Pizza Roma', '1 rue de Caen', 50, 10),
+  rating('r3', 'Sushi Bar', '3 quai Vendeuvre, Caen', 100, 5, false),
 ];
 
 describe('AddRestaurantsDialog', () => {
   let addRestaurantToTierlist: ReturnType<typeof vi.fn>;
+  let removeRestaurantFromTierlist: ReturnType<typeof vi.fn>;
   let tierlistChange: ReturnType<typeof vi.fn<(tierlist: Tierlist) => void>>;
   let closed: ReturnType<typeof vi.fn<() => void>>;
   let fixture: ComponentFixture<AddRestaurantsDialog>;
@@ -77,19 +80,26 @@ describe('AddRestaurantsDialog', () => {
   beforeEach(() => {
     stubDialogs();
     addRestaurantToTierlist = vi.fn();
+    removeRestaurantFromTierlist = vi.fn();
     tierlistChange = vi.fn();
     closed = vi.fn();
     TestBed.configureTestingModule({
-      providers: [{ provide: TierlistApi, useValue: { addRestaurantToTierlist } }],
+      providers: [
+        {
+          provide: TierlistApi,
+          useValue: { addRestaurantToTierlist, removeRestaurantFromTierlist },
+        },
+      ],
     });
   });
 
   /**
-   * Opens the popup for the tierlist Date night holding Pizza Roma, with the owner's `ratings`.
+   * Opens the popup for the tierlist Date night holding `restaurantIds` (Pizza Roma by default), with the owner's
+   * `ratings`.
    */
-  async function open(ratings: UserRating[] = myRatings): Promise<void> {
+  async function open(ratings: UserRating[] = myRatings, restaurantIds = ['r1']): Promise<void> {
     fixture = TestBed.createComponent(AddRestaurantsDialog);
-    fixture.componentRef.setInput('tierlist', tierlist(['r1']));
+    fixture.componentRef.setInput('tierlist', tierlist(restaurantIds));
     fixture.componentRef.setInput('ratings', ratings);
     fixture.componentInstance.tierlist.subscribe(tierlistChange);
     fixture.componentInstance.closed.subscribe(closed);
@@ -115,17 +125,27 @@ describe('AddRestaurantsDialog', () => {
   }
 
   /**
-   * The button adding the restaurant named `name`.
+   * The button adding the restaurant named `name`, or removing it when it is in the tierlist.
    */
-  function addButton(name: string): HTMLButtonElement {
-    return row(name).querySelector<HTMLButtonElement>('.add-btn')!;
+  function toggleButton(name: string): HTMLButtonElement {
+    return row(name).querySelector<HTMLButtonElement>('.toggle-btn')!;
   }
 
   /**
-   * Clicks the button adding the restaurant named `name`, and waits for it to be added.
+   * Clicks the button of the restaurant named `name`, and waits for it to be added or removed.
    */
-  async function add(name: string): Promise<void> {
-    addButton(name).click();
+  async function toggle(name: string): Promise<void> {
+    toggleButton(name).click();
+    await fixture.whenStable();
+  }
+
+  /**
+   * Clicks the sort chip whose text is `label`, and waits for the list to update.
+   */
+  async function sortBy(label: string): Promise<void> {
+    queryAll(fixture, '.sort-chip')
+      .find((chip) => textOf(chip) === label)!
+      .click();
     await fixture.whenStable();
   }
 
@@ -145,11 +165,15 @@ describe('AddRestaurantsDialog', () => {
     return tierlistChange.mock.lastCall![0].restaurants.map((entry) => entry.restaurantId);
   }
 
-  it('lists the restaurants I rated not in the tierlist yet, each once, the most recently rated first', async () => {
+  it('lists the restaurants I rated not in the tierlist yet, each once with its latest score, the best score first', async () => {
     await open();
 
     expect(query<HTMLDialogElement>(fixture, 'dialog').open).toBe(true);
-    expect(listedNames()).toEqual(['Sushi Bar', 'Crêperie du Port']);
+    expect(listedNames()).toEqual(['Crêperie du Port', 'Sushi Bar', 'Arepas']);
+    expect(queryAll(fixture, '.toggle-btn').map(textOf)).toEqual(['Add', 'Add', 'Add']);
+    expect(toggleButton('Sushi Bar').getAttribute('aria-label')).toBe(
+      'Add Sushi Bar to Date night',
+    );
   });
 
   it('shows the emoji, the name and the address of each restaurant, when it is known', async () => {
@@ -160,11 +184,31 @@ describe('AddRestaurantsDialog', () => {
       '3 quai Vendeuvre, Caen',
     );
     expect(row('Crêperie du Port').querySelector('.search-row-detail')).toBeNull();
-    expect(addButton('Sushi Bar').getAttribute('aria-label')).toBe('Add Sushi Bar to Date night');
+  });
+
+  it('sorts the restaurants by score, the default, by the moment of their rating or by name', async () => {
+    await open();
+
+    const chips = queryAll(fixture, 'dialog .sort-chip');
+    expect(chips.map(textOf)).toEqual(['Score', 'Recently rated', 'A–Z']);
+    expect(chips.map((c) => c.getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false']);
+
+    await sortBy('Recently rated');
+    expect(listedNames()).toEqual(['Sushi Bar', 'Arepas', 'Crêperie du Port']);
+
+    await sortBy('A–Z');
+    expect(listedNames()).toEqual(['Arepas', 'Crêperie du Port', 'Sushi Bar']);
+
+    await sortBy('Score');
+    expect(listedNames()).toEqual(['Crêperie du Port', 'Sushi Bar', 'Arepas']);
   });
 
   it('filters the restaurants by the search, and says when none matches', async () => {
     await open();
+
+    // Still in the chosen order
+    await typeIn(fixture, '.search', 'u');
+    expect(listedNames()).toEqual(['Crêperie du Port', 'Sushi Bar']);
 
     await typeIn(fixture, '.search', 'crepe');
     expect(listedNames()).toEqual(['Crêperie du Port']);
@@ -174,36 +218,42 @@ describe('AddRestaurantsDialog', () => {
     expect(textOf(query(fixture, '.search-list-message'))).toBe('No restaurant matches “burger”.');
   });
 
-  it('adds the restaurant to the tierlist, which then leaves the list, and confirms it in a toast', async () => {
+  it('adds the restaurant to the tierlist, its button then removing it, the restaurant staying in the list', async () => {
     addRestaurantToTierlist.mockReturnValue(of(tierlist(['r1', 'r3'], '2026-10-25T10:00:00Z')));
     await open();
 
-    await add('Sushi Bar');
+    await toggle('Sushi Bar');
 
     expect(addRestaurantToTierlist).toHaveBeenCalledWith(7, 'r3');
-    expect(listedNames()).toEqual(['Crêperie du Port']);
     expect(savedRestaurantIds()).toEqual(['r1', 'r3']);
-    expect(toasts()).toEqual(['success: Sushi Bar added to Date night.']);
-    expect(textOf(query(fixture, 'dialog .toast-message'))).toBe('Sushi Bar added to Date night.');
+    expect(listedNames()).toEqual(['Crêperie du Port', 'Sushi Bar', 'Arepas']);
+    expect(textOf(toggleButton('Sushi Bar'))).toBe('Remove');
+    expect(toggleButton('Sushi Bar').getAttribute('aria-label')).toBe(
+      'Remove Sushi Bar from Date night',
+    );
+    expect(toasts()).toEqual([]);
   });
 
-  it('confirms each restaurant added, then says when every restaurant I rated is in the tierlist', async () => {
-    addRestaurantToTierlist
-      .mockReturnValueOnce(of(tierlist(['r1', 'r3'])))
-      .mockReturnValueOnce(of(tierlist(['r1', 'r3', 'r2'])));
+  it('undoes an addition from the same button, the restaurant staying in the list to be added again', async () => {
+    addRestaurantToTierlist.mockReturnValue(of(tierlist(['r1', 'r3'])));
+    removeRestaurantFromTierlist.mockReturnValue(of(tierlist(['r1'], '2026-10-25T10:00:00Z')));
     await open();
 
-    await add('Sushi Bar');
-    await add('Crêperie du Port');
+    await toggle('Sushi Bar');
+    await toggle('Sushi Bar');
 
-    expect(toasts()).toEqual([
-      'success: Sushi Bar added to Date night.',
-      'success: Crêperie du Port added to Date night.',
-    ]);
-    expect(listedNames()).toEqual([]);
-    expect(textOf(query(fixture, '.search-list-message'))).toBe(
-      'Every restaurant you rated is in Date night.',
-    );
+    expect(removeRestaurantFromTierlist).toHaveBeenCalledWith(7, 'r3');
+    expect(savedRestaurantIds()).toEqual(['r1']);
+    expect(tierlistChange.mock.lastCall![0].updatedAt).toBe('2026-10-25T10:00:00Z');
+    expect(listedNames()).toEqual(['Crêperie du Port', 'Sushi Bar', 'Arepas']);
+    expect(textOf(toggleButton('Sushi Bar'))).toBe('Add');
+  });
+
+  it('does not offer the restaurants added before it opened, even the ones added the last time it was open', async () => {
+    // Opened again after adding Sushi Bar
+    await open(myRatings, ['r1', 'r3']);
+
+    expect(listedNames()).toEqual(['Crêperie du Port', 'Arepas']);
   });
 
   it('keeps every restaurant added when two additions are sent together, each answer missing the other', async () => {
@@ -213,8 +263,8 @@ describe('AddRestaurantsDialog', () => {
     );
     await open();
 
-    await add('Sushi Bar');
-    await add('Crêperie du Port');
+    await toggle('Sushi Bar');
+    await toggle('Crêperie du Port');
     // The API read the tierlist before either restaurant was added; the second answer arrives first
     answers['r2']!.next(tierlist(['r1', 'r2']));
     answers['r3']!.next(tierlist(['r1', 'r3']));
@@ -223,48 +273,74 @@ describe('AddRestaurantsDialog', () => {
     await fixture.whenStable();
 
     expect(savedRestaurantIds()).toEqual(['r1', 'r2', 'r3']);
-    expect(listedNames()).toEqual([]);
+    expect(textOf(toggleButton('Sushi Bar'))).toBe('Remove');
+    expect(textOf(toggleButton('Crêperie du Port'))).toBe('Remove');
   });
 
   it('disables the button while the restaurant is added, so it is not sent twice', async () => {
     addRestaurantToTierlist.mockReturnValue(new Subject<Tierlist>());
     await open();
 
-    await add('Sushi Bar');
-    expect(addButton('Sushi Bar').disabled).toBe(true);
-    expect(addButton('Crêperie du Port').disabled).toBe(false);
-    addButton('Sushi Bar').click();
+    await toggle('Sushi Bar');
+    expect(toggleButton('Sushi Bar').disabled).toBe(true);
+    expect(toggleButton('Crêperie du Port').disabled).toBe(false);
+    toggleButton('Sushi Bar').click();
 
     expect(addRestaurantToTierlist).toHaveBeenCalledTimes(1);
   });
 
-  it('tells in a toast when the restaurant cannot be added, the restaurant staying in the list', async () => {
+  it('tells in a toast when the restaurant cannot be added, its button still adding it', async () => {
     addRestaurantToTierlist.mockReturnValue(httpError(503));
     await open();
 
-    await add('Sushi Bar');
+    await toggle('Sushi Bar');
 
     expect(toasts()).toEqual(["error: Couldn't add Sushi Bar to Date night, try again."]);
-    expect(listedNames()).toEqual(['Sushi Bar', 'Crêperie du Port']);
-    expect(addButton('Sushi Bar').disabled).toBe(false);
+    expect(textOf(toggleButton('Sushi Bar'))).toBe('Add');
+    expect(toggleButton('Sushi Bar').disabled).toBe(false);
     expect(tierlistChange).not.toHaveBeenCalled();
+  });
+
+  it('tells in a toast when the addition cannot be undone, its button still removing it', async () => {
+    addRestaurantToTierlist.mockReturnValue(of(tierlist(['r1', 'r3'])));
+    removeRestaurantFromTierlist.mockReturnValue(httpError(503));
+    await open();
+
+    await toggle('Sushi Bar');
+    await toggle('Sushi Bar');
+
+    expect(toasts()).toEqual(["error: Couldn't remove Sushi Bar from Date night, try again."]);
+    expect(textOf(toggleButton('Sushi Bar'))).toBe('Remove');
+    expect(toggleButton('Sushi Bar').disabled).toBe(false);
+    expect(savedRestaurantIds()).toEqual(['r1', 'r3']);
   });
 
   it('tells in a toast when the API answers the restaurant is already in the tierlist', async () => {
     addRestaurantToTierlist.mockReturnValue(httpError(409));
     await open();
 
-    await add('Sushi Bar');
+    await toggle('Sushi Bar');
 
     expect(toasts()).toEqual(['error: Sushi Bar is already in Date night.']);
   });
 
-  it('explains that only the restaurants I rated can be added, when I rated none', async () => {
+  it('explains that only the restaurants I rated can be added, when I rated none, with nothing to sort', async () => {
     await open([]);
 
     expect(textOf(query(fixture, '.search-list-message'))).toBe(
       "Only the restaurants you rated can be added, and you haven't rated any yet.",
     );
+    expect(queryAll(fixture, '.sort-chip')).toHaveLength(0);
+  });
+
+  it('says when every restaurant I rated is in the tierlist, with nothing to sort', async () => {
+    await open(myRatings, ['r1', 'r2', 'r3', 'r4']);
+
+    expect(listedNames()).toEqual([]);
+    expect(textOf(query(fixture, '.search-list-message'))).toBe(
+      'Every restaurant you rated is in Date night.',
+    );
+    expect(queryAll(fixture, '.sort-chip')).toHaveLength(0);
   });
 
   it('asks to be closed from its × button', async () => {

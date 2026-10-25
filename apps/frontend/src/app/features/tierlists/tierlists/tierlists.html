@@ -7,19 +7,7 @@
     <app-new-chip class="new-chip" link="/tierlists/new" />
   </header>
 
-  <div class="sort-row">
-    @for (opt of sortOptions; track opt.key) {
-      <button
-        type="button"
-        class="sort-chip"
-        [class.active]="sortBy() === opt.key"
-        [attr.aria-pressed]="sortBy() === opt.key"
-        (click)="sortBy.set(opt.key)"
-      >
-        {{ opt.label }}
-      </button>
-    }
-  </div>
+  <app-sort-chips class="sort-row" [options]="sortOptions" [(value)]="sortBy" />
 
   @if (loading()) {
     <div class="list">

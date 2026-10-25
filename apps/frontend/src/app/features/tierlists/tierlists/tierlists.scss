@@ -1,5 +1,3 @@
-@use 'hover';
-
 .tierlists-view {
   color: #ffffff;
   overflow: hidden;
@@ -37,38 +35,7 @@
 .sort-row {
   position: relative;
   z-index: 1;
-  display: flex;
-  gap: 8px;
   margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-
-.sort-chip {
-  padding: 6px 14px;
-  border-radius: 100px;
-  border: 1.5px solid rgba(255, 255, 255, 0.12);
-  background: transparent;
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 12px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition:
-    border-color 0.15s,
-    color 0.15s,
-    background 0.15s;
-  white-space: nowrap;
-}
-
-// The active chip keeps its colors: picking it again changes nothing
-.sort-chip:not(.active) {
-  @include hover.background(rgba(255, 255, 255, 0.08));
-}
-
-.sort-chip.active {
-  border-color: #ffffff;
-  color: #0d0d0d;
-  background: #ffffff;
 }
 
 .list {

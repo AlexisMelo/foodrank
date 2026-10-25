@@ -1,3 +1,5 @@
+@use 'hover';
+
 .detail-view {
   color: #ffffff;
   overflow: hidden;
@@ -53,6 +55,15 @@
   margin: 0;
 }
 
+// The owner and the number of restaurants, under the name
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
 .description {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.5);
@@ -60,21 +71,16 @@
   line-height: 1.5;
 }
 
-.list-header {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
 .owner {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  padding: 2px 8px 2px 2px;
+  border-radius: 100px;
   text-decoration: none;
   color: rgba(255, 255, 255, 0.45);
+  transition: background 0.2s;
+  @include hover.background(rgba(255, 255, 255, 0.08));
 }
 
 .owner-avatar {
@@ -89,14 +95,6 @@
 .owner-name {
   font-size: 13px;
   font-weight: 600;
-}
-
-// The count and, for the owner, the chip adding restaurants; on the right even without an owner on the left
-.list-header-end {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
 }
 
 .meta-chip {
@@ -118,6 +116,23 @@
 .load-error {
   text-align: center;
   margin-top: 25dvh;
+}
+
+// The sort chips on the left and, for the owner, the chip adding restaurants on the right
+.list-toolbar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+// On the right even without sort chips (empty tierlist)
+.toolbar-add {
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .restaurant-list {

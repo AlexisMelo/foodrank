@@ -3,6 +3,7 @@
 <dialog
   #dialog
   class="overlay"
+  [class.overlay-full]="fullScreen()"
   [attr.aria-labelledby]="titleId"
   animate.enter="fade-enter"
   (cancel)="closeOnEscape($event)"
@@ -24,6 +25,8 @@
       [attr.aria-label]="searchLabel()"
       [formField]="searchForm"
     />
+
+    <ng-content select="[searchDialogFilters]" />
 
     <div class="list">
       <ng-content />

@@ -8,6 +8,7 @@ import {
   isAlreadyInTierlist,
   toggleId,
   withAddedRestaurant,
+  withRemovedRestaurant,
 } from './tierlist';
 
 /**
@@ -112,6 +113,29 @@ describe('withAddedRestaurant', () => {
     const shown = tierlist(1, 'Top 10', undefined, ['r1']);
 
     expect(withAddedRestaurant(shown, tierlist(1, 'Top 10', undefined, ['r1']), 'r1')).toBe(shown);
+  });
+});
+
+describe('withRemovedRestaurant', () => {
+  it("removes the restaurant's entry, with the answer's last update", () => {
+    const shown = tierlist(1, 'Top 10', '2026-10-01T10:00:00Z', ['r1', 'r2']);
+    const saved = tierlist(1, 'Top 10', '2026-10-25T10:00:00Z', ['r1']);
+
+    const merged = withRemovedRestaurant(shown, saved, 'r2');
+
+    expect(merged.restaurants.map((e) => e.restaurantId)).toEqual(['r1']);
+    expect(merged.updatedAt).toBe('2026-10-25T10:00:00Z');
+  });
+
+  it('keeps the restaurant added meanwhile, which the answer of the removal misses', () => {
+    // r3 added, then r1 removed before the answer of the addition: the API answers the removal without r3
+    const shown = tierlist(1, 'Top 10', '2026-10-25T10:00:01Z', ['r1', 'r3']);
+    const saved = tierlist(1, 'Top 10', '2026-10-25T10:00:00Z', []);
+
+    const merged = withRemovedRestaurant(shown, saved, 'r1');
+
+    expect(merged.restaurants.map((e) => e.restaurantId)).toEqual(['r3']);
+    expect(merged.updatedAt).toBe('2026-10-25T10:00:01Z');
   });
 });
 

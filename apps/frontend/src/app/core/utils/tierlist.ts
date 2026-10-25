@@ -102,12 +102,36 @@ export function withAddedRestaurant(
     restaurantId,
     addedAt: null,
   };
-  const savedIsLater = new Date(saved.updatedAt).getTime() > new Date(tierlist.updatedAt).getTime();
   return {
     ...tierlist,
     restaurants: [...tierlist.restaurants, entry],
-    updatedAt: savedIsLater ? saved.updatedAt : tierlist.updatedAt,
+    updatedAt: laterUpdate(tierlist, saved),
   };
+}
+
+/**
+ * `tierlist` once the restaurant `restaurantId` was removed from it, `saved` being the tierlist the API answered: the
+ * restaurant's entry removed, and the last update of `saved` when it is later. As for `withAddedRestaurant`, the answer
+ * misses the changes sent with it, so it is merged into the tierlist shown rather than shown in its place.
+ */
+export function withRemovedRestaurant(
+  tierlist: Tierlist,
+  saved: Tierlist,
+  restaurantId: string,
+): Tierlist {
+  return {
+    ...tierlist,
+    restaurants: tierlist.restaurants.filter((entry) => entry.restaurantId !== restaurantId),
+    updatedAt: laterUpdate(tierlist, saved),
+  };
+}
+
+/**
+ * The later of the last updates of `tierlist` and `saved`
+ */
+function laterUpdate(tierlist: Tierlist, saved: Tierlist): string {
+  const savedIsLater = new Date(saved.updatedAt).getTime() > new Date(tierlist.updatedAt).getTime();
+  return savedIsLater ? saved.updatedAt : tierlist.updatedAt;
 }
 
 /**

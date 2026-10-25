@@ -1,0 +1,11 @@
+@for (option of options(); track option.key) {
+  <button
+    type="button"
+    class="sort-chip"
+    [class.active]="value() === option.key"
+    [attr.aria-pressed]="value() === option.key"
+    (click)="value.set(option.key)"
+  >
+    {{ option.label }}
+  </button>
+}

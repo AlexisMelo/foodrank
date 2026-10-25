@@ -1,9 +1,14 @@
 <app-search-dialog
   heading="Add restaurants"
   searchLabel="Search the restaurants you rated"
+  fullScreen
   [(query)]="query"
   (closed)="closed.emit()"
 >
+  @if (!noRatedRestaurant() && !allAdded()) {
+    <app-sort-chips searchDialogFilters [options]="sortOptions" [(value)]="sortBy" />
+  }
+
   @if (noRatedRestaurant()) {
     <p class="search-list-message">
       Only the restaurants you rated can be added, and you haven't rated any yet.
@@ -12,6 +17,7 @@
     <p class="search-list-message">Every restaurant you rated is in {{ tierlist().name }}.</p>
   } @else {
     @for (restaurant of shownRestaurants(); track restaurant.restaurantId) {
+      @let added = contains(restaurant);
       <div class="search-row restaurant-row">
         <span class="search-row-cover" aria-hidden="true">{{ restaurant.emoji || '🍽️' }}</span>
         <span class="search-row-info">
@@ -20,14 +26,16 @@
             <span class="search-row-detail">{{ restaurant.address }}</span>
           }
         </span>
+        <!-- One button for both, so it keeps the focus when it switches -->
         <button
           type="button"
-          class="search-row-action add-btn"
+          class="search-row-action toggle-btn"
+          [class.remove-btn]="added"
           [disabled]="saving.has(restaurant.restaurantId)"
-          [attr.aria-label]="'Add ' + restaurant.name + ' to ' + tierlist().name"
-          (click)="add(restaurant)"
+          [attr.aria-label]="toggleLabel(restaurant, added)"
+          (click)="toggle(restaurant)"
         >
-          Add
+          {{ added ? 'Remove' : 'Add' }}
         </button>
       </div>
     } @empty {

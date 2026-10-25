@@ -13,14 +13,18 @@ import { WebShare } from '@/core/share/web-share';
 import { ToastStore } from '@/core/toast/toast-store';
 import { restaurantCountLabel } from '@/core/utils/profile';
 import {
+  RESTAURANT_SORT_OPTIONS,
   type RankedRestaurant,
+  type RestaurantSort,
   overallByRestaurant,
   rankTierlistRestaurants,
+  sortRestaurants,
 } from '@/core/utils/ranking';
 import type { Action } from '@/shared/ui/actions/actions';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog/confirm-dialog';
 import { NewChip } from '@/shared/ui/new-chip/new-chip';
 import { RankedRestaurantItem } from '@/shared/ui/ranked-restaurant-item/ranked-restaurant-item';
+import { SortChips } from '@/shared/ui/sort-chips/sort-chips';
 import { UserAvatar } from '@/shared/ui/user-avatar/user-avatar';
 import { AddRestaurantsDialog } from '../add-restaurants-dialog/add-restaurants-dialog';
 import { TierlistPinButton } from '../tierlist-pin-button/tierlist-pin-button';
@@ -53,7 +57,8 @@ interface TierlistPage {
 
 /**
  * Tierlist page (/tierlists/:id), of any user: the tierlist, its owner and its restaurants ranked by the owner's
- * ratings. Its owner can pin it to their profile, and add the restaurants they rated from a popup. Each restaurant has
+ * ratings, the best score first by default, or the most recently rated first, or by name. Its owner can pin it to their
+ * profile, and add the restaurants they rated from a popup, or remove them. Each restaurant has
  * a menu of actions: see its page, share it, and for the owner, remove it from the tierlist after confirming. On
  * someone else's tierlist, the restaurants I never rated have a "+" opening their rating page, as on someone else's
  * profile.
@@ -65,6 +70,7 @@ interface TierlistPage {
     NewChip,
     RankedRestaurantItem,
     RouterLink,
+    SortChips,
     TierlistPinButton,
     UserAvatar,
   ],
@@ -151,22 +157,33 @@ export class TierlistDetail {
   protected readonly pinError = signal(false);
 
   /**
-   * Restaurants of the tierlist, best first by the owner's scores; on someone else's tierlist, with my own score
-   * (undefined when I never rated it)
+   * Sort chips of the restaurants, in display order
+   */
+  protected readonly sortOptions = RESTAURANT_SORT_OPTIONS;
+
+  /**
+   * Order of the restaurants chosen by the user, the best score first by default
+   */
+  protected readonly sortBy = signal<RestaurantSort>('score');
+
+  /**
+   * Restaurants of the tierlist with the owner's scores, in the chosen order; on someone else's tierlist, with my own
+   * score (undefined when I never rated it)
    */
   private readonly rankedRestaurants = computed(() => {
     const page = this.page();
     if (!page) return [];
     const isOwner = this.isOwner();
     const myScores = overallByRestaurant(page.myRatings);
-    return rankTierlistRestaurants(
+    const ranked = rankTierlistRestaurants(
       page.tierlist.restaurants.map((e) => e.restaurantId),
       page.ownerRatings,
     ).map((r) => ({ ...r, myScore: isOwner ? undefined : myScores.get(r.restaurantId) }));
+    return sortRestaurants(ranked, this.sortBy());
   });
 
   /**
-   * Rows of the list: each restaurant ranked, with the actions of its menu
+   * Rows of the list: each restaurant in the chosen order, with the actions of its menu
    */
   protected readonly rows = computed(() => {
     const isOwner = this.isOwner();
@@ -243,7 +260,8 @@ export class TierlistDetail {
   }
 
   /**
-   * Shows `tierlist` in place of the one loaded: saved by the API, or with the restaurants added from the popup
+   * Shows `tierlist` in place of the one loaded: saved by the API, or with the restaurants added or removed from the
+   * popup
    */
   protected showTierlist(tierlist: Tierlist): void {
     this.pageResource.value.update((page) => page && { ...page, tierlist });

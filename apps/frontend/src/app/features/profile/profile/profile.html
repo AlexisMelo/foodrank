@@ -9,14 +9,16 @@
     <!-- Pinned tierlists -->
     <app-pinned-tierlists [userId]="profile.id" />
 
-    <!-- Restaurants rated, best first -->
+    <!-- Restaurants rated, in the chosen order -->
     @if (ranking.loadError()) {
       <div class="empty" role="alert">Couldn't load the ratings</div>
     } @else if (!ranking.rankedRestaurants().length) {
       <div class="empty">No restaurant rated yet 🍽️</div>
     } @else {
+      <app-sort-chips class="sort-row" [options]="sortOptions" [(value)]="sortBy" />
+
       <div class="list">
-        @for (restaurant of ranking.rankedRestaurants(); track restaurant.restaurantId) {
+        @for (restaurant of sortedRestaurants(); track restaurant.restaurantId) {
           <app-ranked-restaurant-item
             [restaurantId]="restaurant.restaurantId"
             [emoji]="restaurant.emoji"

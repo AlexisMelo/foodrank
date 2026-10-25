@@ -2,6 +2,7 @@ import {
   Component,
   ElementRef,
   afterNextRender,
+  booleanAttribute,
   input,
   model,
   output,
@@ -16,10 +17,11 @@ import { ToastOutlet } from '../toast-outlet/toast-outlet';
 let nextTitleNumber = 1;
 
 /**
- * Popup listing items to pick, with a search field filtering them: a title, a close (×) button, the search field, the
- * list projected inside and an optional footer (`[searchDialogFooter]`). A native dialog shown as a modal once rendered,
- * the search field focused; the × button, the Esc key and a click outside ask to close it, the parent removing it.
- * Toasts shown while it is open render inside it.
+ * Popup listing items to pick, with a search field filtering them: a title, a close (×) button, the search field,
+ * optional filters under it (`[searchDialogFilters]`, e.g. sort chips), the list projected inside and an optional footer
+ * (`[searchDialogFooter]`). A card centered on the screen, or covering it with `fullScreen`. A native dialog shown as a
+ * modal once rendered, the search field focused; the × button, the Esc key and a click outside the card ask to close
+ * it, the parent removing it. Toasts shown while it is open render inside it.
  */
 @Component({
   imports: [FormField, ToastOutlet],
@@ -37,6 +39,11 @@ export class SearchDialog {
    * Placeholder and accessible name of the search field, e.g. "Search your tierlists"
    */
   readonly searchLabel = input.required<string>();
+
+  /**
+   * True to cover the whole screen instead of showing a card, for long lists (e.g. every restaurant rated)
+   */
+  readonly fullScreen = input(false, { transform: booleanAttribute });
 
   /**
    * Text typed in the search field, as typed; the parent filters its list with it

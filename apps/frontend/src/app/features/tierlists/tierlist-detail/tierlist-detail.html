@@ -3,6 +3,19 @@
     <div class="hero">
       <div class="cover">{{ page.tierlist.emoji }}</div>
       <h1 class="title">{{ page.tierlist.name }}</h1>
+      <div class="meta">
+        @if (page.owner; as owner) {
+          <a [routerLink]="'/user/' + owner.id" class="owner">
+            <app-user-avatar
+              [name]="owner.name"
+              [avatarUrl]="owner.avatarUrl"
+              class="owner-avatar"
+            />
+            <span class="owner-name">{{ owner.name }}</span>
+          </a>
+        }
+        <span class="meta-chip">{{ restaurantCountLabel(page.tierlist.restaurants.length) }}</span>
+      </div>
       @if (page.tierlist.description) {
         <p class="description">{{ page.tierlist.description }}</p>
       }
@@ -19,26 +32,24 @@
       }
     </div>
 
-    <div class="list-header">
-      @if (page.owner; as owner) {
-        <a [routerLink]="'/user/' + owner.id" class="owner">
-          <app-user-avatar [name]="owner.name" [avatarUrl]="owner.avatarUrl" class="owner-avatar" />
-          <span class="owner-name">{{ owner.name }}</span>
-        </a>
-      }
-      <div class="list-header-end">
-        <span class="meta-chip">{{ restaurantCountLabel(page.tierlist.restaurants.length) }}</span>
+    @let hasRestaurants = page.tierlist.restaurants.length > 0;
+    @if (hasRestaurants || isOwner()) {
+      <div class="list-toolbar">
+        @if (hasRestaurants) {
+          <app-sort-chips [options]="sortOptions" [(value)]="sortBy" />
+        }
         @if (isOwner()) {
           <app-new-chip
+            class="toolbar-add"
             label="Add"
             [ariaLabel]="'Add restaurants to ' + page.tierlist.name"
             (pressed)="addDialogOpen.set(true)"
           />
         }
       </div>
-    </div>
+    }
 
-    @if (page.tierlist.restaurants.length === 0) {
+    @if (!hasRestaurants) {
       <div class="empty-state">
         <div class="empty-icon" aria-hidden="true">🍽️</div>
         <p class="empty-title">No restaurants yet</p>

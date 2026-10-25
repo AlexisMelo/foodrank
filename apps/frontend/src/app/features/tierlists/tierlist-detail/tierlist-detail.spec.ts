@@ -26,15 +26,19 @@ const profiles: Record<string, UserProfile> = {
 };
 
 /**
- * Builds a rating of `restaurantId` with the same score for the three criteria.
+ * Builds a rating of `restaurantId` given at `date`, with the same score for the three criteria.
  */
-function rating(restaurantId: string, score: number): UserRating {
+function rating(
+  restaurantId: string,
+  score: number,
+  date = '2026-03-07T12:00:00+00:00',
+): UserRating {
   return {
     restaurantId,
     restaurantName: `Restaurant ${restaurantId}`,
     restaurantEmoji: '🍕',
     restaurantAddress: `${restaurantId} street, Caen`,
-    date: '2026-03-07T12:00:00+00:00',
+    date,
     food: score,
     service: score,
     setting: score,
@@ -174,6 +178,25 @@ describe('TierlistDetailView', () => {
   }
 
   /**
+   * Names of the restaurants of the page's list, in order.
+   */
+  function listedRestaurants(): string[] {
+    return queryAll(harness.fixture, '.list-item').map((i) =>
+      textOf(i.querySelector('.item-name')!),
+    );
+  }
+
+  /**
+   * Clicks the sort chip of the page whose text is `label`, and waits for the list to update.
+   */
+  async function sortBy(label: string): Promise<void> {
+    queryAll(harness.fixture, '.sort-chip')
+      .find((chip) => textOf(chip) === label)!
+      .click();
+    await harness.fixture.whenStable();
+  }
+
+  /**
    * Clicks the pin button, and waits for the change to be saved.
    */
   async function clickPin(): Promise<void> {
@@ -188,14 +211,49 @@ describe('TierlistDetailView', () => {
     expect(fetchTierlistById).toHaveBeenCalledWith('7');
     expect(textOf(query(harness.fixture, '.title'))).toBe('Date night');
     expect(textOf(query(harness.fixture, '.description'))).toBe('Candles and good wine');
-    expect(textOf(query(harness.fixture, '.owner-name'))).toBe('Camille');
-    expect(textOf(query(harness.fixture, '.meta-chip'))).toBe('2 restaurants');
+    expect(textOf(query(harness.fixture, '.hero .owner-name'))).toBe('Camille');
+    expect(query(harness.fixture, '.hero .owner').getAttribute('href')).toBe('/user/u2');
+    expect(textOf(query(harness.fixture, '.hero .meta-chip'))).toBe('2 restaurants');
     const items = queryAll(harness.fixture, '.list-item');
     expect(items.map((i) => textOf(i.querySelector('.item-name')!))).toEqual([
       'Restaurant r2',
       'Restaurant r1',
     ]);
     expect(textOf(items[0]!.querySelector('.item-avg')!)).toBe('90');
+  });
+
+  it('sorts the restaurants by score, the default, by the moment of their rating or by name', async () => {
+    // r1 has the lowest score but was rated last
+    fetchUserRatings.mockImplementation((id = 'me') =>
+      of(
+        id === 'u2'
+          ? [rating('r1', 60, '2026-10-20T12:00:00+00:00'), rating('r2', 90)]
+          : (ratings[id] ?? []),
+      ),
+    );
+    fetchTierlistById.mockReturnValue(of(tierlistOf('u2')));
+    await openTierlist();
+
+    const chips = queryAll(harness.fixture, '.sort-chip');
+    expect(chips.map(textOf)).toEqual(['Score', 'Recently rated', 'A–Z']);
+    expect(chips.map((c) => c.getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false']);
+    expect(listedRestaurants()).toEqual(['Restaurant r2', 'Restaurant r1']);
+
+    await sortBy('Recently rated');
+    expect(listedRestaurants()).toEqual(['Restaurant r1', 'Restaurant r2']);
+
+    await sortBy('Score');
+    expect(listedRestaurants()).toEqual(['Restaurant r2', 'Restaurant r1']);
+
+    await sortBy('A–Z');
+    expect(listedRestaurants()).toEqual(['Restaurant r1', 'Restaurant r2']);
+  });
+
+  it("offers no sort for someone else's empty tierlist, nor an empty row", async () => {
+    fetchTierlistById.mockReturnValue(of({ ...tierlistOf('u2'), restaurants: [] }));
+    await openTierlist();
+
+    expect(queryAll(harness.fixture, '.list-toolbar')).toHaveLength(0);
   });
 
   it('shows the address of each restaurant under its name', async () => {
@@ -485,6 +543,24 @@ describe('TierlistDetailView', () => {
     });
 
     /**
+     * The owner's tierlist 7 holding `restaurantIds`, as the API answers a change.
+     */
+    function tierlistWith(restaurantIds: string[]): Tierlist {
+      return {
+        ...tierlistOf('u1'),
+        restaurants: restaurantIds.map((restaurantId) => ({ restaurantId, addedAt: null })),
+      };
+    }
+
+    /**
+     * Clicks the element of the popup matching `selector`, and waits for the page to update.
+     */
+    async function clickInAddPopup(selector: string): Promise<void> {
+      query(harness.fixture, `dialog ${selector}`).click();
+      await harness.fixture.whenStable();
+    }
+
+    /**
      * Opens the owner's tierlist 7, then the popup adding restaurants to it.
      */
     async function openAddPopup(): Promise<void> {
@@ -494,10 +570,11 @@ describe('TierlistDetailView', () => {
       await harness.fixture.whenStable();
     }
 
-    it('offers the owner, next to the count, a popup listing the restaurants they rated not in the tierlist', async () => {
+    it('offers the owner, next to the sort chips, a popup listing the restaurants they rated not in the tierlist', async () => {
       await openAddPopup();
 
-      const chip = query(harness.fixture, '.list-header-end .add-chip');
+      const chip = query(harness.fixture, '.list-toolbar .add-chip');
+      expect(queryAll(harness.fixture, '.list-toolbar .sort-chip')).toHaveLength(3);
       expect(textOf(chip)).toBe('Add');
       expect(chip.getAttribute('aria-label')).toBe('Add restaurants to Date night');
       expect(query<HTMLDialogElement>(harness.fixture, 'dialog').open).toBe(true);
@@ -520,14 +597,38 @@ describe('TierlistDetailView', () => {
 
       expect(addRestaurantToTierlist).toHaveBeenCalledWith(7, 'r3');
       expect(textOf(query(harness.fixture, '.meta-chip'))).toBe('3 restaurants');
+      expect(listedRestaurants()).toEqual(['Restaurant r3', 'Restaurant r1']);
       expect(
-        queryAll(harness.fixture, '.list-item').map((i) => textOf(i.querySelector('.item-name')!)),
-      ).toEqual(['Restaurant r3', 'Restaurant r1']);
+        queryAll(harness.fixture, 'dialog [aria-label="Remove Restaurant r3 from Date night"]'),
+      ).toHaveLength(1);
+    });
+
+    it('takes the restaurant out of the tierlist behind the popup when its addition is undone', async () => {
+      addRestaurantToTierlist.mockReturnValue(of(tierlistWith(['r1', 'r2', 'r3'])));
+      removeRestaurantFromTierlist.mockReturnValue(of(tierlistWith(['r1', 'r2'])));
+      await openAddPopup();
+
+      await clickInAddPopup('[aria-label="Add Restaurant r3 to Date night"]');
+      await clickInAddPopup('[aria-label="Remove Restaurant r3 from Date night"]');
+
+      expect(removeRestaurantFromTierlist).toHaveBeenCalledWith(7, 'r3');
+      expect(textOf(query(harness.fixture, '.meta-chip'))).toBe('2 restaurants');
+      expect(listedRestaurants()).toEqual(['Restaurant r1']);
+      expect(query<HTMLDialogElement>(harness.fixture, 'dialog').open).toBe(true);
+    });
+
+    it('offers the restaurants added no more once the popup is opened again', async () => {
+      addRestaurantToTierlist.mockReturnValue(of(tierlistWith(['r1', 'r2', 'r3'])));
+      await openAddPopup();
+
+      await clickInAddPopup('[aria-label="Add Restaurant r3 to Date night"]');
+      await clickInAddPopup('.close-btn');
+      query(harness.fixture, '.add-chip').click();
+      await harness.fixture.whenStable();
+
+      expect(queryAll(harness.fixture, 'dialog .search-row-name')).toHaveLength(0);
       expect(textOf(query(harness.fixture, 'dialog .search-list-message'))).toBe(
         'Every restaurant you rated is in Date night.',
-      );
-      expect(textOf(query(harness.fixture, 'dialog .toast-message'))).toBe(
-        'Restaurant r3 added to Date night.',
       );
     });
 
@@ -538,6 +639,14 @@ describe('TierlistDetailView', () => {
       await harness.fixture.whenStable();
 
       expect(queryAll(harness.fixture, 'dialog')).toHaveLength(0);
+    });
+
+    it('is offered on an empty tierlist, with nothing to sort', async () => {
+      fetchTierlistById.mockReturnValue(of({ ...tierlistOf('u1'), restaurants: [] }));
+      await openTierlist();
+
+      expect(queryAll(harness.fixture, '.list-toolbar .add-chip')).toHaveLength(1);
+      expect(queryAll(harness.fixture, '.sort-chip')).toHaveLength(0);
     });
 
     it("is not offered on someone else's tierlist", async () => {
