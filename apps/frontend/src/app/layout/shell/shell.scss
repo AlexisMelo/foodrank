@@ -1,0 +1,6 @@
+// Room for the fixed bottom tab bar (72px) and the add button sticking out above it (about 18px), so the end of
+// every page can be scrolled above them; the body padding adds the gap below the last element
+:host {
+  display: block;
+  padding-bottom: 90px;
+}

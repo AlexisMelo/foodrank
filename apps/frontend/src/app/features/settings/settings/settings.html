@@ -5,8 +5,12 @@
 
   <!-- Log out and account deletion stay available even if the profile could not be loaded -->
   <div class="bottom-section">
-    @if (profile(); as profile) {
+    @if (user.profile(); as profile) {
       <app-user-bar [profile]="profile" class="settings-user-bar" />
+    } @else if (user.loadError() || user.notFound()) {
+      <p class="user-bar-error" role="alert">Couldn't load your profile</p>
+    } @else {
+      <div class="user-bar-skeleton"></div>
     }
     <button type="button" class="logout-btn" (click)="auth.logout()">Log out</button>
     <button type="button" class="delete-account-btn" (click)="deleteAccountOpen.set(true)">

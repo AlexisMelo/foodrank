@@ -20,9 +20,10 @@ export class Settings {
   protected readonly auth = inject(AuthStore);
 
   /**
-   * Profile of the logged-in user, shown in the user bar
+   * Profile of the logged-in user, shown in the user bar, with a placeholder while it loads and an error message
+   * when it cannot be loaded
    */
-  protected readonly profile = injectUserProfile().profile;
+  protected readonly user = injectUserProfile();
 
   /**
    * True while the delete account popup is shown
