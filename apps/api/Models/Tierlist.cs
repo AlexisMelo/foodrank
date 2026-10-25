@@ -52,6 +52,13 @@ public class Tierlist : BaseModel
     public DateTime CreatedAt { get; set; }
 
     /// <summary>
+    /// Last time a restaurant was added or removed, or the tierlist pinned or unpinned; set by the database to the
+    /// creation date on insert, then by the API.
+    /// </summary>
+    [Column("updated_at", ignoreOnInsert: true)]
+    public DateTime UpdatedAt { get; set; }
+
+    /// <summary>
     /// True when <paramref name="userId"/> created the tierlist: only its owner can change it.
     /// </summary>
     /// <param name="userId">Supabase Auth id of a user.</param>

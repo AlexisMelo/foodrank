@@ -6,9 +6,12 @@ namespace Api.Tests.Fakes;
 
 /// <summary>
 /// In-memory <see cref="ITierlistService"/>, replacing the Supabase-backed one in API tests. Follows the same rules as
-/// the real service: the id and creation date are generated on creation, and user ids are uuids.
+/// the real service: the id and dates are generated on creation, user ids are uuids, only the owner changes a tierlist,
+/// and only a restaurant the owner rated (active rating) can be added, once.
 /// </summary>
-public class FakeTierlistService : ITierlistService
+/// <param name="restaurantService">Restaurants that can be added to the tierlists.</param>
+/// <param name="ratingService">Ratings telling whether the owner rated a restaurant.</param>
+public class FakeTierlistService(FakeRestaurantService restaurantService, FakeRatingService ratingService) : ITierlistService
 {
     /// <summary>
     /// Tierlists "stored in the database".
@@ -26,6 +29,7 @@ public class FakeTierlistService : ITierlistService
         Tierlist tierlist = request.ToTierlist(userId);
         tierlist.Id = Tierlists.Count == 0 ? 1 : Tierlists.Max(t => t.Id) + 1;
         tierlist.CreatedAt = DateTime.UtcNow;
+        tierlist.UpdatedAt = tierlist.CreatedAt;
         Tierlists.Add(tierlist);
         return Task.FromResult(Result<TierlistResponse>.Success(TierlistResponse.From(tierlist, [])));
     }
@@ -63,6 +67,45 @@ public class FakeTierlistService : ITierlistService
             return Task.FromResult(Result<TierlistResponse>.Failure(TierlistService.NotOwner));
 
         tierlist.Pinned = pinned;
+        tierlist.UpdatedAt = DateTime.UtcNow;
+        return Task.FromResult(Result<TierlistResponse>.Success(WithRestaurants(tierlist)));
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<TierlistResponse>> AddRestaurantAsync(long id, string userId, string restaurantId, CancellationToken cancellationToken)
+    {
+        Tierlist? tierlist = Tierlists.FirstOrDefault(t => t.Id == id);
+        if (tierlist is null)
+            return Result<TierlistResponse>.Failure(TierlistService.NotFound);
+        if (!tierlist.IsOwnedBy(userId))
+            return Result<TierlistResponse>.Failure(TierlistService.NotOwner);
+
+        Result<Restaurant> restaurant = await restaurantService.GetByIdAsync(restaurantId, cancellationToken);
+        if (!restaurant.IsSuccess)
+            return Result<TierlistResponse>.Failure(restaurant.Error!);
+        if (Restaurants.Any(r => r.TierlistId == id && r.RestaurantId == restaurantId))
+            return Result<TierlistResponse>.Failure(TierlistService.RestaurantAlreadyAdded);
+        if (!ratingService.Ratings.Any(r => r.RestaurantId == restaurantId && r.UserId == userId && r.IsActive))
+            return Result<TierlistResponse>.Failure(TierlistService.RestaurantNotRated);
+
+        DateTime now = DateTime.UtcNow;
+        Restaurants.Add(new TierlistRestaurant { TierlistId = id, RestaurantId = restaurantId, AddedAt = now });
+        tierlist.UpdatedAt = now;
+        return Result<TierlistResponse>.Success(WithRestaurants(tierlist));
+    }
+
+    /// <inheritdoc />
+    public Task<Result<TierlistResponse>> RemoveRestaurantAsync(long id, string userId, string restaurantId, CancellationToken cancellationToken)
+    {
+        Tierlist? tierlist = Tierlists.FirstOrDefault(t => t.Id == id);
+        if (tierlist is null)
+            return Task.FromResult(Result<TierlistResponse>.Failure(TierlistService.NotFound));
+        if (!tierlist.IsOwnedBy(userId))
+            return Task.FromResult(Result<TierlistResponse>.Failure(TierlistService.NotOwner));
+        if (Restaurants.RemoveAll(r => r.TierlistId == id && r.RestaurantId == restaurantId) == 0)
+            return Task.FromResult(Result<TierlistResponse>.Failure(TierlistService.RestaurantNotInTierlist));
+
+        tierlist.UpdatedAt = DateTime.UtcNow;
         return Task.FromResult(Result<TierlistResponse>.Success(WithRestaurants(tierlist)));
     }
 

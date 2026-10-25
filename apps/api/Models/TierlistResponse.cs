@@ -10,7 +10,8 @@ namespace api.Models;
 /// <param name="Emoji">Emoji used as the tierlist picture.</param>
 /// <param name="Pinned">True when the tierlist is pinned to the user's profile.</param>
 /// <param name="CreatedAt">Creation date, set by the database.</param>
-/// <param name="UpdatedAt">Last time a restaurant was added, or the creation date when none was added since.</param>
+/// <param name="UpdatedAt">Last time a restaurant was added or removed, or the tierlist pinned or unpinned; the creation
+/// date when none happened since.</param>
 /// <param name="Restaurants">Restaurants of the tierlist, in the order they were added.</param>
 public record TierlistResponse(
     long Id,
@@ -35,12 +36,6 @@ public record TierlistResponse(
             .OrderBy(r => r.AddedAt)
             .Select(r => new TierlistEntryResponse(r.RestaurantId, r.AddedAt))
             .ToList();
-        // No "updated_at" column: the tierlist changes when a restaurant is added to it
-        DateTime updatedAt = entries
-            .Select(e => e.AddedAt)
-            .OfType<DateTime>()
-            .Append(tierlist.CreatedAt)
-            .Max();
 
         return new TierlistResponse(
             tierlist.Id,
@@ -50,7 +45,7 @@ public record TierlistResponse(
             tierlist.Emoji ?? string.Empty,
             tierlist.Pinned ?? false,
             tierlist.CreatedAt,
-            updatedAt,
+            tierlist.UpdatedAt,
             entries);
     }
 }

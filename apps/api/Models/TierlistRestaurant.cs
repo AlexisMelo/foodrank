@@ -5,7 +5,8 @@ namespace api.Models;
 
 /// <summary>
 /// A restaurant added to a tierlist, stored in the "tierlist_restaurant" table (primary key: tierlist, restaurant).
-/// Only a restaurant the tierlist's owner rated can be added: the tierlist ranks restaurants by the owner's ratings.
+/// Only a restaurant the tierlist's owner rated can be added (checked by the API): the tierlist ranks restaurants by the
+/// owner's ratings.
 /// </summary>
 [Table("tierlist_restaurant")]
 public class TierlistRestaurant : BaseModel
