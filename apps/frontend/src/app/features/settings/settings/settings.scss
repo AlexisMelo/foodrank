@@ -32,6 +32,26 @@
   width: 100%;
 }
 
+// Same placeholder and error as the user bar of the home page
+.user-bar-skeleton {
+  height: 60px;
+  border-radius: 16px;
+  background: #1a1a1a;
+}
+
+.user-bar-error {
+  margin: 0;
+  height: 60px;
+  padding: 0 16px;
+  border-radius: 16px;
+  background: #1a1a1a;
+  display: flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .logout-btn {
   margin: auto;
   width: 70%;

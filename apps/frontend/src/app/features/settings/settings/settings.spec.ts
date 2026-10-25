@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { UserApi } from '@/core/api/user-api';
 import { AuthStore } from '@/core/auth/auth-store';
+import type { UserProfile } from '@/core/models/user.model';
 import { query, stubDialogs, textOf } from '@/testing/dom-testing';
 import { Settings } from './settings';
 
@@ -59,14 +60,43 @@ describe('Settings', () => {
     expect(textOf(query(fixture, '.user-name'))).toBe('Alexis Melo');
   });
 
-  it('still offers to log out and delete the account when the profile cannot be loaded', async () => {
+  it('shows a placeholder while the profile loads', async () => {
+    const answer = new Subject<UserProfile>();
+    fetchUserProfile.mockReturnValue(answer);
+    const fixture = TestBed.createComponent(Settings);
+    fixture.detectChanges();
+    const page = fixture.nativeElement as HTMLElement;
+
+    expect(page.querySelector('.user-bar-skeleton')).not.toBeNull();
+    expect(page.querySelector('.user-bar')).toBeNull();
+
+    answer.next({ id: 'u1', name: 'Alexis Melo', avatarUrl: null, ratedRestaurantsCount: 2 });
+    await fixture.whenStable();
+
+    expect(page.querySelector('.user-bar-skeleton')).toBeNull();
+    expect(textOf(query(fixture, '.user-name'))).toBe('Alexis Melo');
+  });
+
+  it('explains when the profile cannot be loaded and still offers to log out and delete the account', async () => {
     fetchUserProfile.mockReturnValue(throwError(() => new Error('503')));
     const fixture = await openSettings();
     const page = fixture.nativeElement as HTMLElement;
 
+    expect(textOf(query(fixture, '.user-bar-error'))).toBe("Couldn't load your profile");
     expect(page.querySelector('.user-bar')).toBeNull();
+    // No placeholder loading forever
+    expect(page.querySelector('.user-bar-skeleton')).toBeNull();
     expect(page.querySelector('.logout-btn')).not.toBeNull();
     expect(page.querySelector('.delete-account-btn')).not.toBeNull();
+  });
+
+  it('explains when the logged-in user is not found', async () => {
+    fetchUserProfile.mockReturnValue(of(undefined));
+    const fixture = await openSettings();
+    const page = fixture.nativeElement as HTMLElement;
+
+    expect(textOf(query(fixture, '.user-bar-error'))).toBe("Couldn't load your profile");
+    expect(page.querySelector('.user-bar-skeleton')).toBeNull();
   });
 
   it('asks for confirmation before deleting the account, and can be cancelled', async () => {
