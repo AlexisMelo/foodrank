@@ -3,15 +3,22 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { form, max, min } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
-import { firstValueFrom, tap } from 'rxjs';
+import { firstValueFrom, map, tap } from 'rxjs';
 import { RatingApi } from '@/core/api/rating-api';
 import { RestaurantApi } from '@/core/api/restaurant-api';
+import { TierlistApi } from '@/core/api/tierlist-api';
 import { CelebrationStore } from '@/core/celebration/celebration-store';
 import type { RatingInput, UserRating } from '@/core/models/rating.model';
+import type { Restaurant } from '@/core/models/restaurant.model';
+import type { Tierlist } from '@/core/models/tierlist.model';
 import { DailyReviewStore, REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
+import { ToastStore } from '@/core/toast/toast-store';
+import { byLastUpdate, containsRestaurant, isAlreadyInTierlist } from '@/core/utils/tierlist';
 import { LockIcon } from '@/shared/ui/lock-icon/lock-icon';
 import { CriterionSlider, type ReviewMarker } from '../criterion-slider/criterion-slider';
 import { type PastReview, pickMarkers } from '../rating-scale';
+import { TierlistChips } from '../tierlist-chips/tierlist-chips';
+import { TierlistSelectDialog } from '../tierlist-select-dialog/tierlist-select-dialog';
 
 /**
  * A past review of the user, with the restaurant it rates.
@@ -64,10 +71,11 @@ function saveErrorMessage(error: unknown): string {
 
 /**
  * Rating page of a restaurant (/review/:id): a slider per criterion (food, service, decor), the "Instant Crush"
- * favorite bonus, and the button saving the rating, locked once the user reviewed a restaurant today.
+ * favorite bonus, the tierlists to add the restaurant to (chips, and a popup to search them), and the button saving
+ * the rating, locked once the user reviewed a restaurant today.
  */
 @Component({
-  imports: [CriterionSlider, LockIcon, RouterLink],
+  imports: [CriterionSlider, LockIcon, RouterLink, TierlistChips, TierlistSelectDialog],
   selector: 'app-new-review',
   styleUrl: './new-review.scss',
   templateUrl: './new-review.html',
@@ -87,6 +95,16 @@ export class NewReview {
    * Reads the user's past reviews and saves the rating
    */
   private readonly ratingApi = inject(RatingApi);
+
+  /**
+   * Reads the user's tierlists, and adds the restaurant to the selected ones once rated
+   */
+  private readonly tierlistApi = inject(TierlistApi);
+
+  /**
+   * Tells which tierlists the restaurant could not be added to
+   */
+  private readonly toasts = inject(ToastStore);
 
   /**
    * Opens the restaurant page once saved, or the home page for an unknown restaurant
@@ -135,6 +153,14 @@ export class NewReview {
   });
 
   /**
+   * The user's tierlists, the most recently updated first, loaded apart from the restaurant: the page still works
+   * without them
+   */
+  private readonly tierlistsResource = rxResource({
+    stream: () => this.tierlistApi.fetchTierlistsByUserId().pipe(map(byLastUpdate)),
+  });
+
+  /**
    * True while the restaurant loads
    */
   protected readonly loading = this.restaurantResource.isLoading;
@@ -148,6 +174,39 @@ export class NewReview {
    * True when the user's ratings could not be loaded: the sliders work, without the past reviews
    */
   protected readonly pastReviewsError = computed(() => this.ratingsResource.status() === 'error');
+
+  /**
+   * True when the user's tierlists could not be loaded: the rating can be saved, without adding the restaurant to them
+   */
+  protected readonly tierlistsError = computed(() => this.tierlistsResource.status() === 'error');
+
+  /**
+   * The user's tierlists offered as chips, the most recently updated first; empty while loading and when the API
+   * fails
+   */
+  protected readonly myTierlists = computed(() =>
+    this.tierlistsResource.hasValue() ? this.tierlistsResource.value() : [],
+  );
+
+  /**
+   * Ids of the tierlists the restaurant is added to once the rating is saved, chosen with the chips or the popup
+   */
+  protected readonly selectedTierlistIds = signal<number[]>([]);
+
+  /**
+   * The selected tierlists not holding the restaurant yet (a new review of it): it is added to them once the rating
+   * is saved, the others are not sent again
+   */
+  private readonly tierlistsToAdd = computed(() =>
+    this.myTierlists().filter(
+      (t) => this.selectedTierlistIds().includes(t.id) && !containsRestaurant(t, this.id()),
+    ),
+  );
+
+  /**
+   * True while the popup searching the tierlists is open
+   */
+  protected readonly tierlistDialogOpen = signal(false);
 
   /**
    * The restaurant rated; undefined while loading, when it does not exist and when the API fails
@@ -231,8 +290,9 @@ export class NewReview {
   }
 
   /**
-   * Save the rating, then go back to the restaurant page, which congratulates the user after their first rating of it.
-   * The review buttons of the app lock once it is saved, or when the API says the user already reviewed today
+   * Save the rating, add the restaurant to the selected tierlists, then go back to the restaurant page, which
+   * congratulates the user after their first rating of it. The review buttons of the app lock once it is saved, or
+   * when the API says the user already reviewed today
    */
   protected async submit(): Promise<void> {
     const restaurant = this.restaurant();
@@ -241,6 +301,8 @@ export class NewReview {
     this.saveError.set(null);
     try {
       await firstValueFrom(this.ratingApi.rateRestaurant(restaurant.id, this.rating()));
+      const tierlists = this.tierlistsToAdd();
+      if (tierlists.length) await this.addToTierlists(restaurant, tierlists);
       this.dailyReview.refresh();
       if (this.firstRating()) this.celebrations.celebrate(restaurant.id, 'first-review');
       void this.router.navigateByUrl(`/restaurant/${restaurant.id}`);
@@ -249,6 +311,28 @@ export class NewReview {
       if (isAlreadyRatedToday(error)) this.dailyReview.refresh();
     } finally {
       this.saving.set(false);
+    }
+  }
+
+  /**
+   * Adds the restaurant just rated (the API only adds rated restaurants) to `tierlists`, all at once. Never fails: the
+   * rating is saved whatever happens, and one toast names the tierlists it could not be added to. A 409 means it is
+   * already in the tierlist: nothing to report
+   */
+  private async addToTierlists(restaurant: Restaurant, tierlists: Tierlist[]): Promise<void> {
+    const results = await Promise.allSettled(
+      tierlists.map((t) =>
+        firstValueFrom(this.tierlistApi.addRestaurantToTierlist(t.id, restaurant.id)),
+      ),
+    );
+    const failed = tierlists.filter((_, i) => {
+      const result = results[i]!;
+      return result.status === 'rejected' && !isAlreadyInTierlist(result.reason);
+    });
+    if (failed.length) {
+      this.toasts.show(
+        `Couldn't add ${restaurant.name} to ${failed.map((t) => t.name).join(', ')}.`,
+      );
     }
   }
 

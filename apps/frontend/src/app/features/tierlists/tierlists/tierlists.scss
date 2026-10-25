@@ -35,33 +35,7 @@
 .sort-row {
   position: relative;
   z-index: 1;
-  display: flex;
-  gap: 8px;
   margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-
-.sort-chip {
-  padding: 6px 14px;
-  border-radius: 100px;
-  border: 1.5px solid rgba(255, 255, 255, 0.12);
-  background: transparent;
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 12px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition:
-    border-color 0.15s,
-    color 0.15s,
-    background 0.15s;
-  white-space: nowrap;
-}
-
-.sort-chip.active {
-  border-color: #ffffff;
-  color: #0d0d0d;
-  background: #ffffff;
 }
 
 .list {

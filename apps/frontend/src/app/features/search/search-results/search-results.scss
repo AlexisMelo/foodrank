@@ -1,3 +1,5 @@
+@use 'hover';
+
 .page {
   color: #ffffff;
   display: flex;
@@ -55,13 +57,10 @@
   cursor: pointer;
   text-decoration: none;
   color: inherit;
-  transition:
-    background 0.15s,
-    transform 0.15s;
+  transition: background 0.15s;
 }
-.list-item:hover {
-  background: #222222;
-  transform: translateX(2px);
+.list-item {
+  @include hover.background(#242424);
 }
 
 .item-index {
@@ -134,8 +133,8 @@
   cursor: pointer;
   transition: background 0.15s;
 }
-.load-more:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06);
+.load-more {
+  @include hover.background(rgba(255, 255, 255, 0.06));
 }
 .load-more:disabled {
   opacity: 0.5;

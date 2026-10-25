@@ -1,0 +1,51 @@
+<app-search-dialog
+  heading="Add to a tierlist"
+  searchLabel="Search your tierlists"
+  [(query)]="query"
+  (closed)="closed.emit()"
+>
+  @if (loading()) {
+    <p class="search-list-message" role="status">Loading your tierlists…</p>
+  } @else if (loadError()) {
+    <p class="search-list-message search-list-error" role="alert">
+      Couldn't load your tierlists, try again later.
+    </p>
+  } @else if (noTierlists()) {
+    <div class="search-list-message">
+      <p class="no-tierlists">You have no tierlist yet.</p>
+      <a class="create-link" routerLink="/tierlists/new">Create a tierlist</a>
+    </div>
+  } @else {
+    @for (tierlist of shownTierlists(); track tierlist.id) {
+      @let added = contains(tierlist);
+      @let busy = saving.has(tierlist.id);
+      <div class="search-row" [class.search-row-added]="added">
+        <button type="button" class="search-row-main" [disabled]="busy" (click)="add(tierlist)">
+          <span class="search-row-cover" aria-hidden="true">{{ tierlist.emoji }}</span>
+          <span class="search-row-info">
+            <span class="search-row-name">{{ tierlist.name }}</span>
+            <span class="search-row-detail">
+              {{ restaurantCountLabel(tierlist.restaurants.length) }}
+            </span>
+          </span>
+          @if (added) {
+            <span class="added-badge">Added ✓</span>
+          }
+        </button>
+        @if (added) {
+          <button
+            type="button"
+            class="search-row-action remove-btn"
+            [disabled]="busy"
+            [attr.aria-label]="'Remove from ' + tierlist.name"
+            (click)="remove(tierlist)"
+          >
+            Remove
+          </button>
+        }
+      </div>
+    } @empty {
+      <p class="search-list-message">No tierlist matches “{{ query().trim() }}”.</p>
+    }
+  }
+</app-search-dialog>

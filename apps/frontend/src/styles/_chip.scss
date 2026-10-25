@@ -1,0 +1,22 @@
+// Size of every pill chip of the app (See all, + New / + Add, sort chips, tierlists to pick, counts, rating labels),
+// the one of the "See all" chips of the home page, so the chips are all the same height. Each chip gives its colors,
+// and its border color when it shows a border. Used with `@use 'chip';` then `@include chip.size;`, before the chip's
+// own declarations so they can change the padding or the gap.
+
+// Height of a chip, border included
+$height: 28px;
+
+@mixin size {
+  display: inline-flex;
+  align-items: center;
+  height: $height;
+  padding: 0 10px;
+  // Transparent unless the chip gives it a color: the chips without a visible border are as high as the others
+  border: 1.5px solid transparent;
+  border-radius: 100px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}

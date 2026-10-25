@@ -1,0 +1,38 @@
+@use 'search-rows';
+@use 'hover';
+
+.search-row-added {
+  border-color: rgba(119, 221, 119, 0.25);
+}
+
+.added-badge {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: #77dd77;
+}
+
+// A .search-row-action
+.remove-btn {
+  background: rgba(255, 107, 107, 0.12);
+  color: #ff6b6b;
+
+  @include hover.background(rgba(255, 107, 107, 0.2));
+}
+
+.no-tierlists {
+  margin: 0 0 12px;
+}
+
+.create-link {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #0d0d0d;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background 0.2s;
+  @include hover.background(#e6e6e6);
+}

@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import { routes } from '@/app.routes';
 import { RatingApi } from '@/core/api/rating-api';
 import { RestaurantApi } from '@/core/api/restaurant-api';
+import { TierlistApi } from '@/core/api/tierlist-api';
 import { AuthStore } from '@/core/auth/auth-store';
 import type { RatingInput, RatingSummary, RestaurantRating } from '@/core/models/rating.model';
 import { CAN_REVIEW, alreadyReviewed } from '@/core/review/daily-review-testing';
@@ -143,6 +144,8 @@ describe('rating a restaurant from its page', () => {
             fetchRestaurantById: (id: string) => of({ id, name: 'Pizza Roma', emoji: '🍕' }),
           },
         },
+        // The rating page offers no tierlist to add the restaurant to
+        { provide: TierlistApi, useValue: { fetchTierlistsByUserId: () => of([]) } },
       ],
     });
   });

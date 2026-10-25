@@ -13,7 +13,7 @@ function rating(restaurantId: string, date: string): UserRating {
     restaurantId,
     restaurantName: `Restaurant ${restaurantId}`,
     restaurantEmoji: '🍕',
-    restaurantCuisine: 'Italian',
+    restaurantAddress: '',
     date,
     food: 80,
     service: 70,

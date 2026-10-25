@@ -18,7 +18,7 @@ namespace api.Services;
 public class RestaurantService(Supabase.Client supabase, IPlaceProvider placeProvider, IConfiguration configuration) : IRestaurantService
 {
     /// <summary>
-    /// Emoji given to restaurants created from a place, until the cuisine type is handled.
+    /// Emoji given to restaurants created from a place, which has none.
     /// </summary>
     private const string DefaultEmoji = "🍽️";
 

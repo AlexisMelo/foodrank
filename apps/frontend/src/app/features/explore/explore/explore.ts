@@ -77,7 +77,7 @@ export class Explore {
 
   /**
    * True when the position is not known once the wait is over (refused, blocked, unavailable or still not answered):
-   * the restaurants are sorted from the API's default city and shown with their cuisine instead of a distance
+   * the restaurants are sorted from the API's default city and shown with their address instead of a distance
    */
   protected readonly locationDenied = computed(
     () => !this.locating() && this.userLocation.status() !== 'granted',

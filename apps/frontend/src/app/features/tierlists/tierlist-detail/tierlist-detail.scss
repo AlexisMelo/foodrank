@@ -1,3 +1,6 @@
+@use 'chip';
+@use 'hover';
+
 .detail-view {
   color: #ffffff;
   overflow: hidden;
@@ -53,6 +56,15 @@
   margin: 0;
 }
 
+// The owner and the number of restaurants, under the name
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
 .description {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.5);
@@ -60,21 +72,15 @@
   line-height: 1.5;
 }
 
-.list-header {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
+// As high as the count next to it
 .owner {
-  display: inline-flex;
-  align-items: center;
+  @include chip.size;
   gap: 6px;
+  padding-left: 2px;
   text-decoration: none;
   color: rgba(255, 255, 255, 0.45);
+  transition: background 0.2s;
+  @include hover.background(rgba(255, 255, 255, 0.08));
 }
 
 .owner-avatar {
@@ -86,18 +92,10 @@
   color: #ffffff;
 }
 
-.owner-name {
-  font-size: 13px;
-  font-weight: 600;
-}
-
 .meta-chip {
-  font-size: 12px;
-  font-weight: 700;
+  @include chip.size;
   color: rgba(255, 255, 255, 0.6);
   background: rgba(255, 255, 255, 0.08);
-  padding: 4px 10px;
-  border-radius: 100px;
 }
 
 .pin-error,
@@ -112,10 +110,58 @@
   margin-top: 25dvh;
 }
 
+// The sort chips on the left and, for the owner, the chip adding restaurants on the right
+.list-toolbar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+// On the right even without sort chips (empty tierlist)
+.toolbar-add {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
 .restaurant-list {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.empty-state {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 48px;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 48px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.empty-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.empty-desc {
+  max-width: 280px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+  line-height: 1.5;
 }

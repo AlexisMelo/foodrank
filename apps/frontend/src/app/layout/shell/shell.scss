@@ -4,3 +4,8 @@
   display: block;
   padding-bottom: 90px;
 }
+
+// The page's toasts show above the tab bar and its add button
+app-toast-outlet {
+  --toast-bottom: calc(90px + env(safe-area-inset-bottom));
+}

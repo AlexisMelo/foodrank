@@ -25,15 +25,20 @@ const profiles: Record<string, UserProfile> = {
 };
 
 /**
- * Builds a rating of `restaurantId` with the same score for the three criteria.
+ * Builds a rating of `restaurantId` given at `date`, with the same score for the three criteria.
  */
-function rating(restaurantId: string, score: number, isActive = true): UserRating {
+function rating(
+  restaurantId: string,
+  score: number,
+  isActive = true,
+  date = '2026-03-07T12:00:00+00:00',
+): UserRating {
   return {
     restaurantId,
     restaurantName: `Restaurant ${restaurantId}`,
     restaurantEmoji: '🍕',
-    restaurantCuisine: 'Italian',
-    date: '2026-03-07T12:00:00+00:00',
+    restaurantAddress: '',
+    date,
     food: score,
     service: score,
     setting: score,
@@ -120,6 +125,25 @@ describe('ProfileView', () => {
     await harness.fixture.whenStable();
   }
 
+  /**
+   * Names of the restaurants of the ranking, in order.
+   */
+  function listedRestaurants(): string[] {
+    return queryAll(harness.fixture, '.list-item').map((i) =>
+      textOf(i.querySelector('.item-name')!),
+    );
+  }
+
+  /**
+   * Clicks the sort chip whose text is `label`, and waits for the list to update.
+   */
+  async function sortBy(label: string): Promise<void> {
+    queryAll(harness.fixture, '.sort-chip')
+      .find((chip) => textOf(chip) === label)!
+      .click();
+    await harness.fixture.whenStable();
+  }
+
   it("shows the logged-in user's real name and number of restaurants rated", async () => {
     await open('/profile');
 
@@ -140,11 +164,34 @@ describe('ProfileView', () => {
     expect(queryAll(harness.fixture, '.my-score')).toHaveLength(0);
   });
 
-  it('explains when the user has not rated any restaurant', async () => {
+  it('sorts the restaurants by score, the default, by the moment of their rating or by name', async () => {
+    // r1 has the lowest score but was rated last
+    fetchUserRatings.mockReturnValue(
+      of([rating('r1', 70, true, '2026-10-20T12:00:00+00:00'), rating('r2', 90)]),
+    );
+    await open('/profile');
+
+    const chips = queryAll<HTMLButtonElement>(harness.fixture, '.sort-chip');
+    expect(chips.map(textOf)).toEqual(['Score', 'Recently rated', 'A–Z']);
+    expect(chips.map((c) => c.getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false']);
+    expect(listedRestaurants()).toEqual(['Restaurant r2', 'Restaurant r1']);
+
+    await sortBy('Recently rated');
+    expect(listedRestaurants()).toEqual(['Restaurant r1', 'Restaurant r2']);
+
+    await sortBy('Score');
+    expect(listedRestaurants()).toEqual(['Restaurant r2', 'Restaurant r1']);
+
+    await sortBy('A–Z');
+    expect(listedRestaurants()).toEqual(['Restaurant r1', 'Restaurant r2']);
+  });
+
+  it('explains when the user has not rated any restaurant, with nothing to sort', async () => {
     fetchUserRatings.mockReturnValue(of([]));
     await open('/profile');
 
     expect(textOf(query(harness.fixture, '.empty'))).toContain('No restaurant rated yet');
+    expect(queryAll(harness.fixture, '.sort-chip')).toHaveLength(0);
   });
 
   it('explains when the profile cannot be loaded, instead of a blank page', async () => {

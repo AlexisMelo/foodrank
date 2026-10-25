@@ -3,6 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { TierlistApi } from '@/core/api/tierlist-api';
 import { rankRestaurants } from '@/core/utils/ranking';
+import { byLastUpdate } from '@/core/utils/tierlist';
 import { injectUserProfile } from '@/shared/data/user-profile';
 import { NewReviewChip } from '@/shared/ui/new-review-chip/new-review-chip';
 import { RankedRestaurantItem } from '@/shared/ui/ranked-restaurant-item/ranked-restaurant-item';
@@ -61,9 +62,7 @@ export class Home {
    * The logged-in user's 8 most recently updated tierlists
    */
   protected readonly recentTierlists = computed(() =>
-    [...(this.tierlists.hasValue() ? this.tierlists.value() : [])]
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-      .slice(0, 8),
+    byLastUpdate(this.tierlists.hasValue() ? this.tierlists.value() : []).slice(0, 8),
   );
 
   /**

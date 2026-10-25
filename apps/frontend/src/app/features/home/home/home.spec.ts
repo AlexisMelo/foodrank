@@ -25,7 +25,7 @@ function rating(restaurantId: string, date: string): UserRating {
     restaurantId,
     restaurantName: `Restaurant ${restaurantId}`,
     restaurantEmoji: '🍕',
-    restaurantCuisine: 'Italian',
+    restaurantAddress: '',
     date,
     food: 90,
     service: 60,
@@ -362,6 +362,7 @@ describe('Home', () => {
     function scored(restaurantId: string, score: number): UserRating {
       return {
         ...rating(restaurantId, '2026-10-08T12:00:00+00:00'),
+        restaurantAddress: `${restaurantId} street, Caen`,
         food: score,
         service: score,
         setting: score,
@@ -385,6 +386,16 @@ describe('Home', () => {
       expect(
         queryAll(harness.fixture, '.favorites-list a.item-link').map((a) => a.getAttribute('href')),
       ).toEqual(['/restaurant/top', '/restaurant/good', '/restaurant/ok']);
+    });
+
+    it('shows the address of each favorite under its name', async () => {
+      fetchUserRatings.mockReturnValue(of([scored('top', 95), scored('good', 80)]));
+      await openHome();
+
+      expect(queryAll(harness.fixture, '.favorites-list .item-sub').map(textOf)).toEqual([
+        'top street, Caen',
+        'good street, Caen',
+      ]);
     });
 
     it('ranks a restaurant by its active rating, its previous ratings left out', async () => {

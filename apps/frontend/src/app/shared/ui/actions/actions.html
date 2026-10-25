@@ -1,0 +1,46 @@
+<button
+  #button
+  type="button"
+  class="actions-btn"
+  aria-haspopup="menu"
+  [id]="buttonId"
+  [attr.aria-label]="label()"
+  [attr.aria-expanded]="open()"
+  [attr.aria-controls]="menuId"
+  [style.anchor-name]="anchorName"
+  (click)="toggle()"
+  (keydown)="onButtonKeydown($event)"
+>
+  <svg class="actions-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="6" r="2" />
+    <circle cx="12" cy="12" r="2" />
+    <circle cx="12" cy="18" r="2" />
+  </svg>
+</button>
+
+<div
+  #menu
+  popover="manual"
+  role="menu"
+  tabindex="-1"
+  class="actions-menu"
+  [id]="menuId"
+  [attr.aria-labelledby]="buttonId"
+  [style.position-anchor]="anchorName"
+  (keydown)="onMenuKeydown($event)"
+>
+  @for (action of actions(); track action.label) {
+    <button
+      #item
+      type="button"
+      role="menuitem"
+      tabindex="-1"
+      class="actions-item"
+      [class.actions-item-danger]="action.danger"
+      (click)="pick(action)"
+    >
+      <span class="actions-item-icon" aria-hidden="true">{{ action.icon }}</span>
+      <span class="actions-item-label">{{ action.label }}</span>
+    </button>
+  }
+</div>

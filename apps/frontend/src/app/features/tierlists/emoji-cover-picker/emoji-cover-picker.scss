@@ -1,3 +1,5 @@
+@use 'hover';
+
 // Anchors the popup under the cover
 .emoji-cover-picker {
   position: relative;
@@ -18,13 +20,13 @@
   color: inherit;
   font-family: inherit;
   cursor: pointer;
-  transition:
-    transform 0.15s,
-    border-color 0.15s;
+  transition: transform 0.15s;
 }
 
-.cover:hover {
-  border-color: rgba(255, 255, 255, 0.2);
+.cover {
+  @include hover.background(
+    linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06))
+  );
 }
 
 .cover:active {
@@ -97,8 +99,8 @@
     border-color 0.15s;
 }
 
-.emoji-option:hover {
-  background: rgba(255, 255, 255, 0.06);
+.emoji-option:not(.selected) {
+  @include hover.background(rgba(255, 255, 255, 0.06));
 }
 
 .emoji-option.selected {

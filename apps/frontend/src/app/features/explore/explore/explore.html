@@ -18,8 +18,8 @@
           <span class="card-name">{{ suggestion.restaurant.name }}</span>
           @if (suggestion.distanceKm !== null) {
             <span class="card-distance">📍 {{ formatDistance(suggestion.distanceKm) }}</span>
-          } @else {
-            <span class="card-distance muted">{{ suggestion.restaurant.cuisine }}</span>
+          } @else if (suggestion.restaurant.address) {
+            <span class="card-distance card-address">{{ suggestion.restaurant.address }}</span>
           }
         </a>
       }

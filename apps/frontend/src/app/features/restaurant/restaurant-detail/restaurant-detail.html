@@ -29,18 +29,19 @@
         <h1 class="name">{{ restaurant.name }}</h1>
       </div>
 
-      @if (restaurant.cuisine) {
-        <div class="chips">
-          <app-cuisine-chip [cuisine]="restaurant.cuisine" />
-        </div>
-      }
-
       @if (restaurant.description) {
         <p class="description">{{ restaurant.description }}</p>
       }
 
       @if (restaurant.address) {
         <app-restaurant-address [address]="restaurant.address" />
+      }
+
+      @if (canAddToTierlist()) {
+        <button type="button" class="add-to-tierlist-btn" (click)="tierlistDialogOpen.set(true)">
+          <span aria-hidden="true">🏆</span>
+          Add to tierlist
+        </button>
       }
 
       <app-restaurant-ratings-tabs
@@ -51,6 +52,14 @@
         [loadError]="ratings.loadError()"
       />
     </div>
+
+    @if (tierlistDialogOpen()) {
+      <app-add-to-tierlist-dialog
+        [restaurantId]="restaurant.id"
+        [restaurantName]="restaurant.name"
+        (closed)="tierlistDialogOpen.set(false)"
+      />
+    }
 
     @if (celebration(); as kind) {
       <app-celebration-dialog

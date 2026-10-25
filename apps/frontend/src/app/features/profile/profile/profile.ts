@@ -1,18 +1,25 @@
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ME } from '@/core/api/user-api';
+import {
+  RESTAURANT_SORT_OPTIONS,
+  type RestaurantSort,
+  sortRestaurants,
+} from '@/core/utils/ranking';
 import { injectUserProfile } from '@/shared/data/user-profile';
 import { RankedRestaurantItem } from '@/shared/ui/ranked-restaurant-item/ranked-restaurant-item';
+import { SortChips } from '@/shared/ui/sort-chips/sort-chips';
 import { PinnedTierlists } from '../pinned-tierlists/pinned-tierlists';
 import { ProfileHeader } from '../profile-header/profile-header';
 import { injectProfileRanking } from '../profile-ranking';
 
 /**
  * Profile page: the logged-in user's on /profile, another user's on /user/:id (ownProfileGuard sends the logged-in
- * user's own id to /profile). Shows the user, their pinned tierlists and the restaurants they rated, best first.
+ * user's own id to /profile). Shows the user, their pinned tierlists and the restaurants they rated, the best score
+ * first by default, or the most recently rated first, or by name.
  */
 @Component({
-  imports: [PinnedTierlists, ProfileHeader, RankedRestaurantItem],
+  imports: [PinnedTierlists, ProfileHeader, RankedRestaurantItem, SortChips],
   selector: 'app-profile',
   styleUrl: './profile.scss',
   templateUrl: './profile.html',
@@ -42,6 +49,23 @@ export class Profile {
    * Restaurants rated by the user shown, best first, with the logged-in user's own scores on another user's profile
    */
   protected readonly ranking = injectProfileRanking(this.profileUserId);
+
+  /**
+   * Sort chips of the restaurants, in display order
+   */
+  protected readonly sortOptions = RESTAURANT_SORT_OPTIONS;
+
+  /**
+   * Order of the restaurants chosen by the user, the best score first by default
+   */
+  protected readonly sortBy = signal<RestaurantSort>('score');
+
+  /**
+   * Restaurants rated by the user shown, in the chosen order
+   */
+  protected readonly sortedRestaurants = computed(() =>
+    sortRestaurants(this.ranking.rankedRestaurants(), this.sortBy()),
+  );
 
   /**
    * True while the profile or the ranking loads

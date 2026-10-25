@@ -1,0 +1,19 @@
+// Hover effect of the links and buttons of the app: their background changes, nothing else (no move nor zoom, no
+// shadow, no change of opacity, color or border). Only with a mouse: on a touch screen, a hover would stay after a tap.
+// Never on a disabled button. Used with `@use 'hover';`, then in the rule of the element:
+// - `@include hover.background(<color>);` to change its background;
+// - `@include hover.background(<color>, '.part');` to change the background of a part of it (e.g. its cover).
+
+@mixin background($color, $part: null) {
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      @if $part {
+        #{$part} {
+          background: $color;
+        }
+      } @else {
+        background: $color;
+      }
+    }
+  }
+}

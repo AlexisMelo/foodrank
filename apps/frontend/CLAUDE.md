@@ -41,8 +41,13 @@ Enforced by the local ESLint rules in `eslint-rules.js` (auto-fixable with `npm 
 - **Auth bootstrap**: `provideAppInitializer` waits for the `/api/auth/me` check before the first navigation.
 - **Layout**: a `Shell` component (`router-outlet` + bottom tab bar + new review sheet) is the parent of all private routes. Guest and public routes sit outside it.
 - **Forms**: Signal Forms (`@angular/forms/signals`). Validation reuses the existing pure functions (`utils/signup.ts`, …) through `validate()`. Use `debounce()` instead of hand-made timers.
-- **Modals**: native `<dialog>` + `showModal()`. No CDK.
+- **Modals**: native `<dialog>` + `showModal()`. No CDK. Confirmations use `shared/ui/confirm-dialog`, searchable pick lists `shared/ui/search-dialog`.
+- **Menus of actions**: `shared/ui/actions` (3 dots button, given `Action`s), a native popover anchored with CSS anchor positioning. Its specs call `stubPopovers()` (jsdom has no Popover API), as dialog specs call `stubDialogs()`.
+- **Sort chips**: `shared/ui/sort-chips` (`[options]` + `[(value)]`). The lists of restaurants share `RESTAURANT_SORT_OPTIONS` and `sortRestaurants` (`core/utils/ranking.ts`).
+- **Toasts**: `ToastStore.show(message)` (errors, 4 s), `show(message, 'success')` to confirm a change saved. A modal dialog hides the page below it, so a modal open while a toast can show (search dialogs, celebration) renders its own `<app-toast-outlet />` inside the `<dialog>`: the last outlet created renders the toasts.
 - **Styles**: global reset and `body` styles in `src/styles.scss`. `responsive.scss` and `_auth-forms.scss` in `src/styles/`, imported with `@use 'responsive';` (`stylePreprocessorOptions.includePaths`).
+- **Chips**: every pill chip takes its size from `@include chip.size;` (`src/styles/_chip.scss`, 28px high like the "See all" chips of the home page) and only sets its colors.
+- **Hover**: every link, button and chip has one, and it only changes the background: never a transform (translate, scale), a shadow, or a change of opacity, color or border.
 - **Import alias**: `@/*` → `src/app/*`.
 
 ## Tests

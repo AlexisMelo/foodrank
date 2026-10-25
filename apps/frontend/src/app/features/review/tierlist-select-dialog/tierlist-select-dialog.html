@@ -1,0 +1,50 @@
+<app-search-dialog
+  heading="Add to tierlists"
+  searchLabel="Search your tierlists"
+  [(query)]="query"
+  (closed)="closed.emit()"
+>
+  @for (tierlist of shownTierlists(); track tierlist.id) {
+    @if (isAlreadyIn(tierlist)) {
+      <div class="search-row select-row select-row-locked">
+        <span class="search-row-cover" aria-hidden="true">{{ tierlist.emoji }}</span>
+        <span class="search-row-info">
+          <span class="search-row-name">{{ tierlist.name }}</span>
+          <span class="search-row-detail">
+            {{ restaurantCountLabel(tierlist.restaurants.length) }}
+          </span>
+        </span>
+        <span
+          class="select-lock"
+          role="img"
+          [attr.aria-label]="'Already in ' + tierlist.name"
+          [title]="alreadyInReason"
+        >
+          <app-lock-icon />
+        </span>
+      </div>
+    } @else {
+      <label class="search-row select-row">
+        <span class="search-row-cover" aria-hidden="true">{{ tierlist.emoji }}</span>
+        <span class="search-row-info">
+          <span class="search-row-name">{{ tierlist.name }}</span>
+          <span class="search-row-detail">
+            {{ restaurantCountLabel(tierlist.restaurants.length) }}
+          </span>
+        </span>
+        <input
+          type="checkbox"
+          class="select-check"
+          [checked]="isSelected(tierlist)"
+          (change)="toggle(tierlist)"
+        />
+      </label>
+    }
+  } @empty {
+    <p class="search-list-message">No tierlist matches “{{ query().trim() }}”.</p>
+  }
+
+  <div searchDialogFooter class="footer">
+    <button type="button" class="done-btn" (click)="closed.emit()">Done</button>
+  </div>
+</app-search-dialog>

@@ -1,0 +1,31 @@
+@use 'chip';
+@use 'hover';
+
+:host {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sort-chip {
+  @include chip.size;
+  border-color: rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
+}
+
+// The active chip keeps its colors: picking it again changes nothing
+.sort-chip:not(.active) {
+  @include hover.background(rgba(255, 255, 255, 0.08));
+}
+
+.sort-chip.active {
+  border-color: #ffffff;
+  color: #0d0d0d;
+  background: #ffffff;
+}

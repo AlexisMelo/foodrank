@@ -1,3 +1,5 @@
+@use 'hover';
+
 .subtitle {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.4);
@@ -97,12 +99,11 @@
   justify-content: center;
   min-height: 46px;
   transition:
+    background 0.2s,
     opacity 0.2s,
     transform 0.15s;
 
-  &:hover:not(:disabled) {
-    opacity: 0.9;
-  }
+  @include hover.background(#e6e6e6);
   &:active:not(:disabled) {
     transform: scale(0.98);
   }
@@ -120,13 +121,11 @@
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  padding: 4px 0;
+  padding: 4px 8px;
+  border-radius: 8px;
   text-align: center;
-  transition: color 0.2s;
-
-  &:hover {
-    color: rgba(255, 255, 255, 0.65);
-  }
+  transition: background 0.2s;
+  @include hover.background(rgba(255, 255, 255, 0.08));
 }
 
 .spinner {

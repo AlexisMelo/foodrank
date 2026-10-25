@@ -154,4 +154,47 @@ describe('TierlistApi', () => {
       await expect(result).rejects.toMatchObject({ name: 'HttpErrorResponse', status: 403 });
     });
   });
+
+  describe('addRestaurantToTierlist', () => {
+    it('posts the restaurant with the session cookie, and returns the updated tierlist', async () => {
+      const result = firstValueFrom(api.addRestaurantToTierlist(7, 'r1'));
+      const req = httpTesting.expectOne('http://api.test/api/tierlists/7/restaurants');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ restaurantId: 'r1' });
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(tierlist(7));
+
+      expect(await result).toEqual(tierlist(7));
+    });
+
+    it('rethrows API errors, like a restaurant already in the tierlist', async () => {
+      const result = firstValueFrom(api.addRestaurantToTierlist(7, 'r1'));
+      httpTesting
+        .expectOne('http://api.test/api/tierlists/7/restaurants')
+        .flush(null, { status: 409, statusText: 'Conflict' });
+
+      await expect(result).rejects.toMatchObject({ name: 'HttpErrorResponse', status: 409 });
+    });
+  });
+
+  describe('removeRestaurantFromTierlist', () => {
+    it('deletes the restaurant with the session cookie, encoding its id, and returns the updated tierlist', async () => {
+      const result = firstValueFrom(api.removeRestaurantFromTierlist(7, 'a/b'));
+      const req = httpTesting.expectOne('http://api.test/api/tierlists/7/restaurants/a%2Fb');
+      expect(req.request.method).toBe('DELETE');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(tierlist(7));
+
+      expect(await result).toEqual(tierlist(7));
+    });
+
+    it('rethrows API errors, like a restaurant that is not in the tierlist', async () => {
+      const result = firstValueFrom(api.removeRestaurantFromTierlist(7, 'r1'));
+      httpTesting
+        .expectOne('http://api.test/api/tierlists/7/restaurants/r1')
+        .flush(null, { status: 404, statusText: 'Not Found' });
+
+      await expect(result).rejects.toMatchObject({ name: 'HttpErrorResponse', status: 404 });
+    });
+  });
 });

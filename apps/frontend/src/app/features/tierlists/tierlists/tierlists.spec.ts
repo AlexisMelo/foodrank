@@ -133,27 +133,39 @@ describe('TierlistsView', () => {
     await harness.fixture.whenStable();
   }
 
-  it("lists the logged-in user's tierlists, most recently created first, with their restaurant count", async () => {
-    addTierlist('Old favorites', '2026-01-01T10:00:00Z', '2026-01-01T10:00:00Z', 1);
+  it("lists the logged-in user's tierlists, most recently updated first, with their restaurant count", async () => {
+    addTierlist('Old favorites', '2026-01-01T10:00:00Z', '2026-10-01T10:00:00Z', 1);
     addTierlist('Fresh picks', '2026-09-01T10:00:00Z', '2026-09-01T10:00:00Z', 3);
     await open('/tierlists');
 
-    expect(listedNames()).toEqual(['Fresh picks', 'Old favorites']);
+    expect(listedNames()).toEqual(['Old favorites', 'Fresh picks']);
     const counts = queryAll(harness.fixture, '.tierlist-card .count').map(textOf);
-    expect(counts).toEqual(['3 restaurants', '1 restaurant']);
+    expect(counts).toEqual(['1 restaurant', '3 restaurants']);
   });
 
-  it('sorts the tierlists by last update or by name', async () => {
-    addTierlist('Burgers', '2026-01-01T10:00:00Z', '2026-10-01T10:00:00Z');
-    addTierlist('Sushi', '2026-05-01T10:00:00Z');
-    addTierlist('Arepas', '2026-03-01T10:00:00Z');
+  it('offers to sort by last update, the default, by number of restaurants or by name', async () => {
     await open('/tierlists');
 
-    await sortBy('Recently updated');
-    expect(listedNames()).toEqual(['Burgers', 'Sushi', 'Arepas']);
+    const chips = queryAll(harness.fixture, '.sort-chip');
+    expect(chips.map(textOf)).toEqual(['Recently updated', 'Number of restaurants', 'A–Z']);
+    expect(chips.map((c) => c.getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false']);
+  });
+
+  it('sorts the tierlists by number of restaurants or by name, then by last update again', async () => {
+    addTierlist('Burgers', '2026-01-01T10:00:00Z', '2026-10-01T10:00:00Z', 1);
+    addTierlist('Sushi', '2026-05-01T10:00:00Z', '2026-05-01T10:00:00Z', 3);
+    addTierlist('Arepas', '2026-03-01T10:00:00Z', '2026-03-01T10:00:00Z', 1);
+    await open('/tierlists');
+
+    // The most restaurants first; Burgers and Arepas hold as many, Burgers updated last
+    await sortBy('Number of restaurants');
+    expect(listedNames()).toEqual(['Sushi', 'Burgers', 'Arepas']);
 
     await sortBy('A–Z');
     expect(listedNames()).toEqual(['Arepas', 'Burgers', 'Sushi']);
+
+    await sortBy('Recently updated');
+    expect(listedNames()).toEqual(['Burgers', 'Sushi', 'Arepas']);
   });
 
   it('marks the tierlists pinned to the profile', async () => {

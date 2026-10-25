@@ -93,6 +93,12 @@
   color: rgba(255, 255, 255, 0.5);
   font-weight: 600;
 }
-.card-distance.muted {
+// Shown instead of the distance when the position is unknown; a long address is cut after 2 lines
+.card-address {
   color: rgba(255, 255, 255, 0.3);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }

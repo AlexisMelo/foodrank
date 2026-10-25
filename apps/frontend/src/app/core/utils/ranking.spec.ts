@@ -1,5 +1,11 @@
 import type { UserRating } from '@/core/models/rating.model';
-import { overallByRestaurant, rankRestaurants, rankTierlistRestaurants } from './ranking';
+import {
+  type RankedRestaurant,
+  overallByRestaurant,
+  rankRestaurants,
+  rankTierlistRestaurants,
+  sortRestaurants,
+} from './ranking';
 import { restaurantCountLabel } from './profile';
 
 /**
@@ -16,7 +22,7 @@ function rating(
     restaurantId,
     restaurantName: `Name ${restaurantId}`,
     restaurantEmoji: '🍽️',
-    restaurantCuisine: 'Italian',
+    restaurantAddress: '1 rue de Caen',
     date: '2026-03-07T12:00:00+00:00',
     food,
     service,
@@ -35,7 +41,12 @@ describe('rankRestaurants', () => {
     ]);
 
     expect(ranked.map((r) => r.restaurantId)).toEqual(['great', 'good', 'meh']);
-    expect(ranked[0]).toMatchObject({ name: 'Name great', emoji: '🍽️', cuisine: 'Italian' });
+    expect(ranked[0]).toMatchObject({
+      name: 'Name great',
+      emoji: '🍽️',
+      address: '1 rue de Caen',
+      ratedAt: '2026-03-07T12:00:00+00:00',
+    });
   });
 
   it('lists a restaurant rated several times once, with its active rating only', () => {
@@ -52,6 +63,56 @@ describe('rankRestaurants', () => {
 
   it('returns nothing without rating', () => {
     expect(rankRestaurants([])).toEqual([]);
+  });
+});
+
+describe('sortRestaurants', () => {
+  /**
+   * Builds the restaurant `name` scored `overall`, rated at `ratedAt`.
+   */
+  function restaurant(name: string, overall: number, ratedAt: string): RankedRestaurant {
+    return {
+      restaurantId: name,
+      name,
+      emoji: '🍽️',
+      address: '',
+      food: overall,
+      service: overall,
+      setting: overall,
+      overall,
+      ratedAt,
+    };
+  }
+
+  const restaurants = [
+    restaurant('Sushi Bar', 60, '2026-10-01T12:00:00+00:00'),
+    restaurant('Crêperie du Port', 90, '2026-09-01T12:00:00+00:00'),
+    restaurant('Arepas', 60, '2026-10-20T12:00:00+00:00'),
+  ];
+
+  /**
+   * Names of `restaurants` sorted in the order `sort`.
+   */
+  function sortedNames(sort: Parameters<typeof sortRestaurants>[1]): string[] {
+    return sortRestaurants(restaurants, sort).map((r) => r.name);
+  }
+
+  it('sorts by score, best first, the restaurants scored the same keeping their order', () => {
+    expect(sortedNames('score')).toEqual(['Crêperie du Port', 'Sushi Bar', 'Arepas']);
+  });
+
+  it('sorts by the moment of the rating, the most recent first', () => {
+    expect(sortedNames('recent')).toEqual(['Arepas', 'Sushi Bar', 'Crêperie du Port']);
+  });
+
+  it('sorts by name', () => {
+    expect(sortedNames('az')).toEqual(['Arepas', 'Crêperie du Port', 'Sushi Bar']);
+  });
+
+  it('leaves the list given unchanged', () => {
+    sortRestaurants(restaurants, 'az');
+
+    expect(restaurants.map((r) => r.name)).toEqual(['Sushi Bar', 'Crêperie du Port', 'Arepas']);
   });
 });
 

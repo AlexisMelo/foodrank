@@ -1,22 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import {
-  Component,
-  ElementRef,
-  afterNextRender,
-  computed,
-  inject,
-  output,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, ElementRef, computed, inject, output, signal, viewChild } from '@angular/core';
 import { FormField, disabled, form, required } from '@angular/forms/signals';
 import { AuthStore } from '@/core/auth/auth-store';
+import { ConfirmDialog } from '@/shared/ui/confirm-dialog/confirm-dialog';
 
 /**
  * Popup asking for the password before deleting the account of the logged-in user. Shown by the settings page.
  */
 @Component({
-  imports: [FormField],
+  imports: [ConfirmDialog, FormField],
   selector: 'app-delete-account-modal',
   styleUrl: './delete-account-modal.scss',
   templateUrl: './delete-account-modal.html',
@@ -31,11 +23,6 @@ export class DeleteAccountModal {
    * Deletes the account, then opens the login page
    */
   private readonly auth = inject(AuthStore);
-
-  /**
-   * The native dialog, shown as a modal once rendered
-   */
-  private readonly dialog = viewChild.required<ElementRef<HTMLDialogElement>>('dialog');
 
   /**
    * Password field, focused when the popup opens
@@ -73,43 +60,17 @@ export class DeleteAccountModal {
     () => this.confirmation().password !== '' && !this.loading(),
   );
 
-  constructor() {
-    // Shows the dialog as a modal (top layer, Esc key, focus kept inside) once rendered, then focuses the password
-    afterNextRender({
-      write: () => {
-        this.dialog().nativeElement.showModal();
-        this.passwordInput().nativeElement.focus();
-      },
-    });
-  }
-
   /**
-   * Asks to close the popup, unless the deletion runs
+   * Focuses the password once the popup is shown
    */
-  protected cancel(): void {
-    if (!this.loading()) this.closed.emit();
-  }
-
-  /**
-   * Esc key: closes through the parent instead of the browser, so the popup stays open while the deletion runs
-   */
-  protected cancelOnEscape(event: Event): void {
-    event.preventDefault();
-    this.cancel();
-  }
-
-  /**
-   * Closes the popup on a click on the dark overlay around it, not inside it
-   */
-  protected cancelOnOverlay(event: MouseEvent): void {
-    if (event.target === event.currentTarget) this.cancel();
+  protected focusPassword(): void {
+    this.passwordInput().nativeElement.focus();
   }
 
   /**
    * Delete the account; on success AuthStore opens the login page, which removes this popup
    */
-  protected async confirm(event: Event): Promise<void> {
-    event.preventDefault();
+  protected async confirm(): Promise<void> {
     if (!this.canConfirm()) return;
     this.error.set('');
     this.loading.set(true);

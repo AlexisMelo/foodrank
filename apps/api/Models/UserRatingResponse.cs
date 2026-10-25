@@ -6,7 +6,7 @@ namespace api.Models;
 /// <param name="RestaurantId">Database identifier of the rated restaurant.</param>
 /// <param name="RestaurantName">Name of the rated restaurant.</param>
 /// <param name="RestaurantEmoji">Emoji of the rated restaurant.</param>
-/// <param name="RestaurantCuisine">Type of cuisine of the rated restaurant, empty when unknown.</param>
+/// <param name="RestaurantAddress">Postal address of the rated restaurant, empty when unknown.</param>
 /// <param name="Date">Moment of the rating, in UTC.</param>
 /// <param name="Food">Food rating, from 0 to 100.</param>
 /// <param name="Service">Service rating, from 0 to 100.</param>
@@ -18,7 +18,7 @@ public record UserRatingResponse(
     string RestaurantId,
     string RestaurantName,
     string RestaurantEmoji,
-    string RestaurantCuisine,
+    string RestaurantAddress,
     DateTimeOffset Date,
     float Food,
     float Service,
@@ -31,12 +31,12 @@ public record UserRatingResponse(
     /// </summary>
     /// <param name="rating">Rating row.</param>
     /// <param name="restaurant">Restaurant of <paramref name="rating"/>.</param>
-    /// <returns>The rating with the restaurant's name, emoji and cuisine.</returns>
+    /// <returns>The rating with the restaurant's name, emoji and address.</returns>
     public static UserRatingResponse From(Rating rating, Restaurant restaurant) => new(
         restaurant.Id,
         restaurant.Name,
         restaurant.Emoji,
-        restaurant.Cuisine,
+        restaurant.Address,
         rating.Date.ToUniversalTime(),
         rating.FoodRating,
         rating.ServiceRating,

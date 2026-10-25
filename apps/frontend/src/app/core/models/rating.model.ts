@@ -149,9 +149,9 @@ export interface UserRating {
   restaurantEmoji: string;
 
   /**
-   * Empty when unknown
+   * Postal address of the restaurant rated, empty when unknown
    */
-  restaurantCuisine: string;
+  restaurantAddress: string;
 
   /**
    * Moment of the rating, ISO 8601 in UTC (e.g. "2026-03-07T21:30:00+00:00"); see `formatRatingDate`

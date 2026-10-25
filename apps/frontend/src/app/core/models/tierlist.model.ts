@@ -80,7 +80,8 @@ export interface Tierlist {
   createdAt: string;
 
   /**
-   * Last time a restaurant was added, or the creation date when none was added since
+   * Last time a restaurant was added or removed, or the tierlist pinned or unpinned; the creation date when none
+   * happened since. ISO 8601
    */
   updatedAt: string;
 

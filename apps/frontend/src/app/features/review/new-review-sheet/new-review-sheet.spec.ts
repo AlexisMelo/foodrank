@@ -31,7 +31,6 @@ function stored(created: boolean): RestaurantFromPlace {
     restaurant: {
       id: 'r9',
       name: 'Pizza Roma',
-      cuisine: '',
       emoji: '🍽️',
       address: '',
       description: '',

@@ -1,4 +1,3 @@
-import { DOCUMENT, Location } from '@angular/common';
 import {
   Component,
   ElementRef,
@@ -15,6 +14,7 @@ import type { Restaurant } from '@/core/models/restaurant.model';
 import { DailyReviewStore, REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
 import { WebShare } from '@/core/share/web-share';
 import { LockIcon } from '@/shared/ui/lock-icon/lock-icon';
+import { ToastOutlet } from '@/shared/ui/toast-outlet/toast-outlet';
 
 /**
  * Full page modal of the restaurant page, celebrating the logged-in user (see CelebrationKind):
@@ -23,10 +23,11 @@ import { LockIcon } from '@/shared/ui/lock-icon/lock-icon';
  * - "Bravo", right after their first rating of the restaurant: shares the restaurant page through the native share
  *   sheet, or copies its link when the browser has no share sheet
  *
- * Both close with their cross or the Esc key.
+ * Both close with their cross or the Esc key. Toasts shown while it is open render inside it (e.g. a tierlist the
+ * rating page could not add the restaurant to).
  */
 @Component({
-  imports: [LockIcon, RouterLink],
+  imports: [LockIcon, RouterLink, ToastOutlet],
   selector: 'app-celebration-dialog',
   styleUrl: './celebration-dialog.scss',
   templateUrl: './celebration-dialog.html',
@@ -61,16 +62,6 @@ export class CelebrationDialog {
    * Tooltip of the locked "Leave a review"
    */
   protected readonly lockedReason = REVIEW_LOCKED_REASON;
-
-  /**
-   * Builds the URL of the restaurant page, with the base href of the app
-   */
-  private readonly location = inject(Location);
-
-  /**
-   * Gives the origin of the app (scheme, host and port), for the absolute URL shared
-   */
-  private readonly document = inject(DOCUMENT);
 
   /**
    * The native dialog, shown as a modal (top layer, Esc key, focus kept inside) once rendered
@@ -116,7 +107,6 @@ export class CelebrationDialog {
    * Absolute URL of the restaurant page, as other people open it
    */
   private restaurantUrl(): string {
-    const path = this.location.prepareExternalUrl(`/restaurant/${this.restaurant().id}`);
-    return new URL(path, this.document.location.origin).href;
+    return this.webShare.appUrl(`/restaurant/${this.restaurant().id}`);
   }
 }

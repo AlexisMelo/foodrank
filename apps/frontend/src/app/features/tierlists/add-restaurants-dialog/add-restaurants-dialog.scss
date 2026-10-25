@@ -1,0 +1,25 @@
+@use 'search-rows';
+@use 'hover';
+
+// No button picking the whole row: the cover and the name sit in the row itself
+.restaurant-row {
+  gap: 12px;
+  padding: 8px;
+}
+
+// A .search-row-action adding the restaurant, wide enough for "Remove" so the row does not move when it switches
+.toggle-btn {
+  min-width: 76px;
+  background: rgba(119, 221, 119, 0.12);
+  color: #77dd77;
+
+  @include hover.background(rgba(119, 221, 119, 0.2));
+}
+
+// The button once the restaurant is in the tierlist
+.toggle-btn.remove-btn {
+  background: rgba(255, 107, 107, 0.12);
+  color: #ff6b6b;
+
+  @include hover.background(rgba(255, 107, 107, 0.2));
+}

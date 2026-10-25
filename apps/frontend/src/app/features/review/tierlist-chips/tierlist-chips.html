@@ -1,0 +1,29 @@
+<p class="section-label" id="tierlist-chips-label">Add to tierlists</p>
+<div class="tierlist-chips" role="group" aria-labelledby="tierlist-chips-label">
+  <button
+    type="button"
+    class="tierlist-chip tierlist-search-chip"
+    [disabled]="disabled()"
+    (click)="searchRequested.emit()"
+  >
+    <span aria-hidden="true">🔍</span>
+    Search
+  </button>
+  @for (tierlist of shownTierlists(); track tierlist.id) {
+    @let checked = isSelected(tierlist);
+    <button
+      type="button"
+      class="tierlist-chip"
+      [class.tierlist-chip-on]="checked"
+      [attr.aria-pressed]="checked"
+      [disabled]="disabled()"
+      (click)="toggle(tierlist)"
+    >
+      <span aria-hidden="true">{{ tierlist.emoji }}</span>
+      <span class="tierlist-chip-name">{{ tierlist.name }}</span>
+      @if (checked) {
+        <span class="tierlist-chip-state" aria-hidden="true">✓</span>
+      }
+    </button>
+  }
+</div>

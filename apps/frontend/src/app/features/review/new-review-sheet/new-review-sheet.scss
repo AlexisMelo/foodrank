@@ -1,3 +1,5 @@
+@use 'hover';
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -60,8 +62,8 @@
   justify-content: center;
   transition: background 0.2s;
 }
-.close-btn:hover {
-  background: rgba(255, 255, 255, 0.14);
+.close-btn {
+  @include hover.background(rgba(255, 255, 255, 0.14));
 }
 
 .search-row {
@@ -104,10 +106,12 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: transform 0.15s;
+  transition:
+    background 0.15s,
+    transform 0.15s;
 }
-.search-btn:hover {
-  transform: scale(1.06);
+.search-btn {
+  @include hover.background(#e6e6e6);
 }
 .search-btn:active {
   transform: scale(0.96);
@@ -148,8 +152,8 @@
   font: inherit;
   text-align: left;
 }
-.suggestion-item:hover {
-  background: rgba(255, 255, 255, 0.07);
+.suggestion-item {
+  @include hover.background(rgba(255, 255, 255, 0.07));
 }
 .suggestion-item:disabled {
   cursor: progress;

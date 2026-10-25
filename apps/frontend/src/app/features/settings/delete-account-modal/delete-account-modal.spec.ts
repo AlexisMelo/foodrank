@@ -37,7 +37,7 @@ describe('DeleteAccountModal', () => {
    * The Delete button.
    */
   function deleteButton(): HTMLButtonElement {
-    return query<HTMLButtonElement>(fixture, '.delete-btn');
+    return query<HTMLButtonElement>(fixture, '.confirm-btn');
   }
 
   it('deletes the account with the entered password', async () => {

@@ -1,3 +1,5 @@
+@use 'hover';
+
 // Full page modal: the defaults of the native <dialog> reset, so it covers the whole screen
 .celebration {
   position: fixed;
@@ -38,8 +40,8 @@
   justify-content: center;
   transition: background 0.2s;
 }
-.close-btn:hover {
-  background: rgba(255, 255, 255, 0.14);
+.close-btn {
+  @include hover.background(rgba(255, 255, 255, 0.14));
 }
 
 .content {
@@ -111,12 +113,8 @@
   cursor: pointer;
   letter-spacing: -0.2px;
 }
-.primary-btn:hover:not(:disabled) {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-.primary-btn:active {
-  transform: translateY(0);
+.primary-btn {
+  @include hover.background(linear-gradient(135deg, #e5b749, #e07957));
 }
 // "Leave a review" once the user reviewed a restaurant today
 .primary-btn:disabled {
@@ -141,8 +139,8 @@
   font-weight: 700;
   cursor: pointer;
 }
-.secondary-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
+.secondary-btn {
+  @include hover.background(rgba(255, 255, 255, 0.06));
 }
 .copy-status {
   margin: 0;

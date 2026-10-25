@@ -13,11 +13,6 @@ export interface Restaurant {
   name: string;
 
   /**
-   * Type of cuisine, e.g. "Italian"; empty when unknown
-   */
-  cuisine: string;
-
-  /**
    * Emoji displayed next to the restaurant name
    */
   emoji: string;
