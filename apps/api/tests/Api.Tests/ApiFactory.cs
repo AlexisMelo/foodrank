@@ -35,9 +35,10 @@ public class ApiFactory : WebApplicationFactory<Program>
     public FakeUserService UserService { get; }
 
     /// <summary>
-    /// Tierlist service used by the controllers; read the created tierlists in the tests.
+    /// Tierlist service used by the controllers, adding the restaurants of <see cref="RestaurantService"/> rated in
+    /// <see cref="RatingService"/>; read the created tierlists in the tests.
     /// </summary>
-    public FakeTierlistService TierlistService { get; } = new();
+    public FakeTierlistService TierlistService { get; }
 
     /// <summary>
     /// Supabase Auth replacement; register the valid tokens in the tests.
@@ -52,6 +53,7 @@ public class ApiFactory : WebApplicationFactory<Program>
         RatingService = new FakeRatingService(RestaurantService);
         RestaurantService.RatedRestaurantIds = userId => RatingService.Ratings.Where(r => r.UserId == userId).Select(r => r.RestaurantId);
         UserService = new FakeUserService(RatingService);
+        TierlistService = new FakeTierlistService(RestaurantService, RatingService);
     }
 
     /// <summary>

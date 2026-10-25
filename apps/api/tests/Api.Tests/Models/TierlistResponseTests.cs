@@ -13,6 +13,11 @@ public class TierlistResponseTests
     private static readonly DateTime CreatedAt = new(2026, 10, 1, 12, 30, 0, DateTimeKind.Utc);
 
     /// <summary>
+    /// Last change of the tierlist mapped in every test.
+    /// </summary>
+    private static readonly DateTime UpdatedAt = CreatedAt.AddDays(3);
+
+    /// <summary>
     /// Builds the tierlist row mapped in the tests.
     /// </summary>
     private static Tierlist SampleTierlist() => new()
@@ -23,12 +28,12 @@ public class TierlistResponseTests
         Description = null,
         Emoji = "🏆",
         Pinned = true,
-        CreatedAt = CreatedAt
+        CreatedAt = CreatedAt,
+        UpdatedAt = UpdatedAt
     };
 
     /// <summary>
-    /// Every field of the row is copied, a null description included; without restaurants, the tierlist was last
-    /// updated when it was created.
+    /// Every field of the row is copied, a null description and the stored update date included.
     /// </summary>
     [Fact]
     public void From_TierlistWithoutRestaurants_CopiesEveryField()
@@ -42,15 +47,16 @@ public class TierlistResponseTests
         Assert.Equal("🏆", response.Emoji);
         Assert.True(response.Pinned);
         Assert.Equal(CreatedAt, response.CreatedAt);
-        Assert.Equal(CreatedAt, response.UpdatedAt);
+        Assert.Equal(UpdatedAt, response.UpdatedAt);
         Assert.Empty(response.Restaurants);
     }
 
     /// <summary>
-    /// The restaurants are listed oldest added first, and the tierlist was last updated when the latest one was added.
+    /// The restaurants are listed oldest added first, with their addition date; the update date is the stored one, even
+    /// when a restaurant was added after it (rows not created by the API).
     /// </summary>
     [Fact]
-    public void From_WithRestaurants_SortsThemAndUsesLatestAdditionAsUpdate()
+    public void From_WithRestaurants_SortsThemOldestAddedFirst()
     {
         DateTime latest = CreatedAt.AddDays(10);
         TierlistRestaurant[] restaurants =
@@ -62,19 +68,20 @@ public class TierlistResponseTests
         TierlistResponse response = TierlistResponse.From(SampleTierlist(), restaurants);
 
         Assert.Equal(["r1", "r2"], response.Restaurants.Select(r => r.RestaurantId));
-        Assert.Equal(latest, response.UpdatedAt);
+        Assert.Equal(latest, response.Restaurants[1].AddedAt);
+        Assert.Equal(UpdatedAt, response.UpdatedAt);
     }
 
     /// <summary>
-    /// Restaurants without addition date do not change the update date.
+    /// A restaurant without addition date is listed with no date.
     /// </summary>
     [Fact]
-    public void From_RestaurantWithoutDate_KeepsCreationAsUpdate()
+    public void From_RestaurantWithoutDate_ListsItWithoutDate()
     {
         TierlistResponse response = TierlistResponse.From(SampleTierlist(), [new TierlistRestaurant { TierlistId = 42, RestaurantId = "r1" }]);
 
-        Assert.Equal(CreatedAt, response.UpdatedAt);
-        Assert.Null(Assert.Single(response.Restaurants).AddedAt);
+        Assert.Equal("r1", Assert.Single(response.Restaurants).RestaurantId);
+        Assert.Null(response.Restaurants[0].AddedAt);
     }
 
     /// <summary>

@@ -222,8 +222,8 @@ public class TierlistsControllerTests : IDisposable
     }
 
     /// <summary>
-    /// A tierlist of any user is returned by its id, with its restaurants (oldest added first) and the date the last
-    /// one was added.
+    /// A tierlist of any user is returned by its id, with its restaurants (oldest added first) and the date of its last
+    /// change.
     /// </summary>
     [Fact]
     public async Task GetById_Existing_ReturnsTierlistWithRestaurants()
@@ -234,7 +234,8 @@ public class TierlistsControllerTests : IDisposable
             UserId = "22222222-2222-2222-2222-222222222222",
             Name = "Camille's picks",
             Emoji = "🍜",
-            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            UpdatedAt = new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc)
         });
         _factory.TierlistService.Restaurants.Add(new TierlistRestaurant { TierlistId = 7, RestaurantId = "r2", AddedAt = new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc) });
         _factory.TierlistService.Restaurants.Add(new TierlistRestaurant { TierlistId = 7, RestaurantId = "r1", AddedAt = new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc) });
@@ -281,11 +282,16 @@ public class TierlistsControllerTests : IDisposable
     private const string OtherUserId = "22222222-2222-2222-2222-222222222222";
 
     /// <summary>
-    /// Stores a tierlist of <paramref name="userId"/>.
+    /// Last change of the tierlists stored by <see cref="AddTierlist"/>, long before the tests run.
+    /// </summary>
+    private static readonly DateTime LastChange = new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+    /// <summary>
+    /// Stores a tierlist of <paramref name="userId"/>, last changed at <see cref="LastChange"/>.
     /// </summary>
     private Tierlist AddTierlist(long id, string userId, bool? pinned)
     {
-        Tierlist tierlist = new() { Id = id, UserId = userId, Name = $"Tierlist {id}", Emoji = "🏆", Pinned = pinned };
+        Tierlist tierlist = new() { Id = id, UserId = userId, Name = $"Tierlist {id}", Emoji = "🏆", Pinned = pinned, UpdatedAt = LastChange };
         _factory.TierlistService.Tierlists.Add(tierlist);
         return tierlist;
     }
@@ -305,32 +311,38 @@ public class TierlistsControllerTests : IDisposable
     }
 
     /// <summary>
-    /// The owner pins their tierlist (never pinned before, stored as null) and gets it back pinned.
+    /// The owner pins their tierlist (never pinned before, stored as null) and gets it back pinned, marked as changed.
     /// </summary>
     [Fact]
-    public async Task SetPinned_OwnTierlist_PinsIt()
+    public async Task SetPinned_OwnTierlist_PinsItAndUpdatesTierlist()
     {
         Tierlist tierlist = AddTierlist(3, UserId, pinned: null);
+        DateTime before = DateTime.UtcNow;
 
         HttpResponseMessage response = await SetPinnedAsync(3, new { pinned = true });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.True(tierlist.Pinned);
-        Assert.True((await response.Content.ReadFromJsonAsync<TierlistResponse>())!.Pinned);
+        Assert.True(tierlist.UpdatedAt >= before);
+        TierlistResponse body = (await response.Content.ReadFromJsonAsync<TierlistResponse>())!;
+        Assert.True(body.Pinned);
+        Assert.True(body.UpdatedAt.ToUniversalTime() >= before);
     }
 
     /// <summary>
-    /// The owner unpins a pinned tierlist.
+    /// The owner unpins a pinned tierlist, which also marks it as changed.
     /// </summary>
     [Fact]
-    public async Task SetPinned_False_UnpinsIt()
+    public async Task SetPinned_False_UnpinsItAndUpdatesTierlist()
     {
         Tierlist tierlist = AddTierlist(3, UserId, pinned: true);
+        DateTime before = DateTime.UtcNow;
 
         HttpResponseMessage response = await SetPinnedAsync(3, new { pinned = false });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.False(tierlist.Pinned);
+        Assert.True(tierlist.UpdatedAt >= before);
     }
 
     /// <summary>
@@ -363,6 +375,7 @@ public class TierlistsControllerTests : IDisposable
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         Assert.Equal(current, tierlist.Pinned);
+        Assert.Equal(LastChange, tierlist.UpdatedAt);
     }
 
     /// <summary>
@@ -402,6 +415,314 @@ public class TierlistsControllerTests : IDisposable
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.False(tierlist.Pinned);
+    }
+
+    /// <summary>
+    /// Id of the restaurant added to and removed from the tierlists.
+    /// </summary>
+    private const string RestaurantId = "33333333-3333-3333-3333-333333333333";
+
+    /// <summary>
+    /// Stores the restaurant <paramref name="restaurantId"/>, with an active rating of <paramref name="ratedBy"/> when given.
+    /// </summary>
+    private void AddRestaurant(string? ratedBy, string restaurantId = RestaurantId)
+    {
+        _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = restaurantId, Name = "Pizza Roma" });
+        if (ratedBy is not null)
+            _factory.RatingService.Ratings.Add(new Rating
+            {
+                RestaurantId = restaurantId,
+                UserId = ratedBy,
+                Date = DateTimeOffset.UtcNow,
+                FoodRating = 80,
+                ServiceRating = 70,
+                SettingRating = 60,
+                IsActive = true
+            });
+    }
+
+    /// <summary>
+    /// Stores <paramref name="restaurantId"/> as a restaurant of the tierlist <paramref name="tierlistId"/>.
+    /// </summary>
+    private void AddEntry(long tierlistId, string restaurantId = RestaurantId)
+        => _factory.TierlistService.Restaurants.Add(new TierlistRestaurant { TierlistId = tierlistId, RestaurantId = restaurantId, AddedAt = LastChange });
+
+    /// <summary>
+    /// Sends the addition of a restaurant to the tierlist <paramref name="id"/>, with the auth cookie when
+    /// <paramref name="token"/> is given.
+    /// </summary>
+    private Task<HttpResponseMessage> AddRestaurantAsync(long id, object body, string? token = Token)
+    {
+        HttpRequestMessage request = new(HttpMethod.Post, $"/api/tierlists/{id}/restaurants")
+        {
+            Content = JsonContent.Create(body)
+        };
+        if (token is not null)
+            request.Headers.Add("Cookie", $"{SupabaseAuthenticationHandler.CookieName}={token}");
+        return _client.SendAsync(request);
+    }
+
+    /// <summary>
+    /// The owner adds a restaurant they rated: it is stored with its addition date, returned in the tierlist, and the
+    /// tierlist is marked as changed.
+    /// </summary>
+    [Fact]
+    public async Task AddRestaurant_RatedByOwner_AddsItAndUpdatesTierlist()
+    {
+        Tierlist tierlist = AddTierlist(3, UserId, pinned: false);
+        AddRestaurant(ratedBy: UserId);
+        DateTime before = DateTime.UtcNow;
+
+        HttpResponseMessage response = await AddRestaurantAsync(3, new { restaurantId = RestaurantId });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        TierlistRestaurant entry = Assert.Single(_factory.TierlistService.Restaurants);
+        Assert.Equal(3, entry.TierlistId);
+        Assert.Equal(RestaurantId, entry.RestaurantId);
+        Assert.True(entry.AddedAt >= before);
+        Assert.True(tierlist.UpdatedAt >= before);
+
+        TierlistResponse body = (await response.Content.ReadFromJsonAsync<TierlistResponse>())!;
+        Assert.Equal(RestaurantId, Assert.Single(body.Restaurants).RestaurantId);
+        Assert.True(body.UpdatedAt.ToUniversalTime() >= before);
+    }
+
+    /// <summary>
+    /// A restaurant can be in several tierlists: adding it to one leaves it in the others, and the tierlist lists it
+    /// after its older restaurants.
+    /// </summary>
+    [Fact]
+    public async Task AddRestaurant_InAnotherTierlist_AddsItToThisOneToo()
+    {
+        AddTierlist(3, UserId, pinned: false);
+        AddTierlist(4, UserId, pinned: false);
+        AddRestaurant(ratedBy: UserId);
+        AddRestaurant(ratedBy: UserId, restaurantId: "44444444-4444-4444-4444-444444444444");
+        AddEntry(3, "44444444-4444-4444-4444-444444444444");
+        AddEntry(4);
+
+        HttpResponseMessage response = await AddRestaurantAsync(3, new { restaurantId = RestaurantId });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        TierlistResponse body = (await response.Content.ReadFromJsonAsync<TierlistResponse>())!;
+        Assert.Equal(["44444444-4444-4444-4444-444444444444", RestaurantId], body.Restaurants.Select(r => r.RestaurantId));
+        Assert.Contains(_factory.TierlistService.Restaurants, r => r.TierlistId == 4 && r.RestaurantId == RestaurantId);
+    }
+
+    /// <summary>
+    /// The owner cannot add a restaurant they never rated, even one another user rated: refused with a 400, as the
+    /// tierlist ranks restaurants by the owner's ratings.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData(OtherUserId)]
+    public async Task AddRestaurant_NotRatedByOwner_Returns400(string? ratedBy)
+    {
+        Tierlist tierlist = AddTierlist(3, UserId, pinned: false);
+        AddRestaurant(ratedBy);
+
+        HttpResponseMessage response = await AddRestaurantAsync(3, new { restaurantId = RestaurantId });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("Rate the restaurant", await response.Content.ReadAsStringAsync());
+        Assert.Empty(_factory.TierlistService.Restaurants);
+        Assert.Equal(LastChange, tierlist.UpdatedAt);
+    }
+
+    /// <summary>
+    /// A restaurant already in the tierlist is refused with a 409, and is not added twice.
+    /// </summary>
+    [Fact]
+    public async Task AddRestaurant_AlreadyInTierlist_Returns409()
+    {
+        AddTierlist(3, UserId, pinned: false);
+        AddRestaurant(ratedBy: UserId);
+        await AddRestaurantAsync(3, new { restaurantId = RestaurantId });
+
+        HttpResponseMessage response = await AddRestaurantAsync(3, new { restaurantId = RestaurantId });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Single(_factory.TierlistService.Restaurants);
+    }
+
+    /// <summary>
+    /// A user cannot add a restaurant to a tierlist of another user, even one they rated: refused with a 403, the
+    /// tierlist is unchanged.
+    /// </summary>
+    [Fact]
+    public async Task AddRestaurant_TierlistOfAnotherUser_Returns403()
+    {
+        Tierlist tierlist = AddTierlist(3, OtherUserId, pinned: false);
+        AddRestaurant(ratedBy: UserId);
+
+        HttpResponseMessage response = await AddRestaurantAsync(3, new { restaurantId = RestaurantId });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Empty(_factory.TierlistService.Restaurants);
+        Assert.Equal(LastChange, tierlist.UpdatedAt);
+    }
+
+    /// <summary>
+    /// An unknown tierlist returns a 404.
+    /// </summary>
+    [Fact]
+    public async Task AddRestaurant_UnknownTierlist_Returns404()
+    {
+        AddRestaurant(ratedBy: UserId);
+
+        HttpResponseMessage response = await AddRestaurantAsync(42, new { restaurantId = RestaurantId });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Contains("Tierlist not found", await response.Content.ReadAsStringAsync());
+    }
+
+    /// <summary>
+    /// An unknown restaurant returns a 404, and nothing is added.
+    /// </summary>
+    [Fact]
+    public async Task AddRestaurant_UnknownRestaurant_Returns404()
+    {
+        AddTierlist(3, UserId, pinned: false);
+
+        HttpResponseMessage response = await AddRestaurantAsync(3, new { restaurantId = RestaurantId });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Contains("Restaurant not found", await response.Content.ReadAsStringAsync());
+        Assert.Empty(_factory.TierlistService.Restaurants);
+    }
+
+    /// <summary>
+    /// A missing, empty or blank restaurant id is refused with a 400.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task AddRestaurant_NoRestaurantId_Returns400(string? restaurantId)
+    {
+        AddTierlist(3, UserId, pinned: false);
+
+        HttpResponseMessage response = await AddRestaurantAsync(3, new { restaurantId });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Empty(_factory.TierlistService.Restaurants);
+    }
+
+    /// <summary>
+    /// Without the auth cookie, the addition is refused with a 401.
+    /// </summary>
+    [Fact]
+    public async Task AddRestaurant_NoCookie_Returns401()
+    {
+        AddTierlist(3, UserId, pinned: false);
+        AddRestaurant(ratedBy: UserId);
+
+        HttpResponseMessage response = await AddRestaurantAsync(3, new { restaurantId = RestaurantId }, token: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Empty(_factory.TierlistService.Restaurants);
+    }
+
+    /// <summary>
+    /// Sends the removal of <paramref name="restaurantId"/> from the tierlist <paramref name="id"/>, with the auth cookie
+    /// when <paramref name="token"/> is given.
+    /// </summary>
+    private Task<HttpResponseMessage> RemoveRestaurantAsync(long id, string restaurantId, string? token = Token)
+    {
+        HttpRequestMessage request = new(HttpMethod.Delete, $"/api/tierlists/{id}/restaurants/{restaurantId}");
+        if (token is not null)
+            request.Headers.Add("Cookie", $"{SupabaseAuthenticationHandler.CookieName}={token}");
+        return _client.SendAsync(request);
+    }
+
+    /// <summary>
+    /// The owner removes a restaurant from their tierlist: only that row is deleted (the tierlist's other restaurants and
+    /// the same restaurant in another tierlist are kept), and the tierlist is marked as changed.
+    /// </summary>
+    [Fact]
+    public async Task RemoveRestaurant_OwnTierlist_RemovesItAndUpdatesTierlist()
+    {
+        Tierlist tierlist = AddTierlist(3, UserId, pinned: false);
+        AddTierlist(4, UserId, pinned: false);
+        AddEntry(3);
+        AddEntry(3, "44444444-4444-4444-4444-444444444444");
+        AddEntry(4);
+        DateTime before = DateTime.UtcNow;
+
+        HttpResponseMessage response = await RemoveRestaurantAsync(3, RestaurantId);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.DoesNotContain(_factory.TierlistService.Restaurants, r => r.TierlistId == 3 && r.RestaurantId == RestaurantId);
+        Assert.Contains(_factory.TierlistService.Restaurants, r => r.TierlistId == 3 && r.RestaurantId == "44444444-4444-4444-4444-444444444444");
+        Assert.Contains(_factory.TierlistService.Restaurants, r => r.TierlistId == 4 && r.RestaurantId == RestaurantId);
+        Assert.True(tierlist.UpdatedAt >= before);
+
+        TierlistResponse body = (await response.Content.ReadFromJsonAsync<TierlistResponse>())!;
+        Assert.Equal("44444444-4444-4444-4444-444444444444", Assert.Single(body.Restaurants).RestaurantId);
+        Assert.True(body.UpdatedAt.ToUniversalTime() >= before);
+    }
+
+    /// <summary>
+    /// A restaurant that is not in the tierlist (unknown, or only in another tierlist) returns a 404, and nothing is
+    /// removed.
+    /// </summary>
+    [Theory]
+    [InlineData(RestaurantId)]
+    [InlineData("unknown-restaurant")]
+    public async Task RemoveRestaurant_NotInTierlist_Returns404(string restaurantId)
+    {
+        Tierlist tierlist = AddTierlist(3, UserId, pinned: false);
+        AddTierlist(4, UserId, pinned: false);
+        AddEntry(4);
+
+        HttpResponseMessage response = await RemoveRestaurantAsync(3, restaurantId);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Single(_factory.TierlistService.Restaurants);
+        Assert.Equal(LastChange, tierlist.UpdatedAt);
+    }
+
+    /// <summary>
+    /// A user cannot remove a restaurant from a tierlist of another user: refused with a 403, the tierlist is unchanged.
+    /// </summary>
+    [Fact]
+    public async Task RemoveRestaurant_TierlistOfAnotherUser_Returns403()
+    {
+        Tierlist tierlist = AddTierlist(3, OtherUserId, pinned: false);
+        AddEntry(3);
+
+        HttpResponseMessage response = await RemoveRestaurantAsync(3, RestaurantId);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Single(_factory.TierlistService.Restaurants);
+        Assert.Equal(LastChange, tierlist.UpdatedAt);
+    }
+
+    /// <summary>
+    /// An unknown tierlist returns a 404.
+    /// </summary>
+    [Fact]
+    public async Task RemoveRestaurant_UnknownTierlist_Returns404()
+    {
+        HttpResponseMessage response = await RemoveRestaurantAsync(42, RestaurantId);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Contains("Tierlist not found", await response.Content.ReadAsStringAsync());
+    }
+
+    /// <summary>
+    /// Without the auth cookie, the removal is refused with a 401.
+    /// </summary>
+    [Fact]
+    public async Task RemoveRestaurant_NoCookie_Returns401()
+    {
+        AddTierlist(3, UserId, pinned: false);
+        AddEntry(3);
+
+        HttpResponseMessage response = await RemoveRestaurantAsync(3, RestaurantId, token: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Single(_factory.TierlistService.Restaurants);
     }
 
     /// <summary>

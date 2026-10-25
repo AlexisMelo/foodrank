@@ -50,4 +50,29 @@ public class TierlistsController(ITierlistService tierlistService) : ControllerB
     [HttpPut("{id:long}/pinned")]
     public async Task<IActionResult> SetPinned(long id, [FromBody] PinTierlistRequest request, CancellationToken cancellationToken)
         => (await _tierlistService.SetPinnedAsync(id, User.GetUserId(), request.Pinned!.Value, cancellationToken)).ToActionResult();
+
+    /// <summary>
+    /// Adds a restaurant the logged-in user rated to one of their tierlists.
+    /// </summary>
+    /// <param name="id">Database id of the tierlist.</param>
+    /// <param name="request">Id of the restaurant to add.</param>
+    /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
+    /// <returns>200 with the updated tierlist, 400 without a restaurant id or for a restaurant the user has not rated,
+    /// 401 when not logged in, 403 for a tierlist of another user, 404 when the tierlist or the restaurant does not exist,
+    /// 409 when the restaurant is already in the tierlist.</returns>
+    [HttpPost("{id:long}/restaurants")]
+    public async Task<IActionResult> AddRestaurant(long id, [FromBody] AddTierlistRestaurantRequest request, CancellationToken cancellationToken)
+        => (await _tierlistService.AddRestaurantAsync(id, User.GetUserId(), request.RestaurantId, cancellationToken)).ToActionResult();
+
+    /// <summary>
+    /// Removes a restaurant from a tierlist of the logged-in user.
+    /// </summary>
+    /// <param name="id">Database id of the tierlist.</param>
+    /// <param name="restaurantId">Database id of the restaurant to remove.</param>
+    /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
+    /// <returns>200 with the updated tierlist, 401 when not logged in, 403 for a tierlist of another user, 404 when the
+    /// tierlist does not exist or the restaurant is not in it.</returns>
+    [HttpDelete("{id:long}/restaurants/{restaurantId}")]
+    public async Task<IActionResult> RemoveRestaurant(long id, string restaurantId, CancellationToken cancellationToken)
+        => (await _tierlistService.RemoveRestaurantAsync(id, User.GetUserId(), restaurantId, cancellationToken)).ToActionResult();
 }

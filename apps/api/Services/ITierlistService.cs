@@ -34,8 +34,8 @@ public interface ITierlistService
     Task<Result<TierlistResponse>> GetByIdAsync(long id, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Pins a tierlist of <paramref name="userId"/> to their profile, or unpins it. A user can pin any number of
-    /// tierlists, but only their own.
+    /// Pins a tierlist of <paramref name="userId"/> to their profile, or unpins it, which marks it as changed. A user can
+    /// pin any number of tierlists, but only their own.
     /// </summary>
     /// <param name="id">Database id of the tierlist.</param>
     /// <param name="userId">Supabase Auth id of the logged-in user.</param>
@@ -43,4 +43,28 @@ public interface ITierlistService
     /// <param name="cancellationToken">Cancels the database queries.</param>
     /// <returns>The updated tierlist, a NotFound failure when it does not exist, or a Forbidden failure when it belongs to another user.</returns>
     Task<Result<TierlistResponse>> SetPinnedAsync(long id, string userId, bool pinned, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Adds a restaurant to a tierlist of <paramref name="userId"/>, who must have rated it: the tierlist ranks its
+    /// restaurants by the owner's ratings.
+    /// </summary>
+    /// <param name="id">Database id of the tierlist.</param>
+    /// <param name="userId">Supabase Auth id of the logged-in user.</param>
+    /// <param name="restaurantId">Database id of the restaurant to add.</param>
+    /// <param name="cancellationToken">Cancels the database queries.</param>
+    /// <returns>The updated tierlist; a NotFound failure when the tierlist or the restaurant does not exist, a Forbidden
+    /// failure when the tierlist belongs to another user, a Conflict failure when the restaurant is already in it, or a
+    /// Validation failure when <paramref name="userId"/> has not rated the restaurant.</returns>
+    Task<Result<TierlistResponse>> AddRestaurantAsync(long id, string userId, string restaurantId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Removes a restaurant from a tierlist of <paramref name="userId"/>.
+    /// </summary>
+    /// <param name="id">Database id of the tierlist.</param>
+    /// <param name="userId">Supabase Auth id of the logged-in user.</param>
+    /// <param name="restaurantId">Database id of the restaurant to remove.</param>
+    /// <param name="cancellationToken">Cancels the database queries.</param>
+    /// <returns>The updated tierlist; a NotFound failure when the tierlist does not exist or the restaurant is not in it,
+    /// or a Forbidden failure when the tierlist belongs to another user.</returns>
+    Task<Result<TierlistResponse>> RemoveRestaurantAsync(long id, string userId, string restaurantId, CancellationToken cancellationToken);
 }
