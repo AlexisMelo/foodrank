@@ -1,3 +1,5 @@
+@use 'hover';
+
 .tierlist-card {
   display: flex;
   align-items: center;
@@ -9,6 +11,7 @@
   background: #161616;
   border: 1px solid rgba(255, 255, 255, 0.05);
   transition: background 0.15s;
+  @include hover.background(#1f1f1f);
 }
 
 .tierlist-card:active {

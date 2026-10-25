@@ -1,3 +1,5 @@
+@use 'hover';
+
 // The label and the row are items of the page column: the host adds no box of its own
 :host {
   display: contents;
@@ -51,10 +53,15 @@
   }
 }
 
+.tierlist-chip:not(.tierlist-chip-on) {
+  @include hover.background(#242424);
+}
+
 .tierlist-chip-on {
   background: #ffffff;
   border-color: #ffffff;
   color: #0d0d0d;
+  @include hover.background(#e6e6e6);
 }
 
 .tierlist-chip-name {

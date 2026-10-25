@@ -1,3 +1,5 @@
+@use 'hover';
+
 // The inner div is the item of the parent column: the host adds no box of its own
 :host {
   display: contents;
@@ -35,6 +37,10 @@
     background 0.2s,
     color 0.2s;
   font-family: inherit;
+}
+// The active tab keeps its colors: picking it again changes nothing
+.tab-btn:not(.tab-btn-active) {
+  @include hover.background(rgba(255, 255, 255, 0.08));
 }
 .tab-btn-active {
   background: #ffffff;

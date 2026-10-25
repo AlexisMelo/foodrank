@@ -1,3 +1,5 @@
+@use 'hover';
+
 .tierlists-view {
   color: #ffffff;
   overflow: hidden;
@@ -56,6 +58,11 @@
     color 0.15s,
     background 0.15s;
   white-space: nowrap;
+}
+
+// The active chip keeps its colors: picking it again changes nothing
+.sort-chip:not(.active) {
+  @include hover.background(rgba(255, 255, 255, 0.08));
 }
 
 .sort-chip.active {

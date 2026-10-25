@@ -1,4 +1,5 @@
 @use 'search-rows';
+@use 'hover';
 
 .search-row-added {
   border-color: rgba(119, 221, 119, 0.25);
@@ -16,9 +17,7 @@
   background: rgba(255, 107, 107, 0.12);
   color: #ff6b6b;
 
-  &:hover:not(:disabled) {
-    background: rgba(255, 107, 107, 0.2);
-  }
+  @include hover.background(rgba(255, 107, 107, 0.2));
 }
 
 .no-tierlists {
@@ -34,4 +33,6 @@
   font-size: 13px;
   font-weight: 800;
   text-decoration: none;
+  transition: background 0.2s;
+  @include hover.background(#e6e6e6);
 }

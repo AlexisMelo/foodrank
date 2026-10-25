@@ -1,3 +1,5 @@
+@use 'hover';
+
 .signup-step {
   width: 100%;
   max-width: 420px;
@@ -19,9 +21,7 @@
   color: #ffffff;
   transition: background 0.15s;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.08);
-  }
+  @include hover.background(rgba(255, 255, 255, 0.08));
 
   svg {
     width: 22px;

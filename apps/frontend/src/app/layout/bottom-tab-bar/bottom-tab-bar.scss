@@ -1,3 +1,5 @@
+@use 'hover';
+
 .tab-bar {
   position: fixed;
   bottom: 0;
@@ -79,13 +81,12 @@
     0 -2px 24px rgba(255, 255, 255, 0.18),
     0 4px 20px rgba(0, 0, 0, 0.4);
   transition:
-    transform 0.15s,
-    box-shadow 0.15s;
+    background 0.15s,
+    transform 0.15s;
 }
 
-.tab-btn-add:hover .add-circle {
-  transform: translateX(-50%) scale(1.07);
-  box-shadow: 0 6px 24px rgba(255, 255, 255, 0.28);
+.tab-btn-add {
+  @include hover.background(#e6e6e6, '.add-circle');
 }
 
 .tab-btn-add:active .add-circle {

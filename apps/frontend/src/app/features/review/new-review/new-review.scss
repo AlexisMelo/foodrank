@@ -1,3 +1,5 @@
+@use 'hover';
+
 // The criterion cards and their sliders are styled in criterion-slider.scss
 .page {
   color: #ffffff;
@@ -50,8 +52,8 @@
   font-weight: 700;
   text-decoration: none;
 }
-.back-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
+.back-btn {
+  @include hover.background(rgba(255, 255, 255, 0.06));
 }
 
 .past-reviews-error {
@@ -242,26 +244,19 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition:
-    opacity 0.2s,
-    transform 0.15s;
+  transition: opacity 0.2s;
 }
 .submit-btn svg {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
 }
-.submit-btn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-.submit-btn:active {
-  transform: translateY(0);
+.submit-btn {
+  @include hover.background(linear-gradient(135deg, #e5b749, #e07957));
 }
 .submit-btn:disabled {
   opacity: 0.6;
   cursor: wait;
-  transform: none;
 }
 // Once the user reviewed a restaurant today
 .submit-btn.submit-locked {

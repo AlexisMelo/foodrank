@@ -1,3 +1,5 @@
+@use 'hover';
+
 .not-found {
   color: #ffffff;
   margin-top: 25dvh;
@@ -37,6 +39,6 @@
   font-weight: 700;
   text-decoration: none;
 }
-.home-link:hover {
-  background: rgba(255, 255, 255, 0.06);
+.home-link {
+  @include hover.background(rgba(255, 255, 255, 0.06));
 }

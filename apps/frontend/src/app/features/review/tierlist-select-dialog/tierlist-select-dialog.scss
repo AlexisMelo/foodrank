@@ -1,9 +1,14 @@
 @use 'search-rows';
+@use 'hover';
 
 .select-row {
   gap: 12px;
   padding: 8px 12px 8px 8px;
   cursor: pointer;
+  transition: background 0.2s;
+}
+.select-row:not(.select-row-locked) {
+  @include hover.background(#242424);
 }
 
 // Already holding the restaurant: a padlock, as on the other locked actions of the app
@@ -39,8 +44,6 @@
   font-size: 14px;
   font-weight: 800;
   cursor: pointer;
-
-  &:hover {
-    opacity: 0.9;
-  }
+  transition: background 0.2s;
+  @include hover.background(#e6e6e6);
 }

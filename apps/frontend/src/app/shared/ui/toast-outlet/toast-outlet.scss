@@ -1,3 +1,5 @@
+@use 'hover';
+
 // Above the page and its fixed bars; clicks go through the gaps between the toasts
 .toasts {
   position: fixed;
@@ -51,9 +53,7 @@
   font-size: 12px;
   cursor: pointer;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.14);
-  }
+  @include hover.background(rgba(255, 255, 255, 0.14));
 }
 
 // Showing: the toast slides up while fading in; no hiding animation

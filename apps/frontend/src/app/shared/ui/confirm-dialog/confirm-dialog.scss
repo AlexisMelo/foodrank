@@ -1,3 +1,5 @@
+@use 'hover';
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -84,9 +86,7 @@
   color: #ffffff;
   border: none;
 
-  &:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.14);
-  }
+  @include hover.background(rgba(255, 255, 255, 0.14));
 }
 
 // Every action confirmed so far is destructive: the button is red
@@ -95,9 +95,7 @@
   color: #0d0d0d;
   border: none;
 
-  &:hover:not(:disabled) {
-    opacity: 0.9;
-  }
+  @include hover.background(#e66060);
 }
 
 // Opening: the overlay fades in; no closing animation

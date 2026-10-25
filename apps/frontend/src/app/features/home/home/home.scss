@@ -1,3 +1,5 @@
+@use 'hover';
+
 .home {
   color: #ffffff;
   overflow: hidden;
@@ -47,13 +49,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition:
-    background 0.2s,
-    color 0.2s;
+  transition: background 0.2s;
 }
-.settings-btn:hover {
-  background: #222;
-  color: rgba(255, 255, 255, 0.8);
+.settings-btn {
+  @include hover.background(#242424);
 }
 .settings-btn svg {
   width: 25px;
@@ -102,13 +101,10 @@
   font-size: 12px;
   font-weight: 700;
   text-decoration: none;
-  transition:
-    border-color 0.2s,
-    color 0.2s;
+  transition: background 0.2s;
 }
-.see-all-chip:hover {
-  border-color: rgba(255, 255, 255, 0.4);
-  color: rgba(255, 255, 255, 0.8);
+.see-all-chip {
+  @include hover.background(rgba(255, 255, 255, 0.08));
 }
 
 .favorites-list {

@@ -1,3 +1,5 @@
+@use 'hover';
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -61,9 +63,7 @@
   cursor: pointer;
   transition: background 0.2s;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.14);
-  }
+  @include hover.background(rgba(255, 255, 255, 0.14));
 }
 
 .search {

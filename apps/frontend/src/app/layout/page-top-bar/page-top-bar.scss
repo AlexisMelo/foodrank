@@ -1,3 +1,5 @@
+@use 'hover';
+
 // Sticky on the host element: a sticky element only moves inside its parent, here the host
 :host {
   display: block;
@@ -27,8 +29,8 @@
   transition: background 0.15s;
 }
 
-.back-link:hover {
-  background: rgba(255, 255, 255, 0.08);
+.back-link {
+  @include hover.background(rgba(255, 255, 255, 0.08));
 }
 
 .back-link svg {

@@ -1,3 +1,5 @@
+@use 'hover';
+
 .page {
   color: #ffffff;
   overflow: hidden;
@@ -49,8 +51,8 @@
   font-weight: 700;
   cursor: pointer;
 }
-.back-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
+.back-btn {
+  @include hover.background(rgba(255, 255, 255, 0.06));
 }
 
 /* Hero */
@@ -156,6 +158,6 @@
   cursor: pointer;
   transition: background 0.2s;
 }
-.add-to-tierlist-btn:hover {
-  background: #242424;
+.add-to-tierlist-btn {
+  @include hover.background(#242424);
 }

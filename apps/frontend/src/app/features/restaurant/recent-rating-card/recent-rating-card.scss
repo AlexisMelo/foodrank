@@ -1,3 +1,5 @@
+@use 'hover';
+
 // The inner link is the item of the parent column: the host adds no box of its own
 :host {
   display: contents;
@@ -15,8 +17,8 @@
   color: inherit;
   transition: background 0.2s;
 }
-.community-card:hover {
-  background: #222;
+.community-card {
+  @include hover.background(#222);
 }
 .community-user {
   display: flex;

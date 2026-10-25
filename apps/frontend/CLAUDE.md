@@ -45,6 +45,7 @@ Enforced by the local ESLint rules in `eslint-rules.js` (auto-fixable with `npm 
 - **Menus of actions**: `shared/ui/actions` (3 dots button, given `Action`s), a native popover anchored with CSS anchor positioning. Its specs call `stubPopovers()` (jsdom has no Popover API), as dialog specs call `stubDialogs()`.
 - **Toasts**: `ToastStore.show(message)` (errors, 4 s), `show(message, 'success')` to confirm a change saved. A modal dialog hides the page below it, so a modal open while a toast can show (search dialogs, celebration) renders its own `<app-toast-outlet />` inside the `<dialog>`: the last outlet created renders the toasts.
 - **Styles**: global reset and `body` styles in `src/styles.scss`. `responsive.scss` and `_auth-forms.scss` in `src/styles/`, imported with `@use 'responsive';` (`stylePreprocessorOptions.includePaths`).
+- **Hover**: every link, button and chip has one, and it only changes the background: never a transform (translate, scale), a shadow, or a change of opacity, color or border.
 - **Import alias**: `@/*` → `src/app/*`.
 
 ## Tests

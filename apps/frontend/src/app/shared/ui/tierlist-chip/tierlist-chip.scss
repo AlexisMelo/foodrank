@@ -1,3 +1,5 @@
+@use 'hover';
+
 // The inner link is the item of the parent row: the host adds no box of its own
 :host {
   display: contents;
@@ -12,6 +14,7 @@
   text-decoration: none;
   color: inherit;
   width: 72px;
+  @include hover.background(#252525, '.tierlist-chip-cover');
 }
 
 .tierlist-chip-cover {

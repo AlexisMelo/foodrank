@@ -1,3 +1,5 @@
+@use 'hover';
+
 // Rows of the search popups (tierlists to add a restaurant to, on the restaurant page; tierlists to select, on the
 // review page; restaurants to add, on the tierlist page): the emoji cover, the name, a detail line (number of
 // restaurants, address) and an optional button at the end. Used with `@use 'search-rows';`
@@ -27,6 +29,8 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
+  transition: background 0.2s;
+  @include hover.background(#242424);
 
   &:disabled {
     opacity: 0.5;

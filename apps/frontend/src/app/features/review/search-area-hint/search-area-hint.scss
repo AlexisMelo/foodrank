@@ -1,3 +1,5 @@
+@use 'hover';
+
 .search-area {
   display: flex;
   flex-wrap: wrap;
@@ -17,9 +19,12 @@
   color: rgba(255, 255, 255, 0.25);
 }
 
+// A link in the sentence: its padding, for the background of the hover, does not move the text around it
 .enable-btn {
-  padding: 0;
+  padding: 1px 4px;
+  margin: -1px -4px;
   border: none;
+  border-radius: 4px;
   background: none;
   font: inherit;
   color: #ffffff;
@@ -27,8 +32,8 @@
   text-underline-offset: 2px;
   cursor: pointer;
 }
-.enable-btn:hover {
-  color: rgba(255, 255, 255, 0.8);
+.enable-btn {
+  @include hover.background(rgba(255, 255, 255, 0.08));
 }
 
 .blocked {
