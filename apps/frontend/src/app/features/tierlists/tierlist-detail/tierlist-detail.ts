@@ -10,7 +10,12 @@ import type { UserRating } from '@/core/models/rating.model';
 import type { Tierlist } from '@/core/models/tierlist.model';
 import type { UserProfile } from '@/core/models/user.model';
 import { restaurantCountLabel } from '@/core/utils/profile';
-import { overallByRestaurant, rankTierlistRestaurants } from '@/core/utils/ranking';
+import {
+  type RankedRestaurant,
+  overallByRestaurant,
+  rankTierlistRestaurants,
+} from '@/core/utils/ranking';
+import { ConfirmDialog } from '@/shared/ui/confirm-dialog/confirm-dialog';
 import { RankedRestaurantItem } from '@/shared/ui/ranked-restaurant-item/ranked-restaurant-item';
 import { UserAvatar } from '@/shared/ui/user-avatar/user-avatar';
 import { TierlistPinButton } from '../tierlist-pin-button/tierlist-pin-button';
@@ -43,10 +48,11 @@ interface TierlistPage {
 
 /**
  * Tierlist page (/tierlists/:id), of any user: the tierlist, its owner and its restaurants ranked by the owner's
- * ratings. Its owner can pin it to their profile.
+ * ratings. Its owner can pin it to their profile, and remove its restaurants after confirming. On someone else's
+ * tierlist, the restaurants I never rated have a "+" opening their rating page, as on someone else's profile.
  */
 @Component({
-  imports: [RankedRestaurantItem, RouterLink, TierlistPinButton, UserAvatar],
+  imports: [ConfirmDialog, RankedRestaurantItem, RouterLink, TierlistPinButton, UserAvatar],
   selector: 'app-tierlist-detail',
   styleUrl: './tierlist-detail.scss',
   templateUrl: './tierlist-detail.html',
@@ -140,6 +146,32 @@ export class TierlistDetail {
   protected readonly restaurantCountLabel = restaurantCountLabel;
 
   /**
+   * The restaurant the owner asked to remove, shown in the confirmation popup; null while it is closed
+   */
+  protected readonly pendingRemoval = signal<RankedRestaurant | null>(null);
+
+  /**
+   * Text of the confirmation popup: what is removed from where; empty while it is closed
+   */
+  protected readonly removalMessage = computed(() => {
+    const restaurant = this.pendingRemoval();
+    const tierlist = this.page()?.tierlist;
+    return restaurant && tierlist
+      ? `${restaurant.name} will be removed from ${tierlist.name}. You can add it again from its page.`
+      : '';
+  });
+
+  /**
+   * True while the removal is being saved: the confirmation popup cannot be closed
+   */
+  protected readonly removing = signal(false);
+
+  /**
+   * Why the last removal failed, shown in the confirmation popup; empty when it did not
+   */
+  protected readonly removeError = signal('');
+
+  /**
    * Loads the tierlist, then its owner and the ratings of the owner and of the logged-in user; the owner's ratings are
    * requested once when the logged-in user owns the tierlist. Leaves for the tierlists page when the tierlist does not
    * exist.
@@ -187,6 +219,44 @@ export class TierlistDetail {
       this.pinError.set(true);
     } finally {
       this.pinSaving.set(false);
+    }
+  }
+
+  /**
+   * Asks the owner to confirm the removal of `restaurant` from the tierlist
+   */
+  protected askRemoval(restaurant: RankedRestaurant): void {
+    this.removeError.set('');
+    this.pendingRemoval.set(restaurant);
+  }
+
+  /**
+   * Closes the confirmation popup, the restaurant kept
+   */
+  protected cancelRemoval(): void {
+    this.pendingRemoval.set(null);
+  }
+
+  /**
+   * Removes the restaurant confirmed from the tierlist, through the API, then closes the popup and shows the tierlist
+   * saved; on failure, the popup stays open and says it
+   */
+  protected async confirmRemoval(): Promise<void> {
+    const tierlist = this.page()?.tierlist;
+    const restaurant = this.pendingRemoval();
+    if (!tierlist || !restaurant || this.removing()) return;
+    this.removing.set(true);
+    this.removeError.set('');
+    try {
+      const saved = await firstValueFrom(
+        this.tierlistApi.removeRestaurantFromTierlist(tierlist.id, restaurant.restaurantId),
+      );
+      this.pageResource.value.update((page) => page && { ...page, tierlist: saved });
+      this.pendingRemoval.set(null);
+    } catch {
+      this.removeError.set("Couldn't remove the restaurant, try again.");
+    } finally {
+      this.removing.set(false);
     }
   }
 }

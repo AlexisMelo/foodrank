@@ -41,7 +41,8 @@ Enforced by the local ESLint rules in `eslint-rules.js` (auto-fixable with `npm 
 - **Auth bootstrap**: `provideAppInitializer` waits for the `/api/auth/me` check before the first navigation.
 - **Layout**: a `Shell` component (`router-outlet` + bottom tab bar + new review sheet) is the parent of all private routes. Guest and public routes sit outside it.
 - **Forms**: Signal Forms (`@angular/forms/signals`). Validation reuses the existing pure functions (`utils/signup.ts`, …) through `validate()`. Use `debounce()` instead of hand-made timers.
-- **Modals**: native `<dialog>` + `showModal()`. No CDK.
+- **Modals**: native `<dialog>` + `showModal()`. No CDK. Confirmations use `shared/ui/confirm-dialog`, searchable pick lists `shared/ui/search-dialog`.
+- **Toasts**: `ToastStore.show(message)` (errors, 4 s). A modal dialog hides the page below it, so a modal open while a toast can show (search dialogs, celebration) renders its own `<app-toast-outlet />` inside the `<dialog>`: the last outlet created renders the toasts.
 - **Styles**: global reset and `body` styles in `src/styles.scss`. `responsive.scss` and `_auth-forms.scss` in `src/styles/`, imported with `@use 'responsive';` (`stylePreprocessorOptions.includePaths`).
 - **Import alias**: `@/*` → `src/app/*`.
 

@@ -143,6 +143,44 @@ describe('RestaurantDetail', () => {
     expect(url()).toBe('/restaurant/r1');
   });
 
+  describe('adding the restaurant to a tierlist', () => {
+    /**
+     * Rating of the restaurant r1 by the logged-in user, as served by the fake API.
+     */
+    const myRating = {
+      restaurantId: 'r1',
+      userId: 'u1',
+      date: '2026-10-01T12:00:00+00:00',
+      food: 80,
+      service: 70,
+      setting: 60,
+      bonus: false,
+      isActive: true,
+      userName: 'Alexis Melo',
+      userAvatarUrl: null,
+    };
+
+    it('is not offered before I rated the restaurant: the API only adds rated restaurants', async () => {
+      await open('/restaurant/r1');
+
+      expect(queryAll(harness.fixture, '.add-to-tierlist-btn')).toHaveLength(0);
+    });
+
+    it('opens a popup listing my tierlists once I rated the restaurant, closed from its cross', async () => {
+      fetchMyRatings.mockReturnValue(of([myRating]));
+      await open('/restaurant/r1');
+
+      query(harness.fixture, '.add-to-tierlist-btn').click();
+      await harness.fixture.whenStable();
+      expect(query<HTMLDialogElement>(harness.fixture, 'dialog').open).toBe(true);
+      expect(textOf(query(harness.fixture, 'dialog .title'))).toBe('Add to a tierlist');
+
+      query(harness.fixture, 'dialog .close-btn').click();
+      await harness.fixture.whenStable();
+      expect(queryAll(harness.fixture, 'dialog')).toHaveLength(0);
+    });
+  });
+
   describe('when the user is the first to open the place', () => {
     /**
      * "The explorer" modal; undefined when it is not shown.

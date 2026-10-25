@@ -15,6 +15,7 @@ import type { Restaurant } from '@/core/models/restaurant.model';
 import { DailyReviewStore, REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
 import { WebShare } from '@/core/share/web-share';
 import { LockIcon } from '@/shared/ui/lock-icon/lock-icon';
+import { ToastOutlet } from '@/shared/ui/toast-outlet/toast-outlet';
 
 /**
  * Full page modal of the restaurant page, celebrating the logged-in user (see CelebrationKind):
@@ -23,10 +24,11 @@ import { LockIcon } from '@/shared/ui/lock-icon/lock-icon';
  * - "Bravo", right after their first rating of the restaurant: shares the restaurant page through the native share
  *   sheet, or copies its link when the browser has no share sheet
  *
- * Both close with their cross or the Esc key.
+ * Both close with their cross or the Esc key. Toasts shown while it is open render inside it (e.g. a tierlist the
+ * rating page could not add the restaurant to).
  */
 @Component({
-  imports: [LockIcon, RouterLink],
+  imports: [LockIcon, RouterLink, ToastOutlet],
   selector: 'app-celebration-dialog',
   styleUrl: './celebration-dialog.scss',
   templateUrl: './celebration-dialog.html',

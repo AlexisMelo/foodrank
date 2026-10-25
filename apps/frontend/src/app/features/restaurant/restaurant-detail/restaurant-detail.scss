@@ -148,3 +148,24 @@
   font-size: 14px;
   color: rgba(255, 255, 255, 0.65);
 }
+
+/* Add to tierlist */
+.add-to-tierlist-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: #1a1a1a;
+  color: #ffffff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.add-to-tierlist-btn:hover {
+  background: #242424;
+}

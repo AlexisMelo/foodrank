@@ -1,0 +1,46 @@
+@use 'tierlist-rows';
+
+.select-row {
+  gap: 12px;
+  padding: 8px 12px 8px 8px;
+  cursor: pointer;
+}
+
+// Already holding the restaurant: a padlock, as on the other locked actions of the app
+.select-row-locked {
+  cursor: default;
+}
+
+.select-lock {
+  flex-shrink: 0;
+  display: inline-flex;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 18px;
+  cursor: not-allowed;
+}
+
+.select-check {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: #ffffff;
+  cursor: inherit;
+}
+
+.done-btn {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #0d0d0d;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}

@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { TierlistApi } from '@/core/api/tierlist-api';
+import { byLastUpdate } from '@/core/utils/tierlist';
 import { NewChip } from '@/shared/ui/new-chip/new-chip';
 import { TierlistCard } from '../tierlist-card/tierlist-card';
 
@@ -70,9 +71,7 @@ export class Tierlists {
     if (sortBy === 'recent') {
       return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
-    if (sortBy === 'updated') {
-      return list.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-    }
+    if (sortBy === 'updated') return byLastUpdate(list);
     return list.sort((a, b) => a.name.localeCompare(b.name));
   });
 }

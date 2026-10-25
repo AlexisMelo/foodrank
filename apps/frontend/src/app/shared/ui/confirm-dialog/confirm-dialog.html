@@ -1,0 +1,33 @@
+<!-- The overlay click is a mouse shortcut: Esc (cancel event) and the Cancel button are its keyboard equivalents -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+<dialog
+  #dialog
+  class="overlay"
+  [attr.aria-labelledby]="titleId"
+  animate.enter="fade-enter"
+  (cancel)="cancelOnEscape($event)"
+  (close)="closed.emit()"
+  (click)="cancelOnOverlay($event)"
+>
+  <form class="dialog" (submit)="confirm($event)">
+    <h2 class="title" [id]="titleId">{{ heading() }}</h2>
+    @if (message()) {
+      <p class="text">{{ message() }}</p>
+    }
+
+    <ng-content />
+
+    @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+    }
+
+    <div class="actions">
+      <button class="cancel-btn" type="button" [disabled]="busy()" (click)="cancel()">
+        Cancel
+      </button>
+      <button class="confirm-btn" type="submit" [disabled]="confirmDisabled()">
+        {{ busy() ? busyLabel() : confirmLabel() }}
+      </button>
+    </div>
+  </form>
+</dialog>

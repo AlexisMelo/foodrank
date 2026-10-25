@@ -58,4 +58,30 @@ export class TierlistApi {
   setTierlistPinned(id: number, pinned: boolean): Observable<Tierlist> {
     return this.http.put<Tierlist>(`/api/tierlists/${encodeURIComponent(id)}/pinned`, { pinned });
   }
+
+  /**
+   * Add a restaurant the logged-in user rated to one of their tierlists
+   * @returns the updated tierlist
+   * @throws the HttpErrorResponse: 400 for a restaurant the user has not rated, 401 when not logged in, 403 for a
+   * tierlist of another user, 404 when the tierlist or the restaurant does not exist, 409 when the restaurant is already
+   * in the tierlist
+   */
+  addRestaurantToTierlist(tierlistId: number, restaurantId: string): Observable<Tierlist> {
+    return this.http.post<Tierlist>(
+      `/api/tierlists/${encodeURIComponent(tierlistId)}/restaurants`,
+      { restaurantId },
+    );
+  }
+
+  /**
+   * Remove a restaurant from a tierlist of the logged-in user
+   * @returns the updated tierlist
+   * @throws the HttpErrorResponse: 401 when not logged in, 403 for a tierlist of another user, 404 when the tierlist
+   * does not exist or the restaurant is not in it
+   */
+  removeRestaurantFromTierlist(tierlistId: number, restaurantId: string): Observable<Tierlist> {
+    return this.http.delete<Tierlist>(
+      `/api/tierlists/${encodeURIComponent(tierlistId)}/restaurants/${encodeURIComponent(restaurantId)}`,
+    );
+  }
 }

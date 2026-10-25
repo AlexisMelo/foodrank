@@ -1,0 +1,74 @@
+// The label and the row are items of the page column: the host adds no box of its own
+:host {
+  display: contents;
+}
+
+// Same as the other section labels of the review page
+.section-label {
+  width: 100%;
+
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin: 0 0 8px;
+}
+
+.tierlist-chips {
+  width: 100%;
+
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+  margin-bottom: 16px;
+}
+
+.tierlist-chip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+  padding: 8px 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: #1a1a1a;
+  color: rgba(255, 255, 255, 0.75);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.55;
+  }
+}
+
+.tierlist-chip-on {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #0d0d0d;
+}
+
+.tierlist-chip-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tierlist-chip-state {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.tierlist-search-chip {
+  border-style: dashed;
+}

@@ -1,0 +1,36 @@
+<!-- The overlay click is a mouse shortcut: Esc (cancel event) and the × button are its keyboard equivalents -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+<dialog
+  #dialog
+  class="overlay"
+  [attr.aria-labelledby]="titleId"
+  animate.enter="fade-enter"
+  (cancel)="closeOnEscape($event)"
+  (close)="closed.emit()"
+  (click)="closeOnOverlay($event)"
+>
+  <div class="panel">
+    <div class="header">
+      <h2 class="title" [id]="titleId">{{ heading() }}</h2>
+      <button type="button" class="close-btn" aria-label="Close" (click)="closed.emit()">✕</button>
+    </div>
+
+    <input
+      #searchInput
+      class="search"
+      type="search"
+      autocomplete="off"
+      [placeholder]="searchLabel()"
+      [attr.aria-label]="searchLabel()"
+      [formField]="searchForm"
+    />
+
+    <div class="list">
+      <ng-content />
+    </div>
+
+    <ng-content select="[searchDialogFooter]" />
+  </div>
+
+  <app-toast-outlet />
+</dialog>

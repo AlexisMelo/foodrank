@@ -13,7 +13,7 @@ import type { UserRating } from '@/core/models/rating.model';
 import type { Tierlist } from '@/core/models/tierlist.model';
 import type { UserProfile } from '@/core/models/user.model';
 import { CAN_REVIEW } from '@/core/review/daily-review-testing';
-import { query, queryAll, textOf } from '@/testing/dom-testing';
+import { query, queryAll, stubDialogs, textOf } from '@/testing/dom-testing';
 
 /**
  * Profiles served by the fake API, by user id; the logged-in user is u1
@@ -70,12 +70,16 @@ function tierlistOf(userId: string): Tierlist {
 describe('TierlistDetailView', () => {
   let fetchTierlistById: ReturnType<typeof vi.fn>;
   let setTierlistPinned: ReturnType<typeof vi.fn>;
+  let removeRestaurantFromTierlist: ReturnType<typeof vi.fn>;
   let fetchUserRatings: ReturnType<typeof vi.fn>;
   let harness: RouterTestingHarness;
 
   beforeEach(async () => {
+    // The removal is confirmed in a native dialog
+    stubDialogs();
     fetchTierlistById = vi.fn();
     setTierlistPinned = vi.fn();
+    removeRestaurantFromTierlist = vi.fn();
     fetchUserRatings = vi.fn((id = 'me') => of(ratings[id] ?? []));
     TestBed.configureTestingModule({
       providers: [
@@ -88,7 +92,12 @@ describe('TierlistDetailView', () => {
         {
           provide: TierlistApi,
           // The tierlists page is opened for an unknown tierlist
-          useValue: { fetchTierlistById, setTierlistPinned, fetchTierlistsByUserId: () => of([]) },
+          useValue: {
+            fetchTierlistById,
+            setTierlistPinned,
+            removeRestaurantFromTierlist,
+            fetchTierlistsByUserId: () => of([]),
+          },
         },
         { provide: UserApi, useValue: { fetchUserProfile: (id: string) => of(profiles[id]) } },
         // The rating allowance locks the "+" of the restaurants of a ranking
@@ -147,6 +156,29 @@ describe('TierlistDetailView', () => {
     expect(fetchUserRatings.mock.calls).toEqual([['u2'], ['me']]);
   });
 
+  it("links the restaurants I never rated on someone else's tierlist to their rating page, as on a profile", async () => {
+    fetchTierlistById.mockReturnValue(of(tierlistOf('u2')));
+    await openTierlist();
+
+    /**
+     * The item of the restaurant named `name`.
+     */
+    const item = (name: string) =>
+      queryAll(harness.fixture, '.list-item').find((i) => textOf(i).includes(name))!;
+    expect(item('Restaurant r2').querySelector('.my-score-rate')!.getAttribute('href')).toBe(
+      '/review/r2',
+    );
+    // Rated by me: my score instead
+    expect(item('Restaurant r1').querySelector('.my-score-rate')).toBeNull();
+  });
+
+  it('offers no "+" on my own tierlist, every restaurant of it being rated by me', async () => {
+    fetchTierlistById.mockReturnValue(of(tierlistOf('u1')));
+    await openTierlist();
+
+    expect(queryAll(harness.fixture, '.my-score-rate')).toHaveLength(0);
+  });
+
   it('lets the owner pin their tierlist, without showing their score twice', async () => {
     fetchTierlistById.mockReturnValue(of(tierlistOf('u1')));
     await openTierlist();
@@ -197,6 +229,106 @@ describe('TierlistDetailView', () => {
     await openTierlist();
 
     expect(TestBed.inject(Router).url).toBe('/tierlists');
+  });
+
+  it('counts every restaurant of the tierlist, as its card does', async () => {
+    // u1 rated r1 only: r2 (data not created by the app) is left out of the ranking, not of the count
+    fetchTierlistById.mockReturnValue(of(tierlistOf('u1')));
+    await openTierlist();
+
+    expect(textOf(query(harness.fixture, '.meta-chip'))).toBe('2 restaurants');
+    expect(queryAll(harness.fixture, '.list-item')).toHaveLength(1);
+  });
+
+  it('tells its owner how to add restaurants to an empty tierlist', async () => {
+    fetchTierlistById.mockReturnValue(of({ ...tierlistOf('u1'), restaurants: [] }));
+    await openTierlist();
+
+    expect(textOf(query(harness.fixture, '.empty-title'))).toBe('No restaurants yet');
+    expect(textOf(query(harness.fixture, '.empty-desc'))).toBe(
+      'Add the restaurants you rated from their page, or when you review them.',
+    );
+    expect(queryAll(harness.fixture, '.list-item')).toHaveLength(0);
+  });
+
+  it("tells a visitor someone else's tierlist is empty", async () => {
+    fetchTierlistById.mockReturnValue(of({ ...tierlistOf('u2'), restaurants: [] }));
+    await openTierlist();
+
+    expect(textOf(query(harness.fixture, '.empty-desc'))).toBe(
+      'There are no restaurants in this tierlist yet.',
+    );
+  });
+
+  describe('removing a restaurant', () => {
+    /**
+     * Opens the owner's tierlist 7, and asks to remove Restaurant r1 from it.
+     */
+    async function askToRemoveR1(): Promise<void> {
+      fetchTierlistById.mockReturnValue(of(tierlistOf('u1')));
+      await openTierlist();
+      query(harness.fixture, '[aria-label="Remove Restaurant r1 from Date night"]').click();
+      await harness.fixture.whenStable();
+    }
+
+    /**
+     * Clicks the element matching `selector` in the confirmation popup, then waits for the page to update.
+     */
+    async function clickInPopup(selector: string): Promise<void> {
+      query(harness.fixture, `dialog ${selector}`).click();
+      await harness.fixture.whenStable();
+    }
+
+    it('lets the owner remove a restaurant once they confirm, then shows the tierlist saved', async () => {
+      removeRestaurantFromTierlist.mockReturnValue(
+        of({ ...tierlistOf('u1'), restaurants: [{ restaurantId: 'r2', addedAt: null }] }),
+      );
+      await askToRemoveR1();
+
+      expect(query<HTMLDialogElement>(harness.fixture, 'dialog').open).toBe(true);
+      expect(textOf(query(harness.fixture, 'dialog .text'))).toBe(
+        'Restaurant r1 will be removed from Date night. You can add it again from its page.',
+      );
+      expect(removeRestaurantFromTierlist).not.toHaveBeenCalled();
+
+      await clickInPopup('.confirm-btn');
+
+      expect(removeRestaurantFromTierlist).toHaveBeenCalledWith(7, 'r1');
+      expect(queryAll(harness.fixture, 'dialog')).toHaveLength(0);
+      expect(queryAll(harness.fixture, '.list-item')).toHaveLength(0);
+      expect(textOf(query(harness.fixture, '.meta-chip'))).toBe('1 restaurant');
+    });
+
+    it('keeps the restaurant when the owner cancels', async () => {
+      await askToRemoveR1();
+
+      await clickInPopup('.cancel-btn');
+
+      expect(removeRestaurantFromTierlist).not.toHaveBeenCalled();
+      expect(queryAll(harness.fixture, 'dialog')).toHaveLength(0);
+      expect(queryAll(harness.fixture, '.list-item')).toHaveLength(1);
+    });
+
+    it('keeps the popup open and explains when the removal fails', async () => {
+      removeRestaurantFromTierlist.mockReturnValue(throwError(() => new Error('503')));
+      await askToRemoveR1();
+
+      await clickInPopup('.confirm-btn');
+
+      expect(query<HTMLDialogElement>(harness.fixture, 'dialog').open).toBe(true);
+      expect(textOf(query(harness.fixture, 'dialog .error'))).toBe(
+        "Couldn't remove the restaurant, try again.",
+      );
+      expect(queryAll(harness.fixture, '.list-item')).toHaveLength(1);
+    });
+
+    it("is not offered on someone else's tierlist", async () => {
+      fetchTierlistById.mockReturnValue(of(tierlistOf('u2')));
+      await openTierlist();
+
+      expect(queryAll(harness.fixture, '.list-item')).toHaveLength(2);
+      expect(queryAll(harness.fixture, '.remove-btn')).toHaveLength(0);
+    });
   });
 
   it('explains when the tierlist cannot be loaded, instead of loading forever', async () => {

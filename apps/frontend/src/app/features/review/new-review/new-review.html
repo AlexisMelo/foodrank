@@ -51,6 +51,29 @@
       [markers]="decorMarkers()"
     />
 
+    @if (tierlistsError()) {
+      <p class="tierlists-error" role="alert">
+        Couldn't load your tierlists, the restaurant can't be added to them.
+      </p>
+    } @else if (myTierlists().length) {
+      <app-tierlist-chips
+        [tierlists]="myTierlists()"
+        [restaurantId]="restaurant.id"
+        [disabled]="locked() || saving()"
+        [(selected)]="selectedTierlistIds"
+        (searchRequested)="tierlistDialogOpen.set(true)"
+      />
+    }
+
+    @if (tierlistDialogOpen()) {
+      <app-tierlist-select-dialog
+        [tierlists]="myTierlists()"
+        [restaurantId]="restaurant.id"
+        [(selected)]="selectedTierlistIds"
+        (closed)="tierlistDialogOpen.set(false)"
+      />
+    }
+
     <div class="actions-card">
       <button
         type="button"

@@ -1,10 +1,11 @@
 import { Location } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import { CelebrationStore } from '@/core/celebration/celebration-store';
+import { AddToTierlistDialog } from '../add-to-tierlist-dialog/add-to-tierlist-dialog';
 import { CriteriaAverages } from '../criteria-averages/criteria-averages';
 import { CelebrationDialog } from '../celebration-dialog/celebration-dialog';
 import { CuisineChip } from '../cuisine-chip/cuisine-chip';
@@ -14,12 +15,13 @@ import { RestaurantRatingsTabs } from '../restaurant-ratings-tabs/restaurant-rat
 import { injectRestaurantRatings } from '../restaurant-ratings';
 
 /**
- * Restaurant page (/restaurant/:id): the restaurant, its global rating and criteria averages, and its ratings. A full
- * page modal celebrates the user when they are the first to open the place from the search ("The explorer"), and
- * right after their first rating of the restaurant ("Bravo").
+ * Restaurant page (/restaurant/:id): the restaurant, its global rating and criteria averages, and its ratings. Once the
+ * user rated it, a popup adds it to their tierlists. A full page modal celebrates the user when they are the first to
+ * open the place from the search ("The explorer"), and right after their first rating of the restaurant ("Bravo").
  */
 @Component({
   imports: [
+    AddToTierlistDialog,
     CriteriaAverages,
     CelebrationDialog,
     CuisineChip,
@@ -103,6 +105,17 @@ export class RestaurantDetail {
    * Loaded once the restaurant is known, and again each time this page is opened (e.g. right after rating it)
    */
   protected readonly ratings = injectRestaurantRatings(() => this.restaurant()?.id ?? null);
+
+  /**
+   * True once the user rated the restaurant: only then can it be added to their tierlists, which rank restaurants by
+   * their owner's score. Any rating counts, one of them being active
+   */
+  protected readonly canAddToTierlist = computed(() => this.ratings.myRatings().length > 0);
+
+  /**
+   * True while the popup adding the restaurant to a tierlist is open
+   */
+  protected readonly tierlistDialogOpen = signal(false);
 
   /**
    * Removes the celebration modal once closed, for good

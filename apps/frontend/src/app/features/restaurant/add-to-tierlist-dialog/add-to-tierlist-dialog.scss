@@ -1,0 +1,49 @@
+@use 'tierlist-rows';
+
+.tierlist-row-added {
+  border-color: rgba(119, 221, 119, 0.25);
+}
+
+.added-badge {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: #77dd77;
+}
+
+.remove-btn {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 107, 107, 0.12);
+  color: #ff6b6b;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 107, 107, 0.2);
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.no-tierlists {
+  margin: 0 0 12px;
+}
+
+.create-link {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #0d0d0d;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}

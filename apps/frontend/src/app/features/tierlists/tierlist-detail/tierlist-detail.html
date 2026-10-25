@@ -26,25 +26,67 @@
           <span class="owner-name">{{ owner.name }}</span>
         </a>
       }
-      <span class="meta-chip">{{ restaurantCountLabel(rankedRestaurants().length) }}</span>
+      <span class="meta-chip">{{ restaurantCountLabel(page.tierlist.restaurants.length) }}</span>
     </div>
 
-    <div class="restaurant-list">
-      @for (r of rankedRestaurants(); track r.restaurantId; let index = $index) {
-        <app-ranked-restaurant-item
-          [restaurantId]="r.restaurantId"
-          [emoji]="r.emoji"
-          [name]="r.name"
-          [cuisine]="r.cuisine"
-          [food]="r.food"
-          [service]="r.service"
-          [decor]="r.setting"
-          [overall]="r.overall"
-          [index]="index"
-          [myScore]="r.myScore"
-        />
-      }
-    </div>
+    @if (page.tierlist.restaurants.length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon" aria-hidden="true">🍽️</div>
+        <p class="empty-title">No restaurants yet</p>
+        <p class="empty-desc">
+          @if (isOwner()) {
+            Add the restaurants you rated from their page, or when you review them.
+          } @else {
+            There are no restaurants in this tierlist yet.
+          }
+        </p>
+      </div>
+    } @else {
+      <div class="restaurant-list">
+        @for (r of rankedRestaurants(); track r.restaurantId; let index = $index) {
+          <div class="restaurant-row">
+            <app-ranked-restaurant-item
+              [restaurantId]="r.restaurantId"
+              [emoji]="r.emoji"
+              [name]="r.name"
+              [cuisine]="r.cuisine"
+              [food]="r.food"
+              [service]="r.service"
+              [decor]="r.setting"
+              [overall]="r.overall"
+              [index]="index"
+              [myScore]="r.myScore"
+              [rateLink]="
+                !isOwner() && r.myScore === undefined ? '/review/' + r.restaurantId : undefined
+              "
+            />
+            @if (isOwner()) {
+              <button
+                type="button"
+                class="remove-btn"
+                [attr.aria-label]="'Remove ' + r.name + ' from ' + page.tierlist.name"
+                (click)="askRemoval(r)"
+              >
+                ✕
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @if (pendingRemoval()) {
+      <app-confirm-dialog
+        heading="Remove from tierlist?"
+        [message]="removalMessage()"
+        confirmLabel="Remove"
+        busyLabel="Removing…"
+        [busy]="removing()"
+        [error]="removeError()"
+        (confirmed)="confirmRemoval()"
+        (closed)="cancelRemoval()"
+      />
+    }
   } @else if (loadError()) {
     <p class="load-error" role="alert">Couldn't load the tierlist, try again.</p>
   } @else {
