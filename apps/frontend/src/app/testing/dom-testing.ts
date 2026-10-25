@@ -105,3 +105,25 @@ export function stubDialogs(): void {
     });
   }
 }
+
+/**
+ * jsdom has no showPopover() nor hidePopover(), and hides every popover (`:popover-open` never matches): adds minimal
+ * ones that toggle a `data-popover-open` attribute, standing for the `:popover-open` state of a browser, and display
+ * the popover shown so its content can be focused. Components using a popover can then be tested. No-op once the
+ * browser has them.
+ */
+export function stubPopovers(): void {
+  const element = HTMLElement.prototype;
+  if (!('showPopover' in element)) {
+    Object.assign(element, {
+      showPopover(this: HTMLElement) {
+        this.setAttribute('data-popover-open', '');
+        this.style.display = 'block';
+      },
+      hidePopover(this: HTMLElement) {
+        this.removeAttribute('data-popover-open');
+        this.style.removeProperty('display');
+      },
+    });
+  }
+}

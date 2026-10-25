@@ -9,12 +9,15 @@ import { AuthStore } from '@/core/auth/auth-store';
 import type { UserRating } from '@/core/models/rating.model';
 import type { Tierlist } from '@/core/models/tierlist.model';
 import type { UserProfile } from '@/core/models/user.model';
+import { WebShare } from '@/core/share/web-share';
+import { ToastStore } from '@/core/toast/toast-store';
 import { restaurantCountLabel } from '@/core/utils/profile';
 import {
   type RankedRestaurant,
   overallByRestaurant,
   rankTierlistRestaurants,
 } from '@/core/utils/ranking';
+import type { Action } from '@/shared/ui/actions/actions';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog/confirm-dialog';
 import { NewChip } from '@/shared/ui/new-chip/new-chip';
 import { RankedRestaurantItem } from '@/shared/ui/ranked-restaurant-item/ranked-restaurant-item';
@@ -50,9 +53,10 @@ interface TierlistPage {
 
 /**
  * Tierlist page (/tierlists/:id), of any user: the tierlist, its owner and its restaurants ranked by the owner's
- * ratings. Its owner can pin it to their profile, add the restaurants they rated from a popup, and remove its
- * restaurants after confirming. On someone else's tierlist, the restaurants I never rated have a "+" opening their
- * rating page, as on someone else's profile.
+ * ratings. Its owner can pin it to their profile, and add the restaurants they rated from a popup. Each restaurant has
+ * a menu of actions: see its page, share it, and for the owner, remove it from the tierlist after confirming. On
+ * someone else's tierlist, the restaurants I never rated have a "+" opening their rating page, as on someone else's
+ * profile.
  */
 @Component({
   imports: [
@@ -75,9 +79,19 @@ export class TierlistDetail {
   readonly id = input.required<string>();
 
   /**
-   * Leaves for the tierlists page when the tierlist does not exist
+   * Leaves for the tierlists page when the tierlist does not exist, and opens the page of a restaurant from its actions
    */
   private readonly router = inject(Router);
+
+  /**
+   * Shares the page of a restaurant through the native share sheet, or copies its link
+   */
+  private readonly webShare = inject(WebShare);
+
+  /**
+   * Tells whether the link of a restaurant was copied
+   */
+  private readonly toasts = inject(ToastStore);
 
   /**
    * Reads the tierlist and saves its pin
@@ -140,7 +154,7 @@ export class TierlistDetail {
    * Restaurants of the tierlist, best first by the owner's scores; on someone else's tierlist, with my own score
    * (undefined when I never rated it)
    */
-  protected readonly rankedRestaurants = computed(() => {
+  private readonly rankedRestaurants = computed(() => {
     const page = this.page();
     if (!page) return [];
     const isOwner = this.isOwner();
@@ -149,6 +163,17 @@ export class TierlistDetail {
       page.tierlist.restaurants.map((e) => e.restaurantId),
       page.ownerRatings,
     ).map((r) => ({ ...r, myScore: isOwner ? undefined : myScores.get(r.restaurantId) }));
+  });
+
+  /**
+   * Rows of the list: each restaurant ranked, with the actions of its menu
+   */
+  protected readonly rows = computed(() => {
+    const isOwner = this.isOwner();
+    return this.rankedRestaurants().map((restaurant) => ({
+      restaurant,
+      actions: this.actionsOf(restaurant, isOwner),
+    }));
   });
 
   /**
@@ -246,9 +271,58 @@ export class TierlistDetail {
   }
 
   /**
+   * Actions of the menu of `restaurant`: see its page, share it (when the browser can share or copy a link), and when
+   * `isOwner`, remove it from the tierlist, last as it deletes
+   */
+  private actionsOf(restaurant: RankedRestaurant, isOwner: boolean): Action[] {
+    const actions: Action[] = [
+      {
+        label: 'See the restaurant',
+        icon: '🍽️',
+        run: () => void this.router.navigate(['/restaurant', restaurant.restaurantId]),
+      },
+    ];
+    if (this.webShare.supported || this.webShare.canCopy) {
+      actions.push({
+        label: this.webShare.supported ? 'Share' : 'Copy link',
+        icon: '📤',
+        run: () => void this.share(restaurant),
+      });
+    }
+    if (isOwner) {
+      actions.push({
+        label: 'Remove from tierlist',
+        icon: '🗑️',
+        danger: true,
+        run: () => this.askRemoval(restaurant),
+      });
+    }
+    return actions;
+  }
+
+  /**
+   * Sends the link of the page of `restaurant` through the native share sheet, as the "Bravo" modal does; copies it
+   * when the browser has no share sheet, a toast telling whether it was copied
+   */
+  private async share(restaurant: RankedRestaurant): Promise<void> {
+    const url = this.webShare.appUrl(`/restaurant/${restaurant.restaurantId}`);
+    if (this.webShare.supported) {
+      await this.webShare.share({
+        title: restaurant.name,
+        text: `Have a look at ${restaurant.name} on FoodRank!`,
+        url,
+      });
+    } else if (await this.webShare.copy(url)) {
+      this.toasts.show('Link copied! Paste it to your friends.', 'success');
+    } else {
+      this.toasts.show("Couldn't copy the link.");
+    }
+  }
+
+  /**
    * Asks the owner to confirm the removal of `restaurant` from the tierlist
    */
-  protected askRemoval(restaurant: RankedRestaurant): void {
+  private askRemoval(restaurant: RankedRestaurant): void {
     this.removeError.set('');
     this.pendingRemoval.set(restaurant);
   }

@@ -1,3 +1,4 @@
+import { DOCUMENT, Location } from '@angular/common';
 import { InjectionToken, Service, inject } from '@angular/core';
 
 /**
@@ -22,6 +23,16 @@ export class WebShare {
   private readonly navigator = inject(SHARE_NAVIGATOR);
 
   /**
+   * Builds the URL of a page, with the base href of the app
+   */
+  private readonly location = inject(Location);
+
+  /**
+   * Gives the origin of the app (scheme, host and port), for the absolute URLs shared
+   */
+  private readonly document = inject(DOCUMENT);
+
+  /**
    * True when the browser can open its share sheet
    */
   readonly supported = typeof this.navigator.share === 'function';
@@ -30,6 +41,13 @@ export class WebShare {
    * True when the browser lets the app write to the clipboard: the fallback of the share sheet
    */
   readonly canCopy = typeof this.navigator.clipboard?.writeText === 'function';
+
+  /**
+   * Absolute URL of the page of the app at `path` (e.g. "/restaurant/r1"), as other people open it
+   */
+  appUrl(path: string): string {
+    return new URL(this.location.prepareExternalUrl(path), this.document.location.origin).href;
+  }
 
   /**
    * Opens the share sheet with `data`. Never throws: a cancelled share, or one the browser refuses, does nothing.

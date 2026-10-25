@@ -3,28 +3,46 @@
   display: contents;
 }
 
-// Holds the link to the restaurant page, which fills it, and next to it the "+" link to rate it
+// A card, raised on hover as the recent review cards: the restaurant link and, at the right of the score, the menu of
+// actions. The end padding of the link leaves room for the bubbles on the score (8px past it) and the right edge
 .list-item {
-  position: relative;
+  --link-padding-end: 16px;
+  display: flex;
+  align-items: center;
+  background: #1a1a1a;
   border-radius: 16px;
+  transition:
+    background 0.2s,
+    transform 0.15s;
+}
+.list-item:hover {
+  background: #242424;
+  transform: translateY(-2px);
+}
+.list-item:active {
+  transform: translateY(0);
+}
+// The menu of actions sits right after the bubbles on the score, leaving more room to the restaurant
+.list-item-with-actions {
+  --link-padding-end: 8px;
+}
+// Holds the link to the restaurant page, which fills it, and next to it the "+" link to rate it
+.item-main {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.item-actions {
+  margin-right: 8px;
 }
 .item-link {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 16px;
+  padding: 12px var(--link-padding-end) 12px 16px;
   border-radius: 16px;
   text-decoration: none;
   color: inherit;
-}
-.list-item-first {
-  color: #0d0d0d;
-}
-.list-item-first .item-name {
-  color: #0d0d0d;
-}
-.list-item-first .item-sub {
-  color: #555;
 }
 .item-avatar {
   width: 46px;
@@ -36,9 +54,6 @@
   justify-content: center;
   font-size: 24px;
   flex-shrink: 0;
-}
-.list-item-first .item-avatar {
-  background: rgba(0, 0, 0, 0.06);
 }
 .item-info {
   flex: 1;
@@ -99,19 +114,15 @@
   border: 2px solid #0d0d0d;
 }
 
-.list-item-first .my-score {
-  border-color: #ffffff;
-}
-
 .rate-plus {
   display: block;
   transform: translateY(-2px);
 }
 
-// Outside the restaurant link, so placed from the item where .my-score sits on the overall score: the score (34px
-// high) is centered in the item and ends 16px from its right edge
+// Outside the restaurant link, so placed from .item-main where .my-score sits on the overall score: the score (34px
+// high) is centered in it and ends at the end padding of the link from its right edge
 .my-score-rate {
-  right: 8px;
+  right: calc(var(--link-padding-end) - 8px);
   bottom: calc(50% - 27px);
   text-decoration: none;
   background: #2f2f2f;

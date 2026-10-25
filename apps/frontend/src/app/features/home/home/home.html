@@ -78,7 +78,7 @@
         <a routerLink="/profile" class="see-all-chip">See all</a>
       </div>
       <div class="favorites-list">
-        @for (r of topRestaurants(); track r.restaurantId; let index = $index) {
+        @for (r of topRestaurants(); track r.restaurantId) {
           <app-ranked-restaurant-item
             [restaurantId]="r.restaurantId"
             [emoji]="r.emoji"
@@ -88,7 +88,6 @@
             [service]="r.service"
             [decor]="r.setting"
             [overall]="r.overall"
-            [index]="index"
           />
         }
       </div>

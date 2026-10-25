@@ -1,0 +1,98 @@
+// The host takes the place the parent gives it, without growing nor shrinking
+:host {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+// Narrow icon button, so the content next to it keeps its room (24px wide: the minimum size of a target for WCAG AA): a
+// light gray rounded rectangle on hover and while open
+.actions-btn {
+  width: 24px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s;
+
+  // Hover only with a mouse: on a touch screen, it would stay after a tap
+  @media (hover: hover) {
+    &:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+    }
+  }
+
+  &[aria-expanded='true'],
+  &:focus-visible {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+  }
+}
+
+.actions-icon {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.actions-menu {
+  min-width: 200px;
+  padding: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: #1a1a1a;
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+// Under the button, right-aligned with it (above it when there is no room below). Browsers without anchor positioning
+// keep the default place of popovers, the center of the screen
+@supports (position-area: bottom) {
+  .actions-menu {
+    inset: auto;
+    margin: 4px 0;
+    position-area: bottom span-left;
+    position-try-fallbacks: flip-block;
+  }
+}
+
+.actions-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+
+  // The focused action is the one the keyboard picks: highlighted as the hovered one
+  &:hover,
+  &:focus-visible {
+    background: rgba(255, 255, 255, 0.08);
+    outline: none;
+  }
+}
+
+.actions-item-danger {
+  color: #ff6b6b;
+}
+
+.actions-item-icon {
+  width: 20px;
+  text-align: center;
+}

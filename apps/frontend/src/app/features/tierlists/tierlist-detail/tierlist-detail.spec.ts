@@ -13,7 +13,9 @@ import type { UserRating } from '@/core/models/rating.model';
 import type { Tierlist } from '@/core/models/tierlist.model';
 import type { UserProfile } from '@/core/models/user.model';
 import { CAN_REVIEW } from '@/core/review/daily-review-testing';
-import { query, queryAll, stubDialogs, textOf } from '@/testing/dom-testing';
+import { SHARE_NAVIGATOR } from '@/core/share/web-share';
+import { ToastStore } from '@/core/toast/toast-store';
+import { query, queryAll, stubDialogs, stubPopovers, textOf } from '@/testing/dom-testing';
 
 /**
  * Profiles served by the fake API, by user id; the logged-in user is u1
@@ -73,11 +75,17 @@ describe('TierlistDetailView', () => {
   let removeRestaurantFromTierlist: ReturnType<typeof vi.fn>;
   let addRestaurantToTierlist: ReturnType<typeof vi.fn>;
   let fetchUserRatings: ReturnType<typeof vi.fn>;
+  let share: ReturnType<typeof vi.fn<(data?: ShareData) => Promise<void>>>;
+  let shareNavigator: { share?: Navigator['share']; clipboard?: Clipboard };
   let harness: RouterTestingHarness;
 
   beforeEach(async () => {
-    // The removal is confirmed, and the restaurants are added, in native dialogs
+    // The removal is confirmed, and the restaurants are added, in native dialogs; the actions of a restaurant are in
+    // a popover
     stubDialogs();
+    stubPopovers();
+    share = vi.fn(() => Promise.resolve());
+    shareNavigator = { share };
     fetchTierlistById = vi.fn();
     setTierlistPinned = vi.fn();
     removeRestaurantFromTierlist = vi.fn();
@@ -108,7 +116,13 @@ describe('TierlistDetailView', () => {
           provide: RatingApi,
           useValue: { fetchUserRatings, fetchRatingAllowance: () => of(CAN_REVIEW) },
         },
-        { provide: RestaurantApi, useValue: {} },
+        // The restaurant page, opened from the actions of a restaurant, cannot load it
+        {
+          provide: RestaurantApi,
+          useValue: { fetchRestaurantById: () => throwError(() => new Error('503')) },
+        },
+        // Web Share API of the browser, read when the page opens
+        { provide: SHARE_NAVIGATOR, useValue: shareNavigator },
       ],
     });
     harness = await RouterTestingHarness.create();
@@ -120,6 +134,43 @@ describe('TierlistDetailView', () => {
   async function openTierlist(): Promise<void> {
     await harness.navigateByUrl('/tierlists/7');
     await harness.fixture.whenStable();
+  }
+
+  /**
+   * The host of the actions of the restaurant named `name`, holding its button and its menu.
+   */
+  function actionsOf(name: string): HTMLElement {
+    return query(harness.fixture, `button[aria-label="Actions for ${name}"]`).closest<HTMLElement>(
+      'app-actions',
+    )!;
+  }
+
+  /**
+   * Opens the menu of the actions of the restaurant named `name`, and gives the labels of its actions.
+   */
+  async function openActions(name: string): Promise<string[]> {
+    actionsOf(name).querySelector<HTMLElement>('.actions-btn')!.click();
+    await harness.fixture.whenStable();
+    return Array.from(actionsOf(name).querySelectorAll('.actions-item-label')).map(textOf);
+  }
+
+  /**
+   * Picks the action `label` in the menu of the restaurant named `name`, and waits for the page to update.
+   */
+  async function pickAction(name: string, label: string): Promise<void> {
+    const index = (await openActions(name)).indexOf(label);
+    if (index < 0) throw new Error(`No action ${label} for ${name}`);
+    actionsOf(name).querySelectorAll<HTMLElement>('[role="menuitem"]')[index]!.click();
+    await harness.fixture.whenStable();
+  }
+
+  /**
+   * Messages of the toasts shown, with their kind.
+   */
+  function toasts(): string[] {
+    return TestBed.inject(ToastStore)
+      .toasts()
+      .map((toast) => `${toast.kind}: ${toast.message}`);
   }
 
   /**
@@ -280,8 +331,7 @@ describe('TierlistDetailView', () => {
     async function askToRemoveR1(): Promise<void> {
       fetchTierlistById.mockReturnValue(of(tierlistOf('u1')));
       await openTierlist();
-      query(harness.fixture, '[aria-label="Remove Restaurant r1 from Date night"]').click();
-      await harness.fixture.whenStable();
+      await pickAction('Restaurant r1', 'Remove from tierlist');
     }
 
     /**
@@ -340,7 +390,89 @@ describe('TierlistDetailView', () => {
       await openTierlist();
 
       expect(queryAll(harness.fixture, '.list-item')).toHaveLength(2);
-      expect(queryAll(harness.fixture, '.remove-btn')).toHaveLength(0);
+      expect(await openActions('Restaurant r1')).not.toContain('Remove from tierlist');
+    });
+  });
+
+  describe('actions of a restaurant', () => {
+    it('offers the owner to see, share or remove each restaurant, from its item, the removal last', async () => {
+      fetchTierlistById.mockReturnValue(of(tierlistOf('u1')));
+      await openTierlist();
+
+      expect(textOf(actionsOf('Restaurant r1').closest('.list-item')!)).toContain('Restaurant r1');
+      expect(await openActions('Restaurant r1')).toEqual([
+        'See the restaurant',
+        'Share',
+        'Remove from tierlist',
+      ]);
+    });
+
+    it("offers a visitor to see or share each restaurant of someone else's tierlist", async () => {
+      fetchTierlistById.mockReturnValue(of(tierlistOf('u2')));
+      await openTierlist();
+
+      expect(await openActions('Restaurant r2')).toEqual(['See the restaurant', 'Share']);
+      expect(await openActions('Restaurant r1')).toEqual(['See the restaurant', 'Share']);
+    });
+
+    it('opens the page of the restaurant', async () => {
+      fetchTierlistById.mockReturnValue(of(tierlistOf('u2')));
+      await openTierlist();
+
+      await pickAction('Restaurant r2', 'See the restaurant');
+
+      expect(TestBed.inject(Router).url).toBe('/restaurant/r2');
+    });
+
+    it('shares the page of the restaurant through the native share sheet', async () => {
+      fetchTierlistById.mockReturnValue(of(tierlistOf('u2')));
+      await openTierlist();
+
+      await pickAction('Restaurant r2', 'Share');
+
+      expect(share).toHaveBeenCalledWith({
+        title: 'Restaurant r2',
+        text: 'Have a look at Restaurant r2 on FoodRank!',
+        url: `${location.origin}/restaurant/r2`,
+      });
+    });
+
+    it('copies the link of the restaurant page when the browser cannot share, and confirms it', async () => {
+      const writeText = vi.fn(() => Promise.resolve());
+      delete shareNavigator.share;
+      shareNavigator.clipboard = { writeText } as unknown as Clipboard;
+      fetchTierlistById.mockReturnValue(of(tierlistOf('u2')));
+      await openTierlist();
+
+      await pickAction('Restaurant r2', 'Copy link');
+
+      expect(writeText).toHaveBeenCalledWith(`${location.origin}/restaurant/r2`);
+      expect(toasts()).toEqual(['success: Link copied! Paste it to your friends.']);
+      expect(share).not.toHaveBeenCalled();
+    });
+
+    it('tells in a toast when the link cannot be copied', async () => {
+      delete shareNavigator.share;
+      shareNavigator.clipboard = {
+        writeText: () => Promise.reject(new DOMException('Denied', 'NotAllowedError')),
+      } as unknown as Clipboard;
+      fetchTierlistById.mockReturnValue(of(tierlistOf('u2')));
+      await openTierlist();
+
+      await pickAction('Restaurant r2', 'Copy link');
+
+      expect(toasts()).toEqual(["error: Couldn't copy the link."]);
+    });
+
+    it('offers no sharing when the browser can neither share nor copy', async () => {
+      delete shareNavigator.share;
+      fetchTierlistById.mockReturnValue(of(tierlistOf('u1')));
+      await openTierlist();
+
+      expect(await openActions('Restaurant r1')).toEqual([
+        'See the restaurant',
+        'Remove from tierlist',
+      ]);
     });
   });
 

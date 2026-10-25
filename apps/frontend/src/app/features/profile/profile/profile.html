@@ -16,11 +16,7 @@
       <div class="empty">No restaurant rated yet 🍽️</div>
     } @else {
       <div class="list">
-        @for (
-          restaurant of ranking.rankedRestaurants();
-          track restaurant.restaurantId;
-          let index = $index
-        ) {
+        @for (restaurant of ranking.rankedRestaurants(); track restaurant.restaurantId) {
           <app-ranked-restaurant-item
             [restaurantId]="restaurant.restaurantId"
             [emoji]="restaurant.emoji"
@@ -30,7 +26,6 @@
             [service]="restaurant.service"
             [decor]="restaurant.setting"
             [overall]="restaurant.overall"
-            [index]="index"
             [myScore]="restaurant.myScore"
             [rateLink]="
               !ranking.isOwnProfile() && restaurant.myScore === undefined

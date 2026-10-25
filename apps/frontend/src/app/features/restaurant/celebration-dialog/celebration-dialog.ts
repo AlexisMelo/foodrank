@@ -1,4 +1,3 @@
-import { DOCUMENT, Location } from '@angular/common';
 import {
   Component,
   ElementRef,
@@ -65,16 +64,6 @@ export class CelebrationDialog {
   protected readonly lockedReason = REVIEW_LOCKED_REASON;
 
   /**
-   * Builds the URL of the restaurant page, with the base href of the app
-   */
-  private readonly location = inject(Location);
-
-  /**
-   * Gives the origin of the app (scheme, host and port), for the absolute URL shared
-   */
-  private readonly document = inject(DOCUMENT);
-
-  /**
    * The native dialog, shown as a modal (top layer, Esc key, focus kept inside) once rendered
    */
   private readonly dialog = viewChild.required<ElementRef<HTMLDialogElement>>('dialog');
@@ -118,7 +107,6 @@ export class CelebrationDialog {
    * Absolute URL of the restaurant page, as other people open it
    */
   private restaurantUrl(): string {
-    const path = this.location.prepareExternalUrl(`/restaurant/${this.restaurant().id}`);
-    return new URL(path, this.document.location.origin).href;
+    return this.webShare.appUrl(`/restaurant/${this.restaurant().id}`);
   }
 }

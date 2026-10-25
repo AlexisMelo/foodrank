@@ -128,40 +128,6 @@
   gap: 10px;
 }
 
-// A restaurant and, for the owner, the button removing it from the tierlist
-.restaurant-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-// The item has no box of its own (display: contents): give it one, filling the row next to the button
-.restaurant-row app-ranked-restaurant-item {
-  display: block;
-  flex: 1;
-  min-width: 0;
-}
-
-.remove-btn {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.55);
-  font-size: 13px;
-  cursor: pointer;
-  transition:
-    background 0.2s,
-    color 0.2s;
-
-  &:hover {
-    background: rgba(255, 107, 107, 0.15);
-    color: #ff6b6b;
-  }
-}
-
 .empty-state {
   position: relative;
   z-index: 1;

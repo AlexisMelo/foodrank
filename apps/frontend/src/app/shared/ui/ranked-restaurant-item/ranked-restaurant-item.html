@@ -1,46 +1,50 @@
-<div
-  class="list-item"
-  [class.list-item-first]="index() === 0"
-  [style.background]="background()"
-  [style.--item-bg]="background()"
->
-  <a [routerLink]="['/restaurant', restaurantId()]" class="item-link">
-    <div class="item-avatar">
-      <span class="item-emoji">{{ emoji() }}</span>
-    </div>
-    <div class="item-info">
-      <span class="item-name">{{ name() }}</span>
-      @if (address()) {
-        <span class="item-sub">{{ address() }}</span>
-      }
-    </div>
-    <app-rating-scores [food]="food()" [service]="service()" [decor]="decor()" />
-    <div class="score-wrap">
-      <div class="item-avg" [style.background-color]="scoreColor(roundedOverall())">
-        {{ roundedOverall() }}
+<div class="list-item" [class.list-item-with-actions]="actions().length > 0">
+  <div class="item-main">
+    <a [routerLink]="['/restaurant', restaurantId()]" class="item-link">
+      <div class="item-avatar">
+        <span class="item-emoji">{{ emoji() }}</span>
       </div>
-      @if (myScore() !== undefined) {
-        <div class="my-score" [style.background-color]="scoreColor(roundedMyScore())">
-          {{ roundedMyScore() }}
+      <div class="item-info">
+        <span class="item-name">{{ name() }}</span>
+        @if (address()) {
+          <span class="item-sub">{{ address() }}</span>
+        }
+      </div>
+      <app-rating-scores [food]="food()" [service]="service()" [decor]="decor()" />
+      <div class="score-wrap">
+        <div class="item-avg" [style.background-color]="scoreColor(roundedOverall())">
+          {{ roundedOverall() }}
         </div>
+        @if (myScore() !== undefined) {
+          <div class="my-score" [style.background-color]="scoreColor(roundedMyScore())">
+            {{ roundedMyScore() }}
+          </div>
+        }
+      </div>
+    </a>
+    @if (myScore() === undefined && rateLink()) {
+      @if (dailyReview.locked()) {
+        <span
+          class="my-score my-score-rate my-score-locked"
+          role="img"
+          aria-label="Rate this restaurant: locked"
+          [title]="lockedReason"
+        >
+          <app-lock-icon class="rate-lock" />
+        </span>
+      } @else {
+        <!-- Next to the link to the restaurant page, not inside it: a link cannot hold another one -->
+        <a
+          class="my-score my-score-rate"
+          [routerLink]="rateLink()"
+          aria-label="Rate this restaurant"
+        >
+          <span class="rate-plus">+</span>
+        </a>
       }
-    </div>
-  </a>
-  @if (myScore() === undefined && rateLink()) {
-    @if (dailyReview.locked()) {
-      <span
-        class="my-score my-score-rate my-score-locked"
-        role="img"
-        aria-label="Rate this restaurant: locked"
-        [title]="lockedReason"
-      >
-        <app-lock-icon class="rate-lock" />
-      </span>
-    } @else {
-      <!-- Next to the link to the restaurant page, not inside it: a link cannot hold another one -->
-      <a class="my-score my-score-rate" [routerLink]="rateLink()" aria-label="Rate this restaurant">
-        <span class="rate-plus">+</span>
-      </a>
     }
+  </div>
+  @if (actions().length) {
+    <app-actions class="item-actions" [actions]="actions()" [label]="'Actions for ' + name()" />
   }
 </div>

@@ -52,34 +52,23 @@
       </div>
     } @else {
       <div class="restaurant-list">
-        @for (r of rankedRestaurants(); track r.restaurantId; let index = $index) {
-          <div class="restaurant-row">
-            <app-ranked-restaurant-item
-              [restaurantId]="r.restaurantId"
-              [emoji]="r.emoji"
-              [name]="r.name"
-              [address]="r.address"
-              [food]="r.food"
-              [service]="r.service"
-              [decor]="r.setting"
-              [overall]="r.overall"
-              [index]="index"
-              [myScore]="r.myScore"
-              [rateLink]="
-                !isOwner() && r.myScore === undefined ? '/review/' + r.restaurantId : undefined
-              "
-            />
-            @if (isOwner()) {
-              <button
-                type="button"
-                class="remove-btn"
-                [attr.aria-label]="'Remove ' + r.name + ' from ' + page.tierlist.name"
-                (click)="askRemoval(r)"
-              >
-                ✕
-              </button>
-            }
-          </div>
+        @for (row of rows(); track row.restaurant.restaurantId) {
+          @let r = row.restaurant;
+          <app-ranked-restaurant-item
+            [restaurantId]="r.restaurantId"
+            [emoji]="r.emoji"
+            [name]="r.name"
+            [address]="r.address"
+            [food]="r.food"
+            [service]="r.service"
+            [decor]="r.setting"
+            [overall]="r.overall"
+            [myScore]="r.myScore"
+            [rateLink]="
+              !isOwner() && r.myScore === undefined ? '/review/' + r.restaurantId : undefined
+            "
+            [actions]="row.actions"
+          />
         }
       </div>
     }
