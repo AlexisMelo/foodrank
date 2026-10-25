@@ -90,15 +90,15 @@ describe('AddToTierlistDialog', () => {
    * Names of the tierlists listed, in order.
    */
   function listedNames(): string[] {
-    return queryAll(fixture, '.tierlist-row-name').map(textOf);
+    return queryAll(fixture, '.search-row-name').map(textOf);
   }
 
   /**
    * The row of the tierlist named `name`.
    */
   function row(name: string): HTMLElement {
-    const found = queryAll(fixture, '.tierlist-row').find(
-      (r) => textOf(r.querySelector('.tierlist-row-name')!) === name,
+    const found = queryAll(fixture, '.search-row').find(
+      (r) => textOf(r.querySelector('.search-row-name')!) === name,
     );
     if (!found) throw new Error(`No row for ${name}`);
     return found;
@@ -108,7 +108,7 @@ describe('AddToTierlistDialog', () => {
    * Taps the tierlist named `name`, and waits for the change to be saved.
    */
   async function tap(name: string): Promise<void> {
-    row(name).querySelector<HTMLButtonElement>('.tierlist-row-main')!.click();
+    row(name).querySelector<HTMLButtonElement>('.search-row-main')!.click();
     await fixture.whenStable();
   }
 
@@ -126,7 +126,7 @@ describe('AddToTierlistDialog', () => {
 
     expect(query<HTMLDialogElement>(fixture, 'dialog').open).toBe(true);
     expect(listedNames()).toEqual(['Top 10', 'Date night', 'Old favorites']);
-    expect(textOf(row('Top 10').querySelector('.tierlist-row-count')!)).toBe('2 restaurants');
+    expect(textOf(row('Top 10').querySelector('.search-row-detail')!)).toBe('2 restaurants');
   });
 
   it('filters the tierlists by the search, and says when none matches', async () => {
@@ -137,7 +137,7 @@ describe('AddToTierlistDialog', () => {
 
     await typeIn(fixture, '.search', 'sushi');
     expect(listedNames()).toEqual([]);
-    expect(textOf(query(fixture, '.tierlist-list-message'))).toBe('No tierlist matches “sushi”.');
+    expect(textOf(query(fixture, '.search-list-message'))).toBe('No tierlist matches “sushi”.');
   });
 
   it('shows the tierlists already holding the restaurant as added, with a button removing it', async () => {
@@ -157,7 +157,7 @@ describe('AddToTierlistDialog', () => {
 
     expect(addRestaurantToTierlist).toHaveBeenCalledWith(3, 'r1');
     expect(textOf(row('Date night').querySelector('.added-badge')!)).toBe('Added ✓');
-    expect(textOf(row('Date night').querySelector('.tierlist-row-count')!)).toBe('2 restaurants');
+    expect(textOf(row('Date night').querySelector('.search-row-detail')!)).toBe('2 restaurants');
     expect(listedNames()).toEqual(['Top 10', 'Date night', 'Old favorites']);
     expect(toastMessages()).toEqual([]);
   });
@@ -191,7 +191,7 @@ describe('AddToTierlistDialog', () => {
 
     expect(toastMessages()).toEqual(["Couldn't add Pizza Roma to Date night, try again."]);
     expect(row('Date night').querySelector('.added-badge')).toBeNull();
-    expect(row('Date night').querySelector<HTMLButtonElement>('.tierlist-row-main')!.disabled).toBe(
+    expect(row('Date night').querySelector<HTMLButtonElement>('.search-row-main')!.disabled).toBe(
       false,
     );
   });
@@ -202,7 +202,7 @@ describe('AddToTierlistDialog', () => {
     await open();
 
     await tap('Date night');
-    const main = row('Date night').querySelector<HTMLButtonElement>('.tierlist-row-main')!;
+    const main = row('Date night').querySelector<HTMLButtonElement>('.search-row-main')!;
     expect(main.disabled).toBe(true);
     main.click();
     expect(addRestaurantToTierlist).toHaveBeenCalledTimes(1);
@@ -212,7 +212,7 @@ describe('AddToTierlistDialog', () => {
     // Lets the popup receive the answer, then waits for it to update
     await Promise.resolve();
     await fixture.whenStable();
-    expect(row('Date night').querySelector<HTMLButtonElement>('.tierlist-row-main')!.disabled).toBe(
+    expect(row('Date night').querySelector<HTMLButtonElement>('.search-row-main')!.disabled).toBe(
       false,
     );
   });
@@ -226,7 +226,7 @@ describe('AddToTierlistDialog', () => {
 
     expect(removeRestaurantFromTierlist).toHaveBeenCalledWith(2, 'r1');
     expect(row('Top 10').querySelector('.added-badge')).toBeNull();
-    expect(textOf(row('Top 10').querySelector('.tierlist-row-count')!)).toBe('1 restaurant');
+    expect(textOf(row('Top 10').querySelector('.search-row-detail')!)).toBe('1 restaurant');
   });
 
   it('tells in a toast when the restaurant cannot be removed, the row unchanged', async () => {
@@ -251,7 +251,7 @@ describe('AddToTierlistDialog', () => {
     fetchTierlistsByUserId.mockReturnValue(httpError(503));
     await open();
 
-    expect(textOf(query(fixture, '.tierlist-list-error'))).toBe(
+    expect(textOf(query(fixture, '.search-list-error'))).toBe(
       "Couldn't load your tierlists, try again later.",
     );
   });

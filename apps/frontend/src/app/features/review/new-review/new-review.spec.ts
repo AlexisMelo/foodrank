@@ -39,6 +39,7 @@ function rating(restaurantId: string, food: number, service: number, setting: nu
     restaurantName: `Restaurant ${restaurantId}`,
     restaurantEmoji: '🍔',
     restaurantCuisine: '',
+    restaurantAddress: '',
     date: '2026-10-01T12:00:00+00:00',
     food,
     service,
@@ -436,7 +437,7 @@ describe('NewReview', () => {
 
       await click('.tierlist-search-chip');
 
-      expect(queryAll(harness.fixture, 'dialog .tierlist-row-name').map(textOf)).toEqual([
+      expect(queryAll(harness.fixture, 'dialog .search-row-name').map(textOf)).toEqual([
         'Date night',
         'Top 10',
         'Pizza places',
@@ -445,7 +446,7 @@ describe('NewReview', () => {
       const lock = query(harness.fixture, 'dialog .select-lock');
       expect(lock.getAttribute('aria-label')).toBe('Already in Pizza places');
       expect(lock.querySelector('app-lock-icon')).not.toBeNull();
-      expect(lock.closest('.tierlist-row')!.querySelector('.select-check')).toBeNull();
+      expect(lock.closest('.search-row')!.querySelector('.select-check')).toBeNull();
       expect(queryAll(harness.fixture, 'dialog .select-check')).toHaveLength(3);
     });
 
@@ -462,7 +463,7 @@ describe('NewReview', () => {
       expect(checkboxes().map((c) => c.checked)).toEqual([false, true, false]);
 
       await typeIn(harness.fixture, 'dialog .search', 'old');
-      expect(queryAll(harness.fixture, 'dialog .tierlist-row-name').map(textOf)).toEqual([
+      expect(queryAll(harness.fixture, 'dialog .search-row-name').map(textOf)).toEqual([
         'Old favorites',
       ]);
       checkboxes()[0]!.click();

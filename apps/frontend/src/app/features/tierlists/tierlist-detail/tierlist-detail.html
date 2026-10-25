@@ -26,7 +26,16 @@
           <span class="owner-name">{{ owner.name }}</span>
         </a>
       }
-      <span class="meta-chip">{{ restaurantCountLabel(page.tierlist.restaurants.length) }}</span>
+      <div class="list-header-end">
+        <span class="meta-chip">{{ restaurantCountLabel(page.tierlist.restaurants.length) }}</span>
+        @if (isOwner()) {
+          <app-new-chip
+            label="Add"
+            [ariaLabel]="'Add restaurants to ' + page.tierlist.name"
+            (pressed)="addDialogOpen.set(true)"
+          />
+        }
+      </div>
     </div>
 
     @if (page.tierlist.restaurants.length === 0) {
@@ -73,6 +82,15 @@
           </div>
         }
       </div>
+    }
+
+    @if (addDialogOpen()) {
+      <app-add-restaurants-dialog
+        [tierlist]="page.tierlist"
+        [ratings]="page.ownerRatings"
+        (tierlistChange)="showTierlist($event)"
+        (closed)="addDialogOpen.set(false)"
+      />
     }
 
     @if (pendingRemoval()) {

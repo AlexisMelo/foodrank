@@ -2,7 +2,7 @@ import { Component, DestroyRef, computed, inject } from '@angular/core';
 import { ToastStore } from '@/core/toast/toast-store';
 
 /**
- * Renders the toasts of ToastStore at the bottom of the screen, `--toast-bottom` above it (24px by default). Placed in
+ * Renders the toasts of ToastStore at the bottom of the screen, errors in red and confirmations in green, `--toast-bottom` above it (24px by default). Placed in
  * the Shell, and in each modal open while a toast can show: only the last outlet created renders them, as a modal
  * <dialog> hides the page below it.
  */

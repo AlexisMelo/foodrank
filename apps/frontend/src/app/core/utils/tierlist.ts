@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import type { Tierlist } from '@/core/models/tierlist.model';
 
 /**
@@ -54,25 +55,6 @@ export const TIERLIST_EMOJIS = [
 export const DEFAULT_TIERLIST_EMOJI = TIERLIST_EMOJIS[0];
 
 /**
- * `text` as compared by the tierlist search: lower case, without accents
- */
-function searchable(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase();
-}
-
-/**
- * The tierlists whose name contains `query`, ignoring case and accents, in the same order; all of them when the query
- * is blank
- */
-export function filterTierlistsByName(tierlists: readonly Tierlist[], query: string): Tierlist[] {
-  const searched = searchable(query.trim());
-  return tierlists.filter((tierlist) => searchable(tierlist.name).includes(searched));
-}
-
-/**
  * Copy of `tierlists`, the most recently updated first (a restaurant added or removed, a pin changed)
  */
 export function byLastUpdate(tierlists: readonly Tierlist[]): Tierlist[] {
@@ -93,4 +75,56 @@ export function toggleId(ids: readonly number[], id: number): number[] {
  */
 export function containsRestaurant(tierlist: Tierlist, restaurantId: string): boolean {
   return tierlist.restaurants.some((entry) => entry.restaurantId === restaurantId);
+}
+
+/**
+ * `tierlist` once the restaurant `restaurantId` was added to it, `saved` being the tierlist the API answered: the
+ * restaurant's entry added at the end, and the last update of `saved` when it is later. The API answers each addition
+ * with the restaurants it read before adding, so the answers of additions sent together each miss the others: merging
+ * each answer into the tierlist shown keeps them all.
+ */
+export function withAddedRestaurant(
+  tierlist: Tierlist,
+  saved: Tierlist,
+  restaurantId: string,
+): Tierlist {
+  if (containsRestaurant(tierlist, restaurantId)) return tierlist;
+  const entry = saved.restaurants.find((e) => e.restaurantId === restaurantId) ?? {
+    restaurantId,
+    addedAt: null,
+  };
+  const savedIsLater = new Date(saved.updatedAt).getTime() > new Date(tierlist.updatedAt).getTime();
+  return {
+    ...tierlist,
+    restaurants: [...tierlist.restaurants, entry],
+    updatedAt: savedIsLater ? saved.updatedAt : tierlist.updatedAt,
+  };
+}
+
+/**
+ * True when the API refused to add a restaurant to a tierlist because it is already in it (409)
+ */
+export function isAlreadyInTierlist(error: unknown): boolean {
+  return error instanceof HttpErrorResponse && error.status === 409;
+}
+
+/**
+ * Toast telling the restaurant `restaurantName` is already in the tierlist `tierlistName`
+ */
+export function alreadyInTierlistMessage(restaurantName: string, tierlistName: string): string {
+  return `${restaurantName} is already in ${tierlistName}.`;
+}
+
+/**
+ * Toast telling why the restaurant `restaurantName` could not be added to the tierlist `tierlistName`: already in it
+ * (409), or any other `error` of the API
+ */
+export function addToTierlistErrorMessage(
+  error: unknown,
+  restaurantName: string,
+  tierlistName: string,
+): string {
+  return isAlreadyInTierlist(error)
+    ? alreadyInTierlistMessage(restaurantName, tierlistName)
+    : `Couldn't add ${restaurantName} to ${tierlistName}, try again.`;
 }

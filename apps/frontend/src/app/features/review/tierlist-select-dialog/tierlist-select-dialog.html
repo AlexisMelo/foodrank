@@ -6,11 +6,11 @@
 >
   @for (tierlist of shownTierlists(); track tierlist.id) {
     @if (isAlreadyIn(tierlist)) {
-      <div class="tierlist-row select-row select-row-locked">
-        <span class="tierlist-row-cover" aria-hidden="true">{{ tierlist.emoji }}</span>
-        <span class="tierlist-row-info">
-          <span class="tierlist-row-name">{{ tierlist.name }}</span>
-          <span class="tierlist-row-count">
+      <div class="search-row select-row select-row-locked">
+        <span class="search-row-cover" aria-hidden="true">{{ tierlist.emoji }}</span>
+        <span class="search-row-info">
+          <span class="search-row-name">{{ tierlist.name }}</span>
+          <span class="search-row-detail">
             {{ restaurantCountLabel(tierlist.restaurants.length) }}
           </span>
         </span>
@@ -24,11 +24,11 @@
         </span>
       </div>
     } @else {
-      <label class="tierlist-row select-row">
-        <span class="tierlist-row-cover" aria-hidden="true">{{ tierlist.emoji }}</span>
-        <span class="tierlist-row-info">
-          <span class="tierlist-row-name">{{ tierlist.name }}</span>
-          <span class="tierlist-row-count">
+      <label class="search-row select-row">
+        <span class="search-row-cover" aria-hidden="true">{{ tierlist.emoji }}</span>
+        <span class="search-row-info">
+          <span class="search-row-name">{{ tierlist.name }}</span>
+          <span class="search-row-detail">
             {{ restaurantCountLabel(tierlist.restaurants.length) }}
           </span>
         </span>
@@ -41,7 +41,7 @@
       </label>
     }
   } @empty {
-    <p class="tierlist-list-message">No tierlist matches “{{ query().trim() }}”.</p>
+    <p class="search-list-message">No tierlist matches “{{ query().trim() }}”.</p>
   }
 
   <div searchDialogFooter class="footer">

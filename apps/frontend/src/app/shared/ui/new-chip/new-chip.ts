@@ -4,8 +4,8 @@ import { RouterLink } from '@angular/router';
 import { LockIcon } from '../lock-icon/lock-icon';
 
 /**
- * Small rounded "+ New" chip, next to a section title: a link when it opens a page, a button otherwise, and a disabled
- * button with a padlock while locked.
+ * Small rounded "+ New" chip (or "+ Add", ...), next to a section title or a count: a link when it opens a page, a
+ * button otherwise, and a disabled button with a padlock while locked.
  */
 @Component({
   imports: [LockIcon, NgTemplateOutlet, RouterLink],
@@ -14,6 +14,17 @@ import { LockIcon } from '../lock-icon/lock-icon';
   templateUrl: './new-chip.html',
 })
 export class NewChip {
+  /**
+   * Text after the "+", e.g. "Add"
+   */
+  readonly label = input('New');
+
+  /**
+   * Accessible name when the label alone is not explicit enough, e.g. "Add restaurants to Date night"; undefined to
+   * use the label
+   */
+  readonly ariaLabel = input<string>();
+
   /**
    * Route the chip links to, e.g. /tierlists/new; undefined for a button emitting pressed instead
    */

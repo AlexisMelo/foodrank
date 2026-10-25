@@ -1,7 +1,8 @@
 import { Component, computed, input, model, output, signal } from '@angular/core';
 import type { Tierlist } from '@/core/models/tierlist.model';
 import { restaurantCountLabel } from '@/core/utils/profile';
-import { containsRestaurant, filterTierlistsByName, toggleId } from '@/core/utils/tierlist';
+import { filterByName } from '@/core/utils/search';
+import { containsRestaurant, toggleId } from '@/core/utils/tierlist';
 import { LockIcon } from '@/shared/ui/lock-icon/lock-icon';
 import { SearchDialog } from '@/shared/ui/search-dialog/search-dialog';
 
@@ -46,9 +47,7 @@ export class TierlistSelectDialog {
   /**
    * The tierlists listed, filtered by the search
    */
-  protected readonly shownTierlists = computed(() =>
-    filterTierlistsByName(this.tierlists(), this.query()),
-  );
+  protected readonly shownTierlists = computed(() => filterByName(this.tierlists(), this.query()));
 
   /**
    * Label of the number of restaurants: "1 restaurant", "3 restaurants"

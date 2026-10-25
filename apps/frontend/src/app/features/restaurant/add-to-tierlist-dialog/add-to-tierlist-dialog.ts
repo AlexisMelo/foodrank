@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -7,15 +6,15 @@ import { TierlistApi } from '@/core/api/tierlist-api';
 import type { Tierlist } from '@/core/models/tierlist.model';
 import { ToastStore } from '@/core/toast/toast-store';
 import { restaurantCountLabel } from '@/core/utils/profile';
-import { byLastUpdate, containsRestaurant, filterTierlistsByName } from '@/core/utils/tierlist';
+import { SavingIds } from '@/core/utils/saving-ids';
+import { filterByName } from '@/core/utils/search';
+import {
+  addToTierlistErrorMessage,
+  alreadyInTierlistMessage,
+  byLastUpdate,
+  containsRestaurant,
+} from '@/core/utils/tierlist';
 import { SearchDialog } from '@/shared/ui/search-dialog/search-dialog';
-
-/**
- * True when the API refused the addition because the restaurant is already in the tierlist (409)
- */
-function isAlreadyInTierlist(error: unknown): boolean {
-  return error instanceof HttpErrorResponse && error.status === 409;
-}
 
 /**
  * Popup of the restaurant page adding the restaurant to the logged-in user's tierlists: their tierlists, the most
@@ -91,7 +90,7 @@ export class AddToTierlistDialog {
    * The tierlists listed, filtered by the search; empty while loading and when the API fails
    */
   protected readonly shownTierlists = computed(() =>
-    filterTierlistsByName(
+    filterByName(
       this.tierlistsResource.hasValue() ? this.tierlistsResource.value() : [],
       this.query(),
     ),
@@ -100,7 +99,7 @@ export class AddToTierlistDialog {
   /**
    * Ids of the tierlists whose change is being saved: their row is disabled, so the change is not sent twice
    */
-  protected readonly savingIds = signal<ReadonlySet<number>>(new Set());
+  protected readonly saving = new SavingIds<number>();
 
   /**
    * Label of the number of restaurants: "1 restaurant", "3 restaurants"
@@ -119,19 +118,14 @@ export class AddToTierlistDialog {
    * or when the API fails
    */
   protected async add(tierlist: Tierlist): Promise<void> {
-    if (this.savingIds().has(tierlist.id)) return;
-    const alreadyIn = `${this.restaurantName()} is already in ${tierlist.name}.`;
     if (this.contains(tierlist)) {
-      this.toasts.show(alreadyIn);
+      this.toasts.show(alreadyInTierlistMessage(this.restaurantName(), tierlist.name));
       return;
     }
     await this.save(
       tierlist,
       this.tierlistApi.addRestaurantToTierlist(tierlist.id, this.restaurantId()),
-      (error) =>
-        isAlreadyInTierlist(error)
-          ? alreadyIn
-          : `Couldn't add ${this.restaurantName()} to ${tierlist.name}, try again.`,
+      (error) => addToTierlistErrorMessage(error, this.restaurantName(), tierlist.name),
     );
   }
 
@@ -139,7 +133,6 @@ export class AddToTierlistDialog {
    * Removes the restaurant from `tierlist`; a toast says when the API fails
    */
   protected async remove(tierlist: Tierlist): Promise<void> {
-    if (this.savingIds().has(tierlist.id)) return;
     await this.save(
       tierlist,
       this.tierlistApi.removeRestaurantFromTierlist(tierlist.id, this.restaurantId()),
@@ -149,27 +142,23 @@ export class AddToTierlistDialog {
 
   /**
    * Sends `request` changing `tierlist`, its row disabled meanwhile, and lists the tierlist answered by the API in its
-   * place; on failure, shows the toast `failure` gives for the error, the row unchanged
+   * place; on failure, shows the toast `failure` gives for the error, the row unchanged. Does nothing while a change
+   * of the same tierlist is being saved
    */
   private async save(
     tierlist: Tierlist,
     request: Observable<Tierlist>,
     failure: (error: unknown) => string,
   ): Promise<void> {
-    this.savingIds.update((ids) => new Set(ids).add(tierlist.id));
-    try {
-      const saved = await firstValueFrom(request);
-      this.tierlistsResource.value.update((tierlists) =>
-        tierlists?.map((t) => (t.id === saved.id ? saved : t)),
-      );
-    } catch (error) {
-      this.toasts.show(failure(error));
-    } finally {
-      this.savingIds.update((ids) => {
-        const remaining = new Set(ids);
-        remaining.delete(tierlist.id);
-        return remaining;
-      });
-    }
+    await this.saving.run(tierlist.id, async () => {
+      try {
+        const saved = await firstValueFrom(request);
+        this.tierlistsResource.value.update((tierlists) =>
+          tierlists?.map((t) => (t.id === saved.id ? saved : t)),
+        );
+      } catch (error) {
+        this.toasts.show(failure(error));
+      }
+    });
   }
 }

@@ -30,6 +30,12 @@
   line-height: 1.4;
 }
 
+// A change saved, instead of an error
+.toast-success {
+  background: #152a17;
+  border-color: rgba(119, 221, 119, 0.4);
+}
+
 .toast-message {
   flex: 1;
 }

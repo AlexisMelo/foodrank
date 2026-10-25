@@ -1,5 +1,13 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import type { Tierlist } from '@/core/models/tierlist.model';
-import { byLastUpdate, containsRestaurant, filterTierlistsByName, toggleId } from './tierlist';
+import {
+  addToTierlistErrorMessage,
+  byLastUpdate,
+  containsRestaurant,
+  isAlreadyInTierlist,
+  toggleId,
+  withAddedRestaurant,
+} from './tierlist';
 
 /**
  * Builds the tierlist `id` named `name`, last updated at `updatedAt`, holding `restaurantIds`.
@@ -22,32 +30,6 @@ function tierlist(
     pinned: false,
   };
 }
-
-describe('filterTierlistsByName', () => {
-  /**
-   * Tierlists searched, one with accents in its name
-   */
-  const tierlists = [
-    tierlist(1, 'Crêpes du dimanche'),
-    tierlist(2, 'Top 10'),
-    tierlist(3, 'Date night'),
-  ];
-
-  it('keeps the tierlists whose name contains the query, whatever its case and accents, in the same order', () => {
-    expect(filterTierlistsByName(tierlists, 'CREPE').map((t) => t.id)).toEqual([1]);
-    expect(filterTierlistsByName(tierlists, 'dimanche').map((t) => t.id)).toEqual([1]);
-    expect(filterTierlistsByName(tierlists, 'T').map((t) => t.id)).toEqual([2, 3]);
-  });
-
-  it('keeps every tierlist for a blank query, ignoring the spaces around a query', () => {
-    expect(filterTierlistsByName(tierlists, '   ').map((t) => t.id)).toEqual([1, 2, 3]);
-    expect(filterTierlistsByName(tierlists, '  top ').map((t) => t.id)).toEqual([2]);
-  });
-
-  it('keeps nothing when no name matches', () => {
-    expect(filterTierlistsByName(tierlists, 'sushi')).toEqual([]);
-  });
-});
 
 describe('byLastUpdate', () => {
   it('sorts a copy of the tierlists, the most recently updated first', () => {
@@ -75,5 +57,65 @@ describe('containsRestaurant', () => {
 
     expect(containsRestaurant(top, 'r2')).toBe(true);
     expect(containsRestaurant(top, 'r3')).toBe(false);
+  });
+});
+
+describe('withAddedRestaurant', () => {
+  it("adds the restaurant's entry answered by the API at the end, with the answer's last update", () => {
+    const shown = tierlist(1, 'Top 10', '2026-10-01T10:00:00Z', ['r1']);
+    const saved = {
+      ...tierlist(1, 'Top 10', '2026-10-25T10:00:00Z'),
+      restaurants: [
+        { restaurantId: 'r1', addedAt: null },
+        { restaurantId: 'r2', addedAt: '2026-10-25T10:00:00Z' },
+      ],
+    };
+
+    const merged = withAddedRestaurant(shown, saved, 'r2');
+
+    expect(merged.restaurants).toEqual([
+      { restaurantId: 'r1', addedAt: null },
+      { restaurantId: 'r2', addedAt: '2026-10-25T10:00:00Z' },
+    ]);
+    expect(merged.updatedAt).toBe('2026-10-25T10:00:00Z');
+  });
+
+  it('keeps the restaurants added meanwhile, which an answer of two additions sent together misses', () => {
+    // r2 then r3 sent together: the API read the tierlist before either was added, and answers each without the other
+    const empty = tierlist(1, 'Top 10', '2026-10-01T10:00:00Z');
+    const savedR2 = tierlist(1, 'Top 10', '2026-10-25T10:00:00Z', ['r2']);
+    const savedR3 = tierlist(1, 'Top 10', '2026-10-25T10:00:01Z', ['r3']);
+
+    const merged = withAddedRestaurant(withAddedRestaurant(empty, savedR3, 'r3'), savedR2, 'r2');
+
+    expect(merged.restaurants.map((e) => e.restaurantId)).toEqual(['r3', 'r2']);
+    // The answer received last is the older one
+    expect(merged.updatedAt).toBe('2026-10-25T10:00:01Z');
+  });
+
+  it('leaves the tierlist unchanged when it already holds the restaurant', () => {
+    const shown = tierlist(1, 'Top 10', undefined, ['r1']);
+
+    expect(withAddedRestaurant(shown, tierlist(1, 'Top 10', undefined, ['r1']), 'r1')).toBe(shown);
+  });
+});
+
+describe('addToTierlistErrorMessage', () => {
+  it('tells the restaurant is already in the tierlist when the API answers 409', () => {
+    const conflict = new HttpErrorResponse({ status: 409 });
+
+    expect(isAlreadyInTierlist(conflict)).toBe(true);
+    expect(addToTierlistErrorMessage(conflict, 'Pizza Roma', 'Top 10')).toBe(
+      'Pizza Roma is already in Top 10.',
+    );
+  });
+
+  it('asks to try again for any other error', () => {
+    const unavailable = new HttpErrorResponse({ status: 503 });
+
+    expect(isAlreadyInTierlist(unavailable)).toBe(false);
+    expect(addToTierlistErrorMessage(unavailable, 'Pizza Roma', 'Top 10')).toBe(
+      "Couldn't add Pizza Roma to Top 10, try again.",
+    );
   });
 });

@@ -16,8 +16,10 @@ import {
   rankTierlistRestaurants,
 } from '@/core/utils/ranking';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog/confirm-dialog';
+import { NewChip } from '@/shared/ui/new-chip/new-chip';
 import { RankedRestaurantItem } from '@/shared/ui/ranked-restaurant-item/ranked-restaurant-item';
 import { UserAvatar } from '@/shared/ui/user-avatar/user-avatar';
+import { AddRestaurantsDialog } from '../add-restaurants-dialog/add-restaurants-dialog';
 import { TierlistPinButton } from '../tierlist-pin-button/tierlist-pin-button';
 
 /**
@@ -35,7 +37,7 @@ interface TierlistPage {
   owner: UserProfile | null;
 
   /**
-   * Every rating of the owner, which ranks the restaurants of the tierlist
+   * Every rating of the owner, which ranks the restaurants of the tierlist, and lists the restaurants the owner can add
    */
   ownerRatings: UserRating[];
 
@@ -48,11 +50,20 @@ interface TierlistPage {
 
 /**
  * Tierlist page (/tierlists/:id), of any user: the tierlist, its owner and its restaurants ranked by the owner's
- * ratings. Its owner can pin it to their profile, and remove its restaurants after confirming. On someone else's
- * tierlist, the restaurants I never rated have a "+" opening their rating page, as on someone else's profile.
+ * ratings. Its owner can pin it to their profile, add the restaurants they rated from a popup, and remove its
+ * restaurants after confirming. On someone else's tierlist, the restaurants I never rated have a "+" opening their
+ * rating page, as on someone else's profile.
  */
 @Component({
-  imports: [ConfirmDialog, RankedRestaurantItem, RouterLink, TierlistPinButton, UserAvatar],
+  imports: [
+    AddRestaurantsDialog,
+    ConfirmDialog,
+    NewChip,
+    RankedRestaurantItem,
+    RouterLink,
+    TierlistPinButton,
+    UserAvatar,
+  ],
   selector: 'app-tierlist-detail',
   styleUrl: './tierlist-detail.scss',
   templateUrl: './tierlist-detail.html',
@@ -109,7 +120,7 @@ export class TierlistDetail {
   protected readonly loadError = computed(() => this.pageResource.status() === 'error');
 
   /**
-   * True when the logged-in user owns the tierlist: they can pin it
+   * True when the logged-in user owns the tierlist: they can pin it, add restaurants to it and remove them
    */
   protected readonly isOwner = computed(
     () => this.page()?.tierlist.userId === this.auth.loggedInUserId(),
@@ -144,6 +155,11 @@ export class TierlistDetail {
    * Label of the number of restaurants: "1 restaurant", "3 restaurants"
    */
   protected readonly restaurantCountLabel = restaurantCountLabel;
+
+  /**
+   * True while the popup adding restaurants to the tierlist is open, for its owner
+   */
+  protected readonly addDialogOpen = signal(false);
 
   /**
    * The restaurant the owner asked to remove, shown in the confirmation popup; null while it is closed
@@ -202,6 +218,13 @@ export class TierlistDetail {
   }
 
   /**
+   * Shows `tierlist` in place of the one loaded: saved by the API, or with the restaurants added from the popup
+   */
+  protected showTierlist(tierlist: Tierlist): void {
+    this.pageResource.value.update((page) => page && { ...page, tierlist });
+  }
+
+  /**
    * Pins the tierlist, or unpins it. Saved through the API, so the pin shows on the profile; the button shows the
    * saved state, unchanged on failure
    */
@@ -214,7 +237,7 @@ export class TierlistDetail {
       const saved = await firstValueFrom(
         this.tierlistApi.setTierlistPinned(tierlist.id, !tierlist.pinned),
       );
-      this.pageResource.value.update((page) => page && { ...page, tierlist: saved });
+      this.showTierlist(saved);
     } catch {
       this.pinError.set(true);
     } finally {
@@ -251,7 +274,7 @@ export class TierlistDetail {
       const saved = await firstValueFrom(
         this.tierlistApi.removeRestaurantFromTierlist(tierlist.id, restaurant.restaurantId),
       );
-      this.pageResource.value.update((page) => page && { ...page, tierlist: saved });
+      this.showTierlist(saved);
       this.pendingRemoval.set(null);
     } catch {
       this.removeError.set("Couldn't remove the restaurant, try again.");

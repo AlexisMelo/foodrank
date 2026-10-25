@@ -48,6 +48,18 @@ describe('ToastOutlet', () => {
     expect(query(fixture, '.toast').getAttribute('role')).toBe('alert');
   });
 
+  it('renders a confirmation as a status, in green, the errors staying alerts', async () => {
+    toasts.show('Could not save');
+    toasts.show('Pizza Roma added to Top 10.', 'success');
+    await fixture.whenStable();
+
+    const [error, success] = queryAll(fixture, '.toast');
+    expect(error!.getAttribute('role')).toBe('alert');
+    expect(error!.classList).not.toContain('toast-success');
+    expect(success!.getAttribute('role')).toBe('status');
+    expect(success!.classList).toContain('toast-success');
+  });
+
   it('renders the toasts only in the modal outlet while the modal is open, then in the page again', async () => {
     fixture.componentInstance.modalOpen.set(true);
     toasts.show('Already in Top 10');

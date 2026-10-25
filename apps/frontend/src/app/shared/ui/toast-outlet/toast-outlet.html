@@ -1,7 +1,13 @@
 @if (active()) {
   <div class="toasts">
     @for (toast of toastStore.toasts(); track toast.id) {
-      <div class="toast" role="alert" animate.enter="toast-enter">
+      <!-- An error interrupts the screen reader; a confirmation waits for it to finish -->
+      <div
+        class="toast"
+        [class.toast-success]="toast.kind === 'success'"
+        [attr.role]="toast.kind === 'error' ? 'alert' : 'status'"
+        animate.enter="toast-enter"
+      >
         <span class="toast-message">{{ toast.message }}</span>
         <button
           type="button"

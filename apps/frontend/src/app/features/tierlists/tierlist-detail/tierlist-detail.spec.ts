@@ -32,6 +32,7 @@ function rating(restaurantId: string, score: number): UserRating {
     restaurantName: `Restaurant ${restaurantId}`,
     restaurantEmoji: '🍕',
     restaurantCuisine: 'Italian',
+    restaurantAddress: '',
     date: '2026-03-07T12:00:00+00:00',
     food: score,
     service: score,
@@ -71,15 +72,17 @@ describe('TierlistDetailView', () => {
   let fetchTierlistById: ReturnType<typeof vi.fn>;
   let setTierlistPinned: ReturnType<typeof vi.fn>;
   let removeRestaurantFromTierlist: ReturnType<typeof vi.fn>;
+  let addRestaurantToTierlist: ReturnType<typeof vi.fn>;
   let fetchUserRatings: ReturnType<typeof vi.fn>;
   let harness: RouterTestingHarness;
 
   beforeEach(async () => {
-    // The removal is confirmed in a native dialog
+    // The removal is confirmed, and the restaurants are added, in native dialogs
     stubDialogs();
     fetchTierlistById = vi.fn();
     setTierlistPinned = vi.fn();
     removeRestaurantFromTierlist = vi.fn();
+    addRestaurantToTierlist = vi.fn();
     fetchUserRatings = vi.fn((id = 'me') => of(ratings[id] ?? []));
     TestBed.configureTestingModule({
       providers: [
@@ -96,6 +99,7 @@ describe('TierlistDetailView', () => {
             fetchTierlistById,
             setTierlistPinned,
             removeRestaurantFromTierlist,
+            addRestaurantToTierlist,
             fetchTierlistsByUserId: () => of([]),
           },
         },
@@ -328,6 +332,78 @@ describe('TierlistDetailView', () => {
 
       expect(queryAll(harness.fixture, '.list-item')).toHaveLength(2);
       expect(queryAll(harness.fixture, '.remove-btn')).toHaveLength(0);
+    });
+  });
+
+  describe('adding restaurants', () => {
+    beforeEach(() => {
+      // u1 also rated r3, which is not in the tierlist
+      fetchUserRatings.mockImplementation((id = 'me') =>
+        of(id === 'u1' ? [rating('r3', 70), rating('r1', 40)] : (ratings[id] ?? [])),
+      );
+    });
+
+    /**
+     * Opens the owner's tierlist 7, then the popup adding restaurants to it.
+     */
+    async function openAddPopup(): Promise<void> {
+      fetchTierlistById.mockReturnValue(of(tierlistOf('u1')));
+      await openTierlist();
+      query(harness.fixture, '.add-chip').click();
+      await harness.fixture.whenStable();
+    }
+
+    it('offers the owner, next to the count, a popup listing the restaurants they rated not in the tierlist', async () => {
+      await openAddPopup();
+
+      const chip = query(harness.fixture, '.list-header-end .add-chip');
+      expect(textOf(chip)).toBe('Add');
+      expect(chip.getAttribute('aria-label')).toBe('Add restaurants to Date night');
+      expect(query<HTMLDialogElement>(harness.fixture, 'dialog').open).toBe(true);
+      expect(queryAll(harness.fixture, 'dialog .search-row-name').map(textOf)).toEqual([
+        'Restaurant r3',
+      ]);
+    });
+
+    it('shows the restaurant added in the tierlist behind the popup, which stays open', async () => {
+      addRestaurantToTierlist.mockReturnValue(
+        of({
+          ...tierlistOf('u1'),
+          restaurants: ['r1', 'r2', 'r3'].map((restaurantId) => ({ restaurantId, addedAt: null })),
+        }),
+      );
+      await openAddPopup();
+
+      query(harness.fixture, 'dialog [aria-label="Add Restaurant r3 to Date night"]').click();
+      await harness.fixture.whenStable();
+
+      expect(addRestaurantToTierlist).toHaveBeenCalledWith(7, 'r3');
+      expect(textOf(query(harness.fixture, '.meta-chip'))).toBe('3 restaurants');
+      expect(
+        queryAll(harness.fixture, '.list-item').map((i) => textOf(i.querySelector('.item-name')!)),
+      ).toEqual(['Restaurant r3', 'Restaurant r1']);
+      expect(textOf(query(harness.fixture, 'dialog .search-list-message'))).toBe(
+        'Every restaurant you rated is in Date night.',
+      );
+      expect(textOf(query(harness.fixture, 'dialog .toast-message'))).toBe(
+        'Restaurant r3 added to Date night.',
+      );
+    });
+
+    it('closes the popup from its × button', async () => {
+      await openAddPopup();
+
+      query(harness.fixture, 'dialog .close-btn').click();
+      await harness.fixture.whenStable();
+
+      expect(queryAll(harness.fixture, 'dialog')).toHaveLength(0);
+    });
+
+    it("is not offered on someone else's tierlist", async () => {
+      fetchTierlistById.mockReturnValue(of(tierlistOf('u2')));
+      await openTierlist();
+
+      expect(queryAll(harness.fixture, '.add-chip')).toHaveLength(0);
     });
   });
 

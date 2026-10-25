@@ -1,14 +1,20 @@
 @if (locked()) {
-  <button type="button" class="add-chip" disabled [attr.title]="lockedReason()">
+  <button
+    type="button"
+    class="add-chip"
+    disabled
+    [attr.title]="lockedReason()"
+    [attr.aria-label]="ariaLabel()"
+  >
     <ng-container [ngTemplateOutlet]="content" />
     <app-lock-icon class="lock" />
   </button>
 } @else if (link(); as link) {
-  <a class="add-chip" [routerLink]="link">
+  <a class="add-chip" [routerLink]="link" [attr.aria-label]="ariaLabel()">
     <ng-container [ngTemplateOutlet]="content" />
   </a>
 } @else {
-  <button type="button" class="add-chip" (click)="pressed.emit()">
+  <button type="button" class="add-chip" [attr.aria-label]="ariaLabel()" (click)="pressed.emit()">
     <ng-container [ngTemplateOutlet]="content" />
   </button>
 }
@@ -25,5 +31,5 @@
     <line x1="12" y1="5" x2="12" y2="19" />
     <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
-  New
+  {{ label() }}
 </ng-template>

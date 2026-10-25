@@ -154,6 +154,11 @@ export interface UserRating {
   restaurantCuisine: string;
 
   /**
+   * Postal address of the restaurant rated, empty when unknown
+   */
+  restaurantAddress: string;
+
+  /**
    * Moment of the rating, ISO 8601 in UTC (e.g. "2026-03-07T21:30:00+00:00"); see `formatRatingDate`
    */
   date: string;

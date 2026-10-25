@@ -1,0 +1,37 @@
+<app-search-dialog
+  heading="Add restaurants"
+  searchLabel="Search the restaurants you rated"
+  [(query)]="query"
+  (closed)="closed.emit()"
+>
+  @if (noRatedRestaurant()) {
+    <p class="search-list-message">
+      Only the restaurants you rated can be added, and you haven't rated any yet.
+    </p>
+  } @else if (allAdded()) {
+    <p class="search-list-message">Every restaurant you rated is in {{ tierlist().name }}.</p>
+  } @else {
+    @for (restaurant of shownRestaurants(); track restaurant.restaurantId) {
+      <div class="search-row restaurant-row">
+        <span class="search-row-cover" aria-hidden="true">{{ restaurant.emoji || '🍽️' }}</span>
+        <span class="search-row-info">
+          <span class="search-row-name">{{ restaurant.name }}</span>
+          @if (restaurant.address) {
+            <span class="search-row-detail">{{ restaurant.address }}</span>
+          }
+        </span>
+        <button
+          type="button"
+          class="search-row-action add-btn"
+          [disabled]="saving.has(restaurant.restaurantId)"
+          [attr.aria-label]="'Add ' + restaurant.name + ' to ' + tierlist().name"
+          (click)="add(restaurant)"
+        >
+          Add
+        </button>
+      </div>
+    } @empty {
+      <p class="search-list-message">No restaurant matches “{{ query().trim() }}”.</p>
+    }
+  }
+</app-search-dialog>

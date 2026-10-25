@@ -6,6 +6,11 @@ import { Service, computed, signal } from '@angular/core';
 export const TOAST_DURATION_MS = 4000;
 
 /**
+ * Kind of a toast: an error (red, announced at once) or the confirmation of a change saved (green)
+ */
+export type ToastKind = 'error' | 'success';
+
+/**
  * A message shown at the bottom of the app for a few seconds.
  */
 export interface Toast {
@@ -18,10 +23,16 @@ export interface Toast {
    * Text of the toast
    */
   message: string;
+
+  /**
+   * Error or confirmation, which sets its color and how it is announced
+   */
+  kind: ToastKind;
 }
 
 /**
- * Error messages shown at the bottom of the app for a few seconds (toasts), and the outlets rendering them. Only the
+ * Messages (errors, confirmations) shown at the bottom of the app for a few seconds (toasts), and the outlets rendering
+ * them. Only the
  * last outlet registered renders the toasts: a modal <dialog> sits above the page and makes it inert, hiding the
  * page's toasts, so a modal open while a toast can show registers its own outlet, and hands back once removed.
  */
@@ -53,11 +64,11 @@ export class ToastStore {
   readonly activeOutlet = computed(() => this.outlets().at(-1));
 
   /**
-   * Shows `message` for TOAST_DURATION_MS, after the toasts already shown
+   * Shows `message` for TOAST_DURATION_MS, after the toasts already shown: an error, unless `kind` says otherwise
    */
-  show(message: string): void {
+  show(message: string, kind: ToastKind = 'error'): void {
     const id = this.nextToastId++;
-    this.shown.update((toasts) => [...toasts, { id, message }]);
+    this.shown.update((toasts) => [...toasts, { id, message, kind }]);
     setTimeout(() => this.dismiss(id), TOAST_DURATION_MS);
   }
 

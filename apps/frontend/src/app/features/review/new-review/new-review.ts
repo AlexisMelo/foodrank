@@ -13,7 +13,7 @@ import type { Restaurant } from '@/core/models/restaurant.model';
 import type { Tierlist } from '@/core/models/tierlist.model';
 import { DailyReviewStore, REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
 import { ToastStore } from '@/core/toast/toast-store';
-import { byLastUpdate, containsRestaurant } from '@/core/utils/tierlist';
+import { byLastUpdate, containsRestaurant, isAlreadyInTierlist } from '@/core/utils/tierlist';
 import { LockIcon } from '@/shared/ui/lock-icon/lock-icon';
 import { CriterionSlider, type ReviewMarker } from '../criterion-slider/criterion-slider';
 import { type PastReview, pickMarkers } from '../rating-scale';
@@ -57,13 +57,6 @@ function pastReviews(ratings: readonly UserRating[], ratedId: string): ReviewedR
  * True when the API refused the rating because the user already rated a restaurant today (409)
  */
 function isAlreadyRatedToday(error: unknown): boolean {
-  return error instanceof HttpErrorResponse && error.status === 409;
-}
-
-/**
- * True when the API refused to add the restaurant to a tierlist because it is already in it (409): nothing to report
- */
-function isAlreadyInTierlist(error: unknown): boolean {
   return error instanceof HttpErrorResponse && error.status === 409;
 }
 

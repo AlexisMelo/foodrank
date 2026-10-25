@@ -1,0 +1,17 @@
+@use 'search-rows';
+
+// No button picking the whole row: the cover and the name sit in the row itself
+.restaurant-row {
+  gap: 12px;
+  padding: 8px;
+}
+
+// A .search-row-action
+.add-btn {
+  background: rgba(119, 221, 119, 0.12);
+  color: #77dd77;
+
+  &:hover:not(:disabled) {
+    background: rgba(119, 221, 119, 0.2);
+  }
+}

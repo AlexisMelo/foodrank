@@ -33,6 +33,13 @@ describe('ToastStore', () => {
     expect(messages()).toEqual([]);
   });
 
+  it('shows errors, unless told the message confirms a change', () => {
+    store.show('Could not save');
+    store.show('Pizza Roma added to Top 10.', 'success');
+
+    expect(store.toasts().map((toast) => toast.kind)).toEqual(['error', 'success']);
+  });
+
   it('hides a toast sooner when it is dismissed, leaving the others', () => {
     store.show('First');
     store.show('Second');
