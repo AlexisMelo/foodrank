@@ -1,8 +1,9 @@
+import { Location, ViewportScroller } from '@angular/common';
 import { Component, type WritableSignal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
+import { NavigationEnd, Router, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { Subject, of, throwError } from 'rxjs';
+import { Subject, filter, firstValueFrom, of, throwError } from 'rxjs';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import { UserApi } from '@/core/api/user-api';
 import { UserLocation } from '@/core/location/user-location';
@@ -81,6 +82,7 @@ describe('SearchResults', () => {
   let searchUsers: ReturnType<typeof vi.fn>;
   let createRestaurantFromPlace: ReturnType<typeof vi.fn>;
   let requestLocation: ReturnType<typeof vi.fn>;
+  let scrollToPosition: ReturnType<typeof vi.fn>;
   let location: WritableSignal<UserPosition | null>;
   let harness: RouterTestingHarness;
 
@@ -94,6 +96,7 @@ describe('SearchResults', () => {
     );
     createRestaurantFromPlace = vi.fn(() => of(stored(true)));
     requestLocation = vi.fn();
+    scrollToPosition = vi.fn();
     TestBed.configureTestingModule({
       providers: [
         provideRouter(
@@ -116,6 +119,7 @@ describe('SearchResults', () => {
           provide: UserLocation,
           useValue: { location, status: signal('idle'), requestLocation },
         },
+        { provide: ViewportScroller, useValue: { scrollToPosition } },
       ],
     });
     harness = await RouterTestingHarness.create();
@@ -126,6 +130,20 @@ describe('SearchResults', () => {
    */
   async function open(url: string): Promise<void> {
     await harness.navigateByUrl(url);
+    await harness.fixture.whenStable();
+  }
+
+  /**
+   * Goes back in the history like the browser's Back button, then waits for the page to load.
+   */
+  async function goBack(): Promise<void> {
+    const router = TestBed.inject(Router);
+    // Done by the initial navigation of the app, which tests do not run
+    router.setUpLocationChangeListener();
+    const navigated = firstValueFrom(router.events.pipe(filter((e) => e instanceof NavigationEnd)));
+    // The browser goes back later, as the Navigation API does
+    TestBed.inject(Location).back();
+    await navigated;
     await harness.fixture.whenStable();
   }
 
@@ -159,6 +177,15 @@ describe('SearchResults', () => {
   ): HTMLButtonElement | null {
     return (harness.fixture.nativeElement as HTMLElement).querySelector(
       `section[aria-labelledby="${section}-title"] .load-more`,
+    );
+  }
+
+  /**
+   * The "See all" link of the restaurants or the profiles, or null when there is none.
+   */
+  function seeAll(section: 'restaurants' | 'profiles'): HTMLAnchorElement | null {
+    return (harness.fixture.nativeElement as HTMLElement).querySelector(
+      `section[aria-labelledby="${section}-title"] .see-all-chip`,
     );
   }
 
@@ -234,6 +261,70 @@ describe('SearchResults', () => {
     ]);
   });
 
+  it('shows no "Show more" on the All tab, but "See all" next to each title, even when every result is shown', async () => {
+    await open('/search?q=pizza');
+
+    expect(moreButton('restaurants')).toBeNull();
+    expect(moreButton('profiles')).toBeNull();
+    expect(textOf(seeAll('restaurants')!)).toBe('See all');
+    expect(seeAll('restaurants')!.getAttribute('aria-label')).toBe('See all restaurants');
+    expect(seeAll('restaurants')!.getAttribute('href')).toBe('/search?q=pizza&type=restaurants');
+    // The 2 profiles found are all of them
+    expect(profileNames()).toEqual(['Camille', 'Camilou']);
+    expect(seeAll('profiles')!.getAttribute('aria-label')).toBe('See all profiles');
+    expect(seeAll('profiles')!.getAttribute('href')).toBe('/search?q=pizza&type=profiles');
+  });
+
+  it('opens the tab of the restaurants with "See all", from the top of the page, Back returning to the All tab', async () => {
+    await open('/search?q=pizza');
+
+    seeAll('restaurants')!.click();
+    await harness.fixture.whenStable();
+
+    expect(url()).toBe('/search?q=pizza&type=restaurants');
+    expect(pressedFilter()).toBe('Restaurants');
+    expect(sectionTitles()).toEqual(['Restaurants']);
+    expect(searchPlaces).toHaveBeenLastCalledWith('pizza', null, 10);
+    expect(restaurantNames()).toHaveLength(10);
+    expect(seeAll('restaurants')).toBeNull();
+    expect(searchUsers).toHaveBeenCalledTimes(1);
+    expect(scrollToPosition).toHaveBeenCalledExactlyOnceWith([0, 0]);
+
+    await goBack();
+
+    expect(url()).toBe('/search?q=pizza');
+    expect(pressedFilter()).toBe('All');
+  });
+
+  it('opens the tab of the profiles with "See all", from the top of the page', async () => {
+    searchUsers.mockImplementation((_: string, limit: number) => of(userPage(limit)));
+    await open('/search?q=user');
+    expect(profileNames()).toHaveLength(5);
+
+    seeAll('profiles')!.click();
+    await harness.fixture.whenStable();
+
+    expect(url()).toBe('/search?q=user&type=profiles');
+    expect(pressedFilter()).toBe('Profiles');
+    expect(sectionTitles()).toEqual(['Profiles']);
+    expect(searchUsers).toHaveBeenLastCalledWith('user', 10);
+    expect(profileNames()).toHaveLength(10);
+    expect(seeAll('profiles')).toBeNull();
+    expect(searchPlaces).toHaveBeenCalledTimes(1);
+    expect(scrollToPosition).toHaveBeenCalledExactlyOnceWith([0, 0]);
+  });
+
+  it('shows the OpenStreetMap attribution in the restaurants title row, on the All tab and theirs', async () => {
+    await open('/search?q=pizza');
+    expect(textOrNull('#restaurants-title + .see-all-chip + .attribution')).toBe(
+      '© OpenStreetMap contributors',
+    );
+
+    await open('/search?q=pizza&type=restaurants');
+
+    expect(textOrNull('#restaurants-title + .attribution')).toBe('© OpenStreetMap contributors');
+  });
+
   it('opens a profile found', async () => {
     await open('/search?q=camil');
     const camille = query(harness.fixture, '.profile-item');
@@ -245,27 +336,28 @@ describe('SearchResults', () => {
     expect(TestBed.inject(Router).url).toBe('/user/u2');
   });
 
-  it('shows 10 more restaurants on each "Show more", keeping the ones shown while they load', async () => {
+  it('shows the first 10 restaurants of their tab, then 10 more on each "Show more", keeping the ones shown while they load', async () => {
     const more = new Subject<SearchPage<PlaceSuggestion>>();
-    searchPlaces.mockReturnValueOnce(of(page('pizza', 5))).mockReturnValueOnce(more);
-    await open('/search?q=pizza');
+    searchPlaces.mockReturnValueOnce(of(page('pizza', 10))).mockReturnValueOnce(more);
+    await open('/search?q=pizza&type=restaurants');
+    expect(restaurantNames()).toHaveLength(10);
 
     moreButton()!.click();
     // Renders while more restaurants load (whenStable would wait for them)
     TestBed.tick();
 
-    expect(lastLimit()).toBe(15);
-    expect(restaurantNames()).toHaveLength(5);
+    expect(lastLimit()).toBe(20);
+    expect(restaurantNames()).toHaveLength(10);
     expect(queryAll(harness.fixture, '.skeleton')).toHaveLength(0);
     expect(textOf(moreButton()!)).toBe('Loading…');
     expect(moreButton()!.disabled).toBe(true);
 
-    more.next(page('pizza', 15));
+    more.next(page('pizza', 20));
     more.complete();
     await harness.fixture.whenStable();
 
-    expect(restaurantNames()).toHaveLength(15);
-    expect(restaurantNames()[14]).toBe('Place pizza-15');
+    expect(restaurantNames()).toHaveLength(20);
+    expect(restaurantNames()[19]).toBe('Place pizza-20');
     expect(textOf(moreButton()!)).toBe('Show more');
   });
 
@@ -273,7 +365,7 @@ describe('SearchResults', () => {
     searchPlaces.mockImplementation((q: string, _: UserPosition | null, limit: number) =>
       of(page(q, limit, 12)),
     );
-    await open('/search?q=pizza');
+    await open('/search?q=pizza&type=restaurants');
 
     await clickButton(harness.fixture, 'Show more');
 
@@ -285,7 +377,7 @@ describe('SearchResults', () => {
     searchPlaces.mockImplementation((q: string, _: UserPosition | null, limit: number) =>
       of(page(q, limit, 100)),
     );
-    await open('/search?q=pizza');
+    await open('/search?q=pizza&type=restaurants');
 
     const limits: number[] = [];
     for (let i = 0; i < 5; i++) {
@@ -293,23 +385,31 @@ describe('SearchResults', () => {
       limits.push(lastLimit());
     }
 
-    expect(limits).toEqual([15, 25, 35, 45, 50]);
+    expect(limits).toEqual([20, 30, 40, 50, 50]);
   });
 
-  it('starts again from 5 restaurants and 5 profiles when the query changes', async () => {
-    searchUsers.mockImplementation((_: string, limit: number) => of(userPage(limit)));
-    await open('/search?q=pizza');
+  it('starts again from the first 10 restaurants of their tab when the query changes', async () => {
+    await open('/search?q=pizza&type=restaurants');
     await clickMore('restaurants');
-    await clickMore('profiles');
-    expect(lastProfileLimit()).toBe(15);
+    expect(lastLimit()).toBe(20);
 
-    await open('/search?q=sushi');
+    await open('/search?q=sushi&type=restaurants');
 
-    expect(searchPlaces).toHaveBeenLastCalledWith('sushi', null, 5);
-    expect(restaurantNames()).toHaveLength(5);
+    expect(searchPlaces).toHaveBeenLastCalledWith('sushi', null, 10);
+    expect(restaurantNames()).toHaveLength(10);
     expect(restaurantNames()[0]).toBe('Place sushi-1');
-    expect(searchUsers).toHaveBeenLastCalledWith('sushi', 5);
-    expect(profileNames()).toHaveLength(5);
+  });
+
+  it('starts again from the first 10 profiles of their tab when the query changes', async () => {
+    searchUsers.mockImplementation((_: string, limit: number) => of(userPage(limit)));
+    await open('/search?q=user&type=profiles');
+    await clickMore('profiles');
+    expect(lastProfileLimit()).toBe(20);
+
+    await open('/search?q=camil&type=profiles');
+
+    expect(searchUsers).toHaveBeenLastCalledWith('camil', 10);
+    expect(profileNames()).toHaveLength(10);
   });
 
   it('ignores the late answer of a previous query', async () => {
@@ -353,17 +453,17 @@ describe('SearchResults', () => {
 
   it('keeps the restaurants shown when loading more fails, and lets the user try again', async () => {
     searchPlaces
-      .mockReturnValueOnce(of(page('pizza', 5)))
+      .mockReturnValueOnce(of(page('pizza', 10)))
       .mockReturnValueOnce(throwError(() => new Error('503')));
-    await open('/search?q=pizza');
+    await open('/search?q=pizza&type=restaurants');
 
     await clickButton(harness.fixture, 'Show more');
-    expect(restaurantNames()).toHaveLength(5);
+    expect(restaurantNames()).toHaveLength(10);
     expect(textOrNull('.restaurants-hint')).toBe('Search is unavailable right now');
 
     await clickButton(harness.fixture, 'Try again');
-    expect(lastLimit()).toBe(15);
-    expect(restaurantNames()).toHaveLength(15);
+    expect(lastLimit()).toBe(20);
+    expect(restaurantNames()).toHaveLength(20);
     expect(textOrNull('.restaurants-hint')).toBeNull();
   });
 
@@ -376,38 +476,39 @@ describe('SearchResults', () => {
     expect(textOrNull('.profiles-hint')).toBe('No profiles found');
     expect(moreButton('restaurants')).toBeNull();
     expect(moreButton('profiles')).toBeNull();
+    expect(seeAll('restaurants')).toBeNull();
+    expect(seeAll('profiles')).toBeNull();
     expect(textOrNull('.attribution')).toBeNull();
   });
 
-  it('shows the first 5 profiles, then 10 more on each "Show more", keeping the ones shown while they load', async () => {
+  it('shows the first 10 profiles of their tab, then 10 more on each "Show more", keeping the ones shown while they load', async () => {
     const more = new Subject<SearchPage<UserProfile>>();
-    searchUsers.mockReturnValueOnce(of(userPage(5))).mockReturnValueOnce(more);
-    await open('/search?q=user');
-    expect(profileNames()).toEqual(['User 1', 'User 2', 'User 3', 'User 4', 'User 5']);
+    searchUsers.mockReturnValueOnce(of(userPage(10))).mockReturnValueOnce(more);
+    await open('/search?q=user&type=profiles');
+    expect(profileNames()).toHaveLength(10);
+    expect(profileNames()[0]).toBe('User 1');
 
     moreButton('profiles')!.click();
     // Renders while more profiles load (whenStable would wait for them)
     TestBed.tick();
 
-    expect(lastProfileLimit()).toBe(15);
-    expect(profileNames()).toHaveLength(5);
+    expect(lastProfileLimit()).toBe(20);
+    expect(profileNames()).toHaveLength(10);
     expect(textOf(moreButton('profiles')!)).toBe('Loading…');
     expect(moreButton('profiles')!.disabled).toBe(true);
 
-    more.next(userPage(15));
+    more.next(userPage(20));
     more.complete();
     await harness.fixture.whenStable();
 
-    expect(profileNames()).toHaveLength(15);
-    expect(profileNames()[14]).toBe('User 15');
+    expect(profileNames()).toHaveLength(20);
+    expect(profileNames()[19]).toBe('User 20');
     expect(textOf(moreButton('profiles')!)).toBe('Show more');
-    // The restaurants do not depend on the profile search
-    expect(searchPlaces).toHaveBeenCalledTimes(1);
   });
 
   it('hides the profiles "Show more" once every profile is shown', async () => {
     searchUsers.mockImplementation((_: string, limit: number) => of(userPage(limit, 12)));
-    await open('/search?q=user');
+    await open('/search?q=user&type=profiles');
 
     await clickMore('profiles');
 
@@ -417,7 +518,7 @@ describe('SearchResults', () => {
 
   it('never asks for more profiles than the API returns at most', async () => {
     searchUsers.mockImplementation((_: string, limit: number) => of(userPage(limit, 100)));
-    await open('/search?q=user');
+    await open('/search?q=user&type=profiles');
 
     const limits: number[] = [];
     for (let i = 0; i < 5; i++) {
@@ -425,7 +526,7 @@ describe('SearchResults', () => {
       limits.push(lastProfileLimit());
     }
 
-    expect(limits).toEqual([15, 25, 35, 45, 50]);
+    expect(limits).toEqual([20, 30, 40, 50, 50]);
   });
 
   it('tells when the profile search fails, still showing the restaurants, and lets the user try again', async () => {
@@ -445,17 +546,17 @@ describe('SearchResults', () => {
   it('keeps the profiles shown when loading more fails, and lets the user try again', async () => {
     searchUsers
       .mockImplementation((_: string, limit: number) => of(userPage(limit)))
-      .mockReturnValueOnce(of(userPage(5)))
+      .mockReturnValueOnce(of(userPage(10)))
       .mockReturnValueOnce(throwError(() => new Error('503')));
-    await open('/search?q=user');
+    await open('/search?q=user&type=profiles');
 
     await clickMore('profiles');
-    expect(profileNames()).toHaveLength(5);
+    expect(profileNames()).toHaveLength(10);
     expect(textOrNull('.profiles-hint')).toBe("Profiles can't be searched right now");
 
     await clickMore('profiles');
-    expect(lastProfileLimit()).toBe(15);
-    expect(profileNames()).toHaveLength(15);
+    expect(lastProfileLimit()).toBe(20);
+    expect(profileNames()).toHaveLength(20);
     expect(textOrNull('.profiles-hint')).toBeNull();
   });
 
@@ -488,18 +589,24 @@ describe('SearchResults', () => {
     expect(sectionTitles()).toEqual(['Restaurants', 'Profiles']);
   });
 
-  it('shows only the profiles, keeping them and without searching the restaurants again', async () => {
-    await open('/search?q=pizza');
+  it('shows only the first 10 profiles, without searching the restaurants again, Back leaving the search', async () => {
+    searchUsers.mockImplementation((_: string, limit: number) => of(userPage(limit)));
+    await open('/search?q=user');
 
     await clickButton(harness.fixture, 'Profiles');
 
-    expect(url()).toBe('/search?q=pizza&type=profiles');
+    expect(url()).toBe('/search?q=user&type=profiles');
     expect(pressedFilter()).toBe('Profiles');
     expect(sectionTitles()).toEqual(['Profiles']);
     expect(restaurantNames()).toEqual([]);
-    expect(profileNames()).toEqual(['Camille', 'Camilou']);
+    expect(searchUsers).toHaveBeenLastCalledWith('user', 10);
+    expect(profileNames()).toHaveLength(10);
     expect(searchPlaces).toHaveBeenCalledTimes(1);
-    expect(searchUsers).toHaveBeenCalledTimes(1);
+
+    // The chip replaced the url: Back goes to the page before the search
+    await goBack();
+
+    expect(url()).toBe('/');
   });
 
   it('shows only the restaurants of a link filtered on them, without searching the profiles', async () => {
@@ -507,23 +614,43 @@ describe('SearchResults', () => {
 
     expect(pressedFilter()).toBe('Restaurants');
     expect(sectionTitles()).toEqual(['Restaurants']);
-    expect(restaurantNames()).toHaveLength(5);
+    expect(searchPlaces).toHaveBeenCalledExactlyOnceWith('pizza', null, 10);
+    expect(restaurantNames()).toHaveLength(10);
     expect(searchUsers).not.toHaveBeenCalled();
   });
 
-  it('shows all the results again, the restaurants as they were, searched again', async () => {
-    await open('/search?q=pizza');
-    await clickMore('restaurants');
-    await clickButton(harness.fixture, 'Profiles');
+  it('shows all the results again, 5 of each type', async () => {
+    await open('/search?q=pizza&type=profiles');
 
     await clickButton(harness.fixture, 'All');
 
     expect(url()).toBe('/search?q=pizza');
     expect(pressedFilter()).toBe('All');
     expect(sectionTitles()).toEqual(['Restaurants', 'Profiles']);
-    expect(searchPlaces).toHaveBeenCalledTimes(3);
-    expect(searchPlaces).toHaveBeenLastCalledWith('pizza', null, 15);
-    expect(restaurantNames()).toHaveLength(15);
+    expect(searchPlaces).toHaveBeenCalledExactlyOnceWith('pizza', null, 5);
+    expect(restaurantNames()).toHaveLength(5);
+    expect(searchUsers).toHaveBeenLastCalledWith('pizza', 5);
+  });
+
+  it('shows the first 5 restaurants already loaded at once on the All tab, while searching them again', async () => {
+    await open('/search?q=pizza&type=restaurants');
+    await clickMore('restaurants');
+    expect(restaurantNames()).toHaveLength(20);
+    searchPlaces.mockReturnValueOnce(new Subject<SearchPage<PlaceSuggestion>>());
+
+    await harness.navigateByUrl('/search?q=pizza');
+    // Renders while the restaurants load again (whenStable would wait for them)
+    TestBed.tick();
+
+    expect(searchPlaces).toHaveBeenLastCalledWith('pizza', null, 5);
+    expect(restaurantNames()).toEqual([
+      'Place pizza-1',
+      'Place pizza-2',
+      'Place pizza-3',
+      'Place pizza-4',
+      'Place pizza-5',
+    ]);
+    expect(moreButton()).toBeNull();
   });
 
   it('shows all the results for an unknown filter', async () => {
@@ -542,7 +669,7 @@ describe('SearchResults', () => {
 
     expect(url()).toBe('/search?q=sushi&type=profiles');
     expect(pressedFilter()).toBe('Profiles');
-    expect(searchUsers).toHaveBeenLastCalledWith('sushi', 5);
+    expect(searchUsers).toHaveBeenLastCalledWith('sushi', 10);
     expect(searchPlaces).not.toHaveBeenCalled();
   });
 

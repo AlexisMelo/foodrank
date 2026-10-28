@@ -4,11 +4,6 @@ import { Observable } from 'rxjs';
 import type { SearchPage } from '@/core/models/search.model';
 
 /**
- * Number of results shown first for a query
- */
-export const FIRST_RESULTS = 5;
-
-/**
  * Number of results added by each "Show more"
  */
 export const MORE_RESULTS = 10;
@@ -18,7 +13,8 @@ export const MORE_RESULTS = 10;
  */
 export interface PagedSearchState<T> {
   /**
-   * Results shown, best first; empty until the first answer of the query, and when the first search failed
+   * Results shown, best first, never more than the limit; empty until the first answer of the query, and when the
+   * first search failed
    */
   results: Signal<T[]>;
 
@@ -43,7 +39,7 @@ export interface PagedSearchState<T> {
   empty: Signal<boolean>;
 
   /**
-   * True when "Show more" can add results: the last answer said there are more
+   * True when "Show more" can add results: the last answer said there are more, or has more than the ones shown
    */
   hasMore: Signal<boolean>;
 
@@ -59,20 +55,23 @@ export interface PagedSearchState<T> {
 }
 
 /**
- * Search shown page by page, loaded by an rxResource of the calling page: the first FIRST_RESULTS results of the
- * query, then MORE_RESULTS more on each "Show more", asked for with a bigger limit. Back to FIRST_RESULTS when the
- * query changes, and a late answer for previous params is ignored. The results shown stay while more load, while
- * searching again with other params of the same query (e.g. the user's position) and after a failure, so the list
- * does not blink. Must run in an injection context.
+ * Search shown page by page, loaded by an rxResource of the calling page: the first `firstResults()` results of the
+ * query, then MORE_RESULTS more on each "Show more", asked for with a bigger limit. Back to the first results when the
+ * query or their number changes, and a late answer for previous params is ignored. The results shown stay while more
+ * load, while searching again with other params of the same query (e.g. the user's position) and after a failure, so
+ * the list does not blink; when the limit decreases, the first ones of them show at once. Must run in an injection
+ * context.
  * @param params what is searched, or undefined when nothing is for now (e.g. a query too short, results filtered
  * out): nothing is searched then, and the results of the last query, with as many shown, come back once searched
- * again for it
+ * again for it with the same number of first results
  * @param search searches the first `limit` results of `params`
+ * @param firstResults number of results shown first, 1 to `maxResults` (e.g. fewer in an overview of several searches)
  * @param maxResults most results the API returns, the highest limit it accepts
  */
 export function injectPagedSearch<P extends { query: string }, T>(
   params: () => P | undefined,
   search: (params: P, limit: number) => Observable<SearchPage<T>>,
+  firstResults: () => number,
   maxResults: number,
 ): PagedSearchState<T> {
   // Undefined params (nothing searched for now) keep the last query: the same results come back once searched again
@@ -80,7 +79,10 @@ export function injectPagedSearch<P extends { query: string }, T>(
     source: () => params()?.query,
     computation: (searched, previous) => searched ?? previous?.value,
   });
-  const limit = linkedSignal({ source: query, computation: () => FIRST_RESULTS });
+  const limit = linkedSignal({
+    source: () => ({ query: query(), first: firstResults() }),
+    computation: ({ first }) => first,
+  });
   const resource = rxResource({
     params: () => {
       const searched = params();
@@ -111,12 +113,15 @@ export function injectPagedSearch<P extends { query: string }, T>(
   });
 
   return {
-    results: computed(() => page()?.results ?? []),
+    results: computed(() => page()?.results.slice(0, limit()) ?? []),
     loading: computed(() => resource.isLoading() && !page()),
     loadingMore: computed(() => resource.isLoading() && !!page()),
     failed: computed(() => resource.status() === 'error'),
     empty: computed(() => page()?.results.length === 0),
-    hasMore: computed(() => page()?.hasMore ?? false),
+    hasMore: computed(() => {
+      const shown = page();
+      return !!shown && (shown.hasMore || shown.results.length > limit());
+    }),
     showMore: () => limit.update((current) => Math.min(current + MORE_RESULTS, maxResults)),
     retry: () => resource.reload(),
   };

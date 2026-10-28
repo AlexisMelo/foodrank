@@ -18,7 +18,27 @@
   } @else if (searchable()) {
     @if (showRestaurants()) {
       <section class="section" aria-labelledby="restaurants-title">
-        <h2 id="restaurants-title" class="section-title">Restaurants</h2>
+        <div class="section-header">
+          <h2 id="restaurants-title" class="section-title">Restaurants</h2>
+          @if (restaurants.results().length) {
+            @if (overview()) {
+              <a
+                class="see-all-chip"
+                routerLink="/search"
+                [queryParams]="{ q: query(), type: 'restaurants' }"
+                aria-label="See all restaurants"
+                (click)="scrollToTop()"
+                >See all</a
+              >
+            }
+            <p class="attribution">
+              ©
+              <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">
+                OpenStreetMap contributors
+              </a>
+            </p>
+          }
+        </div>
 
         @if (restaurants.loading()) {
           <div class="list" role="status" aria-label="Loading restaurants">
@@ -59,7 +79,7 @@
             <button type="button" class="load-more" (click)="restaurants.retry()">Try again</button>
           } @else if (restaurants.empty()) {
             <p class="hint restaurants-hint">No restaurants found</p>
-          } @else if (restaurants.hasMore()) {
+          } @else if (!overview() && restaurants.hasMore()) {
             <button
               type="button"
               class="load-more"
@@ -69,22 +89,25 @@
               {{ restaurants.loadingMore() ? 'Loading…' : 'Show more' }}
             </button>
           }
-
-          @if (restaurants.results().length) {
-            <p class="attribution">
-              ©
-              <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">
-                OpenStreetMap contributors
-              </a>
-            </p>
-          }
         }
       </section>
     }
 
     @if (showProfiles()) {
       <section class="section" aria-labelledby="profiles-title">
-        <h2 id="profiles-title" class="section-title">Profiles</h2>
+        <div class="section-header">
+          <h2 id="profiles-title" class="section-title">Profiles</h2>
+          @if (overview() && profiles.results().length) {
+            <a
+              class="see-all-chip"
+              routerLink="/search"
+              [queryParams]="{ q: query(), type: 'profiles' }"
+              aria-label="See all profiles"
+              (click)="scrollToTop()"
+              >See all</a
+            >
+          }
+        </div>
 
         @if (profiles.loading()) {
           <div class="list" role="status" aria-label="Loading profiles">
@@ -119,7 +142,7 @@
             <button type="button" class="load-more" (click)="profiles.retry()">Try again</button>
           } @else if (profiles.empty()) {
             <p class="hint profiles-hint">No profiles found</p>
-          } @else if (profiles.hasMore()) {
+          } @else if (!overview() && profiles.hasMore()) {
             <button
               type="button"
               class="load-more"

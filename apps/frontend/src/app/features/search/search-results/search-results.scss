@@ -1,3 +1,4 @@
+@use 'chip';
 @use 'hover';
 
 .page {
@@ -28,12 +29,23 @@
   flex-direction: column;
 }
 
-// Closer than the sections of /home (28px): the restaurants end with the small OpenStreetMap attribution
+// Same space as between the sections of /home
 .section + .section {
-  margin-top: 20px;
+  margin-top: 28px;
 }
 
-// Same as the section titles of /home, with the same 16px down to the content
+// Same as the section headers of /home (the title, then its "See all" chip), with the same 16px down to the content
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-header + .list,
+.section-header + .open-error {
+  margin-top: 16px;
+}
+
 .section-title {
   font-size: 18px;
   font-weight: 800;
@@ -42,9 +54,16 @@
   margin: 0;
 }
 
-.section-title + .list,
-.section-title + .open-error {
-  margin-top: 16px;
+// Same as the "See all" chips of /home
+.see-all-chip {
+  @include chip.size;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.45);
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.see-all-chip {
+  @include hover.background(rgba(255, 255, 255, 0.08));
 }
 
 .list {
@@ -159,8 +178,10 @@
   cursor: default;
 }
 
+// At the end of the restaurants title row; on two lines when the row is too narrow, rather than pushing the title
 .attribution {
-  margin: 12px 0 0;
+  margin: 0 0 0 auto;
+  min-width: 0;
   font-size: 11px;
   color: rgba(255, 255, 255, 0.3);
   text-align: right;
