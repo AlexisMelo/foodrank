@@ -3,7 +3,7 @@ import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import type { UserLocation } from '@/core/models/location.model';
 import type {
-  PlaceSuggestion,
+  PlaceSearchPage,
   Restaurant,
   RestaurantFromPlace,
   RestaurantSuggestion,
@@ -16,6 +16,12 @@ import { recoverOnStatus } from './recover-on-status';
  * no result.
  */
 export const PLACE_SEARCH_MIN_LENGTH = 3;
+
+/**
+ * Highest limit of the place search, same as the API (PlaceSearchService.MaxResults): it never returns more results,
+ * and refuses a higher limit with a 400.
+ */
+export const PLACE_SEARCH_MAX_RESULTS = 50;
 
 /**
  * Query params of the user position, none when it is unknown (the API then uses its default city)
@@ -59,21 +65,18 @@ export class RestaurantApi {
   }
 
   /**
-   * Get a few restaurant suggestions while the user is typing
+   * Get the first restaurants matching a query, for the search results page. Asking again with a bigger limit returns
+   * the same first results followed by the next ones ("Show more")
    * @param location favors nearby restaurants; the API falls back to its default city when omitted
+   * @param limit maximum number of results, 1 to PLACE_SEARCH_MAX_RESULTS
    */
-  autocompletePlaces(input: string, location?: UserLocation | null): Observable<PlaceSuggestion[]> {
-    return this.http.get<PlaceSuggestion[]>('/api/places/autocomplete', {
-      params: { input, ...locationParams(location) },
-    });
-  }
-
-  /**
-   * Get a longer list of restaurants for the search results page
-   */
-  searchPlaces(query: string, location?: UserLocation | null): Observable<PlaceSuggestion[]> {
-    return this.http.get<PlaceSuggestion[]>('/api/places/search', {
-      params: { query, ...locationParams(location) },
+  searchPlaces(
+    query: string,
+    location: UserLocation | null,
+    limit: number,
+  ): Observable<PlaceSearchPage> {
+    return this.http.get<PlaceSearchPage>('/api/places/search', {
+      params: { query, limit, ...locationParams(location) },
     });
   }
 

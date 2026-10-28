@@ -27,6 +27,13 @@ public record PlaceDetails(string PlaceId, string Name, string Address, double L
 public record PlaceSuggestion(string PlaceId, string Name, string SecondaryText);
 
 /// <summary>
+/// First results of a restaurant search, returned by GET /api/places/search.
+/// </summary>
+/// <param name="Results">The best results, at most the number asked for.</param>
+/// <param name="HasMore">True when asking for more results would return more ("Show more").</param>
+public record PlaceSearchPage(IReadOnlyList<PlaceSuggestion> Results, bool HasMore);
+
+/// <summary>
 /// Area around which restaurant searches are centered, as shown to the user.
 /// </summary>
 /// <param name="Locality">Name of the city at the search position, null when it could not be determined.</param>

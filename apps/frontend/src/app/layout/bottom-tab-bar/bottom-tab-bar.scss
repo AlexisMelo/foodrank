@@ -54,17 +54,17 @@
   color: #ffffff;
 }
 
-.tab-btn-add {
+.tab-btn-search {
   flex-shrink: 0;
 }
 
-.add-slot {
+.search-slot {
   position: relative;
   width: 22px;
   height: 22px;
 }
 
-.add-circle {
+.search-circle {
   position: absolute;
   left: 50%;
   bottom: 0;
@@ -85,15 +85,15 @@
     transform 0.15s;
 }
 
-.tab-btn-add {
-  @include hover.background(#e6e6e6, '.add-circle');
+.tab-btn-search {
+  @include hover.background(#e6e6e6, '.search-circle');
 }
 
-.tab-btn-add:active .add-circle {
+.tab-btn-search:active .search-circle {
   transform: translateX(-50%) scale(0.95);
 }
 
-.tab-btn-add svg {
+.tab-btn-search svg {
   width: 24px;
   height: 24px;
 }

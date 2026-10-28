@@ -1,0 +1,13 @@
+<form class="search-row" role="search" (submit)="submit($event)">
+  <input
+    #field
+    class="search-input"
+    type="text"
+    enterkeyhint="search"
+    autocomplete="off"
+    placeholder="Search a restaurant or a user…"
+    aria-label="Search a restaurant or a user"
+    [formField]="searchForm.query"
+  />
+  <button type="submit" class="search-btn" aria-label="Search">🔍</button>
+</form>

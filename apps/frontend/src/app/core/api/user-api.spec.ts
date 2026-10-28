@@ -65,4 +65,18 @@ describe('UserApi', () => {
       await expect(result).rejects.toMatchObject({ name: 'HttpErrorResponse', status: 503 });
     });
   });
+
+  describe('searchUsers', () => {
+    it('sends the query encoded, with the session cookie, and returns the profiles found', async () => {
+      const camille = { id: 'u2', name: 'Camille', avatarUrl: null, ratedRestaurantsCount: 1 };
+
+      const result = firstValueFrom(api.searchUsers('cam & co'));
+      const req = httpTesting.expectOne('http://api.test/api/users/search?query=cam%20%26%20co');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush([camille]);
+
+      expect(await result).toEqual([camille]);
+    });
+  });
 });

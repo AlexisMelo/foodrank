@@ -26,46 +26,90 @@ public class PlaceSearchServiceTests
     }
 
     /// <summary>
-    /// Inputs shorter than 3 characters (once trimmed) return no result without calling the provider.
+    /// Makes the provider return <paramref name="count"/> places named "Pizza 0", "Pizza 1"... all at the same position,
+    /// so their ranking keeps this order.
+    /// </summary>
+    private void ProviderFinds(int count)
+        => _provider.SearchResult = Result<IReadOnlyList<PlaceDetails>>.Success(
+            Enumerable.Range(0, count).Select(i => new PlaceDetails($"N{i}", $"Pizza {i}", $"{i} rue de Caen", 49.18, -0.37)).ToList());
+
+    /// <summary>
+    /// Queries shorter than 3 characters (once trimmed) return no result without calling the provider.
     /// </summary>
     [Theory]
     [InlineData("")]
     [InlineData("ab")]
     [InlineData("  ab  ")]
-    public async Task AutocompleteAsync_TooShortInput_ReturnsEmptyWithoutCallingProvider(string input)
+    public async Task SearchAsync_TooShortQuery_ReturnsEmptyWithoutCallingProvider(string query)
     {
-        Result<IReadOnlyList<PlaceSuggestion>> result = await CreateService().AutocompleteAsync(input, null, null, CancellationToken.None);
+        Result<PlaceSearchPage> result = await CreateService().SearchAsync(query, 5, null, null, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.Empty(result.Value!);
+        Assert.Empty(result.Value!.Results);
+        Assert.False(result.Value.HasMore);
         Assert.Equal(0, _provider.SearchCalls);
     }
 
     /// <summary>
-    /// The input is trimmed and twice the displayed count is requested, so nearby places ranked low can still appear.
+    /// The query is trimmed, and the same 50 candidates are requested whatever the limit, so that asking for more
+    /// results keeps the first ones in place (and the provider answer can be reused).
     /// </summary>
-    [Fact]
-    public async Task AutocompleteAsync_TrimsInputAndFetchesExtraCandidates()
+    [Theory]
+    [InlineData(5)]
+    [InlineData(15)]
+    public async Task SearchAsync_TrimsQueryAndAlwaysFetches50Candidates(int limit)
     {
-        await CreateService().AutocompleteAsync("  pizza ", 49.18, -0.37, CancellationToken.None);
+        await CreateService().SearchAsync("  pizza ", limit, 49.18, -0.37, CancellationToken.None);
 
         Assert.Equal("pizza", _provider.LastQuery);
-        Assert.Equal(16, _provider.LastLimit);
+        Assert.Equal(50, _provider.LastLimit);
     }
 
     /// <summary>
-    /// Autocomplete keeps at most 8 suggestions, mapping the address to the secondary text.
+    /// The search keeps the first <c>limit</c> results, mapping the address to the secondary text, and tells there are more.
     /// </summary>
     [Fact]
-    public async Task AutocompleteAsync_KeepsAtMost8Suggestions()
+    public async Task SearchAsync_MoreResultsThanLimit_ReturnsFirstOnesAndHasMore()
     {
-        _provider.SearchResult = Result<IReadOnlyList<PlaceDetails>>.Success(
-            Enumerable.Range(0, 16).Select(i => new PlaceDetails($"N{i}", $"Pizza {i}", $"{i} rue de Caen", 49.18, -0.37)).ToList());
+        ProviderFinds(16);
 
-        Result<IReadOnlyList<PlaceSuggestion>> result = await CreateService().AutocompleteAsync("pizza", null, null, CancellationToken.None);
+        Result<PlaceSearchPage> result = await CreateService().SearchAsync("pizza", 5, null, null, CancellationToken.None);
 
-        Assert.Equal(8, result.Value!.Count);
-        Assert.Equal("0 rue de Caen", result.Value[0].SecondaryText);
+        Assert.Equal(["N0", "N1", "N2", "N3", "N4"], result.Value!.Results.Select(r => r.PlaceId));
+        Assert.Equal("0 rue de Caen", result.Value.Results[0].SecondaryText);
+        Assert.True(result.Value.HasMore);
+    }
+
+    /// <summary>
+    /// A bigger limit returns the same first results followed by the next ones ("Show more").
+    /// </summary>
+    [Fact]
+    public async Task SearchAsync_BiggerLimit_KeepsTheFirstResultsInPlace()
+    {
+        ProviderFinds(16);
+        PlaceSearchService service = CreateService();
+
+        Result<PlaceSearchPage> first = await service.SearchAsync("pizza", 5, null, null, CancellationToken.None);
+        Result<PlaceSearchPage> more = await service.SearchAsync("pizza", 15, null, null, CancellationToken.None);
+
+        Assert.Equal(first.Value!.Results, more.Value!.Results.Take(5));
+        Assert.Equal(15, more.Value.Results.Count);
+    }
+
+    /// <summary>
+    /// When the limit reaches the number of results, they are all returned and there are no more.
+    /// </summary>
+    [Theory]
+    [InlineData(16)]
+    [InlineData(25)]
+    public async Task SearchAsync_LimitReachesTheEnd_HasNoMore(int limit)
+    {
+        ProviderFinds(16);
+
+        Result<PlaceSearchPage> result = await CreateService().SearchAsync("pizza", limit, null, null, CancellationToken.None);
+
+        Assert.Equal(16, result.Value!.Results.Count);
+        Assert.False(result.Value.HasMore);
     }
 
     /// <summary>
@@ -74,7 +118,7 @@ public class PlaceSearchServiceTests
     [Fact]
     public async Task SearchAsync_ValidPosition_UsesUserPosition()
     {
-        await CreateService().SearchAsync("pizza", 49.18, -0.37, CancellationToken.None);
+        await CreateService().SearchAsync("pizza", 5, 49.18, -0.37, CancellationToken.None);
 
         Assert.Equal(new GeoPoint(49.18, -0.37), _provider.LastPosition);
     }
@@ -94,7 +138,7 @@ public class PlaceSearchServiceTests
             ["Places:DefaultLocation:Lon"] = "-0.3707"
         });
 
-        await service.SearchAsync("pizza", lat, lon, CancellationToken.None);
+        await service.SearchAsync("pizza", 5, lat, lon, CancellationToken.None);
 
         Assert.Equal(new GeoPoint(49.1829, -0.3707), _provider.LastPosition);
     }
@@ -105,7 +149,7 @@ public class PlaceSearchServiceTests
     [Fact]
     public async Task SearchAsync_NoPositionNorDefault_FallsBackToParis()
     {
-        await CreateService().SearchAsync("pizza", null, null, CancellationToken.None);
+        await CreateService().SearchAsync("pizza", 5, null, null, CancellationToken.None);
 
         Assert.Equal(new GeoPoint(48.8566, 2.3522), _provider.LastPosition);
     }
@@ -118,7 +162,7 @@ public class PlaceSearchServiceTests
     {
         _provider.SearchResult = Result<IReadOnlyList<PlaceDetails>>.Failure(new Error(ErrorType.Unavailable, "down"));
 
-        Result<IReadOnlyList<PlaceSuggestion>> result = await CreateService().SearchAsync("pizza", null, null, CancellationToken.None);
+        Result<PlaceSearchPage> result = await CreateService().SearchAsync("pizza", 5, null, null, CancellationToken.None);
 
         Assert.False(result.IsSuccess);
         Assert.Equal(ErrorType.Unavailable, result.Error!.Type);

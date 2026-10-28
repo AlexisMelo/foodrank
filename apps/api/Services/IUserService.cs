@@ -18,6 +18,17 @@ public interface IUserService
     Task<Result<UserProfileResponse>> GetProfileAsync(string userId, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Finds the users whose pseudonym contains <paramref name="query"/>, ignoring case, ranked by
+    /// <see cref="UserRanking.Rank"/>, with the number of distinct restaurants each one rated.
+    /// </summary>
+    /// <param name="query">Text typed by the user; shorter than <see cref="UserRanking.MinQueryLength"/> characters once
+    /// trimmed, it returns no user.</param>
+    /// <param name="excludedUserId">Supabase Auth id of the user searching, left out of the results.</param>
+    /// <param name="cancellationToken">Cancels the database queries.</param>
+    /// <returns>At most <see cref="UserRanking.MaxResults"/> profiles, best matches first.</returns>
+    Task<IReadOnlyList<UserProfileResponse>> SearchAsync(string query, string excludedUserId, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Tells whether a profile already uses <paramref name="username"/>.
     /// </summary>
     /// <param name="username">Pseudonym to look for, compared exactly like the database unique constraint.</param>

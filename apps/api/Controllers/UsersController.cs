@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace api.Controllers;
 
 /// <summary>
-/// Endpoints for users' public information (profile, ratings, tierlists). All of them require a logged-in user;
-/// "me" stands for the logged-in user.
+/// Endpoints for users' public information (search, profile, ratings, tierlists). All of them require a logged-in
+/// user; "me" stands for the logged-in user.
 /// </summary>
 /// <param name="userService">Reads the users' profiles.</param>
 /// <param name="ratingService">Reads the users' ratings.</param>
@@ -65,6 +65,17 @@ public class UsersController(IUserService userService, IRatingService ratingServ
     [HttpGet("me/tierlists")]
     public async Task<IActionResult> GetMyTierlists(CancellationToken cancellationToken)
         => (await _tierlistService.GetByUserAsync(User.GetUserId(), cancellationToken)).ToActionResult();
+
+    /// <summary>
+    /// Finds the users whose pseudonym contains a query, ignoring case, best matches first (see
+    /// <see cref="UserRanking.Rank"/>). The logged-in user is not listed.
+    /// </summary>
+    /// <param name="query">Text typed by the user; shorter than 3 characters once trimmed, it returns no user.</param>
+    /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
+    /// <returns>200 with at most 20 profiles, 401 when not logged in.</returns>
+    [HttpGet("search")]
+    public async Task<IActionResult> Search([FromQuery] string query, CancellationToken cancellationToken)
+        => Ok(await _userService.SearchAsync(query, User.GetUserId(), cancellationToken));
 
     /// <summary>
     /// Returns the profile of a user.

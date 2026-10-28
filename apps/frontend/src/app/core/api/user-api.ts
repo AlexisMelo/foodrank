@@ -10,6 +10,12 @@ import { recoverOnStatus } from './recover-on-status';
 export const ME = 'me';
 
 /**
+ * Shortest query the user search answers, same as the API (UserRanking.MinQueryLength) and the shortest pseudonym;
+ * shorter ones return no user.
+ */
+export const USER_SEARCH_MIN_LENGTH = 3;
+
+/**
  * Users of the API (/api/users).
  */
 @Service()
@@ -27,5 +33,13 @@ export class UserApi {
     return this.http
       .get<UserProfile>(`/api/users/${encodeURIComponent(userId)}`)
       .pipe(recoverOnStatus(404, undefined));
+  }
+
+  /**
+   * Get the users whose pseudonym contains the query, ignoring case, best matches first (same pseudonym, then starting
+   * with the query); at most 20, never the logged-in user
+   */
+  searchUsers(query: string): Observable<UserProfile[]> {
+    return this.http.get<UserProfile[]>('/api/users/search', { params: { query } });
   }
 }

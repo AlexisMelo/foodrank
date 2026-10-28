@@ -196,7 +196,7 @@ describe('Home', () => {
     it('opens the new review sheet from the button of the tab bar', async () => {
       await openHome();
 
-      query(harness.fixture, '.tab-btn-add').click();
+      query(harness.fixture, '.tab-btn-search').click();
       await harness.fixture.whenStable();
 
       expect(sheetOpen()).toBe(true);
@@ -221,7 +221,7 @@ describe('Home', () => {
       fetchRatingAllowance.mockReturnValue(of(alreadyReviewed()));
       await openHome();
 
-      const tabButton = query<HTMLButtonElement>(harness.fixture, '.tab-btn-add');
+      const tabButton = query<HTMLButtonElement>(harness.fixture, '.tab-btn-search');
       expect(tabButton.disabled).toBe(false);
       expect(tabButton.querySelector('app-lock-icon')).toBeNull();
 

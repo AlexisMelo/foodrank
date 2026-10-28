@@ -27,7 +27,7 @@ export interface OpenPlaceState {
 }
 
 /**
- * Opens the places selected in a search (the new review sheet, the search results), from a click: storing the
+ * Opens the places selected in a search (the restaurants of the search results page), from a click: storing the
  * restaurant is a mutation, so it runs here and not in the page that shows it. State is per call. Must run in an
  * injection context.
  */

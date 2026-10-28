@@ -1,64 +1,108 @@
 <div class="page">
-  <!-- Title block -->
-  <div class="title-block">
-    <div class="query-label">Results for</div>
-    <h1 class="query">"{{ query() }}"</h1>
-    <p class="cta">Tap a restaurant to leave your review</p>
+  <div class="search-header">
+    <h1 class="title">Search</h1>
+    <app-search-bar [query]="query()" (searched)="search($event)" />
+    <app-search-area-hint />
   </div>
 
-  <!-- Skeleton -->
-  @if (loading()) {
-    <div class="list" role="status" aria-label="Loading">
-      @for (i of skeletons; track i) {
-        <div class="skeleton"></div>
+  @if (query() && !searchable()) {
+    <p class="hint">Type at least {{ minLength }} characters to search</p>
+  } @else if (searchable()) {
+    <section class="section" aria-labelledby="restaurants-title">
+      <h2 id="restaurants-title" class="section-title">Restaurants</h2>
+
+      @if (loadingRestaurants()) {
+        <div class="list" role="status" aria-label="Loading restaurants">
+          @for (i of restaurantSkeletons; track i) {
+            <div class="skeleton"></div>
+          }
+        </div>
+      } @else {
+        @if (places.failed()) {
+          <p class="open-error" role="alert">Couldn't open this restaurant, try again.</p>
+        }
+        <div class="list restaurant-list">
+          @for (r of restaurants(); track r.placeId; let index = $index) {
+            <button
+              type="button"
+              class="list-item restaurant-item"
+              [disabled]="places.opening() !== null"
+              [attr.aria-busy]="places.opening() === r.placeId"
+              (click)="selectPlace(r)"
+            >
+              <span class="item-index">{{ index + 1 }}</span>
+              <span class="item-emoji-wrap" aria-hidden="true">
+                <span class="item-emoji">🍽️</span>
+              </span>
+              <span class="item-info">
+                <span class="item-name">{{ r.name }}</span>
+                <span class="item-meta">{{ r.secondaryText }}</span>
+              </span>
+              <span class="item-arrow" aria-hidden="true">›</span>
+            </button>
+          }
+        </div>
+
+        @if (restaurantsError()) {
+          <p class="hint restaurants-hint">Search is unavailable right now</p>
+          <button type="button" class="load-more" (click)="retryRestaurants()">Try again</button>
+        } @else if (noRestaurants()) {
+          <p class="hint restaurants-hint">No restaurants found</p>
+        } @else if (hasMoreRestaurants()) {
+          <button
+            type="button"
+            class="load-more"
+            [disabled]="loadingMore()"
+            (click)="showMoreRestaurants()"
+          >
+            {{ loadingMore() ? 'Loading…' : 'Show more' }}
+          </button>
+        }
+
+        @if (restaurants().length) {
+          <p class="attribution">
+            ©
+            <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">
+              OpenStreetMap contributors
+            </a>
+          </p>
+        }
       }
-    </div>
-  } @else {
-    <!-- Results -->
-    @if (places.failed()) {
-      <p class="open-error" role="alert">Couldn't open this restaurant, try again.</p>
-    }
-    <div class="list">
-      @for (r of results(); track r.placeId; let index = $index) {
-        <button
-          type="button"
-          class="list-item"
-          [disabled]="places.opening() !== null"
-          [attr.aria-busy]="places.opening() === r.placeId"
-          (click)="selectPlace(r)"
-        >
-          <span class="item-index">{{ index + 1 }}</span>
-          <span class="item-emoji-wrap" aria-hidden="true">
-            <span class="item-emoji">🍽️</span>
-          </span>
-          <span class="item-info">
-            <span class="item-name">{{ r.name }}</span>
-            <span class="item-meta">{{ r.secondaryText }}</span>
-          </span>
-          <span class="item-arrow" aria-hidden="true">›</span>
-        </button>
+    </section>
+
+    <section class="section" aria-labelledby="users-title">
+      <h2 id="users-title" class="section-title">Users</h2>
+
+      @if (loadingUsers()) {
+        <div class="list" role="status" aria-label="Loading users">
+          @for (i of userSkeletons; track i) {
+            <div class="skeleton"></div>
+          }
+        </div>
+      } @else if (usersError()) {
+        <p class="hint users-hint">Users can't be searched right now</p>
+      } @else if (users().length === 0) {
+        <p class="hint users-hint">No users found</p>
+      } @else {
+        <div class="list user-list">
+          @for (user of users(); track user.id) {
+            <a class="list-item user-item" [routerLink]="['/user', user.id]">
+              <app-user-avatar
+                class="item-avatar"
+                [name]="user.name"
+                [avatarUrl]="user.avatarUrl"
+              />
+              <span class="item-info">
+                <span class="item-name">{{ user.name }}</span>
+                <span class="item-meta">{{
+                  restaurantCountLabel(user.ratedRestaurantsCount)
+                }}</span>
+              </span>
+              <span class="item-arrow" aria-hidden="true">›</span>
+            </a>
+          }
+        </div>
       }
-    </div>
-
-    @if (error()) {
-      <p class="hint">Search is unavailable right now</p>
-    } @else if (results().length === 0) {
-      <p class="hint">No restaurants found</p>
-    }
-
-    @if (!moreLoaded() && searchable()) {
-      <button type="button" class="load-more" [disabled]="loadingMore()" (click)="loadMore()">
-        {{ loadingMore() ? 'Loading…' : 'Load more' }}
-      </button>
-    }
-
-    @if (results().length) {
-      <p class="attribution">
-        ©
-        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">
-          OpenStreetMap contributors
-        </a>
-      </p>
-    }
+    </section>
   }
 </div>

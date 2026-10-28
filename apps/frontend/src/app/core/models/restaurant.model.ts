@@ -90,6 +90,21 @@ export interface PlaceSuggestion {
 }
 
 /**
+ * First results of a restaurant search (GET /api/places/search).
+ */
+export interface PlaceSearchPage {
+  /**
+   * The best results, at most the number asked for; empty when the query is shorter than PLACE_SEARCH_MIN_LENGTH
+   */
+  results: PlaceSuggestion[];
+
+  /**
+   * True when asking for more results would return more ("Show more")
+   */
+  hasMore: boolean;
+}
+
+/**
  * Area around which restaurant searches are centered.
  */
 export interface SearchArea {

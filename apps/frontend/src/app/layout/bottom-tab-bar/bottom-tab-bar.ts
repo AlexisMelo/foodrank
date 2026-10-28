@@ -3,7 +3,8 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NewReviewStore } from '@/core/review/new-review-store';
 
 /**
- * Navigation bar fixed at the bottom of the private pages, with the button opening the new review sheet.
+ * Navigation bar fixed at the bottom of the private pages, with the Search button (magnifying glass) opening the
+ * search sheet.
  */
 @Component({
   imports: [RouterLink, RouterLinkActive],
@@ -13,7 +14,7 @@ import { NewReviewStore } from '@/core/review/new-review-store';
 })
 export class BottomTabBar {
   /**
-   * Opens the new review sheet from the Search button
+   * Opens the search sheet (NewReviewSheet) from the Search button
    */
   protected readonly newReview = inject(NewReviewStore);
 
