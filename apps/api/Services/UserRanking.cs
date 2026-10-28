@@ -16,15 +16,12 @@ public static class UserRanking
     public const int MinQueryLength = SignupRequest.UsernameMinLength;
 
     /// <summary>
-    /// Maximum number of users returned.
+    /// Maximum number of users of a search, which is also the number of profiles read from the database (alphabetically)
+    /// for every search whatever the limit asked: ranking the same candidates keeps the first users in place when more
+    /// are asked, and the best matches (same pseudonym, or starting with the query) are still among them when more
+    /// pseudonyms than asked contain the query.
     /// </summary>
-    public const int MaxResults = 20;
-
-    /// <summary>
-    /// Number of profiles read from the database before ranking, alphabetically: more than returned, so that the best
-    /// matches (same pseudonym, or starting with the query) are still among them when many pseudonyms contain the query.
-    /// </summary>
-    public const int CandidatesCount = 50;
+    public const int MaxResults = 50;
 
     /// <summary>
     /// Builds the ILIKE pattern of the pseudonyms containing <paramref name="query"/>: the LIKE wildcards it contains

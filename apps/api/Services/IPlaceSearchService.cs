@@ -1,4 +1,5 @@
 using api.Common;
+using api.Models;
 using api.Services.Places;
 
 namespace api.Services;
@@ -19,7 +20,7 @@ public interface IPlaceSearchService
     /// <param name="lon">Longitude of the user in degrees; null when unknown (the default city is used).</param>
     /// <param name="cancellationToken">Cancels the provider request.</param>
     /// <returns>The results and whether there are more, or the provider failure.</returns>
-    Task<Result<PlaceSearchPage>> SearchAsync(string query, int limit, double? lat, double? lon, CancellationToken cancellationToken);
+    Task<Result<SearchPage<PlaceSuggestion>>> SearchAsync(string query, int limit, double? lat, double? lon, CancellationToken cancellationToken);
 
     /// <summary>
     /// Returns the area searches are centered on: the city at (<paramref name="lat"/>, <paramref name="lon"/>),

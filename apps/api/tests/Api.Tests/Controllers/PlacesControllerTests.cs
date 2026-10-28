@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using api.Common;
+using api.Models;
 using api.Services.Places;
 
 namespace Api.Tests.Controllers;
@@ -48,7 +49,7 @@ public class PlacesControllerTests : IDisposable
         string json = await response.Content.ReadAsStringAsync();
         Assert.Contains("\"results\":[{\"placeId\":\"N1\",\"name\":\"Pizza 1\",\"secondaryText\":\"1 rue de Caen\"}", json);
         Assert.Contains("\"hasMore\":true", json);
-        PlaceSearchPage? page = await response.Content.ReadFromJsonAsync<PlaceSearchPage>();
+        SearchPage<PlaceSuggestion>? page = await response.Content.ReadFromJsonAsync<SearchPage<PlaceSuggestion>>();
         Assert.Equal(["N1", "N2", "N3", "N4", "N5"], page!.Results.Select(r => r.PlaceId));
     }
 
@@ -61,7 +62,7 @@ public class PlacesControllerTests : IDisposable
         _factory.PlaceProvider.SearchResult = Result<IReadOnlyList<PlaceDetails>>.Success(
             Enumerable.Range(1, 6).Select(i => new PlaceDetails($"N{i}", $"Pizza {i}", "", 49.18, -0.37)).ToList());
 
-        PlaceSearchPage? page = await _client.GetFromJsonAsync<PlaceSearchPage>("/api/places/search?query=pizza&limit=15");
+        SearchPage<PlaceSuggestion>? page = await _client.GetFromJsonAsync<SearchPage<PlaceSuggestion>>("/api/places/search?query=pizza&limit=15");
 
         Assert.Equal(6, page!.Results.Count);
         Assert.False(page.HasMore);

@@ -1,4 +1,5 @@
 using api.Common;
+using api.Models;
 using api.Services.Places;
 
 namespace api.Services;
@@ -23,21 +24,21 @@ public class PlaceSearchService(IPlaceProvider placeProvider, IConfiguration con
     public const int MaxResults = 50;
 
     /// <inheritdoc />
-    public async Task<Result<PlaceSearchPage>> SearchAsync(string query, int limit, double? lat, double? lon, CancellationToken cancellationToken)
+    public async Task<Result<SearchPage<PlaceSuggestion>>> SearchAsync(string query, int limit, double? lat, double? lon, CancellationToken cancellationToken)
     {
         string trimmed = query.Trim();
         if (trimmed.Length < MinInputLength)
-            return Result<PlaceSearchPage>.Success(new PlaceSearchPage([], false));
+            return Result<SearchPage<PlaceSuggestion>>.Success(new SearchPage<PlaceSuggestion>([], false));
 
         GeoPoint position = SearchPosition.Resolve(lat, lon, configuration);
         Result<IReadOnlyList<PlaceDetails>> result = await placeProvider.SearchAsync(trimmed, MaxResults, position, cancellationToken);
         if (!result.IsSuccess)
-            return Result<PlaceSearchPage>.Failure(result.Error!);
+            return Result<SearchPage<PlaceSuggestion>>.Failure(result.Error!);
 
         List<PlaceSuggestion> ranked = PlaceRanking.Rank(result.Value!, trimmed, position)
             .Select(p => new PlaceSuggestion(p.PlaceId, p.Name, p.Address))
             .ToList();
-        return Result<PlaceSearchPage>.Success(new PlaceSearchPage(ranked.Take(limit).ToList(), ranked.Count > limit));
+        return Result<SearchPage<PlaceSuggestion>>.Success(new SearchPage<PlaceSuggestion>(ranked.Take(limit).ToList(), ranked.Count > limit));
     }
 
     /// <inheritdoc />

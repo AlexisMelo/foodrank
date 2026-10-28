@@ -73,16 +73,16 @@ public class UserRankingTests
     }
 
     /// <summary>
-    /// At most 20 profiles are kept.
+    /// At most 50 profiles are kept, the most a search returns.
     /// </summary>
     [Fact]
-    public void Rank_KeepsAtMost20Profiles()
+    public void Rank_KeepsAtMost50Profiles()
     {
-        List<Profile> profiles = Profiles(Enumerable.Range(10, 30).Select(i => $"user{i}").ToArray());
+        List<Profile> profiles = Profiles(Enumerable.Range(10, 60).Select(i => $"user{i}").ToArray());
 
         IReadOnlyList<Profile> ranked = UserRanking.Rank(profiles, "user");
 
-        Assert.Equal(20, ranked.Count);
+        Assert.Equal(50, ranked.Count);
         Assert.Equal("user10", ranked[0].Username);
     }
 }

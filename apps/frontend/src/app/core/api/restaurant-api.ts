@@ -3,12 +3,13 @@ import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import type { UserLocation } from '@/core/models/location.model';
 import type {
-  PlaceSearchPage,
+  PlaceSuggestion,
   Restaurant,
   RestaurantFromPlace,
   RestaurantSuggestion,
   SearchArea,
 } from '@/core/models/restaurant.model';
+import type { SearchPage } from '@/core/models/search.model';
 import { recoverOnStatus } from './recover-on-status';
 
 /**
@@ -74,8 +75,8 @@ export class RestaurantApi {
     query: string,
     location: UserLocation | null,
     limit: number,
-  ): Observable<PlaceSearchPage> {
-    return this.http.get<PlaceSearchPage>('/api/places/search', {
+  ): Observable<SearchPage<PlaceSuggestion>> {
+    return this.http.get<SearchPage<PlaceSuggestion>>('/api/places/search', {
       params: { query, limit, ...locationParams(location) },
     });
   }

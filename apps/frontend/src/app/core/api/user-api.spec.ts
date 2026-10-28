@@ -67,16 +67,18 @@ describe('UserApi', () => {
   });
 
   describe('searchUsers', () => {
-    it('sends the query encoded, with the session cookie, and returns the profiles found', async () => {
+    it('sends the query encoded and the limit, with the session cookie, and returns the profiles found', async () => {
       const camille = { id: 'u2', name: 'Camille', avatarUrl: null, ratedRestaurantsCount: 1 };
 
-      const result = firstValueFrom(api.searchUsers('cam & co'));
-      const req = httpTesting.expectOne('http://api.test/api/users/search?query=cam%20%26%20co');
+      const result = firstValueFrom(api.searchUsers('cam & co', 15));
+      const req = httpTesting.expectOne(
+        'http://api.test/api/users/search?query=cam%20%26%20co&limit=15',
+      );
       expect(req.request.method).toBe('GET');
       expect(req.request.withCredentials).toBe(true);
-      req.flush([camille]);
+      req.flush({ results: [camille], hasMore: true });
 
-      expect(await result).toEqual([camille]);
+      expect(await result).toEqual({ results: [camille], hasMore: true });
     });
   });
 });

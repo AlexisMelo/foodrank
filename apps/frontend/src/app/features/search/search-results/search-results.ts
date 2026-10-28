@@ -1,34 +1,23 @@
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
+import { Component, computed, inject, input } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import {
   PLACE_SEARCH_MAX_RESULTS,
   PLACE_SEARCH_MIN_LENGTH,
   RestaurantApi,
 } from '@/core/api/restaurant-api';
-import { USER_SEARCH_MIN_LENGTH, UserApi } from '@/core/api/user-api';
+import { USER_SEARCH_MAX_RESULTS, USER_SEARCH_MIN_LENGTH, UserApi } from '@/core/api/user-api';
 import { UserLocation } from '@/core/location/user-location';
-import type { PlaceSearchPage, PlaceSuggestion } from '@/core/models/restaurant.model';
-import type { UserProfile } from '@/core/models/user.model';
+import type { PlaceSuggestion } from '@/core/models/restaurant.model';
 import { restaurantCountLabel } from '@/core/utils/profile';
 import { injectOpenPlace } from '@/shared/data/open-place';
+import { FIRST_RESULTS, injectPagedSearch } from '@/shared/data/paged-search';
 import { SearchAreaHint } from '@/shared/ui/search-area-hint/search-area-hint';
 import { SearchBar } from '@/shared/ui/search-bar/search-bar';
 import { UserAvatar } from '@/shared/ui/user-avatar/user-avatar';
 
 /**
- * Number of restaurants shown first for a query
- */
-const FIRST_RESTAURANTS = 5;
-
-/**
- * Number of restaurants added by each "Show more"
- */
-const MORE_RESTAURANTS = 10;
-
-/**
  * Search results page (/search?q=…), opened from the search sheet: the searchbar to change the query, then the
- * restaurants of the query (5, then 10 more on each "Show more") and the users whose pseudonym contains it.
+ * restaurants of the query and the users whose pseudonym contains it, each 5 first, then 10 more on each "Show more".
  */
 @Component({
   imports: [RouterLink, SearchAreaHint, SearchBar, UserAvatar],
@@ -83,131 +72,34 @@ export class SearchResults {
   protected readonly searchable = computed(() => this.query().length >= this.minLength);
 
   /**
-   * Number of restaurants asked for: FIRST_RESTAURANTS, then MORE_RESTAURANTS more on each "Show more", up to
-   * PLACE_SEARCH_MAX_RESULTS; back to FIRST_RESTAURANTS when the query changes
+   * Restaurants of the query, near the user's position once known: searched again when the position changes, the
+   * restaurants shown staying; idle when the query is too short
    */
-  private readonly restaurantLimit = linkedSignal({
-    source: this.query,
-    computation: () => FIRST_RESTAURANTS,
-  });
-
-  /**
-   * First restaurantLimit restaurants of the query, near the user's position once known; searched again when the
-   * query, the limit or the position change (an answer to outdated params is ignored); idle when the query is too short
-   */
-  private readonly restaurantsResource = rxResource({
-    params: () =>
+  protected readonly restaurants = injectPagedSearch(
+    () =>
       this.searchable()
-        ? {
-            query: this.query(),
-            limit: this.restaurantLimit(),
-            location: this.userLocation.location(),
-          }
+        ? { query: this.query(), location: this.userLocation.location() }
         : undefined,
-    stream: ({ params }) =>
-      this.restaurantApi.searchPlaces(params.query, params.location, params.limit),
-  });
-
-  /**
-   * Last restaurants answered for the current query: kept while more load, while searching again near the user and
-   * after a failure, so the list does not blink; undefined until the first answer of the query
-   */
-  private readonly restaurantPage = linkedSignal<
-    {
-      /**
-       * Query searched
-       */
-      query: string;
-
-      /**
-       * Answer of restaurantsResource, undefined while it loads and when it failed
-       */
-      page: PlaceSearchPage | undefined;
-    },
-    PlaceSearchPage | undefined
-  >({
-    source: () => ({
-      query: this.query(),
-      page: this.restaurantsResource.hasValue() ? this.restaurantsResource.value() : undefined,
-    }),
-    computation: ({ query, page }, previous) =>
-      page ?? (previous?.source.query === query ? previous.value : undefined),
-  });
-
-  /**
-   * Restaurants shown, best first; empty until the first answer of the query, and when the first search failed
-   */
-  protected readonly restaurants = computed<PlaceSuggestion[]>(
-    () => this.restaurantPage()?.results ?? [],
+    (params, limit) => this.restaurantApi.searchPlaces(params.query, params.location, limit),
+    PLACE_SEARCH_MAX_RESULTS,
   );
 
   /**
-   * True while the first restaurants of the query load: placeholders are shown
+   * Users whose pseudonym contains the query; idle when the query is too short
    */
-  protected readonly loadingRestaurants = computed(
-    () => this.restaurantsResource.isLoading() && !this.restaurantPage(),
+  protected readonly users = injectPagedSearch(
+    () => (this.searchable() ? { query: this.query() } : undefined),
+    (params, limit) => this.userApi.searchUsers(params.query, limit),
+    USER_SEARCH_MAX_RESULTS,
   );
-
-  /**
-   * True while more restaurants load, the ones already shown staying
-   */
-  protected readonly loadingMore = computed(
-    () => this.restaurantsResource.isLoading() && !!this.restaurantPage(),
-  );
-
-  /**
-   * True when the last restaurant search failed: the first restaurants, or more of them
-   */
-  protected readonly restaurantsError = computed(
-    () => this.restaurantsResource.status() === 'error',
-  );
-
-  /**
-   * True when the search answered and found no restaurant
-   */
-  protected readonly noRestaurants = computed(() => this.restaurantPage()?.results.length === 0);
-
-  /**
-   * True when "Show more" can add restaurants: the last answer said there are more
-   */
-  protected readonly hasMoreRestaurants = computed(() => this.restaurantPage()?.hasMore ?? false);
 
   /**
    * Numbers of the restaurant placeholders shown while loading
    */
-  protected readonly restaurantSkeletons = Array.from(
-    { length: FIRST_RESTAURANTS },
-    (_, i) => i + 1,
-  );
+  protected readonly restaurantSkeletons = Array.from({ length: FIRST_RESULTS }, (_, i) => i + 1);
 
   /**
-   * Users whose pseudonym contains the query, searched again when it changes (an answer to an outdated query is
-   * ignored); idle when the query is too short
-   */
-  private readonly usersResource = rxResource({
-    params: () => (this.searchable() ? this.query() : undefined),
-    stream: ({ params: query }) => this.userApi.searchUsers(query),
-  });
-
-  /**
-   * Users found, best matches first; empty while loading and when the search failed
-   */
-  protected readonly users = computed<UserProfile[]>(() =>
-    this.usersResource.hasValue() ? this.usersResource.value() : [],
-  );
-
-  /**
-   * True while the users load: placeholders are shown
-   */
-  protected readonly loadingUsers = this.usersResource.isLoading;
-
-  /**
-   * True when the user search failed
-   */
-  protected readonly usersError = computed(() => this.usersResource.status() === 'error');
-
-  /**
-   * Numbers of the user placeholders shown while loading
+   * Numbers of the user placeholders shown while loading: fewer than restaurants, a query rarely finding many users
    */
   protected readonly userSkeletons = [1, 2, 3];
 
@@ -225,22 +117,6 @@ export class SearchResults {
    */
   protected search(query: string): void {
     void this.router.navigate(['/search'], { queryParams: { q: query } });
-  }
-
-  /**
-   * Asks for MORE_RESTAURANTS more restaurants, without going over what the API returns at most
-   */
-  protected showMoreRestaurants(): void {
-    this.restaurantLimit.update((limit) =>
-      Math.min(limit + MORE_RESTAURANTS, PLACE_SEARCH_MAX_RESULTS),
-    );
-  }
-
-  /**
-   * Searches the restaurants again after a failure, with the same limit
-   */
-  protected retryRestaurants(): void {
-    this.restaurantsResource.reload();
   }
 
   /**

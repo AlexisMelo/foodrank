@@ -26,19 +26,20 @@ public class FakeUserService(FakeRatingService ratings) : IUserService
     }
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<UserProfileResponse>> SearchAsync(string query, string excludedUserId, CancellationToken cancellationToken)
+    public Task<SearchPage<UserProfileResponse>> SearchAsync(string query, int limit, string excludedUserId, CancellationToken cancellationToken)
     {
         string trimmed = query.Trim();
         if (trimmed.Length < UserRanking.MinQueryLength)
-            return Task.FromResult<IReadOnlyList<UserProfileResponse>>([]);
+            return Task.FromResult(new SearchPage<UserProfileResponse>([], false));
 
-        IReadOnlyList<UserProfileResponse> found = UserRanking.Rank(ratings.Profiles.Values.Where(p => p.Id != excludedUserId), trimmed)
+        IReadOnlyList<Profile> ranked = UserRanking.Rank(ratings.Profiles.Values.Where(p => p.Id != excludedUserId), trimmed);
+        List<UserProfileResponse> shown = ranked.Take(limit)
             .Select(p => UserProfileResponse.From(
                 p.Id,
                 p,
                 ratings.Ratings.Where(r => r.UserId == p.Id).Select(r => r.RestaurantId)))
             .ToList();
-        return Task.FromResult(found);
+        return Task.FromResult(new SearchPage<UserProfileResponse>(shown, ranked.Count > limit));
     }
 
     /// <inheritdoc />

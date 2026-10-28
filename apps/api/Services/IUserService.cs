@@ -18,15 +18,17 @@ public interface IUserService
     Task<Result<UserProfileResponse>> GetProfileAsync(string userId, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Finds the users whose pseudonym contains <paramref name="query"/>, ignoring case, ranked by
-    /// <see cref="UserRanking.Rank"/>, with the number of distinct restaurants each one rated.
+    /// Returns the first <paramref name="limit"/> users whose pseudonym contains <paramref name="query"/>, ignoring case,
+    /// ranked by <see cref="UserRanking.Rank"/>, with the number of distinct restaurants each one rated. Asking again
+    /// with a bigger limit returns the same first users followed by the next ones ("Show more").
     /// </summary>
     /// <param name="query">Text typed by the user; shorter than <see cref="UserRanking.MinQueryLength"/> characters once
     /// trimmed, it returns no user.</param>
+    /// <param name="limit">Maximum number of users, from 1 to <see cref="UserRanking.MaxResults"/>.</param>
     /// <param name="excludedUserId">Supabase Auth id of the user searching, left out of the results.</param>
     /// <param name="cancellationToken">Cancels the database queries.</param>
-    /// <returns>At most <see cref="UserRanking.MaxResults"/> profiles, best matches first.</returns>
-    Task<IReadOnlyList<UserProfileResponse>> SearchAsync(string query, string excludedUserId, CancellationToken cancellationToken);
+    /// <returns>The profiles, best matches first, and whether there are more.</returns>
+    Task<SearchPage<UserProfileResponse>> SearchAsync(string query, int limit, string excludedUserId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Tells whether a profile already uses <paramref name="username"/>.

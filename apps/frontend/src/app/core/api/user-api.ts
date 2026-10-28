@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import type { SearchPage } from '@/core/models/search.model';
 import type { UserProfile } from '@/core/models/user.model';
 import { recoverOnStatus } from './recover-on-status';
 
@@ -14,6 +15,11 @@ export const ME = 'me';
  * shorter ones return no user.
  */
 export const USER_SEARCH_MIN_LENGTH = 3;
+
+/**
+ * Most users the user search returns, same as the API (UserRanking.MaxResults): the highest limit it accepts.
+ */
+export const USER_SEARCH_MAX_RESULTS = 50;
 
 /**
  * Users of the API (/api/users).
@@ -36,10 +42,14 @@ export class UserApi {
   }
 
   /**
-   * Get the users whose pseudonym contains the query, ignoring case, best matches first (same pseudonym, then starting
-   * with the query); at most 20, never the logged-in user
+   * Get the first users whose pseudonym contains the query, ignoring case, best matches first (same pseudonym, then
+   * starting with the query), never the logged-in user. Asking again with a bigger limit returns the same first users
+   * followed by the next ones ("Show more")
+   * @param limit maximum number of users, 1 to USER_SEARCH_MAX_RESULTS
    */
-  searchUsers(query: string): Observable<UserProfile[]> {
-    return this.http.get<UserProfile[]>('/api/users/search', { params: { query } });
+  searchUsers(query: string, limit: number): Observable<SearchPage<UserProfile>> {
+    return this.http.get<SearchPage<UserProfile>>('/api/users/search', {
+      params: { query, limit },
+    });
   }
 }

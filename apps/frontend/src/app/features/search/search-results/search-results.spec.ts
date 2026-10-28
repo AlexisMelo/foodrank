@@ -8,11 +8,8 @@ import { UserApi } from '@/core/api/user-api';
 import { UserLocation } from '@/core/location/user-location';
 import type { UserLocation as UserPosition } from '@/core/models/location.model';
 import { CelebrationStore } from '@/core/celebration/celebration-store';
-import type {
-  PlaceSearchPage,
-  PlaceSuggestion,
-  RestaurantFromPlace,
-} from '@/core/models/restaurant.model';
+import type { PlaceSuggestion, RestaurantFromPlace } from '@/core/models/restaurant.model';
+import type { SearchPage } from '@/core/models/search.model';
 import type { UserProfile } from '@/core/models/user.model';
 import { clickButton, query, queryAll, submitForm, textOf, typeIn } from '@/testing/dom-testing';
 import { SearchResults } from './search-results';
@@ -34,7 +31,7 @@ function place(placeId: string): PlaceSuggestion {
  * Answer of the place search of `query` asked for `limit` results, when it finds `total` places: "Place pizza-1",
  * "Place pizza-2"... and whether there are more.
  */
-function page(query: string, limit: number, total = 30): PlaceSearchPage {
+function page(query: string, limit: number, total = 30): SearchPage<PlaceSuggestion> {
   const count = Math.min(limit, total);
   return {
     results: Array.from({ length: count }, (_, i) => place(`${query}-${i + 1}`)),
@@ -47,6 +44,18 @@ function page(query: string, limit: number, total = 30): PlaceSearchPage {
  */
 function user(id: string, name: string, count: number): UserProfile {
   return { id, name, avatarUrl: null, ratedRestaurantsCount: count };
+}
+
+/**
+ * Answer of the user search asked for `limit` users, when it finds `total` users: "User 1", "User 2"... and whether
+ * there are more.
+ */
+function userPage(limit: number, total = 30): SearchPage<UserProfile> {
+  const count = Math.min(limit, total);
+  return {
+    results: Array.from({ length: count }, (_, i) => user(`u${i + 1}`, `User ${i + 1}`, 0)),
+    hasMore: total > limit,
+  };
 }
 
 /**
@@ -80,7 +89,9 @@ describe('SearchResults', () => {
     searchPlaces = vi.fn((query: string, _: UserPosition | null, limit: number) =>
       of(page(query, limit)),
     );
-    searchUsers = vi.fn(() => of([user('u2', 'Camille', 2), user('u3', 'Camilou', 1)]));
+    searchUsers = vi.fn(() =>
+      of({ results: [user('u2', 'Camille', 2), user('u3', 'Camilou', 1)], hasMore: false }),
+    );
     createRestaurantFromPlace = vi.fn(() => of(stored(true)));
     requestLocation = vi.fn();
     TestBed.configureTestingModule({
@@ -141,10 +152,20 @@ describe('SearchResults', () => {
   }
 
   /**
-   * The "Show more" (or "Loading…", "Try again") button, or null when there is none.
+   * The "Show more" (or "Loading…", "Try again") button of the restaurants or the users, or null when there is none.
    */
-  function moreButton(): HTMLButtonElement | null {
-    return (harness.fixture.nativeElement as HTMLElement).querySelector('.load-more');
+  function moreButton(section: 'restaurants' | 'users' = 'restaurants'): HTMLButtonElement | null {
+    return (harness.fixture.nativeElement as HTMLElement).querySelector(
+      `section[aria-labelledby="${section}-title"] .load-more`,
+    );
+  }
+
+  /**
+   * Clicks the "Show more" (or "Try again") button of the restaurants or the users, then waits for the page to load.
+   */
+  async function clickMore(section: 'restaurants' | 'users'): Promise<void> {
+    moreButton(section)!.click();
+    await harness.fixture.whenStable();
   }
 
   /**
@@ -152,6 +173,13 @@ describe('SearchResults', () => {
    */
   function lastLimit(): number {
     return searchPlaces.mock.lastCall?.[2] as number;
+  }
+
+  /**
+   * Limit sent with the last user search.
+   */
+  function lastUserLimit(): number {
+    return searchUsers.mock.lastCall?.[1] as number;
   }
 
   it('shows the query in the searchbar, the first 5 restaurants and the users found', async () => {
@@ -167,7 +195,7 @@ describe('SearchResults', () => {
       'Place pizza-4',
       'Place pizza-5',
     ]);
-    expect(searchUsers).toHaveBeenCalledExactlyOnceWith('pizza');
+    expect(searchUsers).toHaveBeenCalledExactlyOnceWith('pizza', 5);
     expect(userNames()).toEqual(['Camille', 'Camilou']);
     expect(queryAll(harness.fixture, '.user-item .item-meta').map(textOf)).toEqual([
       '2 restaurants',
@@ -187,7 +215,7 @@ describe('SearchResults', () => {
   });
 
   it('shows 10 more restaurants on each "Show more", keeping the ones shown while they load', async () => {
-    const more = new Subject<PlaceSearchPage>();
+    const more = new Subject<SearchPage<PlaceSuggestion>>();
     searchPlaces.mockReturnValueOnce(of(page('pizza', 5))).mockReturnValueOnce(more);
     await open('/search?q=pizza');
 
@@ -237,20 +265,24 @@ describe('SearchResults', () => {
     expect(limits).toEqual([15, 25, 35, 45, 50]);
   });
 
-  it('starts again from 5 restaurants when the query changes', async () => {
+  it('starts again from 5 restaurants and 5 users when the query changes', async () => {
+    searchUsers.mockImplementation((_: string, limit: number) => of(userPage(limit)));
     await open('/search?q=pizza');
-    await clickButton(harness.fixture, 'Show more');
+    await clickMore('restaurants');
+    await clickMore('users');
+    expect(lastUserLimit()).toBe(15);
 
     await open('/search?q=sushi');
 
     expect(searchPlaces).toHaveBeenLastCalledWith('sushi', null, 5);
     expect(restaurantNames()).toHaveLength(5);
     expect(restaurantNames()[0]).toBe('Place sushi-1');
-    expect(searchUsers).toHaveBeenLastCalledWith('sushi');
+    expect(searchUsers).toHaveBeenLastCalledWith('sushi', 5);
+    expect(userNames()).toHaveLength(5);
   });
 
   it('ignores the late answer of a previous query', async () => {
-    const pizza = new Subject<PlaceSearchPage>();
+    const pizza = new Subject<SearchPage<PlaceSuggestion>>();
     searchPlaces.mockReturnValueOnce(pizza);
     await harness.navigateByUrl('/search?q=pizza');
     expect(pizza.observed).toBe(true);
@@ -306,21 +338,94 @@ describe('SearchResults', () => {
 
   it('tells when no restaurant and no user is found', async () => {
     searchPlaces.mockReturnValue(of({ results: [], hasMore: false }));
-    searchUsers.mockReturnValue(of([]));
+    searchUsers.mockReturnValue(of({ results: [], hasMore: false }));
     await open('/search?q=zzzz');
 
     expect(textOrNull('.restaurants-hint')).toBe('No restaurants found');
     expect(textOrNull('.users-hint')).toBe('No users found');
-    expect(moreButton()).toBeNull();
+    expect(moreButton('restaurants')).toBeNull();
+    expect(moreButton('users')).toBeNull();
     expect(textOrNull('.attribution')).toBeNull();
   });
 
-  it('tells when the user search fails, still showing the restaurants', async () => {
-    searchUsers.mockReturnValue(throwError(() => new Error('503')));
+  it('shows the first 5 users, then 10 more on each "Show more", keeping the ones shown while they load', async () => {
+    const more = new Subject<SearchPage<UserProfile>>();
+    searchUsers.mockReturnValueOnce(of(userPage(5))).mockReturnValueOnce(more);
+    await open('/search?q=user');
+    expect(userNames()).toEqual(['User 1', 'User 2', 'User 3', 'User 4', 'User 5']);
+
+    moreButton('users')!.click();
+    // Renders while more users load (whenStable would wait for them)
+    TestBed.tick();
+
+    expect(lastUserLimit()).toBe(15);
+    expect(userNames()).toHaveLength(5);
+    expect(textOf(moreButton('users')!)).toBe('Loading…');
+    expect(moreButton('users')!.disabled).toBe(true);
+
+    more.next(userPage(15));
+    more.complete();
+    await harness.fixture.whenStable();
+
+    expect(userNames()).toHaveLength(15);
+    expect(userNames()[14]).toBe('User 15');
+    expect(textOf(moreButton('users')!)).toBe('Show more');
+    // The restaurants do not depend on the user search
+    expect(searchPlaces).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the users "Show more" once every user is shown', async () => {
+    searchUsers.mockImplementation((_: string, limit: number) => of(userPage(limit, 12)));
+    await open('/search?q=user');
+
+    await clickMore('users');
+
+    expect(userNames()).toHaveLength(12);
+    expect(moreButton('users')).toBeNull();
+  });
+
+  it('never asks for more users than the API returns at most', async () => {
+    searchUsers.mockImplementation((_: string, limit: number) => of(userPage(limit, 100)));
+    await open('/search?q=user');
+
+    const limits: number[] = [];
+    for (let i = 0; i < 5; i++) {
+      await clickMore('users');
+      limits.push(lastUserLimit());
+    }
+
+    expect(limits).toEqual([15, 25, 35, 45, 50]);
+  });
+
+  it('tells when the user search fails, still showing the restaurants, and lets the user try again', async () => {
+    searchUsers.mockReturnValueOnce(throwError(() => new Error('503')));
     await open('/search?q=pizza');
 
     expect(textOrNull('.users-hint')).toBe("Users can't be searched right now");
+    expect(userNames()).toEqual([]);
     expect(restaurantNames()).toHaveLength(5);
+
+    await clickMore('users');
+
+    expect(textOrNull('.users-hint')).toBeNull();
+    expect(userNames()).toEqual(['Camille', 'Camilou']);
+  });
+
+  it('keeps the users shown when loading more fails, and lets the user try again', async () => {
+    searchUsers
+      .mockImplementation((_: string, limit: number) => of(userPage(limit)))
+      .mockReturnValueOnce(of(userPage(5)))
+      .mockReturnValueOnce(throwError(() => new Error('503')));
+    await open('/search?q=user');
+
+    await clickMore('users');
+    expect(userNames()).toHaveLength(5);
+    expect(textOrNull('.users-hint')).toBe("Users can't be searched right now");
+
+    await clickMore('users');
+    expect(lastUserLimit()).toBe(15);
+    expect(userNames()).toHaveLength(15);
+    expect(textOrNull('.users-hint')).toBeNull();
   });
 
   it('does not search a query shorter than 3 characters', async () => {
@@ -350,7 +455,7 @@ describe('SearchResults', () => {
 
     expect(TestBed.inject(Router).url).toBe('/search?q=sushi%20bar');
     expect(searchPlaces).toHaveBeenLastCalledWith('sushi bar', null, 5);
-    expect(searchUsers).toHaveBeenLastCalledWith('sushi bar');
+    expect(searchUsers).toHaveBeenLastCalledWith('sushi bar', 5);
   });
 
   it('stores the restaurant of a place opened first, then opens its page with "The explorer"', async () => {

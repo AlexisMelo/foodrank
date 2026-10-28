@@ -11,7 +11,7 @@
     <section class="section" aria-labelledby="restaurants-title">
       <h2 id="restaurants-title" class="section-title">Restaurants</h2>
 
-      @if (loadingRestaurants()) {
+      @if (restaurants.loading()) {
         <div class="list" role="status" aria-label="Loading restaurants">
           @for (i of restaurantSkeletons; track i) {
             <div class="skeleton"></div>
@@ -21,45 +21,47 @@
         @if (places.failed()) {
           <p class="open-error" role="alert">Couldn't open this restaurant, try again.</p>
         }
-        <div class="list restaurant-list">
-          @for (r of restaurants(); track r.placeId; let index = $index) {
-            <button
-              type="button"
-              class="list-item restaurant-item"
-              [disabled]="places.opening() !== null"
-              [attr.aria-busy]="places.opening() === r.placeId"
-              (click)="selectPlace(r)"
-            >
-              <span class="item-index">{{ index + 1 }}</span>
-              <span class="item-emoji-wrap" aria-hidden="true">
-                <span class="item-emoji">🍽️</span>
-              </span>
-              <span class="item-info">
-                <span class="item-name">{{ r.name }}</span>
-                <span class="item-meta">{{ r.secondaryText }}</span>
-              </span>
-              <span class="item-arrow" aria-hidden="true">›</span>
-            </button>
-          }
-        </div>
+        @if (restaurants.results().length) {
+          <div class="list restaurant-list">
+            @for (r of restaurants.results(); track r.placeId; let index = $index) {
+              <button
+                type="button"
+                class="list-item restaurant-item"
+                [disabled]="places.opening() !== null"
+                [attr.aria-busy]="places.opening() === r.placeId"
+                (click)="selectPlace(r)"
+              >
+                <span class="item-index">{{ index + 1 }}</span>
+                <span class="item-emoji-wrap" aria-hidden="true">
+                  <span class="item-emoji">🍽️</span>
+                </span>
+                <span class="item-info">
+                  <span class="item-name">{{ r.name }}</span>
+                  <span class="item-meta">{{ r.secondaryText }}</span>
+                </span>
+                <span class="item-arrow" aria-hidden="true">›</span>
+              </button>
+            }
+          </div>
+        }
 
-        @if (restaurantsError()) {
+        @if (restaurants.failed()) {
           <p class="hint restaurants-hint">Search is unavailable right now</p>
-          <button type="button" class="load-more" (click)="retryRestaurants()">Try again</button>
-        } @else if (noRestaurants()) {
+          <button type="button" class="load-more" (click)="restaurants.retry()">Try again</button>
+        } @else if (restaurants.empty()) {
           <p class="hint restaurants-hint">No restaurants found</p>
-        } @else if (hasMoreRestaurants()) {
+        } @else if (restaurants.hasMore()) {
           <button
             type="button"
             class="load-more"
-            [disabled]="loadingMore()"
-            (click)="showMoreRestaurants()"
+            [disabled]="restaurants.loadingMore()"
+            (click)="restaurants.showMore()"
           >
-            {{ loadingMore() ? 'Loading…' : 'Show more' }}
+            {{ restaurants.loadingMore() ? 'Loading…' : 'Show more' }}
           </button>
         }
 
-        @if (restaurants().length) {
+        @if (restaurants.results().length) {
           <p class="attribution">
             ©
             <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">
@@ -73,35 +75,49 @@
     <section class="section" aria-labelledby="users-title">
       <h2 id="users-title" class="section-title">Users</h2>
 
-      @if (loadingUsers()) {
+      @if (users.loading()) {
         <div class="list" role="status" aria-label="Loading users">
           @for (i of userSkeletons; track i) {
             <div class="skeleton"></div>
           }
         </div>
-      } @else if (usersError()) {
-        <p class="hint users-hint">Users can't be searched right now</p>
-      } @else if (users().length === 0) {
-        <p class="hint users-hint">No users found</p>
       } @else {
-        <div class="list user-list">
-          @for (user of users(); track user.id) {
-            <a class="list-item user-item" [routerLink]="['/user', user.id]">
-              <app-user-avatar
-                class="item-avatar"
-                [name]="user.name"
-                [avatarUrl]="user.avatarUrl"
-              />
-              <span class="item-info">
-                <span class="item-name">{{ user.name }}</span>
-                <span class="item-meta">{{
-                  restaurantCountLabel(user.ratedRestaurantsCount)
-                }}</span>
-              </span>
-              <span class="item-arrow" aria-hidden="true">›</span>
-            </a>
-          }
-        </div>
+        @if (users.results().length) {
+          <div class="list user-list">
+            @for (user of users.results(); track user.id) {
+              <a class="list-item user-item" [routerLink]="['/user', user.id]">
+                <app-user-avatar
+                  class="item-avatar"
+                  [name]="user.name"
+                  [avatarUrl]="user.avatarUrl"
+                />
+                <span class="item-info">
+                  <span class="item-name">{{ user.name }}</span>
+                  <span class="item-meta">{{
+                    restaurantCountLabel(user.ratedRestaurantsCount)
+                  }}</span>
+                </span>
+                <span class="item-arrow" aria-hidden="true">›</span>
+              </a>
+            }
+          </div>
+        }
+
+        @if (users.failed()) {
+          <p class="hint users-hint">Users can't be searched right now</p>
+          <button type="button" class="load-more" (click)="users.retry()">Try again</button>
+        } @else if (users.empty()) {
+          <p class="hint users-hint">No users found</p>
+        } @else if (users.hasMore()) {
+          <button
+            type="button"
+            class="load-more"
+            [disabled]="users.loadingMore()"
+            (click)="users.showMore()"
+          >
+            {{ users.loadingMore() ? 'Loading…' : 'Show more' }}
+          </button>
+        }
       }
     </section>
   }

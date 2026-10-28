@@ -1,4 +1,5 @@
 using api.Common;
+using api.Models;
 using api.Services;
 using api.Services.Places;
 using Api.Tests.Fakes;
@@ -42,7 +43,7 @@ public class PlaceSearchServiceTests
     [InlineData("  ab  ")]
     public async Task SearchAsync_TooShortQuery_ReturnsEmptyWithoutCallingProvider(string query)
     {
-        Result<PlaceSearchPage> result = await CreateService().SearchAsync(query, 5, null, null, CancellationToken.None);
+        Result<SearchPage<PlaceSuggestion>> result = await CreateService().SearchAsync(query, 5, null, null, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Empty(result.Value!.Results);
@@ -73,7 +74,7 @@ public class PlaceSearchServiceTests
     {
         ProviderFinds(16);
 
-        Result<PlaceSearchPage> result = await CreateService().SearchAsync("pizza", 5, null, null, CancellationToken.None);
+        Result<SearchPage<PlaceSuggestion>> result = await CreateService().SearchAsync("pizza", 5, null, null, CancellationToken.None);
 
         Assert.Equal(["N0", "N1", "N2", "N3", "N4"], result.Value!.Results.Select(r => r.PlaceId));
         Assert.Equal("0 rue de Caen", result.Value.Results[0].SecondaryText);
@@ -89,8 +90,8 @@ public class PlaceSearchServiceTests
         ProviderFinds(16);
         PlaceSearchService service = CreateService();
 
-        Result<PlaceSearchPage> first = await service.SearchAsync("pizza", 5, null, null, CancellationToken.None);
-        Result<PlaceSearchPage> more = await service.SearchAsync("pizza", 15, null, null, CancellationToken.None);
+        Result<SearchPage<PlaceSuggestion>> first = await service.SearchAsync("pizza", 5, null, null, CancellationToken.None);
+        Result<SearchPage<PlaceSuggestion>> more = await service.SearchAsync("pizza", 15, null, null, CancellationToken.None);
 
         Assert.Equal(first.Value!.Results, more.Value!.Results.Take(5));
         Assert.Equal(15, more.Value.Results.Count);
@@ -106,7 +107,7 @@ public class PlaceSearchServiceTests
     {
         ProviderFinds(16);
 
-        Result<PlaceSearchPage> result = await CreateService().SearchAsync("pizza", limit, null, null, CancellationToken.None);
+        Result<SearchPage<PlaceSuggestion>> result = await CreateService().SearchAsync("pizza", limit, null, null, CancellationToken.None);
 
         Assert.Equal(16, result.Value!.Results.Count);
         Assert.False(result.Value.HasMore);
@@ -162,7 +163,7 @@ public class PlaceSearchServiceTests
     {
         _provider.SearchResult = Result<IReadOnlyList<PlaceDetails>>.Failure(new Error(ErrorType.Unavailable, "down"));
 
-        Result<PlaceSearchPage> result = await CreateService().SearchAsync("pizza", 5, null, null, CancellationToken.None);
+        Result<SearchPage<PlaceSuggestion>> result = await CreateService().SearchAsync("pizza", 5, null, null, CancellationToken.None);
 
         Assert.False(result.IsSuccess);
         Assert.Equal(ErrorType.Unavailable, result.Error!.Type);

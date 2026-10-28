@@ -183,9 +183,63 @@ public class UsersControllerTests : IDisposable
         HttpResponseMessage response = await GetAsync("/api/users/search?query=%20CAMIL%20");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        List<UserProfileResponse> users = (await response.Content.ReadFromJsonAsync<List<UserProfileResponse>>())!;
-        Assert.Equal(["Camille", "Camilou"], users.Select(u => u.Name));
-        Assert.Equal(new UserProfileResponse(camille, "Camille", null, 2), users[0]);
+        SearchPage<UserProfileResponse> page = (await response.Content.ReadFromJsonAsync<SearchPage<UserProfileResponse>>())!;
+        Assert.Equal(["Camille", "Camilou"], page.Results.Select(u => u.Name));
+        Assert.Equal(new UserProfileResponse(camille, "Camille", null, 2), page.Results[0]);
+        Assert.False(page.HasMore);
+    }
+
+    /// <summary>
+    /// Stores 7 users named "user1" to "user7".
+    /// </summary>
+    private void Add7Users()
+    {
+        for (char digit = '1'; digit <= '7'; digit++)
+            AddUser((char)(digit + 1), $"user{digit}");
+    }
+
+    /// <summary>
+    /// Without a limit, the search returns the first 5 users and tells there are more.
+    /// </summary>
+    [Fact]
+    public async Task Search_ReturnsFirst5UsersAndHasMore()
+    {
+        Add7Users();
+
+        SearchPage<UserProfileResponse> page = (await (await GetAsync("/api/users/search?query=user")).Content.ReadFromJsonAsync<SearchPage<UserProfileResponse>>())!;
+
+        Assert.Equal(["user1", "user2", "user3", "user4", "user5"], page.Results.Select(u => u.Name));
+        Assert.True(page.HasMore);
+    }
+
+    /// <summary>
+    /// A bigger limit returns the same first users followed by the next ones, and tells when there are no more.
+    /// </summary>
+    [Theory]
+    [InlineData(6, true)]
+    [InlineData(7, false)]
+    [InlineData(15, false)]
+    public async Task Search_WithLimit_ReturnsThatManyUsers(int limit, bool hasMore)
+    {
+        Add7Users();
+
+        SearchPage<UserProfileResponse> page = (await (await GetAsync($"/api/users/search?query=user&limit={limit}")).Content.ReadFromJsonAsync<SearchPage<UserProfileResponse>>())!;
+
+        Assert.Equal(Enumerable.Range(1, Math.Min(limit, 7)).Select(i => $"user{i}"), page.Results.Select(u => u.Name));
+        Assert.Equal(hasMore, page.HasMore);
+    }
+
+    /// <summary>
+    /// A limit outside 1-50 is refused with a 400.
+    /// </summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(51)]
+    public async Task Search_LimitOutOfRange_Returns400(int limit)
+    {
+        HttpResponseMessage response = await GetAsync($"/api/users/search?query=user&limit={limit}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     /// <summary>
@@ -196,9 +250,9 @@ public class UsersControllerTests : IDisposable
     {
         AddUser('2', "alexia");
 
-        List<UserProfileResponse> users = (await (await GetAsync("/api/users/search?query=alex")).Content.ReadFromJsonAsync<List<UserProfileResponse>>())!;
+        SearchPage<UserProfileResponse> page = (await (await GetAsync("/api/users/search?query=alex")).Content.ReadFromJsonAsync<SearchPage<UserProfileResponse>>())!;
 
-        Assert.Equal("alexia", Assert.Single(users).Name);
+        Assert.Equal("alexia", Assert.Single(page.Results).Name);
     }
 
     /// <summary>
@@ -212,7 +266,9 @@ public class UsersControllerTests : IDisposable
         HttpResponseMessage response = await GetAsync("/api/users/search?query=%20al%20");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Empty((await response.Content.ReadFromJsonAsync<List<UserProfileResponse>>())!);
+        SearchPage<UserProfileResponse> page = (await response.Content.ReadFromJsonAsync<SearchPage<UserProfileResponse>>())!;
+        Assert.Empty(page.Results);
+        Assert.False(page.HasMore);
     }
 
     /// <summary>
