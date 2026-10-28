@@ -11,16 +11,32 @@ import type { PlaceSuggestion } from '@/core/models/restaurant.model';
 import { restaurantCountLabel } from '@/core/utils/profile';
 import { injectOpenPlace } from '@/shared/data/open-place';
 import { FIRST_RESULTS, injectPagedSearch } from '@/shared/data/paged-search';
+import { type ChipOption, ChoiceChips } from '@/shared/ui/choice-chips/choice-chips';
 import { SearchAreaHint } from '@/shared/ui/search-area-hint/search-area-hint';
 import { SearchBar } from '@/shared/ui/search-bar/search-bar';
 import { UserAvatar } from '@/shared/ui/user-avatar/user-avatar';
 
 /**
- * Search results page (/search?q=…), opened from the search sheet: the searchbar to change the query, then the
- * restaurants of the query and the users whose pseudonym contains it, each 5 first, then 10 more on each "Show more".
+ * Results shown by the search: all of them, only the restaurants or only the profiles
+ */
+type SearchFilter = 'all' | 'restaurants' | 'profiles';
+
+/**
+ * Filter chips of the search, in display order
+ */
+const FILTER_OPTIONS: readonly ChipOption<SearchFilter>[] = [
+  { key: 'all', label: 'All' },
+  { key: 'restaurants', label: 'Restaurants' },
+  { key: 'profiles', label: 'Profiles' },
+];
+
+/**
+ * Search results page (/search?q=…&type=…), opened from the search sheet: the searchbar to change the query, the
+ * chips filtering the results, then the restaurants of the query and the profiles whose pseudonym contains it, each
+ * 5 first, then 10 more on each "Show more".
  */
 @Component({
-  imports: [RouterLink, SearchAreaHint, SearchBar, UserAvatar],
+  imports: [ChoiceChips, RouterLink, SearchAreaHint, SearchBar, UserAvatar],
   selector: 'app-search-results',
   styleUrl: './search-results.scss',
   templateUrl: './search-results.html',
@@ -30,6 +46,11 @@ export class SearchResults {
    * Query as in the URL, from ?q=; undefined when missing
    */
   readonly q = input<string>();
+
+  /**
+   * Results shown as in the URL, from ?type=: "restaurants" or "profiles"; undefined (or any other value) for all
+   */
+  readonly type = input<string>();
 
   /**
    * Opens the place picked, storing its restaurant on the first time
@@ -72,12 +93,36 @@ export class SearchResults {
   protected readonly searchable = computed(() => this.query().length >= this.minLength);
 
   /**
+   * Filter chips offered above the results
+   */
+  protected readonly filterOptions = FILTER_OPTIONS;
+
+  /**
+   * Results shown, from ?type=; all of them when it is missing or unknown
+   */
+  protected readonly filter = computed<SearchFilter>(() => {
+    const type = this.type();
+    return type === 'restaurants' || type === 'profiles' ? type : 'all';
+  });
+
+  /**
+   * True when the restaurants are shown: not filtered out by the "Profiles" chip
+   */
+  protected readonly showRestaurants = computed(() => this.filter() !== 'profiles');
+
+  /**
+   * True when the profiles are shown: not filtered out by the "Restaurants" chip
+   */
+  protected readonly showProfiles = computed(() => this.filter() !== 'restaurants');
+
+  /**
    * Restaurants of the query, near the user's position once known: searched again when the position changes, the
-   * restaurants shown staying; idle when the query is too short
+   * restaurants shown staying; idle when the query is too short and while filtered out, then shown again as they were
+   * (as many restaurants) and searched again
    */
   protected readonly restaurants = injectPagedSearch(
     () =>
-      this.searchable()
+      this.searchable() && this.showRestaurants()
         ? { query: this.query(), location: this.userLocation.location() }
         : undefined,
     (params, limit) => this.restaurantApi.searchPlaces(params.query, params.location, limit),
@@ -85,10 +130,11 @@ export class SearchResults {
   );
 
   /**
-   * Users whose pseudonym contains the query; idle when the query is too short
+   * Profiles whose pseudonym contains the query; idle when the query is too short and while filtered out, then shown
+   * again as they were (as many profiles) and searched again
    */
-  protected readonly users = injectPagedSearch(
-    () => (this.searchable() ? { query: this.query() } : undefined),
+  protected readonly profiles = injectPagedSearch(
+    () => (this.searchable() && this.showProfiles() ? { query: this.query() } : undefined),
     (params, limit) => this.userApi.searchUsers(params.query, limit),
     USER_SEARCH_MAX_RESULTS,
   );
@@ -99,12 +145,13 @@ export class SearchResults {
   protected readonly restaurantSkeletons = Array.from({ length: FIRST_RESULTS }, (_, i) => i + 1);
 
   /**
-   * Numbers of the user placeholders shown while loading: fewer than restaurants, a query rarely finding many users
+   * Numbers of the profile placeholders shown while loading: fewer than restaurants, a query rarely finding many
+   * profiles
    */
-  protected readonly userSkeletons = [1, 2, 3];
+  protected readonly profileSkeletons = [1, 2, 3];
 
   /**
-   * Line under a user's name, e.g. "3 restaurants"
+   * Line under a profile's name, e.g. "3 restaurants"
    */
   protected readonly restaurantCountLabel = restaurantCountLabel;
 
@@ -113,10 +160,23 @@ export class SearchResults {
   }
 
   /**
-   * Opens the results of the query typed in the searchbar (already trimmed, never empty)
+   * Opens the results of the query typed in the searchbar (already trimmed, never empty), with the same filter
    */
   protected search(query: string): void {
-    void this.router.navigate(['/search'], { queryParams: { q: query } });
+    void this.router.navigate(['/search'], {
+      queryParams: { q: query, type: this.typeParam(this.filter()) },
+    });
+  }
+
+  /**
+   * Shows the results of the chip picked, for the same query; replaces the URL, so Back leaves the search instead of
+   * going through every chip picked
+   */
+  protected filterBy(filter: SearchFilter): void {
+    void this.router.navigate(['/search'], {
+      queryParams: { q: this.query(), type: this.typeParam(filter) },
+      replaceUrl: true,
+    });
   }
 
   /**
@@ -125,5 +185,12 @@ export class SearchResults {
    */
   protected selectPlace(place: PlaceSuggestion): void {
     void this.places.open(place.placeId);
+  }
+
+  /**
+   * Value of ?type= for `filter`: null for all the results, which leaves it out of the URL
+   */
+  private typeParam(filter: SearchFilter): SearchFilter | null {
+    return filter === 'all' ? null : filter;
   }
 }

@@ -6,7 +6,12 @@
   (closed)="closed.emit()"
 >
   @if (!noRatedRestaurant() && !allAdded()) {
-    <app-sort-chips searchDialogFilters [options]="sortOptions" [(value)]="sortBy" />
+    <app-choice-chips
+      label="Sort by"
+      searchDialogFilters
+      [options]="sortOptions"
+      [(value)]="sortBy"
+    />
   }
 
   @if (noRatedRestaurant()) {

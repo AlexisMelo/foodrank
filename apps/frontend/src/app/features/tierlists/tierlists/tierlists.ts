@@ -2,8 +2,8 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { TierlistApi } from '@/core/api/tierlist-api';
 import { byLastUpdate, byRestaurantCount } from '@/core/utils/tierlist';
+import { type ChipOption, ChoiceChips } from '@/shared/ui/choice-chips/choice-chips';
 import { NewChip } from '@/shared/ui/new-chip/new-chip';
-import { type SortOption, SortChips } from '@/shared/ui/sort-chips/sort-chips';
 import { TierlistCard } from '../tierlist-card/tierlist-card';
 
 /**
@@ -14,7 +14,7 @@ type SortKey = 'updated' | 'count' | 'az';
 /**
  * Sort chips of the page, in display order
  */
-const SORT_OPTIONS: SortOption<SortKey>[] = [
+const SORT_OPTIONS: ChipOption<SortKey>[] = [
   { key: 'updated', label: 'Recently updated' },
   { key: 'count', label: 'Number of restaurants' },
   { key: 'az', label: 'A–Z' },
@@ -24,7 +24,7 @@ const SORT_OPTIONS: SortOption<SortKey>[] = [
  * Tierlists page (/tierlists): the logged-in user's tierlists, sorted as they choose, and a link to create one.
  */
 @Component({
-  imports: [NewChip, SortChips, TierlistCard],
+  imports: [ChoiceChips, NewChip, TierlistCard],
   selector: 'app-tierlists',
   styleUrl: './tierlists.scss',
   templateUrl: './tierlists.html',

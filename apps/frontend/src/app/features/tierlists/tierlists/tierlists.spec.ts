@@ -127,7 +127,7 @@ describe('TierlistsView', () => {
    * Clicks the sort chip whose text is `label`, and waits for the list to update.
    */
   async function sortBy(label: string): Promise<void> {
-    queryAll<HTMLButtonElement>(harness.fixture, '.sort-chip')
+    queryAll<HTMLButtonElement>(harness.fixture, '.choice-chip')
       .find((c) => textOf(c) === label)!
       .click();
     await harness.fixture.whenStable();
@@ -146,7 +146,7 @@ describe('TierlistsView', () => {
   it('offers to sort by last update, the default, by number of restaurants or by name', async () => {
     await open('/tierlists');
 
-    const chips = queryAll(harness.fixture, '.sort-chip');
+    const chips = queryAll(harness.fixture, '.choice-chip');
     expect(chips.map(textOf)).toEqual(['Recently updated', 'Number of restaurants', 'A–Z']);
     expect(chips.map((c) => c.getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false']);
   });

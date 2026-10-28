@@ -7,7 +7,7 @@
     <app-new-chip class="new-chip" link="/tierlists/new" />
   </header>
 
-  <app-sort-chips class="sort-row" [options]="sortOptions" [(value)]="sortBy" />
+  <app-choice-chips label="Sort by" class="sort-row" [options]="sortOptions" [(value)]="sortBy" />
 
   @if (loading()) {
     <div class="list">

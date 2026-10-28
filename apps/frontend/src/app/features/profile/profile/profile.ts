@@ -7,8 +7,8 @@ import {
   sortRestaurants,
 } from '@/core/utils/ranking';
 import { injectUserProfile } from '@/shared/data/user-profile';
+import { ChoiceChips } from '@/shared/ui/choice-chips/choice-chips';
 import { RankedRestaurantItem } from '@/shared/ui/ranked-restaurant-item/ranked-restaurant-item';
-import { SortChips } from '@/shared/ui/sort-chips/sort-chips';
 import { PinnedTierlists } from '../pinned-tierlists/pinned-tierlists';
 import { ProfileHeader } from '../profile-header/profile-header';
 import { injectProfileRanking } from '../profile-ranking';
@@ -19,7 +19,7 @@ import { injectProfileRanking } from '../profile-ranking';
  * first by default, or the most recently rated first, or by name.
  */
 @Component({
-  imports: [PinnedTierlists, ProfileHeader, RankedRestaurantItem, SortChips],
+  imports: [ChoiceChips, PinnedTierlists, ProfileHeader, RankedRestaurantItem],
   selector: 'app-profile',
   styleUrl: './profile.scss',
   templateUrl: './profile.html',

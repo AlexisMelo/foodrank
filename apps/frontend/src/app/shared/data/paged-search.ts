@@ -64,7 +64,9 @@ export interface PagedSearchState<T> {
  * query changes, and a late answer for previous params is ignored. The results shown stay while more load, while
  * searching again with other params of the same query (e.g. the user's position) and after a failure, so the list
  * does not blink. Must run in an injection context.
- * @param params what is searched, or undefined when nothing is (e.g. a query too short)
+ * @param params what is searched, or undefined when nothing is for now (e.g. a query too short, results filtered
+ * out): nothing is searched then, and the results of the last query, with as many shown, come back once searched
+ * again for it
  * @param search searches the first `limit` results of `params`
  * @param maxResults most results the API returns, the highest limit it accepts
  */
@@ -73,7 +75,11 @@ export function injectPagedSearch<P extends { query: string }, T>(
   search: (params: P, limit: number) => Observable<SearchPage<T>>,
   maxResults: number,
 ): PagedSearchState<T> {
-  const query = computed(() => params()?.query);
+  // Undefined params (nothing searched for now) keep the last query: the same results come back once searched again
+  const query = linkedSignal<string | undefined, string | undefined>({
+    source: () => params()?.query,
+    computation: (searched, previous) => searched ?? previous?.value,
+  });
   const limit = linkedSignal({ source: query, computation: () => FIRST_RESULTS });
   const resource = rxResource({
     params: () => {
@@ -85,7 +91,7 @@ export function injectPagedSearch<P extends { query: string }, T>(
   const page = linkedSignal<
     {
       /**
-       * Query searched, undefined when nothing is
+       * Last query searched, undefined until one is
        */
       query: string | undefined;
 
