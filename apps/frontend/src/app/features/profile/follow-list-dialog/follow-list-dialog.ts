@@ -1,7 +1,8 @@
 import { Component, computed, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { UserSummary } from '@/core/models/user.model';
-import { filterByName } from '@/core/utils/search';
+import { filterUsers } from '@/core/utils/search';
+import { DisplayedNamePipe } from '@/shared/pipes/displayed-name-pipe';
 import { SearchDialog } from '@/shared/ui/search-dialog/search-dialog';
 import { UserAvatar } from '@/shared/ui/user-avatar/user-avatar';
 
@@ -12,11 +13,11 @@ export type FollowList = 'followers' | 'following';
 
 /**
  * Popup of a profile listing its followers, or the users it follows, covering the whole screen, filtered by a search
- * on the name. Each row (avatar and name) opens the user's profile; the parent removes the popup when the profile shown
- * changes.
+ * on the username or display name. Each row (avatar, display name and username) opens the user's profile; the parent
+ * removes the popup when the profile shown changes.
  */
 @Component({
-  imports: [RouterLink, SearchDialog, UserAvatar],
+  imports: [RouterLink, SearchDialog, UserAvatar, DisplayedNamePipe],
   selector: 'app-follow-list-dialog',
   styleUrl: './follow-list-dialog.scss',
   templateUrl: './follow-list-dialog.html',
@@ -64,7 +65,7 @@ export class FollowListDialog {
   );
 
   /**
-   * Users whose name contains the search, in the order of the list
+   * Users whose username or display name contains the search, in the order of the list
    */
-  protected readonly shownUsers = computed(() => filterByName(this.users(), this.query()));
+  protected readonly shownUsers = computed(() => filterUsers(this.users(), this.query()));
 }

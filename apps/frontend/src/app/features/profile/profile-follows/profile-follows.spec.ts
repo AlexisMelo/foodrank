@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { signal } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Observable, Subject, of, throwError } from 'rxjs';
@@ -8,13 +8,16 @@ import { AuthStore } from '@/core/auth/auth-store';
 import type { UserProfile, UserSummary } from '@/core/models/user.model';
 import { ToastStore } from '@/core/toast/toast-store';
 import { query, queryAll, stubDialogs, textOf, typeIn } from '@/testing/dom-testing';
+import { FollowButton } from '../follow-button/follow-button';
+import { injectProfileFollows } from '../profile-follows-state';
 import { ProfileFollows } from './profile-follows';
 
 /**
- * Builds the user `id` named `name`, as the follow endpoints list them.
+ * Builds the user `id` with the username `username` and the display name `displayName`, as the follow endpoints list
+ * them.
  */
-function user(id: string, name: string): UserSummary {
-  return { id, name, avatarUrl: null };
+function user(id: string, username: string, displayName: string | null = null): UserSummary {
+  return { id, username, displayName, avatarUrl: null };
 }
 
 /**
@@ -27,17 +30,17 @@ function profileOf(summary: UserSummary): UserProfile {
 /**
  * The logged-in user
  */
-const me = user('u1', 'Alexis');
+const me = user('u1', 'alex.m', 'Alexis');
 
 /**
  * The user whose profile is shown, unless a test opens another one
  */
-const camille = user('u2', 'Camille');
+const camille = user('u2', 'camille', 'Camille');
 
 /**
- * A third user
+ * A third user, without display name
  */
-const hugo = user('u3', 'Hugo');
+const hugo = user('u3', 'hugo');
 
 /**
  * Builds the error HttpClient gives when the API answers with `status`.
@@ -46,12 +49,31 @@ function httpError(status: number): Observable<never> {
   return throwError(() => new HttpErrorResponse({ status }));
 }
 
-describe('ProfileFollows', () => {
+/**
+ * The counts and the follow button of a profile, sharing its follows as on the profile page.
+ */
+@Component({
+  imports: [FollowButton, ProfileFollows],
+  template: `<app-profile-follows [follows]="follows" /><app-follow-button [follows]="follows" />`,
+})
+class ProfileFollowsHost {
+  /**
+   * Profile shown, set by the tests
+   */
+  readonly profile = input<UserProfile | null>(null);
+
+  /**
+   * Follows of the profile shown
+   */
+  protected readonly follows = injectProfileFollows(this.profile);
+}
+
+describe('ProfileFollows and FollowButton', () => {
   let fetchFollowers: ReturnType<typeof vi.fn<(userId: string) => Observable<UserSummary[]>>>;
   let fetchFollowing: ReturnType<typeof vi.fn<(userId: string) => Observable<UserSummary[]>>>;
   let follow: ReturnType<typeof vi.fn<(userId: string) => Observable<UserSummary[]>>>;
   let unfollow: ReturnType<typeof vi.fn<(userId: string) => Observable<UserSummary[]>>>;
-  let fixture: ComponentFixture<ProfileFollows>;
+  let fixture: ComponentFixture<ProfileFollowsHost>;
 
   beforeEach(() => {
     stubDialogs();
@@ -74,7 +96,7 @@ describe('ProfileFollows', () => {
    * Shows the follows of `shown` (Camille by default) and waits for them to load.
    */
   async function open(shown: UserSummary = camille): Promise<void> {
-    fixture = TestBed.createComponent(ProfileFollows);
+    fixture = TestBed.createComponent(ProfileFollowsHost);
     fixture.componentRef.setInput('profile', profileOf(shown));
     await fixture.whenStable();
   }
@@ -242,11 +264,11 @@ describe('ProfileFollows', () => {
 
     expect(textOf(query(fixture, 'dialog .title'))).toBe('Followers');
     expect(query(fixture, 'dialog').classList).toContain('overlay-full');
-    expect(listedNames()).toEqual(['Hugo', 'Alexis']);
+    expect(listedNames()).toEqual(['hugo', 'Alexis']);
     const rows = queryAll(fixture, '.user-row');
     expect(rows.map((row) => row.getAttribute('href'))).toEqual(['/user/u3', '/user/u1']);
-    // Only the name: the API gives no number of restaurants rated in lists
-    expect(queryAll(fixture, '.user-row .search-row-detail')).toHaveLength(0);
+    // The username under the display name, alone otherwise; the API gives no number of restaurants rated in lists
+    expect(queryAll(fixture, '.user-row .search-row-detail').map(textOf)).toEqual(['@alex.m']);
   });
 
   it('opens the users followed in the popup', async () => {
@@ -256,16 +278,22 @@ describe('ProfileFollows', () => {
     await click(query(fixture, '.following-btn'));
 
     expect(textOf(query(fixture, 'dialog .title'))).toBe('Following');
-    expect(listedNames()).toEqual(['Alexis', 'Hugo']);
+    expect(listedNames()).toEqual(['Alexis', 'hugo']);
   });
 
-  it('filters the popup by name, ignoring case, and says when nobody matches', async () => {
+  it('filters the popup by display name or username, ignoring case, and says when nobody matches', async () => {
     fetchFollowers.mockReturnValue(of([hugo, me]));
     await open();
     await click(query(fixture, '.followers-btn'));
 
     await typeIn(fixture, '.search', 'HUG');
-    expect(listedNames()).toEqual(['Hugo']);
+    expect(listedNames()).toEqual(['hugo']);
+
+    await typeIn(fixture, '.search', 'alexis');
+    expect(listedNames()).toEqual(['Alexis']);
+
+    await typeIn(fixture, '.search', '.M');
+    expect(listedNames()).toEqual(['Alexis']);
 
     await typeIn(fixture, '.search', 'zoe');
     expect(listedNames()).toEqual([]);
@@ -314,7 +342,7 @@ describe('ProfileFollows', () => {
   function openLoading(followers: Subject<UserSummary[]>, shown: UserSummary = camille): void {
     fetchFollowers.mockReturnValue(followers);
     // Rendered without waiting: the followers are not answered, so the section would never be stable
-    fixture = TestBed.createComponent(ProfileFollows);
+    fixture = TestBed.createComponent(ProfileFollowsHost);
     fixture.componentRef.setInput('profile', profileOf(shown));
     fixture.detectChanges();
   }

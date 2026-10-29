@@ -98,7 +98,13 @@ describe('TierlistsView', () => {
           provide: UserApi,
           useValue: {
             fetchUserProfile: () =>
-              of({ id: 'u1', name: 'Alexis Melo', avatarUrl: null, ratedRestaurantsCount: 0 }),
+              of({
+                id: 'u1',
+                username: 'alexis.melo',
+                displayName: 'Alexis Melo',
+                avatarUrl: null,
+                ratedRestaurantsCount: 0,
+              }),
           },
         },
         { provide: RatingApi, useValue: { fetchUserRatings: () => of([]) } },

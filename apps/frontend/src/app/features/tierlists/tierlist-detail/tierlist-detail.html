@@ -7,11 +7,11 @@
         @if (page.owner; as owner) {
           <a [routerLink]="'/user/' + owner.id" class="owner">
             <app-user-avatar
-              [name]="owner.name"
+              [name]="owner | displayedName"
               [avatarUrl]="owner.avatarUrl"
               class="owner-avatar"
             />
-            <span class="owner-name">{{ owner.name }}</span>
+            <span class="owner-name">{{ owner | displayedName }}</span>
           </a>
         }
         <span class="meta-chip">{{ restaurantCountLabel(page.tierlist.restaurants.length) }}</span>

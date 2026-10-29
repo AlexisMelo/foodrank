@@ -6,9 +6,11 @@ namespace api.Models;
 /// listed.
 /// </summary>
 /// <param name="Id">Supabase Auth identifier of the user.</param>
-/// <param name="Name">User name (pseudonym) of the user.</param>
+/// <param name="Username">Unique username of the user.</param>
+/// <param name="DisplayName">Name the user chose to be shown, null when there is none (the username is shown
+/// instead).</param>
 /// <param name="AvatarUrl">Profile picture, null when there is none.</param>
-public record UserSummaryResponse(string Id, string Name, string? AvatarUrl)
+public record UserSummaryResponse(string Id, string Username, string? DisplayName, string? AvatarUrl)
 {
     /// <summary>
     /// Builds the summary of a user from its profile row.
@@ -18,5 +20,6 @@ public record UserSummaryResponse(string Id, string Name, string? AvatarUrl)
     public static UserSummaryResponse From(Profile profile) => new(
         profile.Id,
         profile.Username,
+        Profile.DisplayNameOrNull(profile),
         Profile.AvatarUrlOrNull(profile));
 }

@@ -62,7 +62,13 @@ describe('Home', () => {
     // The new review sheet of the app layout is a native dialog
     stubDialogs();
     fetchUserProfile = vi.fn(() =>
-      of({ id: 'u1', name: 'Alexis Melo', avatarUrl: null, ratedRestaurantsCount: 3 }),
+      of({
+        id: 'u1',
+        username: 'alexis.melo',
+        displayName: 'Alexis Melo',
+        avatarUrl: null,
+        ratedRestaurantsCount: 3,
+      }),
     );
     fetchUserRatings = vi.fn(() => of([]));
     fetchRatingAllowance = vi.fn(() => of(CAN_REVIEW));
@@ -124,7 +130,8 @@ describe('Home', () => {
       fetchUserProfile.mockReturnValue(
         of({
           id: 'u1',
-          name: 'Alexis Melo',
+          username: 'alexis.melo',
+          displayName: 'Alexis Melo',
           avatarUrl: 'https://img.test/me.png',
           ratedRestaurantsCount: 1,
         }),

@@ -247,6 +247,7 @@ public class AuthControllerTests : IDisposable
         string userId = Assert.Contains("new@test.fr", _factory.AuthService.UserIdsByEmail);
         Profile profile = Assert.Contains(userId, _factory.RatingService.Profiles);
         Assert.Equal("alex", profile.Username);
+        Assert.Null(profile.DisplayName);
         Assert.Equal(DateTime.UtcNow.Year - 30, profile.BirthYear);
         Assert.Equal(Identities.NonBinary, profile.Identity);
 
@@ -290,8 +291,8 @@ public class AuthControllerTests : IDisposable
     }
 
     /// <summary>
-    /// Signing up with the pseudonym of another user is refused with a 409 before the account is created, so the
-    /// email can still be used once another pseudonym is chosen.
+    /// Signing up with the username of another user is refused with a 409 before the account is created, so the
+    /// email can still be used once another username is chosen.
     /// </summary>
     [Fact]
     public async Task Signup_UsernameTaken_Returns409WithoutCreatingAccount()
@@ -301,7 +302,7 @@ public class AuthControllerTests : IDisposable
         HttpResponseMessage response = await SignupAsync();
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
-        Assert.Contains("This pseudonym is already taken.", await response.Content.ReadAsStringAsync());
+        Assert.Contains("This username is already taken.", await response.Content.ReadAsStringAsync());
         Assert.Empty(_factory.AuthService.UserIdsByEmail);
         Assert.Null(SessionCookie(response));
 
@@ -387,7 +388,8 @@ public class AuthControllerTests : IDisposable
         => await AssertRefusedAsync(new() { ["password"] = password });
 
     /// <summary>
-    /// A missing, blank, too short, too long or space-padded pseudonym is refused with a 400.
+    /// A missing, blank, too short, too long or space-padded username is refused with a 400, as is one holding capitals,
+    /// spaces, accents or symbols other than "." and "_".
     /// </summary>
     [Theory]
     [InlineData(null)]
@@ -396,9 +398,28 @@ public class AuthControllerTests : IDisposable
     [InlineData("ab")]
     [InlineData(" alex")]
     [InlineData("alex ")]
-    [InlineData("abcdefghijklmnopqrstuvwxyz12345")]
+    [InlineData("abcdefghijklmnopqrstu")]
+    [InlineData("Alex")]
+    [InlineData("alex b")]
+    [InlineData("élodie")]
+    [InlineData("alex-b")]
     public async Task Signup_InvalidUsername_Returns400(string? username)
         => await AssertRefusedAsync(new() { ["username"] = username });
+
+    /// <summary>
+    /// A username of 3 to 20 lowercase letters, digits, dots and underscores is accepted.
+    /// </summary>
+    [Theory]
+    [InlineData("abc")]
+    [InlineData("alex.martin_92")]
+    [InlineData("abcdefghijklmnopqrst")]
+    public async Task Signup_ValidUsername_Returns200(string username)
+    {
+        HttpResponseMessage response = await SignupAsync(new() { ["username"] = username });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(username, Assert.Single(_factory.RatingService.Profiles.Values).Username);
+    }
 
     /// <summary>
     /// A missing, negative, too high or decimal age is refused with a 400.

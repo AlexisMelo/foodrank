@@ -72,6 +72,30 @@ describe('routes', () => {
     expect(textOf(query(harness.fixture, 'h1'))).toBe('Friends');
   });
 
+  it('opens the settings page and its account page', async () => {
+    await checkSession(200);
+    const httpTesting = TestBed.inject(HttpTestingController);
+
+    const harness = await RouterTestingHarness.create('/settings');
+    httpTesting.expectOne('/api/places/area').flush({ locality: 'Lyon', isDefault: true });
+    httpTesting.expectOne('/api/users/me').flush({
+      id: SESSION_USER_ID,
+      username: 'alexis.melo',
+      displayName: null,
+      avatarUrl: null,
+      ratedRestaurantsCount: 0,
+    });
+    await harness.fixture.whenStable();
+
+    expect(TestBed.inject(Router).url).toBe('/settings');
+    expect(textOf(query(harness.fixture, 'h1'))).toBe('Settings');
+
+    await harness.navigateByUrl('/settings/account');
+
+    expect(TestBed.inject(Router).url).toBe('/settings/account');
+    expect(textOf(query(harness.fixture, 'h1'))).toBe('Account');
+  });
+
   it('sends a logged-out user opening an unknown URL to the login page', async () => {
     await checkSession(401);
 

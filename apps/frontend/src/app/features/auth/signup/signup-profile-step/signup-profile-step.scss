@@ -1,5 +1,11 @@
 @use 'auth-forms';
 
+// The username is sent in lowercase (normalizeUsername), so it is shown in lowercase as it is typed; the placeholder
+// keeps its case
+.username-input:not(:placeholder-shown) {
+  text-transform: lowercase;
+}
+
 .field-hint {
   font-size: 12px;
   color: #ff6b6b;

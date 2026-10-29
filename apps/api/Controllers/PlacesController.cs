@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using api.Common;
+using api.Models;
 using api.Services;
+using api.Services.Places;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -28,13 +30,13 @@ public class PlacesController(IPlaceSearchService placeSearchService) : Controll
     /// <returns>200 with the results and whether there are more, 400 when the limit is outside 1-50, 503 when the
     /// place provider is unavailable.</returns>
     [HttpGet("search")]
-    public async Task<IActionResult> Search([FromQuery] string query, [FromQuery] double? lat, [FromQuery] double? lon, [FromQuery, Range(1, PlaceSearchService.MaxResults)] int limit = 5, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<SearchPage<PlaceSuggestion>>> Search([FromQuery] string query, [FromQuery] double? lat, [FromQuery] double? lon, [FromQuery, Range(1, PlaceSearchService.MaxResults)] int limit = 5, CancellationToken cancellationToken = default)
         => (await placeSearchService.SearchAsync(query, limit, lat, lon, cancellationToken)).ToActionResult();
 
     /// <summary>
     /// Returns the city searches are centered on (the user's, or the default one when no position is given).
     /// </summary>
     [HttpGet("area")]
-    public async Task<IActionResult> Area([FromQuery] double? lat, [FromQuery] double? lon, CancellationToken cancellationToken)
+    public async Task<ActionResult<SearchArea>> Area([FromQuery] double? lat, [FromQuery] double? lon, CancellationToken cancellationToken)
         => (await placeSearchService.GetSearchAreaAsync(lat, lon, cancellationToken)).ToActionResult();
 }

@@ -33,11 +33,14 @@
         <a class="search-row user-row" [routerLink]="['/user', friend.id]">
           <app-user-avatar
             class="user-avatar"
-            [name]="friend.name"
+            [name]="friend | displayedName"
             [avatarUrl]="friend.avatarUrl"
           />
           <span class="search-row-info">
-            <span class="search-row-name">{{ friend.name }}</span>
+            <span class="search-row-name">{{ friend | displayedName }}</span>
+            @if (friend.displayName) {
+              <span class="search-row-detail">&#64;{{ friend.username }}</span>
+            }
           </span>
           <span class="user-arrow" aria-hidden="true">›</span>
         </a>

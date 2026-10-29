@@ -11,6 +11,7 @@ import { LocationStore } from '@/core/location/location-store';
 import type { PlaceSuggestion } from '@/core/models/restaurant.model';
 import { injectOpenPlace } from '@/shared/data/open-place';
 import { injectPagedSearch } from '@/shared/data/paged-search';
+import { DisplayedNamePipe } from '@/shared/pipes/displayed-name-pipe';
 import { type ChipOption, ChoiceChips } from '@/shared/ui/choice-chips/choice-chips';
 import { SearchAreaHint } from '@/shared/ui/search-area-hint/search-area-hint';
 import { SearchBar } from '@/shared/ui/search-bar/search-bar';
@@ -46,7 +47,7 @@ const TYPE_TAB_FIRST_RESULTS = 10;
  * "All" tab shows 5 of each type with "See all", the tab of one type 10 first, then 10 more on each "Show more".
  */
 @Component({
-  imports: [ChoiceChips, RouterLink, SearchAreaHint, SearchBar, UserAvatar],
+  imports: [ChoiceChips, RouterLink, SearchAreaHint, SearchBar, UserAvatar, DisplayedNamePipe],
   selector: 'app-search-results',
   styleUrl: './search-results.scss',
   templateUrl: './search-results.html',

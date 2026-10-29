@@ -113,7 +113,7 @@ public class FollowsControllerTests : IDisposable
 
         List<UserSummaryResponse> followers = await ProfilesAsync(HttpMethod.Get, $"/api/users/{CamilleId}/followers");
 
-        Assert.Equal([new UserSummaryResponse(HugoId, "hugo", null), new UserSummaryResponse(MeId, "alexis", null)], followers);
+        Assert.Equal([new UserSummaryResponse(HugoId, "hugo", null, null), new UserSummaryResponse(MeId, "alexis", null, null)], followers);
     }
 
     /// <summary>
@@ -148,7 +148,7 @@ public class FollowsControllerTests : IDisposable
 
         List<UserSummaryResponse> following = await ProfilesAsync(HttpMethod.Get, $"/api/users/{MeId}/following");
 
-        Assert.Equal(["hugo", "camille"], following.Select(u => u.Name));
+        Assert.Equal(["hugo", "camille"], following.Select(u => u.Username));
         Assert.Equal("https://img.test/camille.png", following[1].AvatarUrl);
     }
 
@@ -185,7 +185,7 @@ public class FollowsControllerTests : IDisposable
 
         List<UserSummaryResponse> friends = await ProfilesAsync(HttpMethod.Get, $"/api/users/{MeId}/friends");
 
-        Assert.Equal([new UserSummaryResponse(LeaId, "lea", null), new UserSummaryResponse(CamilleId, "camille", "https://img.test/camille.png")], friends);
+        Assert.Equal([new UserSummaryResponse(LeaId, "lea", null, null), new UserSummaryResponse(CamilleId, "camille", null, "https://img.test/camille.png")], friends);
     }
 
     /// <summary>
@@ -211,7 +211,7 @@ public class FollowsControllerTests : IDisposable
 
         List<UserSummaryResponse> followers = await ProfilesAsync(HttpMethod.Put, $"/api/users/{CamilleId}/follow");
 
-        Assert.Equal(["alexis", "hugo"], followers.Select(u => u.Name));
+        Assert.Equal(["alexis", "hugo"], followers.Select(u => u.Username));
         Assert.Equal([CamilleId], (await ProfilesAsync(HttpMethod.Get, $"/api/users/{MeId}/following")).Select(u => u.Id));
     }
 

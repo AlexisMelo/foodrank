@@ -1,6 +1,15 @@
 <a routerLink="/profile" class="user-bar">
-  <app-user-avatar [name]="profile().name" [avatarUrl]="profile().avatarUrl" class="avatar" />
-  <span class="user-name">{{ profile().name }}</span>
+  <app-user-avatar
+    [name]="profile() | displayedName"
+    [avatarUrl]="profile().avatarUrl"
+    class="avatar"
+  />
+  <span class="user-names">
+    <span class="user-name">{{ profile() | displayedName }}</span>
+    @if (profile().displayName) {
+      <span class="user-username">&#64;{{ profile().username }}</span>
+    }
+  </span>
   @if (showCount()) {
     <span class="user-visited">{{ countLabel() }}</span>
   }

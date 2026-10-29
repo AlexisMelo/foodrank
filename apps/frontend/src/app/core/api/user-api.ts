@@ -2,7 +2,12 @@ import { HttpClient } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import type { SearchPage } from '@/core/models/search.model';
-import type { UserProfile, UserSummary } from '@/core/models/user.model';
+import type {
+  ProfileDetails,
+  ProfileDetailsUpdate,
+  UserProfile,
+  UserSummary,
+} from '@/core/models/user.model';
 import { recoverOnStatus } from './recover-on-status';
 
 /**
@@ -39,6 +44,21 @@ export class UserApi {
     return this.http
       .get<UserProfile>(`/api/users/${encodeURIComponent(userId)}`)
       .pipe(recoverOnStatus(404, undefined));
+  }
+
+  /**
+   * Get the logged-in user's profile as they edit it, with their identity and age
+   */
+  fetchProfileDetails(): Observable<ProfileDetails> {
+    return this.http.get<ProfileDetails>('/api/users/me/details');
+  }
+
+  /**
+   * Save the display name, identity and age of the logged-in user; a 400 means the API refused a value
+   * @returns the saved details
+   */
+  updateProfileDetails(update: ProfileDetailsUpdate): Observable<ProfileDetails> {
+    return this.http.put<ProfileDetails>('/api/users/me/details', update);
   }
 
   /**

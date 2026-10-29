@@ -101,7 +101,8 @@ public class UsersControllerTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         string json = await response.Content.ReadAsStringAsync();
         Assert.Contains($"\"id\":\"{MeId}\"", json);
-        Assert.Contains("\"name\":\"alexis\"", json);
+        Assert.Contains("\"username\":\"alexis\"", json);
+        Assert.Contains("\"displayName\":null", json);
         Assert.Contains("\"avatarUrl\":\"https://img.test/me.png\"", json);
         Assert.Contains("\"ratedRestaurantsCount\":2", json);
     }
@@ -118,18 +119,157 @@ public class UsersControllerTests : IDisposable
     }
 
     /// <summary>
+    /// Sends a PUT of <paramref name="body"/> to /api/users/me/details, with the auth cookie when
+    /// <paramref name="token"/> is given.
+    /// </summary>
+    private Task<HttpResponseMessage> UpdateDetailsAsync(object body, string? token = Token)
+    {
+        HttpRequestMessage request = new(HttpMethod.Put, "/api/users/me/details")
+        {
+            Content = JsonContent.Create(body)
+        };
+        if (token is not null)
+            request.Headers.Add("Cookie", $"{SupabaseAuthenticationHandler.CookieName}={token}");
+        return _client.SendAsync(request);
+    }
+
+    /// <summary>
+    /// The details of the logged-in user hold their username, display name, avatar, identity and age.
+    /// </summary>
+    [Fact]
+    public async Task GetMyDetails_LoggedIn_ReturnsEditableFields()
+    {
+        Profile me = _factory.RatingService.Profiles[MeId];
+        me.DisplayName = "Alexis";
+        me.Identity = Identities.Woman;
+        me.BirthYear = DateTime.UtcNow.Year - 30;
+
+        HttpResponseMessage response = await GetAsync("/api/users/me/details");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        string json = await response.Content.ReadAsStringAsync();
+        Assert.Contains("\"username\":\"alexis\"", json);
+        Assert.Contains("\"displayName\":\"Alexis\"", json);
+        Assert.Contains("\"avatarUrl\":\"https://img.test/me.png\"", json);
+        Assert.Contains("\"identity\":\"woman\"", json);
+        Assert.Contains("\"age\":30", json);
+    }
+
+    /// <summary>
+    /// Identity and age are private: the profile read by another user (or by "me") does not hold them.
+    /// </summary>
+    [Fact]
+    public async Task GetById_DoesNotExposeIdentityNorAge()
+    {
+        _factory.RatingService.Profiles[OtherId] = new Profile { Id = OtherId, Username = "camille", Identity = Identities.Woman, BirthYear = 1990 };
+
+        string json = await (await GetAsync($"/api/users/{OtherId}")).Content.ReadAsStringAsync();
+
+        Assert.DoesNotContain("identity", json);
+        Assert.DoesNotContain("age", json);
+        Assert.DoesNotContain("birth", json, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Saving the details trims the display name, stores the identity and the birth year of the age, and leaves the
+    /// username and avatar as they are.
+    /// </summary>
+    [Fact]
+    public async Task UpdateMyDetails_ValidBody_SavesAndReturnsTheDetails()
+    {
+        HttpResponseMessage response = await UpdateDetailsAsync(new { displayName = "  Alexis Melo ", identity = "non_binary", age = 31 });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        ProfileDetailsResponse details = (await response.Content.ReadFromJsonAsync<ProfileDetailsResponse>())!;
+        Assert.Equal(new ProfileDetailsResponse("alexis", "Alexis Melo", "https://img.test/me.png", Identities.NonBinary, 31), details);
+        Profile saved = _factory.RatingService.Profiles[MeId];
+        Assert.Equal("Alexis Melo", saved.DisplayName);
+        Assert.Equal(Identities.NonBinary, saved.Identity);
+        Assert.Equal(DateTime.UtcNow.Year - 31, saved.BirthYear);
+        Assert.Equal("alexis", saved.Username);
+        Assert.Equal("https://img.test/me.png", saved.AvatarUrl);
+    }
+
+    /// <summary>
+    /// A blank or missing display name clears it, so the username is shown again.
+    /// </summary>
+    [Theory]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public async Task UpdateMyDetails_NoDisplayName_ClearsIt(string? displayName)
+    {
+        _factory.RatingService.Profiles[MeId].DisplayName = "Alexis";
+
+        HttpResponseMessage response = await UpdateDetailsAsync(new { displayName, identity = "man", age = 30 });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Null(_factory.RatingService.Profiles[MeId].DisplayName);
+    }
+
+    /// <summary>
+    /// The username cannot be changed: a username in the body is ignored.
+    /// </summary>
+    [Fact]
+    public async Task UpdateMyDetails_WithUsername_KeepsTheUsername()
+    {
+        HttpResponseMessage response = await UpdateDetailsAsync(new { username = "hacker", displayName = "Alexis", identity = "man", age = 30 });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("alexis", _factory.RatingService.Profiles[MeId].Username);
+    }
+
+    /// <summary>
+    /// A display name too long or with hidden characters, an unknown or missing identity, or an age outside 0-120 or
+    /// missing is refused with a 400, and nothing is saved.
+    /// </summary>
+    [Theory]
+    [InlineData("abcdefghijklmnopqrstuvwxyz12345", "man", 30)]
+    [InlineData("Alexis\nMelo", "man", 30)]
+    [InlineData("Alexis\u202EoleM", "man", 30)]
+    [InlineData("Alexis", "other", 30)]
+    [InlineData("Alexis", null, 30)]
+    [InlineData("Alexis", "man", -1)]
+    [InlineData("Alexis", "man", 121)]
+    [InlineData("Alexis", "man", null)]
+    public async Task UpdateMyDetails_InvalidBody_Returns400(string displayName, string? identity, int? age)
+    {
+        HttpResponseMessage response = await UpdateDetailsAsync(new { displayName, identity, age });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Profile me = _factory.RatingService.Profiles[MeId];
+        Assert.Null(me.DisplayName);
+        Assert.Null(me.Identity);
+        Assert.Null(me.BirthYear);
+    }
+
+    /// <summary>
+    /// Without the auth cookie, the details can be neither read nor saved.
+    /// </summary>
+    [Fact]
+    public async Task MyDetails_NoCookie_Returns401()
+    {
+        HttpResponseMessage read = await GetAsync("/api/users/me/details", token: null);
+        HttpResponseMessage update = await UpdateDetailsAsync(new { displayName = "Alexis", identity = "man", age = 30 }, token: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, read.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, update.StatusCode);
+        Assert.Null(_factory.RatingService.Profiles[MeId].DisplayName);
+    }
+
+    /// <summary>
     /// The profile of another user is returned by its id.
     /// </summary>
     [Fact]
     public async Task GetById_OtherUser_ReturnsItsProfile()
     {
-        _factory.RatingService.Profiles[OtherId] = new Profile { Id = OtherId, Username = "camille" };
+        _factory.RatingService.Profiles[OtherId] = new Profile { Id = OtherId, Username = "camille", DisplayName = "Camille D." };
         AddRating(OtherId, "r2", new DateTime(2026, 3, 4));
 
         UserProfileResponse profile = (await (await GetAsync($"/api/users/{OtherId}")).Content.ReadFromJsonAsync<UserProfileResponse>())!;
 
         Assert.Equal(OtherId, profile.Id);
-        Assert.Equal("camille", profile.Name);
+        Assert.Equal("camille", profile.Username);
+        Assert.Equal("Camille D.", profile.DisplayName);
         Assert.Equal(1, profile.RatedRestaurantsCount);
     }
 
@@ -148,34 +288,52 @@ public class UsersControllerTests : IDisposable
     }
 
     /// <summary>
-    /// Stores the profile of a user named <paramref name="username"/>, with an id built from <paramref name="digit"/>.
+    /// Stores the profile of a user named <paramref name="username"/> (and <paramref name="displayName"/>, when given),
+    /// with an id built from <paramref name="digit"/>.
     /// </summary>
-    private string AddUser(char digit, string username)
+    private string AddUser(char digit, string username, string? displayName = null)
     {
         string id = new Guid(new string(digit, 32)).ToString();
-        _factory.RatingService.Profiles[id] = new Profile { Id = id, Username = username };
+        _factory.RatingService.Profiles[id] = new Profile { Id = id, Username = username, DisplayName = displayName };
         return id;
     }
 
     /// <summary>
-    /// The search finds the users whose pseudonym contains the query, ignoring case, best matches first, with their id,
-    /// name and avatar.
+    /// The search finds the users whose username contains the query, ignoring case, best matches first, with their id,
+    /// username, display name and avatar.
     /// </summary>
     [Fact]
     public async Task Search_ReturnsMatchingUsersBestFirst()
     {
-        string camille = AddUser('2', "Camille");
-        AddUser('3', "Mila");
-        AddUser('4', "Camilou");
-        AddUser('5', "Hugo");
+        string camille = AddUser('2', "camille");
+        AddUser('3', "mila");
+        AddUser('4', "camilou");
+        AddUser('5', "hugo");
 
         HttpResponseMessage response = await GetAsync("/api/users/search?query=%20CAMIL%20");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         SearchPage<UserSummaryResponse> page = (await response.Content.ReadFromJsonAsync<SearchPage<UserSummaryResponse>>())!;
-        Assert.Equal(["Camille", "Camilou"], page.Results.Select(u => u.Name));
-        Assert.Equal(new UserSummaryResponse(camille, "Camille", null), page.Results[0]);
+        Assert.Equal(["camille", "camilou"], page.Results.Select(u => u.Username));
+        Assert.Equal(new UserSummaryResponse(camille, "camille", null, null), page.Results[0]);
         Assert.False(page.HasMore);
+    }
+
+    /// <summary>
+    /// The search also finds the users whose display name contains the query, ranked by their best matching name.
+    /// </summary>
+    [Fact]
+    public async Task Search_FindsUsersByDisplayName()
+    {
+        string camille = AddUser('2', "cam_92", "Camille Durand");
+        AddUser('3', "durand.h");
+        AddUser('4', "hugo", "Hugo");
+
+        SearchPage<UserSummaryResponse> page = (await (await GetAsync("/api/users/search?query=durand")).Content.ReadFromJsonAsync<SearchPage<UserSummaryResponse>>())!;
+
+        // "durand.h" starts with the query, "Camille Durand" only contains it
+        Assert.Equal(["durand.h", "cam_92"], page.Results.Select(u => u.Username));
+        Assert.Equal(new UserSummaryResponse(camille, "cam_92", "Camille Durand", null), page.Results[1]);
     }
 
     /// <summary>
@@ -185,12 +343,13 @@ public class UsersControllerTests : IDisposable
     [Fact]
     public async Task Search_UsersFound_HaveNoRestaurantsCount()
     {
-        string camille = AddUser('2', "Camille");
+        string camille = AddUser('2', "camille", "Camille D.");
         AddRating(camille, "r1", new DateTime(2026, 3, 1));
 
         string json = await (await GetAsync("/api/users/search?query=camil")).Content.ReadAsStringAsync();
 
-        Assert.Contains("\"name\":\"Camille\"", json);
+        Assert.Contains("\"username\":\"camille\"", json);
+        Assert.Contains("\"displayName\":\"Camille D.\"", json);
         Assert.DoesNotContain("ratedRestaurantsCount", json);
     }
 
@@ -213,7 +372,7 @@ public class UsersControllerTests : IDisposable
 
         SearchPage<UserSummaryResponse> page = (await (await GetAsync("/api/users/search?query=user")).Content.ReadFromJsonAsync<SearchPage<UserSummaryResponse>>())!;
 
-        Assert.Equal(["user1", "user2", "user3", "user4", "user5"], page.Results.Select(u => u.Name));
+        Assert.Equal(["user1", "user2", "user3", "user4", "user5"], page.Results.Select(u => u.Username));
         Assert.True(page.HasMore);
     }
 
@@ -230,7 +389,7 @@ public class UsersControllerTests : IDisposable
 
         SearchPage<UserSummaryResponse> page = (await (await GetAsync($"/api/users/search?query=user&limit={limit}")).Content.ReadFromJsonAsync<SearchPage<UserSummaryResponse>>())!;
 
-        Assert.Equal(Enumerable.Range(1, Math.Min(limit, 7)).Select(i => $"user{i}"), page.Results.Select(u => u.Name));
+        Assert.Equal(Enumerable.Range(1, Math.Min(limit, 7)).Select(i => $"user{i}"), page.Results.Select(u => u.Username));
         Assert.Equal(hasMore, page.HasMore);
     }
 
@@ -257,7 +416,7 @@ public class UsersControllerTests : IDisposable
 
         SearchPage<UserSummaryResponse> page = (await (await GetAsync("/api/users/search?query=alex")).Content.ReadFromJsonAsync<SearchPage<UserSummaryResponse>>())!;
 
-        Assert.Equal("alexia", Assert.Single(page.Results).Name);
+        Assert.Equal("alexia", Assert.Single(page.Results).Username);
     }
 
     /// <summary>

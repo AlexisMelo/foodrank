@@ -11,7 +11,7 @@ namespace api.Controllers;
 /// kept in an HttpOnly cookie holding the Supabase access token.
 /// </summary>
 /// <param name="authService">Accounts and sessions of Supabase Auth.</param>
-/// <param name="userService">Saves the profile created at sign up and checks the pseudonym is free.</param>
+/// <param name="userService">Saves the profile created at sign up and checks the username is free.</param>
 /// <param name="configuration">Application settings, holding the frontend URL (Frontend:Url).</param>
 [ApiController]
 [Route("api/auth")]
@@ -23,29 +23,29 @@ public class AuthController(ISupabaseAuthService authService, IUserService userS
     private string FrontendUrl => configuration["Frontend:Url"]!;
 
     /// <summary>
-    /// Creates the Supabase Auth account with its profile (pseudonym, birth year, identity), then opens its session.
+    /// Creates the Supabase Auth account with its profile (username, birth year, identity), then opens its session.
     /// </summary>
     /// <param name="request">Email, password and personal data entered in the sign up steps.</param>
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
     /// <returns>200 with the session cookie, 400 for invalid values, 401 when no session could be opened, 409 when
-    /// the email or the pseudonym is already used.</returns>
+    /// the email or the username is already used.</returns>
     [HttpPost("signup")]
     [AllowAnonymous]
-    public async Task<IActionResult> Signup([FromBody] SignupRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult> Signup([FromBody] SignupRequest request, CancellationToken cancellationToken)
     {
         // Checked before creating the account: an account whose profile cannot be saved would be left without
-        // pseudonym, and its email could not be used to sign up again
+        // username, and its email could not be used to sign up again
         if (await userService.IsUsernameTakenAsync(request.Username, cancellationToken))
-            return Conflict(new { error = UserService.UsernameTaken.Message });
+            return UserService.UsernameTaken.ToActionResult();
 
         Result<AuthSession> session = await authService.SignUpAsync(request.Email, request.Password);
         if (!session.IsSuccess)
-            return session.ToActionResult();
+            return session.Error!.ToActionResult();
 
         Result<Profile> profile = await userService.SaveProfileAsync(
             request.ToProfile(session.Value!.UserId, DateTime.UtcNow.Year), cancellationToken);
         if (!profile.IsSuccess)
-            return profile.ToActionResult();
+            return profile.Error!.ToActionResult();
 
         SetSessionCookie(session.Value.AccessToken);
         return Ok();
@@ -58,7 +58,7 @@ public class AuthController(ISupabaseAuthService authService, IUserService userS
     /// <returns></returns>
     [HttpPost("login")]
     [AllowAnonymous]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    public async Task<ActionResult> Login([FromBody] LoginRequest request)
     {
         string? token = await authService.SignInAsync(request.Email, request.Password);
 
@@ -83,7 +83,7 @@ public class AuthController(ISupabaseAuthService authService, IUserService userS
     /// <returns>200, the session cookie deleted.</returns>
     [HttpPost("logout")]
     [AllowAnonymous]
-    public IActionResult Logout()
+    public ActionResult Logout()
     {
         DeleteCookie();
         return Ok();
@@ -98,17 +98,17 @@ public class AuthController(ISupabaseAuthService authService, IUserService userS
     /// <returns>200 and the session cookie deleted, 400 without password, 401 when not logged in, 403 when the
     /// password is wrong, 503 when Supabase Auth fails (nothing is deleted then).</returns>
     [HttpPost("delete-account")]
-    public async Task<IActionResult> DeleteAccount([FromBody] DeleteAccountRequest request)
+    public async Task<ActionResult> DeleteAccount([FromBody] DeleteAccountRequest request)
     {
         string userId = User.GetUserId();
 
         Result<bool> password = await authService.CheckPasswordAsync(userId, request.Password);
         if (!password.IsSuccess)
-            return password.ToActionResult();
+            return password.Error!.ToActionResult();
 
         Result<bool> deleted = await authService.DeleteUserAsync(userId);
         if (!deleted.IsSuccess)
-            return deleted.ToActionResult();
+            return deleted.Error!.ToActionResult();
 
         DeleteCookie();
         return Ok();
@@ -127,7 +127,7 @@ public class AuthController(ISupabaseAuthService authService, IUserService userS
     /// </summary>
     [HttpPost("forgot-password")]
     [AllowAnonymous]
-    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
         string redirectUrl = $"{FrontendUrl}/auth/reset-password";
         try
@@ -149,11 +149,11 @@ public class AuthController(ISupabaseAuthService authService, IUserService userS
     /// token is missing, 401 when the link is invalid or expired, 503 when Supabase Auth fails.</returns>
     [HttpPost("reset-password")]
     [AllowAnonymous]
-    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
         Result<string> token = await authService.ResetPasswordAsync(request.AccessToken, request.RefreshToken, request.Password);
         if (!token.IsSuccess)
-            return token.ToActionResult();
+            return token.Error!.ToActionResult();
 
         SetSessionCookie(token.Value!);
         return Ok();

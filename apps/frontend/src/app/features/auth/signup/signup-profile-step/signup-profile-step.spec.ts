@@ -56,7 +56,7 @@ describe('SignupProfileStep', () => {
     ]);
   });
 
-  it('only enables Sign up once pseudonym, age and identity are filled', async () => {
+  it('only enables Sign up once username, age and identity are filled', async () => {
     expect(signupButton().disabled).toBe(true);
 
     await typeIn(fixture, '#signup-username', 'alex');
@@ -67,11 +67,17 @@ describe('SignupProfileStep', () => {
     expect(signupButton().disabled).toBe(false);
   });
 
+  const usernameHint = '3 to 20 characters: lowercase letters, numbers, dots and underscores.';
+
   it.each([
     [{ age: '-1' }, 'Enter an age between 0 and 120.'],
     [{ age: '121' }, 'Enter an age between 0 and 120.'],
     [{ age: '30.5' }, 'Enter an age between 0 and 120.'],
-    [{ username: 'ab' }, 'Between 3 and 30 characters.'],
+    [{ username: 'ab' }, usernameHint],
+    [{ username: 'a'.repeat(21) }, usernameHint],
+    [{ username: 'alex b' }, usernameHint],
+    [{ username: 'élodie' }, usernameHint],
+    [{ username: 'alex-b' }, usernameHint],
   ])('refuses %j and explains why', async (values, hint) => {
     await fill(values);
     await submitForm(fixture);
@@ -101,16 +107,16 @@ describe('SignupProfileStep', () => {
     expect(query<HTMLSelectElement>(again, '#signup-identity').value).toBe('woman');
   });
 
-  it('signs up with the trimmed pseudonym and the age as a number, then empties the draft', async () => {
+  it('signs up with the username trimmed and lowercased and the age as a number, then empties the draft', async () => {
     signup.mockResolvedValue(undefined);
 
-    await fill({ username: '  Alex B ', age: '0', identity: 'non_binary' });
+    await fill({ username: '  Alex.B_92 ', age: '0', identity: 'non_binary' });
     await submitForm(fixture);
 
     expect(signup).toHaveBeenCalledWith({
       email: 'me@test.fr',
       password: 'abcdefg1',
-      username: 'Alex B',
+      username: 'alex.b_92',
       age: 0,
       identity: 'non_binary',
     });
@@ -120,14 +126,14 @@ describe('SignupProfileStep', () => {
 
   it.each([
     [
-      httpError(409, { error: 'This pseudonym is already taken.' }),
-      'This pseudonym is already taken.',
+      httpError(409, { error: 'This username is already taken.' }),
+      'This username is already taken.',
     ],
     [
       httpError(409, { error: 'An account with this email already exists.' }),
       'An account with this email already exists.',
     ],
-    [httpError(409), 'This email or pseudonym is already used.'],
+    [httpError(409), 'This email or username is already used.'],
     [httpError(400, { errors: {} }), 'Some of your information was refused. Please check it.'],
     [httpError(500), 'Could not create account.'],
     [httpError(0, new ProgressEvent('error')), 'Could not create account.'],

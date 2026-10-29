@@ -122,11 +122,14 @@
                 <a class="list-item profile-item" [routerLink]="['/user', profile.id]">
                   <app-user-avatar
                     class="item-avatar"
-                    [name]="profile.name"
+                    [name]="profile | displayedName"
                     [avatarUrl]="profile.avatarUrl"
                   />
                   <span class="item-info">
-                    <span class="item-name">{{ profile.name }}</span>
+                    <span class="item-name">{{ profile | displayedName }}</span>
+                    @if (profile.displayName) {
+                      <span class="item-meta item-username">&#64;{{ profile.username }}</span>
+                    }
                   </span>
                   <span class="item-arrow" aria-hidden="true">›</span>
                 </a>

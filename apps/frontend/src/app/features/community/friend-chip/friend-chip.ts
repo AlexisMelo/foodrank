@@ -19,7 +19,7 @@ export class FriendChip {
   readonly id = input.required<string>();
 
   /**
-   * Name of the friend, cut with an ellipsis when too long
+   * Name shown for the friend (their display name, or their username), cut with an ellipsis when too long
    */
   readonly name = input.required<string>();
 

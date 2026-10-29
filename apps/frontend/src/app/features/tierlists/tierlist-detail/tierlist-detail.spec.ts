@@ -21,8 +21,20 @@ import { query, queryAll, stubDialogs, stubPopovers, textOf } from '@/testing/do
  * Profiles served by the fake API, by user id; the logged-in user is u1
  */
 const profiles: Record<string, UserProfile> = {
-  u1: { id: 'u1', name: 'Alexis Melo', avatarUrl: null, ratedRestaurantsCount: 1 },
-  u2: { id: 'u2', name: 'Camille', avatarUrl: null, ratedRestaurantsCount: 2 },
+  u1: {
+    id: 'u1',
+    username: 'alexis.melo',
+    displayName: 'Alexis Melo',
+    avatarUrl: null,
+    ratedRestaurantsCount: 1,
+  },
+  u2: {
+    id: 'u2',
+    username: 'camille',
+    displayName: 'Camille',
+    avatarUrl: null,
+    ratedRestaurantsCount: 2,
+  },
 };
 
 /**

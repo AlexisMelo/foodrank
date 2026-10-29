@@ -71,7 +71,7 @@ export interface RestaurantRating {
   isActive: boolean;
 
   /**
-   * User name (pseudonym) of the author
+   * Name shown for the author: their display name, or their username when they have none
    */
   userName: string;
 
@@ -186,7 +186,7 @@ export interface FollowedRating {
   userId: string;
 
   /**
-   * User name (pseudonym) of the author
+   * Name shown for the author: their display name, or their username when they have none
    */
   userName: string;
 

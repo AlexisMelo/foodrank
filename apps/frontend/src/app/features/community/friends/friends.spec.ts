@@ -10,10 +10,11 @@ import { query, queryAll, textOf, typeIn } from '@/testing/dom-testing';
 import { Friends } from './friends';
 
 /**
- * Builds the user `id` named `name`, as the friends endpoint lists them.
+ * Builds the user `id` with the username `username` and the display name `displayName`, as the friends endpoint lists
+ * them.
  */
-function user(id: string, name: string): UserSummary {
-  return { id, name, avatarUrl: null };
+function user(id: string, username: string, displayName: string | null = null): UserSummary {
+  return { id, username, displayName, avatarUrl: null };
 }
 
 describe('Friends', () => {
@@ -23,7 +24,12 @@ describe('Friends', () => {
   beforeEach(() => {
     // In the order of the API: the most recent follow first
     fetchFriends = vi.fn(() =>
-      of([user('u2', 'Zoé'), user('u3', 'camille'), user('u4', 'Élodie'), user('u5', 'Hugo')]),
+      of([
+        user('u2', 'zoe', 'Zoé'),
+        user('u3', 'camille'),
+        user('u4', 'elo_b', 'Élodie'),
+        user('u5', 'hugo', 'Hugo'),
+      ]),
     );
     TestBed.configureTestingModule({
       providers: [
@@ -50,11 +56,20 @@ describe('Friends', () => {
     return queryAll(fixture, '.user-row .search-row-name').map(textOf);
   }
 
-  it('lists every friend of the logged-in user from A to Z, ignoring case and accents', async () => {
+  it('lists every friend of the logged-in user from A to Z by the name shown, ignoring case and accents', async () => {
     await open();
 
     expect(fetchFriends).toHaveBeenCalledWith('u1');
     expect(listedNames()).toEqual(['camille', 'Élodie', 'Hugo', 'Zoé']);
+  });
+
+  it('shows the username under the display name, and the username alone without display name', async () => {
+    await open();
+
+    const rows = queryAll(fixture, '.user-row');
+    expect(rows.map((row) => row.querySelector('.search-row-detail')?.textContent ?? null)).toEqual(
+      [null, '@elo_b', '@hugo', '@zoe'],
+    );
   });
 
   it("links each row to the friend's profile, and the back arrow to the community page", async () => {
@@ -66,10 +81,13 @@ describe('Friends', () => {
     expect(query(fixture, '.back-link').getAttribute('href')).toBe('/community');
   });
 
-  it('keeps the friends whose name contains the search, ignoring case and accents', async () => {
+  it('keeps the friends whose display name or username contains the search, ignoring case and accents', async () => {
     await open();
 
     await typeIn(fixture, '.search', 'ELO');
+    expect(listedNames()).toEqual(['Élodie']);
+
+    await typeIn(fixture, '.search', 'O_B');
     expect(listedNames()).toEqual(['Élodie']);
 
     await typeIn(fixture, '.search', 'o');

@@ -1,0 +1,16 @@
+@use 'outline-button';
+@use 'section-links';
+
+.account-settings {
+  color: #ffffff;
+}
+
+// Same space as between the sub-sections and Log out, on the settings page
+.sections {
+  margin-bottom: 28px;
+}
+
+// Same button as Log out, on the settings page
+.delete-account-btn {
+  @include outline-button.danger;
+}

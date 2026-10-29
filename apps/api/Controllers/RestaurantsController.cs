@@ -22,7 +22,7 @@ public class RestaurantsController(IRestaurantService restaurantService) : Contr
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<Restaurant>>> GetAll(CancellationToken cancellationToken)
         => Ok(await restaurantService.GetAllAsync(cancellationToken));
 
     /// <summary>
@@ -35,7 +35,7 @@ public class RestaurantsController(IRestaurantService restaurantService) : Contr
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
     /// <returns>200 with the suggestions, 400 when the limit is outside 1-50, 401 when not logged in.</returns>
     [HttpGet("suggestions")]
-    public async Task<IActionResult> GetSuggestions([FromQuery] double? lat, [FromQuery] double? lon, [FromQuery, Range(1, 50)] int limit = 5, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<IReadOnlyList<RestaurantSuggestionResponse>>> GetSuggestions([FromQuery] double? lat, [FromQuery] double? lon, [FromQuery, Range(1, 50)] int limit = 5, CancellationToken cancellationToken = default)
         => Ok(await restaurantService.GetSuggestionsAsync(User.GetUserId(), lat, lon, limit, cancellationToken));
 
     /// <summary>
@@ -43,7 +43,7 @@ public class RestaurantsController(IRestaurantService restaurantService) : Contr
     /// </summary>
     [HttpGet("{id}")]
     [AllowAnonymous]
-    public async Task<IActionResult> GetById(string id, CancellationToken cancellationToken)
+    public async Task<ActionResult<Restaurant>> GetById(string id, CancellationToken cancellationToken)
         => (await restaurantService.GetByIdAsync(id, cancellationToken)).ToActionResult();
 
     /// <summary>
@@ -53,6 +53,6 @@ public class RestaurantsController(IRestaurantService restaurantService) : Contr
     [HttpPost("from-place")]
     [AllowAnonymous]
     [EnableRateLimiting(RateLimitPolicies.Places)]
-    public async Task<IActionResult> FromPlace([FromBody] CreateRestaurantFromPlaceRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<RestaurantFromPlaceResponse>> FromPlace([FromBody] CreateRestaurantFromPlaceRequest request, CancellationToken cancellationToken)
         => (await restaurantService.GetOrCreateFromPlaceAsync(request.PlaceId, cancellationToken)).ToActionResult();
 }

@@ -41,6 +41,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/profile/profile/profile').then((m) => m.Profile),
       },
       {
+        path: 'profile/edit',
+        loadComponent: () =>
+          import('./features/profile/edit-profile/edit-profile').then((m) => m.EditProfile),
+      },
+      {
         path: 'explore',
         loadComponent: () => import('./features/explore/explore/explore').then((m) => m.Explore),
       },
@@ -99,6 +104,13 @@ export const routes: Routes = [
         path: 'settings',
         loadComponent: () =>
           import('./features/settings/settings/settings').then((m) => m.Settings),
+      },
+      {
+        path: 'settings/account',
+        loadComponent: () =>
+          import('./features/settings/account-settings/account-settings').then(
+            (m) => m.AccountSettings,
+          ),
       },
       // Any other URL; a logged-out user is sent to the login page by the guard of the Shell
       {

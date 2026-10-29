@@ -1,43 +1,26 @@
-@if (loaded()) {
+@let state = follows();
+@if (state.loaded()) {
   <div class="follows">
-    <div class="counts">
-      <button type="button" class="count-btn followers-btn" (click)="openList.set('followers')">
-        {{ followersLabel() }}
-      </button>
-      <span class="count-separator" aria-hidden="true">·</span>
-      <button type="button" class="count-btn following-btn" (click)="openList.set('following')">
-        {{ following().length }} following
-      </button>
-    </div>
-
-    @if (!isOwnProfile()) {
-      <button
-        type="button"
-        class="follow-btn"
-        [class.following]="isFollowing()"
-        [attr.aria-pressed]="isFollowing()"
-        [disabled]="saving()"
-        (click)="toggleFollow()"
-      >
-        {{ followLabel() }}
-      </button>
-    }
+    <button type="button" class="count-btn followers-btn" (click)="openList.set('followers')">
+      {{ followersLabel() }}
+    </button>
+    <span class="count-separator" aria-hidden="true">·</span>
+    <button type="button" class="count-btn following-btn" (click)="openList.set('following')">
+      {{ state.following().length }} following
+    </button>
   </div>
-} @else if (!loadError()) {
-  <!-- Placeholders of the same size, so the profile does not move once the follows arrive. Nothing when they cannot
+} @else if (!state.loadError()) {
+  <!-- Placeholder of the same size, so the profile does not move once the follows arrive. Nothing when they cannot
    be loaded: a secondary part of the profile, not worth an error -->
   <div class="follows" role="status" aria-label="Loading follows">
     <div class="skeleton counts-skeleton"></div>
-    @if (!isOwnProfile()) {
-      <div class="skeleton follow-skeleton"></div>
-    }
   </div>
 }
 
 @if (openList(); as list) {
   <app-follow-list-dialog
     [list]="list"
-    [users]="list === 'followers' ? followers() : following()"
+    [users]="list === 'followers' ? state.followers() : state.following()"
     (closed)="openList.set(null)"
   />
 }

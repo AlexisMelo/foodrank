@@ -12,7 +12,8 @@ namespace api.Models;
 /// <param name="Bonus">True when the user gave the "instant crush" favorite bonus.</param>
 /// <param name="IsActive">True for the user's latest rating of the restaurant, which is their score for it; false for
 /// the previous ones, kept as history.</param>
-/// <param name="UserName">Name displayed for the user who rated.</param>
+/// <param name="UserName">Name displayed for the user who rated: their display name, or their username when they have
+/// none.</param>
 /// <param name="UserAvatarUrl">Profile picture of the user who rated, null when there is none.</param>
 public record RatingResponse(
     string RestaurantId,
@@ -31,7 +32,7 @@ public record RatingResponse(
     /// </summary>
     /// <param name="rating">Rating row.</param>
     /// <param name="profile">Profile row of the author.</param>
-    /// <returns>The rating with the author's user name and avatar.</returns>
+    /// <returns>The rating with the author's displayed name and avatar.</returns>
     public static RatingResponse From(Rating rating, Profile profile) => new(
         rating.RestaurantId,
         rating.UserId,
@@ -41,6 +42,6 @@ public record RatingResponse(
         rating.SettingRating,
         rating.Bonus,
         rating.IsActive,
-        profile.Username,
+        Profile.DisplayedName(profile),
         Profile.AvatarUrlOrNull(profile));
 }

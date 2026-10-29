@@ -2,13 +2,15 @@ import { Component, booleanAttribute, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { UserProfile } from '@/core/models/user.model';
 import { restaurantCountLabel } from '@/core/utils/profile';
+import { DisplayedNamePipe } from '@/shared/pipes/displayed-name-pipe';
 import { UserAvatar } from '../user-avatar/user-avatar';
 
 /**
- * Link showing the logged-in user's avatar and name, opening their profile page.
+ * Link showing the logged-in user's avatar and name (with their username under their display name, when they have
+ * one), opening their profile page.
  */
 @Component({
-  imports: [RouterLink, UserAvatar],
+  imports: [RouterLink, UserAvatar, DisplayedNamePipe],
   selector: 'app-user-bar',
   styleUrl: './user-bar.scss',
   templateUrl: './user-bar.html',

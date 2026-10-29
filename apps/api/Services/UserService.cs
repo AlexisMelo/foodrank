@@ -14,9 +14,9 @@ namespace api.Services;
 public class UserService(Supabase.Client supabase) : IUserService
 {
     /// <summary>
-    /// Error returned when saving a profile with the pseudonym of another user.
+    /// Error returned when saving a profile with the username of another user.
     /// </summary>
-    public static Error UsernameTaken { get; } = new(ErrorType.Conflict, "This pseudonym is already taken.");
+    public static Error UsernameTaken { get; } = new(ErrorType.Conflict, "This username is already taken.");
 
     /// <summary>
     /// Client of the Supabase database.
@@ -44,22 +44,80 @@ public class UserService(Supabase.Client supabase) : IUserService
     }
 
     /// <inheritdoc />
+    public async Task<Result<ProfileDetailsResponse>> GetDetailsAsync(string userId, int currentYear, CancellationToken cancellationToken)
+    {
+        Profile? profile = await FindProfileAsync(userId, cancellationToken);
+        return profile is null
+            ? Result<ProfileDetailsResponse>.Failure(UserIds.NotFound)
+            : Result<ProfileDetailsResponse>.Success(ProfileDetailsResponse.From(profile, currentYear));
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<ProfileDetailsResponse>> UpdateDetailsAsync(string userId, UpdateProfileDetailsRequest request, int currentYear, CancellationToken cancellationToken)
+    {
+        Profile? profile = await FindProfileAsync(userId, cancellationToken);
+        if (profile is null)
+            return Result<ProfileDetailsResponse>.Failure(UserIds.NotFound);
+
+        // Update on the primary key of the row just read: its username and avatar are sent back unchanged
+        request.ApplyTo(profile, currentYear);
+        ModeledResponse<Profile> updated = await _supabase.From<Profile>().Update(profile, cancellationToken: cancellationToken);
+        return Result<ProfileDetailsResponse>.Success(
+            ProfileDetailsResponse.From(updated.Models.FirstOrDefault() ?? profile, currentYear));
+    }
+
+    /// <summary>
+    /// Reads the profile row of <paramref name="userId"/>.
+    /// </summary>
+    /// <param name="userId">Supabase Auth id of the user (a uuid).</param>
+    /// <param name="cancellationToken">Cancels the database query.</param>
+    /// <returns>The row, null when the user has none.</returns>
+    private async Task<Profile?> FindProfileAsync(string userId, CancellationToken cancellationToken)
+    {
+        ModeledResponse<Profile> profiles = await _supabase.From<Profile>()
+            .Where(p => p.Id == userId)
+            .Limit(1)
+            .Get(cancellationToken);
+        return profiles.Models.FirstOrDefault();
+    }
+
+    /// <inheritdoc />
     public async Task<SearchPage<UserSummaryResponse>> SearchAsync(string query, int limit, string excludedUserId, CancellationToken cancellationToken)
     {
         string trimmed = query.Trim();
         if (trimmed.Length < UserRanking.MinQueryLength)
             return new SearchPage<UserSummaryResponse>([], false);
 
-        ModeledResponse<Profile> candidates = await _supabase.From<Profile>()
-            .Filter("username", Constants.Operator.ILike, UserRanking.LikePattern(trimmed))
-            .Not("id", Constants.Operator.Equals, excludedUserId)
-            .Order("username", Constants.Ordering.Ascending)
-            .Limit(UserRanking.MaxResults)
-            .Get(cancellationToken);
-        IReadOnlyList<Profile> ranked = UserRanking.Rank(candidates.Models, trimmed);
+        // One query per name rather than an Or(): the client does not quote the values of an or=(...) filter, so a
+        // query holding "," or ")" would break it
+        string pattern = UserRanking.LikePattern(trimmed);
+        IReadOnlyList<Profile> byUsername = await FindCandidatesAsync("username", pattern, excludedUserId, cancellationToken);
+        IReadOnlyList<Profile> byDisplayName = await FindCandidatesAsync("display_name", pattern, excludedUserId, cancellationToken);
+
+        IReadOnlyList<Profile> ranked = UserRanking.Rank(byUsername.Concat(byDisplayName), trimmed);
         return new SearchPage<UserSummaryResponse>(
             ranked.Take(limit).Select(UserSummaryResponse.From).ToList(),
             ranked.Count > limit);
+    }
+
+    /// <summary>
+    /// Reads the first <see cref="UserRanking.MaxResults"/> profiles whose <paramref name="column"/> matches
+    /// <paramref name="pattern"/>, alphabetically on that column, without <paramref name="excludedUserId"/>.
+    /// </summary>
+    /// <param name="column">Name column searched: "username" or "display_name".</param>
+    /// <param name="pattern">ILIKE pattern built by <see cref="UserRanking.LikePattern"/>.</param>
+    /// <param name="excludedUserId">Supabase Auth id of the user searching, left out.</param>
+    /// <param name="cancellationToken">Cancels the database query.</param>
+    /// <returns>The candidate profiles, to rank with <see cref="UserRanking.Rank"/>.</returns>
+    private async Task<IReadOnlyList<Profile>> FindCandidatesAsync(string column, string pattern, string excludedUserId, CancellationToken cancellationToken)
+    {
+        ModeledResponse<Profile> candidates = await _supabase.From<Profile>()
+            .Filter(column, Constants.Operator.ILike, pattern)
+            .Not("id", Constants.Operator.Equals, excludedUserId)
+            .Order(column, Constants.Ordering.Ascending)
+            .Limit(UserRanking.MaxResults)
+            .Get(cancellationToken);
+        return candidates.Models;
     }
 
     /// <inheritdoc />
@@ -97,7 +155,7 @@ public class UserService(Supabase.Client supabase) : IUserService
         }
         catch (PostgrestException ex) when (PostgrestErrors.IsUniqueViolation(ex))
         {
-            // Another user took the pseudonym since it was checked
+            // Another user took the username since it was checked
             return Result<Profile>.Failure(UsernameTaken);
         }
     }

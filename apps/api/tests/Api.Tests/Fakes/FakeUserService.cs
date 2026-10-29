@@ -7,7 +7,7 @@ namespace Api.Tests.Fakes;
 /// <summary>
 /// In-memory <see cref="IUserService"/>, replacing the Supabase-backed one in API tests. Reads and saves the profiles
 /// and ratings of <see cref="FakeRatingService"/>, with the same rules as the real service (user ids are uuids,
-/// pseudonyms are unique, the search follows <see cref="UserRanking"/>).
+/// usernames are unique, the search follows <see cref="UserRanking"/>).
 /// </summary>
 /// <param name="ratings">Ratings and profiles "stored in the database".</param>
 public class FakeUserService(FakeRatingService ratings) : IUserService
@@ -22,6 +22,22 @@ public class FakeUserService(FakeRatingService ratings) : IUserService
             ratings.Profiles[userId],
             ratings.Ratings.Where(r => r.UserId == userId).Select(r => r.RestaurantId));
         return Task.FromResult(Result<UserProfileResponse>.Success(profile));
+    }
+
+    /// <inheritdoc />
+    public Task<Result<ProfileDetailsResponse>> GetDetailsAsync(string userId, int currentYear, CancellationToken cancellationToken)
+        => Task.FromResult(ratings.Profiles.TryGetValue(userId, out Profile? profile)
+            ? Result<ProfileDetailsResponse>.Success(ProfileDetailsResponse.From(profile, currentYear))
+            : Result<ProfileDetailsResponse>.Failure(UserIds.NotFound));
+
+    /// <inheritdoc />
+    public Task<Result<ProfileDetailsResponse>> UpdateDetailsAsync(string userId, UpdateProfileDetailsRequest request, int currentYear, CancellationToken cancellationToken)
+    {
+        if (!ratings.Profiles.TryGetValue(userId, out Profile? profile))
+            return Task.FromResult(Result<ProfileDetailsResponse>.Failure(UserIds.NotFound));
+
+        request.ApplyTo(profile, currentYear);
+        return Task.FromResult(Result<ProfileDetailsResponse>.Success(ProfileDetailsResponse.From(profile, currentYear)));
     }
 
     /// <inheritdoc />

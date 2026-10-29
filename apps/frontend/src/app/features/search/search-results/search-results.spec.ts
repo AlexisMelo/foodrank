@@ -41,10 +41,10 @@ function page(query: string, limit: number, total = 30): SearchPage<PlaceSuggest
 }
 
 /**
- * Builds the user `id` named `name`, as the user search lists them.
+ * Builds the user `id` with the username `username` and the display name `displayName`, as the user search lists them.
  */
-function user(id: string, name: string): UserSummary {
-  return { id, name, avatarUrl: null };
+function user(id: string, username: string, displayName: string | null = null): UserSummary {
+  return { id, username, displayName, avatarUrl: null };
 }
 
 /**
@@ -54,7 +54,9 @@ function user(id: string, name: string): UserSummary {
 function userPage(limit: number, total = 30): SearchPage<UserSummary> {
   const count = Math.min(limit, total);
   return {
-    results: Array.from({ length: count }, (_, i) => user(`u${i + 1}`, `User ${i + 1}`)),
+    results: Array.from({ length: count }, (_, i) =>
+      user(`u${i + 1}`, `user${i + 1}`, `User ${i + 1}`),
+    ),
     hasMore: total > limit,
   };
 }
@@ -92,7 +94,7 @@ describe('SearchResults', () => {
       of(page(query, limit)),
     );
     searchUsers = vi.fn(() =>
-      of({ results: [user('u2', 'Camille'), user('u3', 'Camilou')], hasMore: false }),
+      of({ results: [user('u2', 'camille', 'Camille'), user('u3', 'camilou')], hasMore: false }),
     );
     createRestaurantFromPlace = vi.fn(() => of(stored(true)));
     requestLocation = vi.fn();
@@ -256,9 +258,10 @@ describe('SearchResults', () => {
       'Place pizza-5',
     ]);
     expect(searchUsers).toHaveBeenCalledExactlyOnceWith('pizza', 5);
-    expect(profileNames()).toEqual(['Camille', 'Camilou']);
-    // Only the name: the API gives no number of restaurants rated in the search
-    expect(queryAll(harness.fixture, '.profile-item .item-meta')).toHaveLength(0);
+    expect(profileNames()).toEqual(['Camille', 'camilou']);
+    // The username under the display name, the username alone otherwise; the API gives no number of restaurants
+    // rated in the search
+    expect(queryAll(harness.fixture, '.profile-item .item-meta').map(textOf)).toEqual(['@camille']);
   });
 
   it('shows no "Show more" on the All tab, but "See all" next to each title, even when every result is shown', async () => {
@@ -270,7 +273,7 @@ describe('SearchResults', () => {
     expect(seeAll('restaurants')!.getAttribute('aria-label')).toBe('See all restaurants');
     expect(seeAll('restaurants')!.getAttribute('href')).toBe('/search?q=pizza&type=restaurants');
     // The 2 profiles found are all of them
-    expect(profileNames()).toEqual(['Camille', 'Camilou']);
+    expect(profileNames()).toEqual(['Camille', 'camilou']);
     expect(seeAll('profiles')!.getAttribute('aria-label')).toBe('See all profiles');
     expect(seeAll('profiles')!.getAttribute('href')).toBe('/search?q=pizza&type=profiles');
   });
@@ -443,7 +446,7 @@ describe('SearchResults', () => {
     expect(restaurantNames()).toEqual([]);
     expect(textOrNull('.restaurants-hint')).toBe('Search is unavailable right now');
     // The profiles do not depend on the place search
-    expect(profileNames()).toEqual(['Camille', 'Camilou']);
+    expect(profileNames()).toEqual(['Camille', 'camilou']);
 
     await clickButton(harness.fixture, 'Try again');
 
@@ -540,7 +543,7 @@ describe('SearchResults', () => {
     await clickMore('profiles');
 
     expect(textOrNull('.profiles-hint')).toBeNull();
-    expect(profileNames()).toEqual(['Camille', 'Camilou']);
+    expect(profileNames()).toEqual(['Camille', 'camilou']);
   });
 
   it('keeps the profiles shown when loading more fails, and lets the user try again', async () => {

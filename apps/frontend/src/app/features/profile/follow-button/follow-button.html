@@ -1,0 +1,18 @@
+@let state = follows();
+@if (!state.isOwnProfile()) {
+  @if (state.loaded()) {
+    <button
+      type="button"
+      class="follow-btn"
+      [class.following]="state.isFollowing()"
+      [attr.aria-pressed]="state.isFollowing()"
+      [disabled]="state.saving()"
+      (click)="state.toggleFollow()"
+    >
+      {{ state.followLabel() }}
+    </button>
+  } @else if (!state.loadError()) {
+    <!-- The loading is announced by the placeholder of the counts (ProfileFollows) -->
+    <div class="follow-skeleton" aria-hidden="true"></div>
+  }
+}

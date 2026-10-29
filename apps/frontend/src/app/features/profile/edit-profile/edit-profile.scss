@@ -1,0 +1,155 @@
+@use 'hover';
+
+.edit-profile {
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+// Same button as Create on the tierlist creation page
+.save-btn {
+  padding: 8px 18px;
+  border-radius: 100px;
+  border: none;
+  background: #ffffff;
+  color: #0d0d0d;
+  font-size: 14px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.save-btn {
+  @include hover.background(#e6e6e6);
+}
+
+.save-btn:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.3);
+  cursor: default;
+}
+
+// Same loading and error as the profile page
+.loading {
+  align-self: center;
+  font-size: 48px;
+  animation: pulse 1s ease-in-out infinite;
+  margin-top: 25dvh;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.9);
+  }
+}
+
+.load-error {
+  margin: 25dvh 0 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.avatar {
+  align-self: center;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 28px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 40px;
+}
+
+.save-error {
+  margin: -12px 0 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ff6b6b;
+  text-align: center;
+}
+
+// Same fields as the tierlist creation page
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.field-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.optional {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+.field-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  background: #161616;
+  color: #ffffff;
+  // 16px at least, or iOS zooms on the page when the field gets the focus
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.field-input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.field-input:focus {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.field-input:disabled {
+  opacity: 0.5;
+}
+
+// Same select as the sign up
+.select {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 40px;
+  // Chevron drawn in the field, since the native one is hidden by appearance: none
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+
+  // Placeholder option still selected
+  &:invalid {
+    color: rgba(255, 255, 255, 0.25);
+  }
+
+  option {
+    background: #111111;
+    color: #ffffff;
+  }
+}
+
+.field-hint {
+  font-size: 12px;
+  color: #ff6b6b;
+  margin: 0;
+}

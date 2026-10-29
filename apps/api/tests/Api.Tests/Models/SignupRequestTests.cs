@@ -8,7 +8,8 @@ namespace Api.Tests.Models;
 public class SignupRequestTests
 {
     /// <summary>
-    /// The user id, pseudonym and identity are copied, and the age is replaced by the birth year.
+    /// The user id, username and identity are copied, the age is replaced by the birth year, and there is no display
+    /// name yet.
     /// </summary>
     [Fact]
     public void ToProfile_ValidRequest_CopiesFieldsAndComputesBirthYear()
@@ -21,6 +22,7 @@ public class SignupRequestTests
         Assert.Equal("alex", profile.Username);
         Assert.Equal(1996, profile.BirthYear);
         Assert.Equal(Identities.NonBinary, profile.Identity);
+        Assert.Null(profile.DisplayName);
         Assert.Null(profile.AvatarUrl);
     }
 

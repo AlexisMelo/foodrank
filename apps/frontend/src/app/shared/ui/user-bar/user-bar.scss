@@ -31,15 +31,29 @@
   height: 38px;
   background: rgba(255, 255, 255, 0.06);
 }
+// The name alone, or the display name above the username: centered on the avatar either way
+.user-names {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.user-name,
+.user-username {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .user-name {
   font-size: 14px;
   font-weight: 800;
   color: #ffffff;
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+.user-username {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
 }
 .user-visited {
   font-size: 12px;

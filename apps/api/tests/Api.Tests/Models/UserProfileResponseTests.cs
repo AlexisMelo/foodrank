@@ -33,18 +33,32 @@ public class UserProfileResponseTests
     }
 
     /// <summary>
-    /// The id, user name and avatar of the profile are returned.
+    /// The id, username, display name and avatar of the profile are returned.
     /// </summary>
     [Fact]
-    public void From_FullProfile_UsesUsernameAndAvatar()
+    public void From_FullProfile_UsesUsernameDisplayNameAndAvatar()
     {
-        Profile profile = new() { Id = "user-1", Username = "camille", AvatarUrl = "https://img.test/c.png" };
+        Profile profile = new() { Id = "user-1", Username = "camille", DisplayName = "Camille D.", AvatarUrl = "https://img.test/c.png" };
 
         UserProfileResponse response = UserProfileResponse.From(profile, []);
 
         Assert.Equal("user-1", response.Id);
-        Assert.Equal("camille", response.Name);
+        Assert.Equal("camille", response.Username);
+        Assert.Equal("Camille D.", response.DisplayName);
         Assert.Equal("https://img.test/c.png", response.AvatarUrl);
+    }
+
+    /// <summary>
+    /// A profile without display name (or with a blank one) has none: the frontend shows the username instead.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("  ")]
+    public void From_NoDisplayName_HasNoDisplayName(string? displayName)
+    {
+        Profile profile = new() { Id = "user-1", Username = "camille", DisplayName = displayName };
+
+        Assert.Null(UserProfileResponse.From(profile, []).DisplayName);
     }
 
     /// <summary>

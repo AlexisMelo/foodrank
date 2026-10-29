@@ -3,6 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { RatingApi } from '@/core/api/rating-api';
 import { pickRandom } from '@/core/utils/random';
+import { DisplayedNamePipe } from '@/shared/pipes/displayed-name-pipe';
 import { FollowedReviewCard } from '../followed-review-card/followed-review-card';
 import { FriendChip } from '../friend-chip/friend-chip';
 import { injectMyFriends } from '../my-friends';
@@ -23,7 +24,7 @@ export const FOLLOWED_REVIEWS_COUNT = 5;
  * author.
  */
 @Component({
-  imports: [RouterLink, FollowedReviewCard, FriendChip],
+  imports: [RouterLink, FollowedReviewCard, FriendChip, DisplayedNamePipe],
   selector: 'app-community',
   styleUrl: './community.scss',
   templateUrl: './community.html',
