@@ -1,3 +1,4 @@
+@use 'danger-button';
 @use 'hover';
 
 .settings {
@@ -5,43 +6,94 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-}
-
-.header {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 32px;
-}
-
-.title {
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.3px;
-  margin: 0;
-}
-
-.bottom-section {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  gap: 28px;
   padding-bottom: 16px;
 }
 
-.settings-user-bar {
-  width: 100%;
+// Same title as the community and explore pages
+.page-title {
+  font-size: 30px;
+  font-weight: 800;
+  margin: 0 0 4px;
+  letter-spacing: -0.5px;
 }
 
-// Same placeholder and error as the user bar of the home page
-.user-bar-skeleton {
-  height: 60px;
-  border-radius: 16px;
+.page-subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+}
+
+// The avatar, then the display name above the username, or the username alone in the font of the display name
+.profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.profile-avatar,
+.profile-avatar-skeleton {
+  width: 88px;
+  height: 88px;
+  margin-bottom: 12px;
+}
+
+.profile-avatar {
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 36px;
+}
+
+.profile-name,
+.profile-username {
+  max-width: 100%;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-name {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.profile-username {
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.profile-avatar-skeleton,
+.profile-name-skeleton {
   background: #1a1a1a;
+  animation: pulse 1.2s ease-in-out infinite;
 }
 
-.user-bar-error {
+.profile-avatar-skeleton {
+  border-radius: 50%;
+}
+
+// As high as the display name
+.profile-name-skeleton {
+  width: 140px;
+  height: 26px;
+  border-radius: 8px;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.profile-error {
   margin: 0;
   height: 60px;
   padding: 0 16px;
@@ -54,37 +106,40 @@
   font-weight: 600;
 }
 
-.logout-btn {
-  margin: auto;
-  width: 70%;
-  padding: 13px;
-  background: transparent;
-  color: #ff6b6b;
-  border: 1.5px solid rgba(255, 107, 107, 0.35);
-  border-radius: 14px;
-  font-size: 14px;
-  font-weight: 800;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.logout-btn {
-  @include hover.background(rgba(255, 107, 107, 0.08));
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.delete-account-btn {
-  margin: 0 auto;
-  padding: 6px 12px;
-  background: none;
-  border: none;
-  border-radius: 8px;
-  color: rgba(255, 107, 107, 0.6);
-  font-size: 12px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
+// A sub-section of the settings, opening its own page; same box as the user bar of the home page
+.section-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 14px;
+  background: #1a1a1a;
+  border: 1.5px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  color: #ffffff;
+  text-decoration: none;
   transition: background 0.2s;
+  @include hover.background(#222);
 }
-.delete-account-btn {
-  @include hover.background(rgba(255, 107, 107, 0.08));
+
+.section-link-title {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.section-link-arrow {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.logout-btn {
+  @include danger-button.outline;
 }

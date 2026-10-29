@@ -1,0 +1,11 @@
+<div class="account-settings">
+  <app-page-top-bar title="Account" backTo="/settings" />
+
+  <button type="button" class="delete-account-btn" (click)="deleteAccountOpen.set(true)">
+    Delete account
+  </button>
+
+  @if (deleteAccountOpen()) {
+    <app-delete-account-modal (closed)="deleteAccountOpen.set(false)" />
+  }
+</div>

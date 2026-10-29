@@ -1,14 +1,15 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { AuthStore } from '@/core/auth/auth-store';
 import { injectUserProfile } from '@/shared/data/user-profile';
-import { UserBar } from '@/shared/ui/user-bar/user-bar';
-import { DeleteAccountModal } from '../delete-account-modal/delete-account-modal';
+import { DisplayedNamePipe } from '@/shared/pipes/displayed-name-pipe';
+import { UserAvatar } from '@/shared/ui/user-avatar/user-avatar';
 
 /**
- * Settings page (/settings): the logged-in user, log out and account deletion.
+ * Settings page (/settings): the logged-in user's avatar and names, the link to the account settings, and log out.
  */
 @Component({
-  imports: [DeleteAccountModal, UserBar],
+  imports: [RouterLink, UserAvatar, DisplayedNamePipe],
   selector: 'app-settings',
   styleUrl: './settings.scss',
   templateUrl: './settings.html',
@@ -20,13 +21,8 @@ export class Settings {
   protected readonly auth = inject(AuthStore);
 
   /**
-   * Profile of the logged-in user, shown in the user bar, with a placeholder while it loads and an error message
-   * when it cannot be loaded
+   * Profile of the logged-in user, shown at the top, with a placeholder while it loads and an error message when it
+   * cannot be loaded
    */
   protected readonly user = injectUserProfile();
-
-  /**
-   * True while the delete account popup is shown
-   */
-  protected readonly deleteAccountOpen = signal(false);
 }

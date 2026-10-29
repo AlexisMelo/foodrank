@@ -1,0 +1,10 @@
+@use 'danger-button';
+
+.account-settings {
+  color: #ffffff;
+}
+
+// Same button as Log out, on the settings page
+.delete-account-btn {
+  @include danger-button.outline;
+}

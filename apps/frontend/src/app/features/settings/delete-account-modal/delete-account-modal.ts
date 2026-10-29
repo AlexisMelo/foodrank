@@ -5,7 +5,8 @@ import { AuthStore } from '@/core/auth/auth-store';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog/confirm-dialog';
 
 /**
- * Popup asking for the password before deleting the account of the logged-in user. Shown by the settings page.
+ * Popup asking for the password before deleting the account of the logged-in user. Shown by the account settings page
+ * (/settings/account).
  */
 @Component({
   imports: [ConfirmDialog, FormField],

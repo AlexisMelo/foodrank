@@ -100,6 +100,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/settings/settings/settings').then((m) => m.Settings),
       },
+      {
+        path: 'settings/account',
+        loadComponent: () =>
+          import('./features/settings/account-settings/account-settings').then(
+            (m) => m.AccountSettings,
+          ),
+      },
       // Any other URL; a logged-out user is sent to the login page by the guard of the Shell
       {
         path: '**',

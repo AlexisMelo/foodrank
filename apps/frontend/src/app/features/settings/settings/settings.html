@@ -1,24 +1,48 @@
 <div class="settings">
-  <div class="header">
-    <h1 class="title">Settings</h1>
-  </div>
+  <header class="page-header">
+    <h1 class="page-title">Settings</h1>
+    <p class="page-subtitle">Your profile and account</p>
+  </header>
 
-  <!-- Log out and account deletion stay available even if the profile could not be loaded -->
-  <div class="bottom-section">
-    @if (user.profile(); as profile) {
-      <app-user-bar [profile]="profile" class="settings-user-bar" />
-    } @else if (user.loadError() || user.notFound()) {
-      <p class="user-bar-error" role="alert">Couldn't load your profile</p>
-    } @else {
-      <div class="user-bar-skeleton"></div>
-    }
-    <button type="button" class="logout-btn" (click)="auth.logout()">Log out</button>
-    <button type="button" class="delete-account-btn" (click)="deleteAccountOpen.set(true)">
-      Delete account
-    </button>
-  </div>
-
-  @if (deleteAccountOpen()) {
-    <app-delete-account-modal (closed)="deleteAccountOpen.set(false)" />
+  @if (user.profile(); as profile) {
+    <div class="profile">
+      <app-user-avatar
+        [name]="profile | displayedName"
+        [avatarUrl]="profile.avatarUrl"
+        class="profile-avatar"
+      />
+      <p class="profile-name">{{ profile | displayedName }}</p>
+      @if (profile.displayName) {
+        <p class="profile-username">&#64;{{ profile.username }}</p>
+      }
+    </div>
+  } @else if (user.loadError() || user.notFound()) {
+    <p class="profile-error" role="alert">Couldn't load your profile</p>
+  } @else {
+    <div class="profile" role="status" aria-label="Loading your profile">
+      <div class="profile-avatar-skeleton"></div>
+      <div class="profile-name-skeleton"></div>
+    </div>
   }
+
+  <!-- The account settings and log out stay available even if the profile could not be loaded -->
+  <nav class="sections" aria-label="Settings">
+    <a routerLink="/settings/account" class="section-link">
+      <span class="section-link-title">Account</span>
+      <svg
+        class="section-link-arrow"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <polyline points="9 18 15 12 9 6" />
+      </svg>
+    </a>
+  </nav>
+
+  <button type="button" class="logout-btn" (click)="auth.logout()">Log out</button>
 </div>
