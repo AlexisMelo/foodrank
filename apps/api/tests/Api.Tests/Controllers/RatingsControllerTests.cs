@@ -271,12 +271,13 @@ public class RatingsControllerTests : IDisposable
     }
 
     /// <summary>
-    /// Each rating carries the name and avatar of its author's profile, in camelCase for the frontend.
+    /// Each rating carries the displayed name (display name, else username) and avatar of its author's profile, in
+    /// camelCase for the frontend.
     /// </summary>
     [Fact]
     public async Task GetRecent_WithProfile_ReturnsAuthorName()
     {
-        _factory.RatingService.Profiles["user-2"] = new Profile { Id = "user-2", Username = "Camille", AvatarUrl = "https://img.test/c.png" };
+        _factory.RatingService.Profiles["user-2"] = new Profile { Id = "user-2", Username = "camille", DisplayName = "Camille", AvatarUrl = "https://img.test/c.png" };
         AddRating("user-2", new DateTime(2026, 3, 1, 21, 30, 0), food: 72.5f);
 
         HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings");

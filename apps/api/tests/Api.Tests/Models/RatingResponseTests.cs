@@ -59,16 +59,25 @@ public class RatingResponseTests
     }
 
     /// <summary>
-    /// The user name is displayed, and the avatar is passed along.
+    /// The author's display name is displayed, and the avatar is passed along.
     /// </summary>
     [Fact]
-    public void From_FullProfile_UsesUsernameAndAvatar()
+    public void From_FullProfile_UsesDisplayNameAndAvatar()
     {
-        Profile profile = new() { Id = "user-1", Username = "alex", AvatarUrl = "https://img.test/a.png" };
+        Profile profile = new() { Id = "user-1", Username = "alex", DisplayName = "Alex M.", AvatarUrl = "https://img.test/a.png" };
 
         RatingResponse response = RatingResponse.From(SampleRating, profile);
 
-        Assert.Equal("alex", response.UserName);
+        Assert.Equal("Alex M.", response.UserName);
         Assert.Equal("https://img.test/a.png", response.UserAvatarUrl);
+    }
+
+    /// <summary>
+    /// Without a display name, the author's username is displayed.
+    /// </summary>
+    [Fact]
+    public void From_NoDisplayName_UsesUsername()
+    {
+        Assert.Equal("alex", RatingResponse.From(SampleRating, SampleProfile).UserName);
     }
 }

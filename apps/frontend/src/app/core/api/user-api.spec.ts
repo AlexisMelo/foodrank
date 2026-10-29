@@ -27,7 +27,13 @@ describe('UserApi', () => {
 
   describe('fetchUserProfile', () => {
     it("returns the logged-in user's profile by default, sending the session cookie", async () => {
-      const profile = { id: 'u1', name: 'Alexis', avatarUrl: null, ratedRestaurantsCount: 3 };
+      const profile = {
+        id: 'u1',
+        username: 'alexis',
+        displayName: 'Alexis',
+        avatarUrl: null,
+        ratedRestaurantsCount: 3,
+      };
 
       const result = firstValueFrom(api.fetchUserProfile());
       const req = httpTesting.expectOne('http://api.test/api/users/me');
@@ -68,7 +74,7 @@ describe('UserApi', () => {
 
   describe('searchUsers', () => {
     it('sends the query encoded and the limit, with the session cookie, and returns the users found', async () => {
-      const camille = { id: 'u2', name: 'Camille', avatarUrl: null };
+      const camille = { id: 'u2', username: 'camille', displayName: null, avatarUrl: null };
 
       const result = firstValueFrom(api.searchUsers('cam & co', 15));
       const req = httpTesting.expectOne(
@@ -86,7 +92,7 @@ describe('UserApi', () => {
     /**
      * User answered by the follow endpoints
      */
-    const camille = { id: 'u2', name: 'Camille', avatarUrl: null };
+    const camille = { id: 'u2', username: 'camille', displayName: null, avatarUrl: null };
 
     it("reads a user's followers and the users they follow, the id encoded, with the session cookie", async () => {
       const followers = firstValueFrom(api.fetchFollowers('a/b'));

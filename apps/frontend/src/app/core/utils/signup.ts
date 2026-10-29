@@ -10,20 +10,24 @@ export type SignupStep = 1 | 2 | 3;
  */
 export const SIGNUP_STEP_COUNT = 3;
 
-// Same rules as the API (SignupRequest, StrongPasswordAttribute)
+// Same rules as the API (SignupRequest, StrongPasswordAttribute, UsernameAttribute)
 
 /**
  * Minimum length of a password
  */
 export const PASSWORD_MIN_LENGTH = 8;
 /**
- * Minimum length of a pseudonym, once trimmed
+ * Minimum length of a username, once trimmed
  */
 export const USERNAME_MIN_LENGTH = 3;
 /**
- * Maximum length of a pseudonym, once trimmed
+ * Maximum length of a username, once trimmed
  */
-export const USERNAME_MAX_LENGTH = 30;
+export const USERNAME_MAX_LENGTH = 20;
+/**
+ * Characters a username is made of: lowercase letters, numbers, dots and underscores
+ */
+const USERNAME_CHARACTERS = /^[a-z0-9._]*$/;
 /**
  * Maximum age in years
  */
@@ -86,11 +90,24 @@ export function isValidPassword(password: string): boolean {
 }
 
 /**
- * True when `username`, once trimmed, has an allowed length.
+ * Username sent for what was typed: trimmed and in lowercase, so "Alex " gives "alex" (the field shows it in lowercase
+ * too).
  */
-export function isValidUsername(username: string): boolean {
-  const length = username.trim().length;
-  return length >= USERNAME_MIN_LENGTH && length <= USERNAME_MAX_LENGTH;
+export function normalizeUsername(typed: string): string {
+  return typed.trim().toLowerCase();
+}
+
+/**
+ * True when `typed`, once normalized (see {@link normalizeUsername}), has an allowed length and only lowercase letters,
+ * numbers, dots and underscores.
+ */
+export function isValidUsername(typed: string): boolean {
+  const username = normalizeUsername(typed);
+  return (
+    username.length >= USERNAME_MIN_LENGTH &&
+    username.length <= USERNAME_MAX_LENGTH &&
+    USERNAME_CHARACTERS.test(username)
+  );
 }
 
 /**
@@ -101,11 +118,11 @@ export function isValidAge(age: number | null): age is number {
 }
 
 /**
- * Body of the sign up request built from `draft`, with the pseudonym trimmed. Null while the personal data is
+ * Body of the sign up request built from `draft`, with the username normalized. Null while the personal data is
  * missing or invalid.
  */
 export function toSignupData(draft: SignupDraft): SignupData | null {
-  const username = draft.username.trim();
+  const username = normalizeUsername(draft.username);
   if (!isValidUsername(username) || !isValidAge(draft.age) || draft.identity === '') return null;
 
   return {

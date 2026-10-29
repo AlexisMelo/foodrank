@@ -12,10 +12,11 @@ import { query, queryAll, textOf } from '@/testing/dom-testing';
 import { Community } from './community';
 
 /**
- * Builds the user `id` named `name`, as the friends endpoint lists them.
+ * Builds the user `id` with the username `username` and the display name `displayName`, as the friends endpoint lists
+ * them.
  */
-function user(id: string, name: string): UserSummary {
-  return { id, name, avatarUrl: null };
+function user(id: string, username: string, displayName: string | null = null): UserSummary {
+  return { id, username, displayName, avatarUrl: null };
 }
 
 /**
@@ -54,7 +55,7 @@ function httpError(status: number): Observable<never> {
  * Seven users, all friends of the logged-in user unless a test says otherwise
  */
 const sevenFriends = ['Camille', 'Hugo', 'Léa', 'Marc', 'Nina', 'Paul', 'Zoé'].map((name, i) =>
-  user(`u${i + 2}`, name),
+  user(`u${i + 2}`, `friend${i + 2}`, name),
 );
 
 describe('Community', () => {
@@ -106,20 +107,22 @@ describe('Community', () => {
     const names = shownFriendNames();
     expect(names).toHaveLength(5);
     expect(new Set(names).size).toBe(5);
-    expect(names.every((name) => sevenFriends.some((friend) => friend.name === name))).toBe(true);
+    expect(names.every((name) => sevenFriends.some((friend) => friend.displayName === name))).toBe(
+      true,
+    );
     for (const link of queryAll<HTMLAnchorElement>(fixture, '.friends-section .friend-chip')) {
       const name = textOf(link.querySelector('.friend-name') as Element);
-      const friend = sevenFriends.find((f) => f.name === name);
+      const friend = sevenFriends.find((f) => f.displayName === name);
       expect(link.getAttribute('href')).toBe(`/user/${friend?.id}`);
     }
   });
 
-  it('shows every friend when there are fewer than 5, with "See all" opening the friends page', async () => {
-    fetchFriends.mockReturnValue(of([user('u2', 'Camille'), user('u3', 'Hugo')]));
+  it('shows every friend when there are fewer than 5, by display name or username, with "See all" opening the friends page', async () => {
+    fetchFriends.mockReturnValue(of([user('u2', 'cam_92', 'Camille'), user('u3', 'hugo')]));
 
     await open();
 
-    expect(shownFriendNames().sort()).toEqual(['Camille', 'Hugo']);
+    expect(shownFriendNames().sort()).toEqual(['Camille', 'hugo']);
     expect(query(fixture, '.friends-section .see-all-chip').getAttribute('href')).toBe(
       '/community/friends',
     );

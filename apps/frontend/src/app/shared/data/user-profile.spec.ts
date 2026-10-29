@@ -6,10 +6,10 @@ import type { UserProfile } from '@/core/models/user.model';
 import { injectUserProfile } from './user-profile';
 
 /**
- * Builds the profile of `id` named `name`.
+ * Builds the profile of `id` with the username `username`.
  */
-function profile(id: string, name: string): UserProfile {
-  return { id, name, avatarUrl: null, ratedRestaurantsCount: 4 };
+function profile(id: string, username: string): UserProfile {
+  return { id, username, displayName: null, avatarUrl: null, ratedRestaurantsCount: 4 };
 }
 
 describe('injectUserProfile', () => {
@@ -30,14 +30,14 @@ describe('injectUserProfile', () => {
   }
 
   it("loads the logged-in user's profile by default", async () => {
-    fetchUserProfile.mockReturnValue(of(profile('u1', 'Alexis')));
+    fetchUserProfile.mockReturnValue(of(profile('u1', 'alexis')));
 
     const { profile: loaded, loading } = TestBed.runInInjectionContext(() => injectUserProfile());
     expect(loading()).toBe(true);
     await settle();
 
     expect(fetchUserProfile).toHaveBeenCalledWith('me');
-    expect(loaded()?.name).toBe('Alexis');
+    expect(loaded()?.username).toBe('alexis');
     expect(loaded()?.ratedRestaurantsCount).toBe(4);
     expect(loading()).toBe(false);
   });
@@ -74,7 +74,7 @@ describe('injectUserProfile', () => {
 
   it('reloads when the user changes and ignores the late answer of the previous one', async () => {
     const first = new Subject<UserProfile>();
-    fetchUserProfile.mockReturnValueOnce(first).mockReturnValueOnce(of(profile('u2', 'Camille')));
+    fetchUserProfile.mockReturnValueOnce(first).mockReturnValueOnce(of(profile('u2', 'camille')));
     const userId = signal('u1');
 
     const { profile: loaded } = TestBed.runInInjectionContext(() => injectUserProfile(userId));
@@ -82,10 +82,10 @@ describe('injectUserProfile', () => {
     TestBed.tick();
     userId.set('u2');
     await settle();
-    first.next(profile('u1', 'Old'));
+    first.next(profile('u1', 'old'));
     await settle();
 
     expect(fetchUserProfile.mock.calls).toEqual([['u1'], ['u2']]);
-    expect(loaded()?.name).toBe('Camille');
+    expect(loaded()?.username).toBe('camille');
   });
 });

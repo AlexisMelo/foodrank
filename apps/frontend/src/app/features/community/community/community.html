@@ -20,7 +20,11 @@
         <p class="empty">Couldn't load your friends</p>
       } @else {
         @for (friend of shownFriends(); track friend.id) {
-          <app-friend-chip [id]="friend.id" [name]="friend.name" [avatarUrl]="friend.avatarUrl" />
+          <app-friend-chip
+            [id]="friend.id"
+            [name]="friend | displayedName"
+            [avatarUrl]="friend.avatarUrl"
+          />
         } @empty {
           <p class="empty">
             No friends yet: friends are the people you follow who follow you back 🤝

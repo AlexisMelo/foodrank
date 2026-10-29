@@ -7,7 +7,7 @@ namespace Api.Tests.Fakes;
 /// <summary>
 /// In-memory <see cref="IUserService"/>, replacing the Supabase-backed one in API tests. Reads and saves the profiles
 /// and ratings of <see cref="FakeRatingService"/>, with the same rules as the real service (user ids are uuids,
-/// pseudonyms are unique, the search follows <see cref="UserRanking"/>).
+/// usernames are unique, the search follows <see cref="UserRanking"/>).
 /// </summary>
 /// <param name="ratings">Ratings and profiles "stored in the database".</param>
 public class FakeUserService(FakeRatingService ratings) : IUserService

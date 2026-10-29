@@ -144,6 +144,12 @@
   white-space: nowrap;
 }
 
+// Under the display name of a profile
+.item-username {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .item-arrow {
   font-size: 20px;
   color: rgba(255, 255, 255, 0.2);

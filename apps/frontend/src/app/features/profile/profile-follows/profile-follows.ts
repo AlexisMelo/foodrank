@@ -6,6 +6,7 @@ import { AuthStore } from '@/core/auth/auth-store';
 import type { UserProfile, UserSummary } from '@/core/models/user.model';
 import { ToastStore } from '@/core/toast/toast-store';
 import { followButtonLabel, followersCountLabel } from '@/core/utils/follow';
+import { displayedName } from '@/core/utils/profile';
 import { type FollowList, FollowListDialog } from '../follow-list-dialog/follow-list-dialog';
 
 /**
@@ -140,7 +141,8 @@ export class ProfileFollows {
    */
   protected async toggleFollow(): Promise<void> {
     if (this.saving()) return;
-    const { id: userId, name } = this.profile();
+    const userId = this.profile().id;
+    const name = displayedName(this.profile());
     const unfollow = this.isFollowing();
     this.saving.set(true);
     try {

@@ -11,10 +11,11 @@ import { query, queryAll, stubDialogs, textOf, typeIn } from '@/testing/dom-test
 import { ProfileFollows } from './profile-follows';
 
 /**
- * Builds the user `id` named `name`, as the follow endpoints list them.
+ * Builds the user `id` with the username `username` and the display name `displayName`, as the follow endpoints list
+ * them.
  */
-function user(id: string, name: string): UserSummary {
-  return { id, name, avatarUrl: null };
+function user(id: string, username: string, displayName: string | null = null): UserSummary {
+  return { id, username, displayName, avatarUrl: null };
 }
 
 /**
@@ -27,17 +28,17 @@ function profileOf(summary: UserSummary): UserProfile {
 /**
  * The logged-in user
  */
-const me = user('u1', 'Alexis');
+const me = user('u1', 'alex.m', 'Alexis');
 
 /**
  * The user whose profile is shown, unless a test opens another one
  */
-const camille = user('u2', 'Camille');
+const camille = user('u2', 'camille', 'Camille');
 
 /**
- * A third user
+ * A third user, without display name
  */
-const hugo = user('u3', 'Hugo');
+const hugo = user('u3', 'hugo');
 
 /**
  * Builds the error HttpClient gives when the API answers with `status`.
@@ -242,11 +243,11 @@ describe('ProfileFollows', () => {
 
     expect(textOf(query(fixture, 'dialog .title'))).toBe('Followers');
     expect(query(fixture, 'dialog').classList).toContain('overlay-full');
-    expect(listedNames()).toEqual(['Hugo', 'Alexis']);
+    expect(listedNames()).toEqual(['hugo', 'Alexis']);
     const rows = queryAll(fixture, '.user-row');
     expect(rows.map((row) => row.getAttribute('href'))).toEqual(['/user/u3', '/user/u1']);
-    // Only the name: the API gives no number of restaurants rated in lists
-    expect(queryAll(fixture, '.user-row .search-row-detail')).toHaveLength(0);
+    // The username under the display name, alone otherwise; the API gives no number of restaurants rated in lists
+    expect(queryAll(fixture, '.user-row .search-row-detail').map(textOf)).toEqual(['@alex.m']);
   });
 
   it('opens the users followed in the popup', async () => {
@@ -256,16 +257,22 @@ describe('ProfileFollows', () => {
     await click(query(fixture, '.following-btn'));
 
     expect(textOf(query(fixture, 'dialog .title'))).toBe('Following');
-    expect(listedNames()).toEqual(['Alexis', 'Hugo']);
+    expect(listedNames()).toEqual(['Alexis', 'hugo']);
   });
 
-  it('filters the popup by name, ignoring case, and says when nobody matches', async () => {
+  it('filters the popup by display name or username, ignoring case, and says when nobody matches', async () => {
     fetchFollowers.mockReturnValue(of([hugo, me]));
     await open();
     await click(query(fixture, '.followers-btn'));
 
     await typeIn(fixture, '.search', 'HUG');
-    expect(listedNames()).toEqual(['Hugo']);
+    expect(listedNames()).toEqual(['hugo']);
+
+    await typeIn(fixture, '.search', 'alexis');
+    expect(listedNames()).toEqual(['Alexis']);
+
+    await typeIn(fixture, '.search', '.M');
+    expect(listedNames()).toEqual(['Alexis']);
 
     await typeIn(fixture, '.search', 'zoe');
     expect(listedNames()).toEqual([]);

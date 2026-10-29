@@ -10,9 +10,14 @@ export interface UserSummary {
   id: string;
 
   /**
-   * User name (pseudonym)
+   * Unique username, chosen when signing up and never changed (lowercase letters, numbers, "." and "_")
    */
-  name: string;
+  username: string;
+
+  /**
+   * Name the user chose to be shown, null when there is none: the username is shown instead (see `displayedName`)
+   */
+  displayName: string | null;
 
   /**
    * Profile picture, null when there is none
@@ -50,7 +55,7 @@ export interface SignupData {
   password: string;
 
   /**
-   * Pseudonym displayed for the user, trimmed
+   * Unique username, trimmed and in lowercase (see `normalizeUsername`)
    */
   username: string;
 
@@ -80,7 +85,7 @@ export interface SignupDraft {
   password: string;
 
   /**
-   * Pseudonym as typed, not trimmed yet
+   * Username as typed, not trimmed nor lowercased yet
    */
   username: string;
 

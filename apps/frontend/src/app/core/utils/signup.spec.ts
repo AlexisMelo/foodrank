@@ -3,6 +3,7 @@ import {
   isValidAge,
   isValidPassword,
   isValidUsername,
+  normalizeUsername,
   passwordCriteria,
   reachableSignupStep,
   signupStepRoute,
@@ -53,14 +54,35 @@ describe('isValidPassword', () => {
   });
 });
 
+describe('normalizeUsername', () => {
+  it('trims and lowercases what was typed', () => {
+    expect(normalizeUsername('  Alex.B_92 ')).toBe('alex.b_92');
+  });
+});
+
 describe('isValidUsername', () => {
-  it('needs 3 to 30 characters once trimmed', () => {
+  it('needs 3 to 20 characters once trimmed', () => {
     expect(isValidUsername('abc')).toBe(true);
-    expect(isValidUsername('a'.repeat(30))).toBe(true);
+    expect(isValidUsername('a'.repeat(20))).toBe(true);
+    expect(isValidUsername('  abc  ')).toBe(true);
     expect(isValidUsername('  ab  ')).toBe(false);
     expect(isValidUsername('   ')).toBe(false);
-    expect(isValidUsername('a'.repeat(31))).toBe(false);
+    expect(isValidUsername('a'.repeat(21))).toBe(false);
   });
+
+  it.each(['alex.martin', 'alex_92', '_.9', 'Alex', 'ALEX.B'])(
+    'accepts lowercase letters, numbers, dots and underscores, capitals being lowercased: %j',
+    (username) => {
+      expect(isValidUsername(username)).toBe(true);
+    },
+  );
+
+  it.each(['alex b', 'élodie', 'alex-b', 'alex@home', '<b>alex</b>', 'ali b'])(
+    'refuses %j',
+    (username) => {
+      expect(isValidUsername(username)).toBe(false);
+    },
+  );
 });
 
 describe('isValidAge', () => {
@@ -76,8 +98,8 @@ describe('isValidAge', () => {
 });
 
 describe('toSignupData', () => {
-  it('builds the request body with the trimmed pseudonym', () => {
-    expect(toSignupData(draft({ username: '  alex  ' }))).toEqual({
+  it('builds the request body with the username trimmed and lowercased', () => {
+    expect(toSignupData(draft({ username: '  Alex  ' }))).toEqual({
       email: 'me@test.fr',
       password: 'abcdefg1',
       username: 'alex',
@@ -89,6 +111,7 @@ describe('toSignupData', () => {
   it.each<Partial<SignupDraft>>([
     { username: '' },
     { username: 'ab' },
+    { username: 'alex b' },
     { age: null },
     { age: -1 },
     { age: 121 },

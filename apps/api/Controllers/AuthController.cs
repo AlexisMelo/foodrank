@@ -11,7 +11,7 @@ namespace api.Controllers;
 /// kept in an HttpOnly cookie holding the Supabase access token.
 /// </summary>
 /// <param name="authService">Accounts and sessions of Supabase Auth.</param>
-/// <param name="userService">Saves the profile created at sign up and checks the pseudonym is free.</param>
+/// <param name="userService">Saves the profile created at sign up and checks the username is free.</param>
 /// <param name="configuration">Application settings, holding the frontend URL (Frontend:Url).</param>
 [ApiController]
 [Route("api/auth")]
@@ -23,18 +23,18 @@ public class AuthController(ISupabaseAuthService authService, IUserService userS
     private string FrontendUrl => configuration["Frontend:Url"]!;
 
     /// <summary>
-    /// Creates the Supabase Auth account with its profile (pseudonym, birth year, identity), then opens its session.
+    /// Creates the Supabase Auth account with its profile (username, birth year, identity), then opens its session.
     /// </summary>
     /// <param name="request">Email, password and personal data entered in the sign up steps.</param>
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
     /// <returns>200 with the session cookie, 400 for invalid values, 401 when no session could be opened, 409 when
-    /// the email or the pseudonym is already used.</returns>
+    /// the email or the username is already used.</returns>
     [HttpPost("signup")]
     [AllowAnonymous]
     public async Task<IActionResult> Signup([FromBody] SignupRequest request, CancellationToken cancellationToken)
     {
         // Checked before creating the account: an account whose profile cannot be saved would be left without
-        // pseudonym, and its email could not be used to sign up again
+        // username, and its email could not be used to sign up again
         if (await userService.IsUsernameTakenAsync(request.Username, cancellationToken))
             return Conflict(new { error = UserService.UsernameTaken.Message });
 

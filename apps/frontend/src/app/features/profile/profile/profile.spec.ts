@@ -20,8 +20,20 @@ import { query, queryAll, textOf } from '@/testing/dom-testing';
  * Profiles served by the fake API, by user id
  */
 const profiles: Record<string, UserProfile> = {
-  me: { id: 'u1', name: 'Alexis Melo', avatarUrl: null, ratedRestaurantsCount: 2 },
-  u2: { id: 'u2', name: 'Camille', avatarUrl: null, ratedRestaurantsCount: 2 },
+  me: {
+    id: 'u1',
+    username: 'alexis.melo',
+    displayName: 'Alexis Melo',
+    avatarUrl: null,
+    ratedRestaurantsCount: 2,
+  },
+  u2: {
+    id: 'u2',
+    username: 'camille',
+    displayName: null,
+    avatarUrl: null,
+    ratedRestaurantsCount: 2,
+  },
 };
 
 /**
@@ -150,10 +162,11 @@ describe('ProfileView', () => {
     await harness.fixture.whenStable();
   }
 
-  it("shows the logged-in user's real name and number of restaurants rated", async () => {
+  it("shows the logged-in user's display name, their username under it, and their number of restaurants rated", async () => {
     await open('/profile');
 
     expect(textOf(query(harness.fixture, '.winner-name'))).toBe('Alexis Melo');
+    expect(textOf(query(harness.fixture, '.winner-username'))).toBe('@alexis.melo');
     expect(textOf(query(harness.fixture, '.winner-tag'))).toBe('2 restaurants');
     expect(textOf(query(harness.fixture, '.winner-avatar'))).toBe('A');
   });
@@ -250,7 +263,9 @@ describe('ProfileView', () => {
     await open('/user/u2');
 
     expect(fetchUserProfile).toHaveBeenCalledWith('u2');
-    expect(textOf(query(harness.fixture, '.winner-name'))).toBe('Camille');
+    // No display name: the username alone, as the title
+    expect(textOf(query(harness.fixture, '.winner-name'))).toBe('camille');
+    expect(queryAll(harness.fixture, '.winner-username')).toHaveLength(0);
     const items = queryAll(harness.fixture, '.list-item');
     expect(items.map((i) => textOf(i.querySelector('.item-name')!))).toEqual([
       'Restaurant r3',

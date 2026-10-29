@@ -30,13 +30,13 @@ import { SignupStepLayout } from '../signup-step-layout/signup-step-layout';
  */
 interface ApiError {
   /**
-   * Explanation of the API, e.g. "This pseudonym is already taken."
+   * Explanation of the API, e.g. "This username is already taken."
    */
   error?: unknown;
 }
 
 /**
- * Message shown when the sign up fails: the API explains a 409 (email or pseudonym already used).
+ * Message shown when the sign up fails: the API explains a 409 (email or username already used).
  */
 function errorMessage(error: unknown): string {
   if (error instanceof HttpErrorResponse) {
@@ -44,14 +44,15 @@ function errorMessage(error: unknown): string {
     if (error.status === 409)
       return typeof apiMessage === 'string'
         ? apiMessage
-        : 'This email or pseudonym is already used.';
+        : 'This email or username is already used.';
     if (error.status === 400) return 'Some of your information was refused. Please check it.';
   }
   return 'Could not create account.';
 }
 
 /**
- * Sign up step 3: pseudonym, age and identity, then the account is created with everything entered.
+ * Sign up step 3: username, age and identity, then the account is created with everything entered. The username is
+ * shown and sent in lowercase, so capitals typed are accepted.
  */
 @Component({
   imports: [FormField, SignupStepLayout],
@@ -115,12 +116,12 @@ export class SignupProfileStep {
   });
 
   /**
-   * Explains an invalid pseudonym, empty while it is valid or empty (an empty form is not shown in error)
+   * Explains an invalid username, empty while it is valid or empty (an empty form is not shown in error)
    */
   protected readonly usernameHint = computed(() => {
     const username = this.form.username();
     return username.value().trim() && username.invalid()
-      ? `Between ${USERNAME_MIN_LENGTH} and ${USERNAME_MAX_LENGTH} characters.`
+      ? `${USERNAME_MIN_LENGTH} to ${USERNAME_MAX_LENGTH} characters: lowercase letters, numbers, dots and underscores.`
       : '';
   });
 

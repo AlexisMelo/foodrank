@@ -10,9 +10,16 @@
   } @else {
     @for (user of shownUsers(); track user.id) {
       <a class="search-row user-row" [routerLink]="['/user', user.id]">
-        <app-user-avatar class="user-avatar" [name]="user.name" [avatarUrl]="user.avatarUrl" />
+        <app-user-avatar
+          class="user-avatar"
+          [name]="user | displayedName"
+          [avatarUrl]="user.avatarUrl"
+        />
         <span class="search-row-info">
-          <span class="search-row-name">{{ user.name }}</span>
+          <span class="search-row-name">{{ user | displayedName }}</span>
+          @if (user.displayName) {
+            <span class="search-row-detail">&#64;{{ user.username }}</span>
+          }
         </span>
         <span class="user-arrow" aria-hidden="true">›</span>
       </a>

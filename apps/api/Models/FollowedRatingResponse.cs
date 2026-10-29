@@ -15,7 +15,8 @@ namespace api.Models;
 /// <param name="IsActive">True for the author's latest rating of the restaurant, which is their score for it; false for
 /// the previous ones, kept as history.</param>
 /// <param name="UserId">Supabase Auth identifier of the user who rated.</param>
-/// <param name="UserName">Name displayed for the user who rated.</param>
+/// <param name="UserName">Name displayed for the user who rated: their display name, or their username when they have
+/// none.</param>
 /// <param name="UserAvatarUrl">Profile picture of the user who rated, null when there is none.</param>
 public record FollowedRatingResponse(
     string RestaurantId,
@@ -37,7 +38,7 @@ public record FollowedRatingResponse(
     /// <param name="rating">Rating row.</param>
     /// <param name="restaurant">Restaurant of <paramref name="rating"/>.</param>
     /// <param name="profile">Profile row of the author.</param>
-    /// <returns>The rating with the restaurant's name and emoji, and the author's user name and avatar.</returns>
+    /// <returns>The rating with the restaurant's name and emoji, and the author's displayed name and avatar.</returns>
     public static FollowedRatingResponse From(Rating rating, Restaurant restaurant, Profile profile) => new(
         restaurant.Id,
         restaurant.Name,
@@ -49,6 +50,6 @@ public record FollowedRatingResponse(
         rating.Bonus,
         rating.IsActive,
         rating.UserId,
-        profile.Username,
+        Profile.DisplayedName(profile),
         Profile.AvatarUrlOrNull(profile));
 }

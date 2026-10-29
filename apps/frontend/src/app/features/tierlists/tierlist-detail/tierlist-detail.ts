@@ -20,6 +20,7 @@ import {
   rankTierlistRestaurants,
   sortRestaurants,
 } from '@/core/utils/ranking';
+import { DisplayedNamePipe } from '@/shared/pipes/displayed-name-pipe';
 import type { Action } from '@/shared/ui/actions/actions';
 import { ChoiceChips } from '@/shared/ui/choice-chips/choice-chips';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog/confirm-dialog';
@@ -73,6 +74,7 @@ interface TierlistPage {
     RouterLink,
     TierlistPinButton,
     UserAvatar,
+    DisplayedNamePipe,
   ],
   selector: 'app-tierlist-detail',
   styleUrl: './tierlist-detail.scss',

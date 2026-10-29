@@ -1,12 +1,14 @@
 <app-signup-step-layout [step]="3" title="Enter your personal data" [backTo]="backTo">
   <form class="form" (submit)="submit($event)">
-    <label class="label" for="signup-username">Pseudonym</label>
+    <label class="label" for="signup-username">Username</label>
     <input
       id="signup-username"
-      class="input"
+      class="input username-input"
       type="text"
-      placeholder="How others will see you"
+      placeholder="Unique, can't be changed later"
       autocomplete="nickname"
+      autocapitalize="none"
+      spellcheck="false"
       [formField]="form.username"
     />
     @if (usernameHint()) {

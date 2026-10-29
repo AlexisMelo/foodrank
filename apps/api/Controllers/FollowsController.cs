@@ -24,7 +24,7 @@ public class FollowsController(IFollowService followService) : ControllerBase
     /// </summary>
     /// <param name="userId">Supabase Auth id of the user.</param>
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
-    /// <returns>200 with the users (id, name, avatar), 401 when not logged in, 404 when the id is not a user id.</returns>
+    /// <returns>200 with the users (id, username, display name, avatar), 401 when not logged in, 404 when the id is not a user id.</returns>
     [HttpGet("followers")]
     public async Task<IActionResult> GetFollowers(string userId, CancellationToken cancellationToken)
         => (await _followService.GetFollowersAsync(userId, cancellationToken)).ToActionResult();
@@ -34,7 +34,7 @@ public class FollowsController(IFollowService followService) : ControllerBase
     /// </summary>
     /// <param name="userId">Supabase Auth id of the user.</param>
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
-    /// <returns>200 with the users (id, name, avatar), 401 when not logged in, 404 when the id is not a user id.</returns>
+    /// <returns>200 with the users (id, username, display name, avatar), 401 when not logged in, 404 when the id is not a user id.</returns>
     [HttpGet("following")]
     public async Task<IActionResult> GetFollowing(string userId, CancellationToken cancellationToken)
         => (await _followService.GetFollowingAsync(userId, cancellationToken)).ToActionResult();
@@ -44,7 +44,7 @@ public class FollowsController(IFollowService followService) : ControllerBase
     /// </summary>
     /// <param name="userId">Supabase Auth id of the user.</param>
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
-    /// <returns>200 with the users (id, name, avatar), 401 when not logged in, 404 when the id is not a user id.</returns>
+    /// <returns>200 with the users (id, username, display name, avatar), 401 when not logged in, 404 when the id is not a user id.</returns>
     [HttpGet("friends")]
     public async Task<IActionResult> GetFriends(string userId, CancellationToken cancellationToken)
         => (await _followService.GetFriendsAsync(userId, cancellationToken)).ToActionResult();

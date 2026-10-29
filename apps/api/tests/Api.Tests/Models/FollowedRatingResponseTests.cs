@@ -67,16 +67,25 @@ public class FollowedRatingResponseTests
     }
 
     /// <summary>
-    /// The author's user name is displayed, and the avatar is passed along.
+    /// The author's display name is displayed, and the avatar is passed along.
     /// </summary>
     [Fact]
-    public void From_FullProfile_UsesUsernameAndAvatar()
+    public void From_FullProfile_UsesDisplayNameAndAvatar()
     {
-        Profile profile = new() { Id = "user-1", Username = "camille", AvatarUrl = "https://img.test/c.png" };
+        Profile profile = new() { Id = "user-1", Username = "camille", DisplayName = "Camille D.", AvatarUrl = "https://img.test/c.png" };
 
         FollowedRatingResponse response = FollowedRatingResponse.From(SampleRating, SampleRestaurant, profile);
 
-        Assert.Equal("camille", response.UserName);
+        Assert.Equal("Camille D.", response.UserName);
         Assert.Equal("https://img.test/c.png", response.UserAvatarUrl);
+    }
+
+    /// <summary>
+    /// Without a display name, the author's username is displayed.
+    /// </summary>
+    [Fact]
+    public void From_NoDisplayName_UsesUsername()
+    {
+        Assert.Equal("camille", FollowedRatingResponse.From(SampleRating, SampleRestaurant, SampleProfile).UserName);
     }
 }

@@ -17,7 +17,13 @@ describe('Settings', () => {
     logout = vi.fn();
     deleteAccount = vi.fn();
     fetchUserProfile = vi.fn(() =>
-      of({ id: 'u1', name: 'Alexis Melo', avatarUrl: null, ratedRestaurantsCount: 2 }),
+      of({
+        id: 'u1',
+        username: 'alexis.melo',
+        displayName: 'Alexis Melo',
+        avatarUrl: null,
+        ratedRestaurantsCount: 2,
+      }),
     );
     TestBed.configureTestingModule({
       providers: [
@@ -70,7 +76,13 @@ describe('Settings', () => {
     expect(page.querySelector('.user-bar-skeleton')).not.toBeNull();
     expect(page.querySelector('.user-bar')).toBeNull();
 
-    answer.next({ id: 'u1', name: 'Alexis Melo', avatarUrl: null, ratedRestaurantsCount: 2 });
+    answer.next({
+      id: 'u1',
+      username: 'alexis.melo',
+      displayName: 'Alexis Melo',
+      avatarUrl: null,
+      ratedRestaurantsCount: 2,
+    });
     await fixture.whenStable();
 
     expect(page.querySelector('.user-bar-skeleton')).toBeNull();
