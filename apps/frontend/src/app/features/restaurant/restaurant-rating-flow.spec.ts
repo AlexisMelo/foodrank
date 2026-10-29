@@ -224,7 +224,7 @@ describe('rating a restaurant from its page', () => {
     const chip = query<HTMLButtonElement>(harness.fixture, '.add-chip');
     expect(chip.tagName).toBe('BUTTON');
     expect(chip.disabled).toBe(true);
-    expect(query<HTMLButtonElement>(harness.fixture, '.tab-btn-add').disabled).toBe(false);
+    expect(query<HTMLButtonElement>(harness.fixture, '.tab-btn-search').disabled).toBe(false);
 
     // The rating page of another restaurant, opened from its URL, is locked too
     await harness.navigateByUrl('/review/r2');

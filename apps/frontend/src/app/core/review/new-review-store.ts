@@ -1,7 +1,8 @@
 import { Service, signal } from '@angular/core';
 
 /**
- * Whether the new review sheet is open, shared by the buttons that open it and the sheet itself.
+ * Whether the new review sheet is open, shared by the buttons that open it and the sheet itself. The sheet searches
+ * restaurants (to pick the one to review) and users.
  */
 @Service()
 export class NewReviewStore {

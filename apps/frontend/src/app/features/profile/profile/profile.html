@@ -15,7 +15,12 @@
     } @else if (!ranking.rankedRestaurants().length) {
       <div class="empty">No restaurant rated yet 🍽️</div>
     } @else {
-      <app-sort-chips class="sort-row" [options]="sortOptions" [(value)]="sortBy" />
+      <app-choice-chips
+        label="Sort by"
+        class="sort-row"
+        [options]="sortOptions"
+        [(value)]="sortBy"
+      />
 
       <div class="list">
         @for (restaurant of sortedRestaurants(); track restaurant.restaurantId) {

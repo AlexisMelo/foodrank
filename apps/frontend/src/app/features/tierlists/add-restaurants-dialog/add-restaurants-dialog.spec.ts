@@ -143,7 +143,7 @@ describe('AddRestaurantsDialog', () => {
    * Clicks the sort chip whose text is `label`, and waits for the list to update.
    */
   async function sortBy(label: string): Promise<void> {
-    queryAll(fixture, '.sort-chip')
+    queryAll(fixture, '.choice-chip')
       .find((chip) => textOf(chip) === label)!
       .click();
     await fixture.whenStable();
@@ -189,7 +189,7 @@ describe('AddRestaurantsDialog', () => {
   it('sorts the restaurants by score, the default, by the moment of their rating or by name', async () => {
     await open();
 
-    const chips = queryAll(fixture, 'dialog .sort-chip');
+    const chips = queryAll(fixture, 'dialog .choice-chip');
     expect(chips.map(textOf)).toEqual(['Score', 'Recently rated', 'A–Z']);
     expect(chips.map((c) => c.getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false']);
 
@@ -330,7 +330,7 @@ describe('AddRestaurantsDialog', () => {
     expect(textOf(query(fixture, '.search-list-message'))).toBe(
       "Only the restaurants you rated can be added, and you haven't rated any yet.",
     );
-    expect(queryAll(fixture, '.sort-chip')).toHaveLength(0);
+    expect(queryAll(fixture, '.choice-chip')).toHaveLength(0);
   });
 
   it('says when every restaurant I rated is in the tierlist, with nothing to sort', async () => {
@@ -340,7 +340,7 @@ describe('AddRestaurantsDialog', () => {
     expect(textOf(query(fixture, '.search-list-message'))).toBe(
       'Every restaurant you rated is in Date night.',
     );
-    expect(queryAll(fixture, '.sort-chip')).toHaveLength(0);
+    expect(queryAll(fixture, '.choice-chip')).toHaveLength(0);
   });
 
   it('asks to be closed from its × button', async () => {

@@ -12,3 +12,18 @@ export interface UserLocation {
    */
   lon: number;
 }
+
+/**
+ * Area around which restaurant searches are centered.
+ */
+export interface SearchArea {
+  /**
+   * City name, null when it could not be determined
+   */
+  locality: string | null;
+
+  /**
+   * True when the API used its default city because no user position was sent
+   */
+  isDefault: boolean;
+}

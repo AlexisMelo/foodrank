@@ -21,10 +21,10 @@ import {
   sortRestaurants,
 } from '@/core/utils/ranking';
 import type { Action } from '@/shared/ui/actions/actions';
+import { ChoiceChips } from '@/shared/ui/choice-chips/choice-chips';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog/confirm-dialog';
 import { NewChip } from '@/shared/ui/new-chip/new-chip';
 import { RankedRestaurantItem } from '@/shared/ui/ranked-restaurant-item/ranked-restaurant-item';
-import { SortChips } from '@/shared/ui/sort-chips/sort-chips';
 import { UserAvatar } from '@/shared/ui/user-avatar/user-avatar';
 import { AddRestaurantsDialog } from '../add-restaurants-dialog/add-restaurants-dialog';
 import { TierlistPinButton } from '../tierlist-pin-button/tierlist-pin-button';
@@ -66,11 +66,11 @@ interface TierlistPage {
 @Component({
   imports: [
     AddRestaurantsDialog,
+    ChoiceChips,
     ConfirmDialog,
     NewChip,
     RankedRestaurantItem,
     RouterLink,
-    SortChips,
     TierlistPinButton,
     UserAvatar,
   ],

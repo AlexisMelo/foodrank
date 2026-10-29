@@ -7,7 +7,7 @@ namespace Api.Tests.Fakes;
 /// <summary>
 /// In-memory <see cref="IUserService"/>, replacing the Supabase-backed one in API tests. Reads and saves the profiles
 /// and ratings of <see cref="FakeRatingService"/>, with the same rules as the real service (user ids are uuids,
-/// pseudonyms are unique).
+/// pseudonyms are unique, the search follows <see cref="UserRanking"/>).
 /// </summary>
 /// <param name="ratings">Ratings and profiles "stored in the database".</param>
 public class FakeUserService(FakeRatingService ratings) : IUserService
@@ -23,6 +23,23 @@ public class FakeUserService(FakeRatingService ratings) : IUserService
             ratings.Profiles.GetValueOrDefault(userId),
             ratings.Ratings.Where(r => r.UserId == userId).Select(r => r.RestaurantId));
         return Task.FromResult(Result<UserProfileResponse>.Success(profile));
+    }
+
+    /// <inheritdoc />
+    public Task<SearchPage<UserProfileResponse>> SearchAsync(string query, int limit, string excludedUserId, CancellationToken cancellationToken)
+    {
+        string trimmed = query.Trim();
+        if (trimmed.Length < UserRanking.MinQueryLength)
+            return Task.FromResult(new SearchPage<UserProfileResponse>([], false));
+
+        IReadOnlyList<Profile> ranked = UserRanking.Rank(ratings.Profiles.Values.Where(p => p.Id != excludedUserId), trimmed);
+        List<UserProfileResponse> shown = ranked.Take(limit)
+            .Select(p => UserProfileResponse.From(
+                p.Id,
+                p,
+                ratings.Ratings.Where(r => r.UserId == p.Id).Select(r => r.RestaurantId)))
+            .ToList();
+        return Task.FromResult(new SearchPage<UserProfileResponse>(shown, ranked.Count > limit));
     }
 
     /// <inheritdoc />

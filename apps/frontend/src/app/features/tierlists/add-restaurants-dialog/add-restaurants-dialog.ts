@@ -28,8 +28,8 @@ import {
   withAddedRestaurant,
   withRemovedRestaurant,
 } from '@/core/utils/tierlist';
+import { ChoiceChips } from '@/shared/ui/choice-chips/choice-chips';
 import { SearchDialog } from '@/shared/ui/search-dialog/search-dialog';
-import { SortChips } from '@/shared/ui/sort-chips/sort-chips';
 
 /**
  * Popup of the tierlist page adding restaurants to the tierlist, for its owner, covering the whole screen: the
@@ -40,7 +40,7 @@ import { SortChips } from '@/shared/ui/sort-chips/sort-chips';
  * the owner of the tierlist rated.
  */
 @Component({
-  imports: [SearchDialog, SortChips],
+  imports: [ChoiceChips, SearchDialog],
   selector: 'app-add-restaurants-dialog',
   styleUrl: './add-restaurants-dialog.scss',
   templateUrl: './add-restaurants-dialog.html',

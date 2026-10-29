@@ -1,4 +1,5 @@
 using api.Common;
+using api.Models;
 using api.Services.Places;
 
 namespace api.Services;
@@ -15,28 +16,30 @@ public class PlaceSearchService(IPlaceProvider placeProvider, IConfiguration con
     private const int MinInputLength = 3;
 
     /// <summary>
-    /// Maximum number of suggestions returned while the user is typing.
+    /// Maximum number of results of a search, which is also the number of candidates fetched from the provider for
+    /// every search whatever the limit asked: ranking the same candidates keeps the first results in place when more
+    /// are asked, and lets a nearby place the provider ranked low make it into the first ones after
+    /// <see cref="PlaceRanking.Rank"/>.
     /// </summary>
-    private const int AutocompleteLimit = 8;
-
-    /// <summary>
-    /// Maximum number of results returned by the longer search of the results page ("Load more").
-    /// </summary>
-    private const int SearchLimit = 25;
-
-    /// <summary>
-    /// How many more candidates than displayed are fetched from the provider, so that a nearby place the provider
-    /// ranked low can still make it into the list after <see cref="PlaceRanking.Rank"/>.
-    /// </summary>
-    private const int CandidatesFactor = 2;
+    public const int MaxResults = 50;
 
     /// <inheritdoc />
-    public Task<Result<IReadOnlyList<PlaceSuggestion>>> AutocompleteAsync(string input, double? lat, double? lon, CancellationToken cancellationToken)
-        => SearchWithLimitAsync(input, AutocompleteLimit, lat, lon, cancellationToken);
+    public async Task<Result<SearchPage<PlaceSuggestion>>> SearchAsync(string query, int limit, double? lat, double? lon, CancellationToken cancellationToken)
+    {
+        string trimmed = query.Trim();
+        if (trimmed.Length < MinInputLength)
+            return Result<SearchPage<PlaceSuggestion>>.Success(new SearchPage<PlaceSuggestion>([], false));
 
-    /// <inheritdoc />
-    public Task<Result<IReadOnlyList<PlaceSuggestion>>> SearchAsync(string query, double? lat, double? lon, CancellationToken cancellationToken)
-        => SearchWithLimitAsync(query, SearchLimit, lat, lon, cancellationToken);
+        GeoPoint position = SearchPosition.Resolve(lat, lon, configuration);
+        Result<IReadOnlyList<PlaceDetails>> result = await placeProvider.SearchAsync(trimmed, MaxResults, position, cancellationToken);
+        if (!result.IsSuccess)
+            return Result<SearchPage<PlaceSuggestion>>.Failure(result.Error!);
+
+        List<PlaceSuggestion> ranked = PlaceRanking.Rank(result.Value!, trimmed, position)
+            .Select(p => new PlaceSuggestion(p.PlaceId, p.Name, p.Address))
+            .ToList();
+        return Result<SearchPage<PlaceSuggestion>>.Success(new SearchPage<PlaceSuggestion>(ranked.Take(limit).ToList(), ranked.Count > limit));
+    }
 
     /// <inheritdoc />
     public async Task<Result<SearchArea>> GetSearchAreaAsync(double? lat, double? lon, CancellationToken cancellationToken)
@@ -46,27 +49,5 @@ public class PlaceSearchService(IPlaceProvider placeProvider, IConfiguration con
         return locality.IsSuccess
             ? Result<SearchArea>.Success(new SearchArea(locality.Value, isDefault))
             : Result<SearchArea>.Failure(locality.Error!);
-    }
-
-    /// <summary>
-    /// Validates the input, resolves the position (user's or the configured default city), fetches extra candidates,
-    /// re-ranks them by match then distance, and keeps the first <paramref name="limit"/> as suggestions.
-    /// </summary>
-    private async Task<Result<IReadOnlyList<PlaceSuggestion>>> SearchWithLimitAsync(string query, int limit, double? lat, double? lon, CancellationToken cancellationToken)
-    {
-        string trimmed = query.Trim();
-        if (trimmed.Length < MinInputLength)
-            return Result<IReadOnlyList<PlaceSuggestion>>.Success([]);
-
-        GeoPoint position = SearchPosition.Resolve(lat, lon, configuration);
-        Result<IReadOnlyList<PlaceDetails>> result = await placeProvider.SearchAsync(trimmed, limit * CandidatesFactor, position, cancellationToken);
-        if (!result.IsSuccess)
-            return Result<IReadOnlyList<PlaceSuggestion>>.Failure(result.Error!);
-
-        List<PlaceSuggestion> suggestions = PlaceRanking.Rank(result.Value!, trimmed, position)
-            .Take(limit)
-            .Select(p => new PlaceSuggestion(p.PlaceId, p.Name, p.Address))
-            .ToList();
-        return Result<IReadOnlyList<PlaceSuggestion>>.Success(suggestions);
     }
 }

@@ -1,3 +1,4 @@
+@use 'chip';
 @use 'hover';
 
 .page {
@@ -7,22 +8,15 @@
   overflow: hidden;
 }
 
-.title-block {
+// Same spacing as in the search sheet, which the location hint is made for
+.search-header {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 20px;
   margin-bottom: 28px;
 }
 
-.query-label {
-  font-size: 13px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.35);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
-
-.query {
+.title {
   font-size: 26px;
   font-weight: 900;
   letter-spacing: -0.5px;
@@ -30,11 +24,46 @@
   color: #ffffff;
 }
 
-.cta {
-  margin: 8px 0 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.38);
+.section {
+  display: flex;
+  flex-direction: column;
+}
+
+// Same space as between the sections of /home
+.section + .section {
+  margin-top: 28px;
+}
+
+// Same as the section headers of /home (the title, then its "See all" chip), with the same 16px down to the content
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-header + .list,
+.section-header + .open-error {
+  margin-top: 16px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: #ffffff;
+  margin: 0;
+}
+
+// Same as the "See all" chips of /home
+.see-all-chip {
+  @include chip.size;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.45);
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.see-all-chip {
+  @include hover.background(rgba(255, 255, 255, 0.08));
 }
 
 .list {
@@ -84,6 +113,13 @@
   flex-shrink: 0;
 }
 
+.item-avatar {
+  width: 44px;
+  height: 44px;
+  font-size: 18px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .item-info {
   flex: 1;
   display: flex;
@@ -105,6 +141,7 @@
   font-size: 12px;
   color: rgba(255, 255, 255, 0.38);
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .item-arrow {
@@ -141,8 +178,10 @@
   cursor: default;
 }
 
+// At the end of the restaurants title row; on two lines when the row is too narrow, rather than pushing the title
 .attribution {
-  margin: 12px 0 0;
+  margin: 0 0 0 auto;
+  min-width: 0;
   font-size: 11px;
   color: rgba(255, 255, 255, 0.3);
   text-align: right;

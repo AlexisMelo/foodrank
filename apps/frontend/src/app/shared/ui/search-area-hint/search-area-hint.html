@@ -1,0 +1,17 @@
+@if (locationStore.city(); as city) {
+  <p class="search-area">
+    <span class="pin" aria-hidden="true">📍</span>
+    <span>Around {{ city }}</span>
+    @if (canAsk()) {
+      <span class="separator" aria-hidden="true">·</span>
+      <button type="button" class="enable-btn" (click)="locationStore.requestLocation()">
+        Enable location for nearby results
+      </button>
+    } @else if (locationStore.status() === 'blocked') {
+      <span class="separator" aria-hidden="true">·</span>
+      <span class="blocked">
+        Location blocked, allow it in your browser settings for nearby results
+      </span>
+    }
+  </p>
+}

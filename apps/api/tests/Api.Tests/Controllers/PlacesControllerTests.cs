@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using api.Common;
+using api.Models;
 using api.Services.Places;
 
 namespace Api.Tests.Controllers;
@@ -34,19 +35,50 @@ public class PlacesControllerTests : IDisposable
     public void Dispose() => _factory.Dispose();
 
     /// <summary>
-    /// Autocomplete returns the ranked suggestions as JSON.
+    /// The search returns the first 5 ranked results by default, and whether there are more, as JSON.
     /// </summary>
     [Fact]
-    public async Task Autocomplete_ReturnsSuggestions()
+    public async Task Search_ReturnsFirst5ResultsAndHasMore()
     {
         _factory.PlaceProvider.SearchResult = Result<IReadOnlyList<PlaceDetails>>.Success(
-            [new PlaceDetails("N1", "Pizza Roma", "1 rue de Caen", 49.18, -0.37)]);
+            Enumerable.Range(1, 6).Select(i => new PlaceDetails($"N{i}", $"Pizza {i}", $"{i} rue de Caen", 49.18, -0.37)).ToList());
 
-        HttpResponseMessage response = await _client.GetAsync("/api/places/autocomplete?input=pizza");
+        HttpResponseMessage response = await _client.GetAsync("/api/places/search?query=pizza");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        List<PlaceSuggestion>? suggestions = await response.Content.ReadFromJsonAsync<List<PlaceSuggestion>>();
-        Assert.Equal([new PlaceSuggestion("N1", "Pizza Roma", "1 rue de Caen")], suggestions);
+        string json = await response.Content.ReadAsStringAsync();
+        Assert.Contains("\"results\":[{\"placeId\":\"N1\",\"name\":\"Pizza 1\",\"secondaryText\":\"1 rue de Caen\"}", json);
+        Assert.Contains("\"hasMore\":true", json);
+        SearchPage<PlaceSuggestion>? page = await response.Content.ReadFromJsonAsync<SearchPage<PlaceSuggestion>>();
+        Assert.Equal(["N1", "N2", "N3", "N4", "N5"], page!.Results.Select(r => r.PlaceId));
+    }
+
+    /// <summary>
+    /// The limit sets the number of results returned.
+    /// </summary>
+    [Fact]
+    public async Task Search_WithLimit_ReturnsThatManyResults()
+    {
+        _factory.PlaceProvider.SearchResult = Result<IReadOnlyList<PlaceDetails>>.Success(
+            Enumerable.Range(1, 6).Select(i => new PlaceDetails($"N{i}", $"Pizza {i}", "", 49.18, -0.37)).ToList());
+
+        SearchPage<PlaceSuggestion>? page = await _client.GetFromJsonAsync<SearchPage<PlaceSuggestion>>("/api/places/search?query=pizza&limit=15");
+
+        Assert.Equal(6, page!.Results.Count);
+        Assert.False(page.HasMore);
+    }
+
+    /// <summary>
+    /// A limit outside 1-50 is refused with a 400.
+    /// </summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(51)]
+    public async Task Search_LimitOutOfRange_Returns400(int limit)
+    {
+        HttpResponseMessage response = await _client.GetAsync($"/api/places/search?query=pizza&limit={limit}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     /// <summary>
@@ -66,15 +98,15 @@ public class PlacesControllerTests : IDisposable
     /// The places endpoints are limited to 30 requests per minute, to protect the free OSM services.
     /// </summary>
     [Fact]
-    public async Task Autocomplete_MoreThan30RequestsPerMinute_Returns429()
+    public async Task Search_MoreThan30RequestsPerMinute_Returns429()
     {
         for (int i = 0; i < 30; i++)
         {
-            HttpResponseMessage allowed = await _client.GetAsync("/api/places/autocomplete?input=ab");
+            HttpResponseMessage allowed = await _client.GetAsync("/api/places/search?query=ab");
             Assert.Equal(HttpStatusCode.OK, allowed.StatusCode);
         }
 
-        HttpResponseMessage rejected = await _client.GetAsync("/api/places/autocomplete?input=ab");
+        HttpResponseMessage rejected = await _client.GetAsync("/api/places/search?query=ab");
 
         Assert.Equal(HttpStatusCode.TooManyRequests, rejected.StatusCode);
     }

@@ -1,0 +1,57 @@
+@use 'hover';
+
+:host {
+  display: block;
+}
+
+.search-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  height: 46px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  background: #1e1e1e;
+  color: #ffffff;
+  font-size: 15px;
+  font-family: inherit;
+  font-weight: 600;
+  padding: 0 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+  font-weight: 500;
+}
+.search-input:focus {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.search-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  border: none;
+  background: #ffffff;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition:
+    background 0.15s,
+    transform 0.15s;
+}
+.search-btn {
+  @include hover.background(#e6e6e6);
+}
+.search-btn:active {
+  transform: scale(0.96);
+}

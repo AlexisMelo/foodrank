@@ -138,7 +138,7 @@ describe('ProfileView', () => {
    * Clicks the sort chip whose text is `label`, and waits for the list to update.
    */
   async function sortBy(label: string): Promise<void> {
-    queryAll(harness.fixture, '.sort-chip')
+    queryAll(harness.fixture, '.choice-chip')
       .find((chip) => textOf(chip) === label)!
       .click();
     await harness.fixture.whenStable();
@@ -171,7 +171,7 @@ describe('ProfileView', () => {
     );
     await open('/profile');
 
-    const chips = queryAll<HTMLButtonElement>(harness.fixture, '.sort-chip');
+    const chips = queryAll<HTMLButtonElement>(harness.fixture, '.choice-chip');
     expect(chips.map(textOf)).toEqual(['Score', 'Recently rated', 'A–Z']);
     expect(chips.map((c) => c.getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false']);
     expect(listedRestaurants()).toEqual(['Restaurant r2', 'Restaurant r1']);
@@ -191,7 +191,7 @@ describe('ProfileView', () => {
     await open('/profile');
 
     expect(textOf(query(harness.fixture, '.empty'))).toContain('No restaurant rated yet');
-    expect(queryAll(harness.fixture, '.sort-chip')).toHaveLength(0);
+    expect(queryAll(harness.fixture, '.choice-chip')).toHaveLength(0);
   });
 
   it('explains when the profile cannot be loaded, instead of a blank page', async () => {

@@ -157,6 +157,143 @@ public class UsersControllerTests : IDisposable
     }
 
     /// <summary>
+    /// Stores the profile of a user named <paramref name="username"/>, with an id built from <paramref name="digit"/>.
+    /// </summary>
+    private string AddUser(char digit, string username)
+    {
+        string id = new Guid(new string(digit, 32)).ToString();
+        _factory.RatingService.Profiles[id] = new Profile { Id = id, Username = username };
+        return id;
+    }
+
+    /// <summary>
+    /// The search finds the users whose pseudonym contains the query, ignoring case, best matches first, with their
+    /// profile (name, avatar, number of restaurants rated).
+    /// </summary>
+    [Fact]
+    public async Task Search_ReturnsMatchingUsersBestFirst()
+    {
+        string camille = AddUser('2', "Camille");
+        AddUser('3', "Mila");
+        AddUser('4', "Camilou");
+        AddUser('5', "Hugo");
+        AddRating(camille, "r1", new DateTime(2026, 3, 1));
+        AddRating(camille, "r2", new DateTime(2026, 3, 2));
+
+        HttpResponseMessage response = await GetAsync("/api/users/search?query=%20CAMIL%20");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        SearchPage<UserProfileResponse> page = (await response.Content.ReadFromJsonAsync<SearchPage<UserProfileResponse>>())!;
+        Assert.Equal(["Camille", "Camilou"], page.Results.Select(u => u.Name));
+        Assert.Equal(new UserProfileResponse(camille, "Camille", null, 2), page.Results[0]);
+        Assert.False(page.HasMore);
+    }
+
+    /// <summary>
+    /// Stores 7 users named "user1" to "user7".
+    /// </summary>
+    private void Add7Users()
+    {
+        for (char digit = '1'; digit <= '7'; digit++)
+            AddUser((char)(digit + 1), $"user{digit}");
+    }
+
+    /// <summary>
+    /// Without a limit, the search returns the first 5 users and tells there are more.
+    /// </summary>
+    [Fact]
+    public async Task Search_ReturnsFirst5UsersAndHasMore()
+    {
+        Add7Users();
+
+        SearchPage<UserProfileResponse> page = (await (await GetAsync("/api/users/search?query=user")).Content.ReadFromJsonAsync<SearchPage<UserProfileResponse>>())!;
+
+        Assert.Equal(["user1", "user2", "user3", "user4", "user5"], page.Results.Select(u => u.Name));
+        Assert.True(page.HasMore);
+    }
+
+    /// <summary>
+    /// A bigger limit returns the same first users followed by the next ones, and tells when there are no more.
+    /// </summary>
+    [Theory]
+    [InlineData(6, true)]
+    [InlineData(7, false)]
+    [InlineData(15, false)]
+    public async Task Search_WithLimit_ReturnsThatManyUsers(int limit, bool hasMore)
+    {
+        Add7Users();
+
+        SearchPage<UserProfileResponse> page = (await (await GetAsync($"/api/users/search?query=user&limit={limit}")).Content.ReadFromJsonAsync<SearchPage<UserProfileResponse>>())!;
+
+        Assert.Equal(Enumerable.Range(1, Math.Min(limit, 7)).Select(i => $"user{i}"), page.Results.Select(u => u.Name));
+        Assert.Equal(hasMore, page.HasMore);
+    }
+
+    /// <summary>
+    /// A limit outside 1-50 is refused with a 400.
+    /// </summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(51)]
+    public async Task Search_LimitOutOfRange_Returns400(int limit)
+    {
+        HttpResponseMessage response = await GetAsync($"/api/users/search?query=user&limit={limit}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    /// <summary>
+    /// The logged-in user is not listed in their own search.
+    /// </summary>
+    [Fact]
+    public async Task Search_LeavesOutTheLoggedInUser()
+    {
+        AddUser('2', "alexia");
+
+        SearchPage<UserProfileResponse> page = (await (await GetAsync("/api/users/search?query=alex")).Content.ReadFromJsonAsync<SearchPage<UserProfileResponse>>())!;
+
+        Assert.Equal("alexia", Assert.Single(page.Results).Name);
+    }
+
+    /// <summary>
+    /// A query shorter than 3 characters once trimmed finds nobody.
+    /// </summary>
+    [Fact]
+    public async Task Search_TooShortQuery_ReturnsEmptyList()
+    {
+        AddUser('2', "al");
+
+        HttpResponseMessage response = await GetAsync("/api/users/search?query=%20al%20");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        SearchPage<UserProfileResponse> page = (await response.Content.ReadFromJsonAsync<SearchPage<UserProfileResponse>>())!;
+        Assert.Empty(page.Results);
+        Assert.False(page.HasMore);
+    }
+
+    /// <summary>
+    /// Without the auth cookie, the search is refused with a 401.
+    /// </summary>
+    [Fact]
+    public async Task Search_NoCookie_Returns401()
+    {
+        HttpResponseMessage response = await GetAsync("/api/users/search?query=camille", token: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    /// <summary>
+    /// "search" is not read as a user id: without a query, the search is refused with a 400 rather than a 404.
+    /// </summary>
+    [Fact]
+    public async Task Search_NoQuery_Returns400()
+    {
+        HttpResponseMessage response = await GetAsync("/api/users/search");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    /// <summary>
     /// "me/ratings" returns all the logged-in user's ratings, most recent first, with their restaurant, and none of
     /// the other users'.
     /// </summary>

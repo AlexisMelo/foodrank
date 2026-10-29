@@ -1,5 +1,6 @@
 using api.Common;
 using api.Models;
+using Supabase.Postgrest;
 using Supabase.Postgrest.Exceptions;
 using Supabase.Postgrest.Responses;
 
@@ -40,6 +41,37 @@ public class UserService(Supabase.Client supabase) : IUserService
 
         return Result<UserProfileResponse>.Success(
             UserProfileResponse.From(userId, profiles.Models.FirstOrDefault(), ratings.Models.Select(r => r.RestaurantId)));
+    }
+
+    /// <inheritdoc />
+    public async Task<SearchPage<UserProfileResponse>> SearchAsync(string query, int limit, string excludedUserId, CancellationToken cancellationToken)
+    {
+        string trimmed = query.Trim();
+        if (trimmed.Length < UserRanking.MinQueryLength)
+            return new SearchPage<UserProfileResponse>([], false);
+
+        ModeledResponse<Profile> candidates = await _supabase.From<Profile>()
+            .Filter("username", Constants.Operator.ILike, UserRanking.LikePattern(trimmed))
+            .Not("id", Constants.Operator.Equals, excludedUserId)
+            .Order("username", Constants.Ordering.Ascending)
+            .Limit(UserRanking.MaxResults)
+            .Get(cancellationToken);
+        IReadOnlyList<Profile> ranked = UserRanking.Rank(candidates.Models, trimmed);
+        List<Profile> shown = ranked.Take(limit).ToList();
+        if (shown.Count == 0)
+            return new SearchPage<UserProfileResponse>([], false);
+
+        // Only the user and restaurant columns are needed to count the distinct restaurants each user shown rated
+        List<object> userIds = shown.Select(p => p.Id).Cast<object>().ToList();
+        ModeledResponse<Rating> ratings = await _supabase.From<Rating>()
+            .Select("id_user,id_restaurant")
+            .Filter("id_user", Constants.Operator.In, userIds)
+            .Get(cancellationToken);
+        ILookup<string, string> ratedRestaurantIds = ratings.Models.ToLookup(r => r.UserId, r => r.RestaurantId);
+
+        return new SearchPage<UserProfileResponse>(
+            shown.Select(p => UserProfileResponse.From(p.Id, p, ratedRestaurantIds[p.Id])).ToList(),
+            ranked.Count > limit);
     }
 
     /// <inheritdoc />

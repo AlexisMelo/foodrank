@@ -54,26 +54,6 @@ describe('RestaurantApi', () => {
     });
   });
 
-  describe('autocompletePlaces', () => {
-    it('sends the user position', async () => {
-      const result = firstValueFrom(api.autocompletePlaces('pizza', { lat: 49.18, lon: -0.37 }));
-      const req = httpTesting.expectOne(
-        'http://api.test/api/places/autocomplete?input=pizza&lat=49.18&lon=-0.37',
-      );
-      expect(req.request.method).toBe('GET');
-      req.flush([]);
-
-      await result;
-    });
-
-    it('omits the position when unknown, so the API uses its default city', async () => {
-      const result = firstValueFrom(api.autocompletePlaces('pizza', null));
-      httpTesting.expectOne('http://api.test/api/places/autocomplete?input=pizza').flush([]);
-
-      await result;
-    });
-  });
-
   describe('fetchSuggestions', () => {
     it('sends the limit and the user position', async () => {
       const result = firstValueFrom(api.fetchSuggestions({ lat: 49.18, lon: -0.37 }, 5));
@@ -95,42 +75,30 @@ describe('RestaurantApi', () => {
   });
 
   describe('searchPlaces', () => {
-    it('sends the query and the user position, encoded', async () => {
-      const result = firstValueFrom(api.searchPlaces('pizza & co', { lat: 49.18, lon: -0.37 }));
+    it('sends the query, the limit and the user position, encoded', async () => {
+      const result = firstValueFrom(api.searchPlaces('pizza & co', { lat: 49.18, lon: -0.37 }, 15));
       const req = httpTesting.expectOne(
-        'http://api.test/api/places/search?query=pizza%20%26%20co&lat=49.18&lon=-0.37',
+        'http://api.test/api/places/search?query=pizza%20%26%20co&limit=15&lat=49.18&lon=-0.37',
       );
       expect(req.request.method).toBe('GET');
-      req.flush([{ placeId: 'N1', name: 'Pizza & Co', secondaryText: 'Caen' }]);
+      req.flush({
+        results: [{ placeId: 'N1', name: 'Pizza & Co', secondaryText: 'Caen' }],
+        hasMore: true,
+      });
 
-      expect((await result)[0]?.placeId).toBe('N1');
+      expect(await result).toEqual({
+        results: [{ placeId: 'N1', name: 'Pizza & Co', secondaryText: 'Caen' }],
+        hasMore: true,
+      });
     });
 
     it('omits the position when unknown, so the API uses its default city', async () => {
-      const result = firstValueFrom(api.searchPlaces('pizza'));
-      httpTesting.expectOne('http://api.test/api/places/search?query=pizza').flush([]);
+      const result = firstValueFrom(api.searchPlaces('pizza', null, 5));
+      httpTesting
+        .expectOne('http://api.test/api/places/search?query=pizza&limit=5')
+        .flush({ results: [], hasMore: false });
 
       await result;
-    });
-  });
-
-  describe('fetchSearchArea', () => {
-    it('gets the city around the user position', async () => {
-      const result = firstValueFrom(api.fetchSearchArea({ lat: 49.18, lon: -0.37 }));
-      const req = httpTesting.expectOne('http://api.test/api/places/area?lat=49.18&lon=-0.37');
-      expect(req.request.method).toBe('GET');
-      req.flush({ locality: 'Caen', isDefault: false });
-
-      expect(await result).toEqual({ locality: 'Caen', isDefault: false });
-    });
-
-    it('gets the default city of the API when the position is unknown', async () => {
-      const result = firstValueFrom(api.fetchSearchArea(null));
-      httpTesting
-        .expectOne('http://api.test/api/places/area')
-        .flush({ locality: 'Lyon', isDefault: true });
-
-      expect((await result).isDefault).toBe(true);
     });
   });
 

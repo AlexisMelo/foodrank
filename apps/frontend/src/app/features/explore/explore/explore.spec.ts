@@ -4,8 +4,8 @@ import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 import { RestaurantApi } from '@/core/api/restaurant-api';
-import { type LocationStatus, UserLocation } from '@/core/location/user-location';
-import type { UserLocation as UserPosition } from '@/core/models/location.model';
+import { type LocationStatus, LocationStore } from '@/core/location/location-store';
+import type { UserLocation } from '@/core/models/location.model';
 import type { RestaurantSuggestion } from '@/core/models/restaurant.model';
 import { query, queryAll, textOf } from '@/testing/dom-testing';
 import { Explore } from './explore';
@@ -37,10 +37,10 @@ function suggestion(id: string, distanceKm: number | null): RestaurantSuggestion
 /**
  * Position of the user in the tests: Caen.
  */
-const CAEN: UserPosition = { lat: 49.18, lon: -0.37 };
+const CAEN: UserLocation = { lat: 49.18, lon: -0.37 };
 
 describe('Explore', () => {
-  let location: WritableSignal<UserPosition | null>;
+  let location: WritableSignal<UserLocation | null>;
   let status: WritableSignal<LocationStatus>;
   let requestLocation: ReturnType<typeof vi.fn>;
   let fetchSuggestions: ReturnType<typeof vi.fn>;
@@ -52,7 +52,7 @@ describe('Explore', () => {
     requestLocation = vi.fn();
     // Like the API: nearest first with distances from the user's position, from the default city without distances
     // otherwise
-    fetchSuggestions = vi.fn((position: UserPosition | null) =>
+    fetchSuggestions = vi.fn((position: UserLocation | null) =>
       of(
         position
           ? [
@@ -78,7 +78,7 @@ describe('Explore', () => {
           { path: '**', component: StubPage },
         ]),
         { provide: RestaurantApi, useValue: { fetchSuggestions } },
-        { provide: UserLocation, useValue: { location, status, requestLocation } },
+        { provide: LocationStore, useValue: { location, status, requestLocation } },
       ],
     });
   });

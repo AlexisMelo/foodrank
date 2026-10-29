@@ -1,5 +1,8 @@
+import { HttpClient } from '@angular/common/http';
 import { InjectionToken, Service, inject, signal } from '@angular/core';
-import type { UserLocation as UserPosition } from '@/core/models/location.model';
+import { firstValueFrom } from 'rxjs';
+import { locationParams } from '@/core/api/location-params';
+import type { SearchArea, UserLocation } from '@/core/models/location.model';
 
 /**
  * - `idle`: not asked yet
@@ -13,7 +16,7 @@ export type LocationStatus =
   'idle' | 'pending' | 'granted' | 'dismissed' | 'blocked' | 'unavailable';
 
 /**
- * Browser APIs used by UserLocation: the real `navigator` in the app, a fake one in tests. `geolocation` is missing
+ * Browser APIs used by LocationStore: the real `navigator` in the app, a fake one in tests. `geolocation` is missing
  * when the browser does not support it, `permissions` when it has no Permissions API.
  */
 export const BROWSER_NAVIGATOR = new InjectionToken<
@@ -21,25 +24,41 @@ export const BROWSER_NAVIGATOR = new InjectionToken<
 >('BROWSER_NAVIGATOR', { factory: () => navigator });
 
 /**
- * Browser geolocation, used to favor nearby restaurants in search. Shared across the app.
+ * Location of the user, shared across the app: the browser geolocation, used to favor nearby restaurants in search,
+ * and the city searches are centered on (GET /api/places/area): the default city of the API, then the user's.
  * Never blocks: `location` stays null while pending or if refused (the API then uses its default city).
  */
 @Service()
-export class UserLocation {
+export class LocationStore {
   /**
    * Geolocation and Permissions APIs of the browser
    */
   private readonly navigator = inject(BROWSER_NAVIGATOR);
 
   /**
+   * Reads the city of a position from the API
+   */
+  private readonly http = inject(HttpClient);
+
+  /**
    * Writable state behind location
    */
-  private readonly position = signal<UserPosition | null>(null);
+  private readonly position = signal<UserLocation | null>(null);
 
   /**
    * Writable state behind status
    */
   private readonly state = signal<LocationStatus>('idle');
+
+  /**
+   * Writable state behind city
+   */
+  private readonly loadedCity = signal<string | null>(null);
+
+  /**
+   * True while the browser is asked for the position, so it is only asked once at a time
+   */
+  private locating = false;
 
   /**
    * True once the permission changes are followed, so the listener is only set once
@@ -57,32 +76,88 @@ export class UserLocation {
   readonly status = this.state.asReadonly();
 
   /**
+   * City searches are centered on: the default city of the API, then the user's once located. Null only until the
+   * first answer; the previous city stays while the next one loads
+   */
+  readonly city = this.loadedCity.asReadonly();
+
+  constructor() {
+    // The default city, until the user is located
+    void this.loadCity();
+  }
+
+  /**
    * Asks the browser for the position, unless it is already known or being asked.
    */
   requestLocation(): void {
-    if (this.state() === 'pending' || this.state() === 'granted') return;
+    if (this.state() === 'granted') return;
+    this.locate();
+  }
+
+  /**
+   * Asks the browser for a fresh position, unless it is being asked. A known position stays meanwhile, and when the
+   * new one cannot be obtained, so a search started meanwhile is still near the user.
+   */
+  refreshLocation(): void {
+    this.locate();
+  }
+
+  /**
+   * Asks the browser for the position, unless it is being asked; `pending` only when the position is not known yet.
+   */
+  private locate(): void {
+    if (this.locating) return;
     const geolocation = this.navigator.geolocation;
     if (!geolocation) {
       this.state.set('unavailable');
       return;
     }
-    this.state.set('pending');
+    this.locating = true;
+    if (this.state() !== 'granted') this.state.set('pending');
     void this.watchPermission(() => this.requestLocation());
     geolocation.getCurrentPosition(
       (position) => {
-        this.position.set({ lat: position.coords.latitude, lon: position.coords.longitude });
+        this.setPosition({ lat: position.coords.latitude, lon: position.coords.longitude });
         this.state.set('granted');
+        this.locating = false;
       },
       async (error) => {
-        this.position.set(null);
         if (error.code === error.PERMISSION_DENIED) {
-          this.state.set((await this.isBlocked()) ? 'blocked' : 'dismissed');
-        } else {
+          const blocked = await this.isBlocked();
+          this.setPosition(null);
+          this.state.set(blocked ? 'blocked' : 'dismissed');
+        } else if (this.state() === 'pending') {
+          // A known position is kept when the fresh one cannot be obtained
           this.state.set('unavailable');
         }
+        this.locating = false;
       },
       { timeout: 10000, maximumAge: 10 * 60 * 1000 },
     );
+  }
+
+  /**
+   * Stores the position (null when it is forgotten) and loads its city.
+   */
+  private setPosition(position: UserLocation | null): void {
+    this.position.set(position);
+    void this.loadCity();
+  }
+
+  /**
+   * Loads the city of the current position, the default city when there is none. The previous city stays when the
+   * API fails or finds no city there, and when the position has changed since the request.
+   */
+  private async loadCity(): Promise<void> {
+    const position = this.position();
+    try {
+      const { locality } = await firstValueFrom(
+        this.http.get<SearchArea>('/api/places/area', { params: locationParams(position) }),
+      );
+      if (locality && this.position() === position) this.loadedCity.set(locality);
+    } catch {
+      // The previous city stays
+    }
   }
 
   /**
@@ -114,7 +189,7 @@ export class UserLocation {
         if (permission.state === 'granted') {
           onGranted();
         } else if (permission.state === 'denied') {
-          this.position.set(null);
+          this.setPosition(null);
           this.state.set('blocked');
         }
       };

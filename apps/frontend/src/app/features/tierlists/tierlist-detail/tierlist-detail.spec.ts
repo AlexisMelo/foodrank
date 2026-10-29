@@ -190,7 +190,7 @@ describe('TierlistDetailView', () => {
    * Clicks the sort chip of the page whose text is `label`, and waits for the list to update.
    */
   async function sortBy(label: string): Promise<void> {
-    queryAll(harness.fixture, '.sort-chip')
+    queryAll(harness.fixture, '.choice-chip')
       .find((chip) => textOf(chip) === label)!
       .click();
     await harness.fixture.whenStable();
@@ -234,7 +234,7 @@ describe('TierlistDetailView', () => {
     fetchTierlistById.mockReturnValue(of(tierlistOf('u2')));
     await openTierlist();
 
-    const chips = queryAll(harness.fixture, '.sort-chip');
+    const chips = queryAll(harness.fixture, '.choice-chip');
     expect(chips.map(textOf)).toEqual(['Score', 'Recently rated', 'A–Z']);
     expect(chips.map((c) => c.getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false']);
     expect(listedRestaurants()).toEqual(['Restaurant r2', 'Restaurant r1']);
@@ -574,7 +574,7 @@ describe('TierlistDetailView', () => {
       await openAddPopup();
 
       const chip = query(harness.fixture, '.list-toolbar .add-chip');
-      expect(queryAll(harness.fixture, '.list-toolbar .sort-chip')).toHaveLength(3);
+      expect(queryAll(harness.fixture, '.list-toolbar .choice-chip')).toHaveLength(3);
       expect(textOf(chip)).toBe('Add');
       expect(chip.getAttribute('aria-label')).toBe('Add restaurants to Date night');
       expect(query<HTMLDialogElement>(harness.fixture, 'dialog').open).toBe(true);
@@ -646,7 +646,7 @@ describe('TierlistDetailView', () => {
       await openTierlist();
 
       expect(queryAll(harness.fixture, '.list-toolbar .add-chip')).toHaveLength(1);
-      expect(queryAll(harness.fixture, '.sort-chip')).toHaveLength(0);
+      expect(queryAll(harness.fixture, '.choice-chip')).toHaveLength(0);
     });
 
     it("is not offered on someone else's tierlist", async () => {
