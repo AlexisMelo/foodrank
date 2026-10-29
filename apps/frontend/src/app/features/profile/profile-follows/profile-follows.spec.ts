@@ -307,15 +307,40 @@ describe('ProfileFollows', () => {
     expect(textOf(followButton())).toBe('Following');
   });
 
-  it('keeps its space while the follows load, invisible and disabled', async () => {
-    fetchFollowers.mockReturnValue(new Subject<UserSummary[]>());
-    // Rendered without waiting: the followers never load, so the section would never be stable
+  /**
+   * Shows the follows of `shown` (Camille by default) without waiting for them: they stay loading until `followers`
+   * answers.
+   */
+  function openLoading(followers: Subject<UserSummary[]>, shown: UserSummary = camille): void {
+    fetchFollowers.mockReturnValue(followers);
+    // Rendered without waiting: the followers are not answered, so the section would never be stable
     fixture = TestBed.createComponent(ProfileFollows);
-    fixture.componentRef.setInput('profile', profileOf(camille));
+    fixture.componentRef.setInput('profile', profileOf(shown));
     fixture.detectChanges();
+  }
 
-    expect(query(fixture, '.follows').classList).toContain('pending');
-    expect(queryAll<HTMLButtonElement>(fixture, 'button').every((b) => b.disabled)).toBe(true);
+  it('shows placeholders of the counts and of the follow button while the follows load, then the follows', async () => {
+    const followers = new Subject<UserSummary[]>();
+    openLoading(followers);
+
+    expect(query(fixture, '.follows').getAttribute('role')).toBe('status');
+    expect(queryAll(fixture, '.counts-skeleton')).toHaveLength(1);
+    expect(queryAll(fixture, '.follow-skeleton')).toHaveLength(1);
+    expect(queryAll(fixture, 'button')).toHaveLength(0);
+
+    followers.next([hugo]);
+    await fixture.whenStable();
+
+    expect(queryAll(fixture, '.skeleton')).toHaveLength(0);
+    expect(counts()).toEqual(['1 follower', '0 following']);
+    expect(textOf(followButton())).toBe('Follow');
+  });
+
+  it('shows no placeholder of the follow button on my own profile, which has no button', () => {
+    openLoading(new Subject<UserSummary[]>(), me);
+
+    expect(queryAll(fixture, '.counts-skeleton')).toHaveLength(1);
+    expect(queryAll(fixture, '.follow-skeleton')).toHaveLength(0);
   });
 
   it('hides the section when the follows cannot be loaded, instead of showing wrong counts', async () => {

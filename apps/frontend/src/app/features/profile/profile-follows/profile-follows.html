@@ -1,21 +1,11 @@
-@if (!loadError()) {
-  <div class="follows" [class.pending]="!loaded()" [attr.aria-busy]="!loaded()">
+@if (loaded()) {
+  <div class="follows">
     <div class="counts">
-      <button
-        type="button"
-        class="count-btn followers-btn"
-        [disabled]="!loaded()"
-        (click)="openList.set('followers')"
-      >
+      <button type="button" class="count-btn followers-btn" (click)="openList.set('followers')">
         {{ followersLabel() }}
       </button>
       <span class="count-separator" aria-hidden="true">·</span>
-      <button
-        type="button"
-        class="count-btn following-btn"
-        [disabled]="!loaded()"
-        (click)="openList.set('following')"
-      >
+      <button type="button" class="count-btn following-btn" (click)="openList.set('following')">
         {{ following().length }} following
       </button>
     </div>
@@ -26,11 +16,20 @@
         class="follow-btn"
         [class.following]="isFollowing()"
         [attr.aria-pressed]="isFollowing()"
-        [disabled]="!loaded() || saving()"
+        [disabled]="saving()"
         (click)="toggleFollow()"
       >
         {{ followLabel() }}
       </button>
+    }
+  </div>
+} @else if (!loadError()) {
+  <!-- Placeholders of the same size, so the profile does not move once the follows arrive. Nothing when they cannot
+   be loaded: a secondary part of the profile, not worth an error -->
+  <div class="follows" role="status" aria-label="Loading follows">
+    <div class="skeleton counts-skeleton"></div>
+    @if (!isOwnProfile()) {
+      <div class="skeleton follow-skeleton"></div>
     }
   </div>
 }

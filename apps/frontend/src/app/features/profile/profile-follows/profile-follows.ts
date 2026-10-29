@@ -11,9 +11,9 @@ import { type FollowList, FollowListDialog } from '../follow-list-dialog/follow-
 /**
  * Follows of a profile, under the user's name: the number of users following them and of users they follow, each
  * opening the list in a full-screen popup, and on another user's profile the button following or unfollowing them
- * ("Follow", "Follow back" when they already follow the logged-in user, "Following" once followed). Its space is kept
- * while the lists load; the section is hidden when the API fails, a secondary part of the profile not failing the page.
- * Errors of the button are toasts.
+ * ("Follow", "Follow back" when they already follow the logged-in user, "Following" once followed). While the lists
+ * load, placeholders of the same size stand in their place; the section is hidden when the API fails, a secondary part
+ * of the profile not failing the page. Errors of the button are toasts.
  */
 @Component({
   imports: [FollowListDialog],
@@ -65,7 +65,7 @@ export class ProfileFollows {
   });
 
   /**
-   * True once both lists are loaded: until then the section keeps its space but is invisible and cannot be used
+   * True once both lists are loaded: until then placeholders stand in place of the counts and the button
    */
   protected readonly loaded = computed(
     () => this.followersResource.hasValue() && this.followingResource.hasValue(),

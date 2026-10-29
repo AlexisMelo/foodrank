@@ -1,5 +1,10 @@
 @use 'hover';
 
+// Heights of the counts and of the follow button, shared with their loading placeholders so the profile does not move
+// once the follows arrive
+$count-height: 26px;
+$follow-height: 36px;
+
 .follows {
   display: flex;
   flex-direction: column;
@@ -8,9 +13,28 @@
   margin-bottom: 14px;
 }
 
-// Loading: the space is kept so the profile does not move once the counts arrive
-.pending {
-  visibility: hidden;
+/* Loading */
+.skeleton {
+  border-radius: 100px;
+  background: #1a1a1a;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.counts-skeleton {
+  width: 170px;
+  height: $count-height;
+}
+.follow-skeleton {
+  width: 100px;
+  height: $follow-height;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 .counts {
@@ -20,7 +44,8 @@
 }
 
 .count-btn {
-  padding: 4px 8px;
+  height: $count-height;
+  padding: 0 8px;
   border: none;
   border-radius: 8px;
   background: transparent;
@@ -40,7 +65,8 @@
 
 // Not followed yet: the call to action, filled; once followed, outlined
 .follow-btn {
-  padding: 8px 22px;
+  height: $follow-height;
+  padding: 0 22px;
   border-radius: 100px;
   border: 1.5px solid #ffffff;
   background: #ffffff;
