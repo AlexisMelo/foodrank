@@ -12,5 +12,12 @@
   }
   <!-- Under the name: the follows of the profile -->
   <ng-content />
-  <div class="winner-tag">{{ countLabel() }}</div>
+  <div class="winner-chips">
+    <div class="winner-tag">{{ countLabel() }}</div>
+    @if (editable()) {
+      <a routerLink="/profile/edit" class="edit-profile-btn">Edit profile</a>
+    }
+    <!-- On another user's profile: the follow button -->
+    <ng-content select="app-follow-button" />
+  </div>
 </div>

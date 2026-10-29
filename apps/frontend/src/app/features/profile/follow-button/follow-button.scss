@@ -1,0 +1,60 @@
+@use 'hover';
+
+// The host adds no box: on the logged-in user's own profile, an empty host would still take a gap in the row of chips
+:host {
+  display: contents;
+}
+
+// Same size as the number of restaurants rated next to it (ProfileHeader .winner-tag): a 20px line, a 6px padding and
+// a 1.5px border
+$height: 35px;
+
+// Not followed yet: the call to action, filled; once followed, outlined
+.follow-btn {
+  height: $height;
+  padding: 0 18px;
+  border-radius: 100px;
+  border: 1.5px solid #ffffff;
+  background: #ffffff;
+  color: #0d0d0d;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    opacity 0.15s;
+
+  @include hover.background(#e6e6e6);
+
+  &.following {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: #ffffff;
+
+    @include hover.background(rgba(255, 255, 255, 0.08));
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.follow-skeleton {
+  width: 100px;
+  height: $height;
+  border-radius: 100px;
+  background: #1a1a1a;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}

@@ -1,0 +1,70 @@
+<!-- novalidate: Save stays disabled until the form is valid, no browser bubbles needed -->
+<form class="edit-profile" novalidate (submit)="submit($event)">
+  <app-page-top-bar title="Edit profile" backTo="/profile">
+    <button type="submit" class="save-btn" [disabled]="incomplete() || saving()">
+      {{ saving() ? 'Saving...' : 'Save' }}
+    </button>
+  </app-page-top-bar>
+
+  @if (details.isLoading()) {
+    <div class="loading" role="status" aria-label="Loading your profile">👤</div>
+  } @else if (details.hasValue()) {
+    @let profile = details.value();
+
+    <app-user-avatar
+      [name]="profile | displayedName"
+      [avatarUrl]="profile.avatarUrl"
+      class="avatar"
+    />
+
+    @if (saveError()) {
+      <p class="save-error" role="alert">{{ saveError() }}</p>
+    }
+
+    <div class="field">
+      <label for="edit-display-name" class="field-label">
+        Display name <span class="optional">(optional)</span>
+      </label>
+      <!-- Empty, the username is shown: it is the placeholder -->
+      <input
+        id="edit-display-name"
+        type="text"
+        class="field-input"
+        autocomplete="nickname"
+        [placeholder]="profile.username"
+        [formField]="profileForm.displayName"
+      />
+      @if (displayNameHint()) {
+        <p class="field-hint">{{ displayNameHint() }}</p>
+      }
+    </div>
+
+    <div class="field">
+      <label for="edit-identity" class="field-label">Identity</label>
+      <select id="edit-identity" class="field-input select" [formField]="profileForm.identity">
+        <option value="" disabled>Select your identity</option>
+        @for (identity of identities; track identity.value) {
+          <option [value]="identity.value">{{ identity.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="edit-age" class="field-label">Age</label>
+      <input
+        id="edit-age"
+        type="number"
+        inputmode="numeric"
+        step="1"
+        class="field-input"
+        placeholder="Your age"
+        [formField]="profileForm.age"
+      />
+      @if (ageHint()) {
+        <p class="field-hint">{{ ageHint() }}</p>
+      }
+    </div>
+  } @else {
+    <p class="load-error" role="alert">Couldn't load your profile, try again.</p>
+  }
+</form>

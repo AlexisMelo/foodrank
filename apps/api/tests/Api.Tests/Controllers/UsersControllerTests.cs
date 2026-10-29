@@ -119,6 +119,144 @@ public class UsersControllerTests : IDisposable
     }
 
     /// <summary>
+    /// Sends a PUT of <paramref name="body"/> to /api/users/me/details, with the auth cookie when
+    /// <paramref name="token"/> is given.
+    /// </summary>
+    private Task<HttpResponseMessage> UpdateDetailsAsync(object body, string? token = Token)
+    {
+        HttpRequestMessage request = new(HttpMethod.Put, "/api/users/me/details")
+        {
+            Content = JsonContent.Create(body)
+        };
+        if (token is not null)
+            request.Headers.Add("Cookie", $"{SupabaseAuthenticationHandler.CookieName}={token}");
+        return _client.SendAsync(request);
+    }
+
+    /// <summary>
+    /// The details of the logged-in user hold their username, display name, avatar, identity and age.
+    /// </summary>
+    [Fact]
+    public async Task GetMyDetails_LoggedIn_ReturnsEditableFields()
+    {
+        Profile me = _factory.RatingService.Profiles[MeId];
+        me.DisplayName = "Alexis";
+        me.Identity = Identities.Woman;
+        me.BirthYear = DateTime.UtcNow.Year - 30;
+
+        HttpResponseMessage response = await GetAsync("/api/users/me/details");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        string json = await response.Content.ReadAsStringAsync();
+        Assert.Contains("\"username\":\"alexis\"", json);
+        Assert.Contains("\"displayName\":\"Alexis\"", json);
+        Assert.Contains("\"avatarUrl\":\"https://img.test/me.png\"", json);
+        Assert.Contains("\"identity\":\"woman\"", json);
+        Assert.Contains("\"age\":30", json);
+    }
+
+    /// <summary>
+    /// Identity and age are private: the profile read by another user (or by "me") does not hold them.
+    /// </summary>
+    [Fact]
+    public async Task GetById_DoesNotExposeIdentityNorAge()
+    {
+        _factory.RatingService.Profiles[OtherId] = new Profile { Id = OtherId, Username = "camille", Identity = Identities.Woman, BirthYear = 1990 };
+
+        string json = await (await GetAsync($"/api/users/{OtherId}")).Content.ReadAsStringAsync();
+
+        Assert.DoesNotContain("identity", json);
+        Assert.DoesNotContain("age", json);
+        Assert.DoesNotContain("birth", json, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Saving the details trims the display name, stores the identity and the birth year of the age, and leaves the
+    /// username and avatar as they are.
+    /// </summary>
+    [Fact]
+    public async Task UpdateMyDetails_ValidBody_SavesAndReturnsTheDetails()
+    {
+        HttpResponseMessage response = await UpdateDetailsAsync(new { displayName = "  Alexis Melo ", identity = "non_binary", age = 31 });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        ProfileDetailsResponse details = (await response.Content.ReadFromJsonAsync<ProfileDetailsResponse>())!;
+        Assert.Equal(new ProfileDetailsResponse("alexis", "Alexis Melo", "https://img.test/me.png", Identities.NonBinary, 31), details);
+        Profile saved = _factory.RatingService.Profiles[MeId];
+        Assert.Equal("Alexis Melo", saved.DisplayName);
+        Assert.Equal(Identities.NonBinary, saved.Identity);
+        Assert.Equal(DateTime.UtcNow.Year - 31, saved.BirthYear);
+        Assert.Equal("alexis", saved.Username);
+        Assert.Equal("https://img.test/me.png", saved.AvatarUrl);
+    }
+
+    /// <summary>
+    /// A blank or missing display name clears it, so the username is shown again.
+    /// </summary>
+    [Theory]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public async Task UpdateMyDetails_NoDisplayName_ClearsIt(string? displayName)
+    {
+        _factory.RatingService.Profiles[MeId].DisplayName = "Alexis";
+
+        HttpResponseMessage response = await UpdateDetailsAsync(new { displayName, identity = "man", age = 30 });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Null(_factory.RatingService.Profiles[MeId].DisplayName);
+    }
+
+    /// <summary>
+    /// The username cannot be changed: a username in the body is ignored.
+    /// </summary>
+    [Fact]
+    public async Task UpdateMyDetails_WithUsername_KeepsTheUsername()
+    {
+        HttpResponseMessage response = await UpdateDetailsAsync(new { username = "hacker", displayName = "Alexis", identity = "man", age = 30 });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("alexis", _factory.RatingService.Profiles[MeId].Username);
+    }
+
+    /// <summary>
+    /// A display name too long or with hidden characters, an unknown or missing identity, or an age outside 0-120 or
+    /// missing is refused with a 400, and nothing is saved.
+    /// </summary>
+    [Theory]
+    [InlineData("abcdefghijklmnopqrstuvwxyz12345", "man", 30)]
+    [InlineData("Alexis\nMelo", "man", 30)]
+    [InlineData("Alexis\u202EoleM", "man", 30)]
+    [InlineData("Alexis", "other", 30)]
+    [InlineData("Alexis", null, 30)]
+    [InlineData("Alexis", "man", -1)]
+    [InlineData("Alexis", "man", 121)]
+    [InlineData("Alexis", "man", null)]
+    public async Task UpdateMyDetails_InvalidBody_Returns400(string displayName, string? identity, int? age)
+    {
+        HttpResponseMessage response = await UpdateDetailsAsync(new { displayName, identity, age });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Profile me = _factory.RatingService.Profiles[MeId];
+        Assert.Null(me.DisplayName);
+        Assert.Null(me.Identity);
+        Assert.Null(me.BirthYear);
+    }
+
+    /// <summary>
+    /// Without the auth cookie, the details can be neither read nor saved.
+    /// </summary>
+    [Fact]
+    public async Task MyDetails_NoCookie_Returns401()
+    {
+        HttpResponseMessage read = await GetAsync("/api/users/me/details", token: null);
+        HttpResponseMessage update = await UpdateDetailsAsync(new { displayName = "Alexis", identity = "man", age = 30 }, token: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, read.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, update.StatusCode);
+        Assert.Null(_factory.RatingService.Profiles[MeId].DisplayName);
+    }
+
+    /// <summary>
     /// The profile of another user is returned by its id.
     /// </summary>
     [Fact]

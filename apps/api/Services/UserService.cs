@@ -44,6 +44,44 @@ public class UserService(Supabase.Client supabase) : IUserService
     }
 
     /// <inheritdoc />
+    public async Task<Result<ProfileDetailsResponse>> GetDetailsAsync(string userId, int currentYear, CancellationToken cancellationToken)
+    {
+        Profile? profile = await FindProfileAsync(userId, cancellationToken);
+        return profile is null
+            ? Result<ProfileDetailsResponse>.Failure(UserIds.NotFound)
+            : Result<ProfileDetailsResponse>.Success(ProfileDetailsResponse.From(profile, currentYear));
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<ProfileDetailsResponse>> UpdateDetailsAsync(string userId, UpdateProfileDetailsRequest request, int currentYear, CancellationToken cancellationToken)
+    {
+        Profile? profile = await FindProfileAsync(userId, cancellationToken);
+        if (profile is null)
+            return Result<ProfileDetailsResponse>.Failure(UserIds.NotFound);
+
+        // Update on the primary key of the row just read: its username and avatar are sent back unchanged
+        request.ApplyTo(profile, currentYear);
+        ModeledResponse<Profile> updated = await _supabase.From<Profile>().Update(profile, cancellationToken: cancellationToken);
+        return Result<ProfileDetailsResponse>.Success(
+            ProfileDetailsResponse.From(updated.Models.FirstOrDefault() ?? profile, currentYear));
+    }
+
+    /// <summary>
+    /// Reads the profile row of <paramref name="userId"/>.
+    /// </summary>
+    /// <param name="userId">Supabase Auth id of the user (a uuid).</param>
+    /// <param name="cancellationToken">Cancels the database query.</param>
+    /// <returns>The row, null when the user has none.</returns>
+    private async Task<Profile?> FindProfileAsync(string userId, CancellationToken cancellationToken)
+    {
+        ModeledResponse<Profile> profiles = await _supabase.From<Profile>()
+            .Where(p => p.Id == userId)
+            .Limit(1)
+            .Get(cancellationToken);
+        return profiles.Models.FirstOrDefault();
+    }
+
+    /// <inheritdoc />
     public async Task<SearchPage<UserSummaryResponse>> SearchAsync(string query, int limit, string excludedUserId, CancellationToken cancellationToken)
     {
         string trimmed = query.Trim();

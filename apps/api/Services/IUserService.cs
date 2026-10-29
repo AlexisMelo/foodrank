@@ -4,7 +4,8 @@ using api.Models;
 namespace api.Services;
 
 /// <summary>
-/// Reads and saves the public profile of users. Their ratings are read by <see cref="IRatingService"/>.
+/// Reads and saves the profile of users: their public profile, and the private details (identity, age) only the user
+/// reads and edits. Their ratings are read by <see cref="IRatingService"/>.
 /// </summary>
 public interface IUserService
 {
@@ -15,6 +16,26 @@ public interface IUserService
     /// <param name="cancellationToken">Cancels the database queries.</param>
     /// <returns>The profile, or a NotFound failure when <paramref name="userId"/> is not a user id (uuid).</returns>
     Task<Result<UserProfileResponse>> GetProfileAsync(string userId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Returns the profile of <paramref name="userId"/> as the user edits it, with its private fields (identity, age).
+    /// </summary>
+    /// <param name="userId">Supabase Auth id of the logged-in user.</param>
+    /// <param name="currentYear">Current year, from which the birth year is turned back into an age.</param>
+    /// <param name="cancellationToken">Cancels the database query.</param>
+    /// <returns>The details, or a NotFound failure when the user has no profile row.</returns>
+    Task<Result<ProfileDetailsResponse>> GetDetailsAsync(string userId, int currentYear, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Saves the display name, identity and age of <paramref name="userId"/>, leaving the username and avatar as they
+    /// are.
+    /// </summary>
+    /// <param name="userId">Supabase Auth id of the logged-in user.</param>
+    /// <param name="request">New values, already validated.</param>
+    /// <param name="currentYear">Current year, from which the age is turned into a birth year.</param>
+    /// <param name="cancellationToken">Cancels the database queries.</param>
+    /// <returns>The saved details, or a NotFound failure when the user has no profile row.</returns>
+    Task<Result<ProfileDetailsResponse>> UpdateDetailsAsync(string userId, UpdateProfileDetailsRequest request, int currentYear, CancellationToken cancellationToken);
 
     /// <summary>
     /// Returns the first <paramref name="limit"/> users whose username or display name contains

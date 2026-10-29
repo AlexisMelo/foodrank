@@ -1,3 +1,5 @@
+@use 'hover';
+
 // The inner section is the item of the profile page: the host adds no box of its own
 :host {
   display: contents;
@@ -38,13 +40,34 @@
   margin: 0 0 10px;
   text-align: center;
 }
-.winner-tag {
+// The number of restaurants rated, and next to it "Edit profile" on the logged-in user's own profile, or the follow
+// button (FollowButton, of the same height) on another user's profile
+.winner-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.winner-tag,
+.edit-profile-btn {
   display: block;
   padding: 6px 18px;
   border-radius: 100px;
-  background: rgba(144, 190, 109, 0.25);
-  color: #90be6d;
-  border: 1.5px solid #90be6d;
+  border: 1.5px solid;
   font-size: 14px;
   font-weight: 700;
+  line-height: 20px;
+}
+.winner-tag {
+  background: rgba(144, 190, 109, 0.25);
+  color: #90be6d;
+  border-color: #90be6d;
+}
+// Same size as the number of restaurants rated
+.edit-profile-btn {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  text-decoration: none;
+  transition: background 0.2s;
+  @include hover.background(rgba(255, 255, 255, 0.08));
 }

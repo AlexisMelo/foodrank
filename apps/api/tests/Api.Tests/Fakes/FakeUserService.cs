@@ -25,6 +25,22 @@ public class FakeUserService(FakeRatingService ratings) : IUserService
     }
 
     /// <inheritdoc />
+    public Task<Result<ProfileDetailsResponse>> GetDetailsAsync(string userId, int currentYear, CancellationToken cancellationToken)
+        => Task.FromResult(ratings.Profiles.TryGetValue(userId, out Profile? profile)
+            ? Result<ProfileDetailsResponse>.Success(ProfileDetailsResponse.From(profile, currentYear))
+            : Result<ProfileDetailsResponse>.Failure(UserIds.NotFound));
+
+    /// <inheritdoc />
+    public Task<Result<ProfileDetailsResponse>> UpdateDetailsAsync(string userId, UpdateProfileDetailsRequest request, int currentYear, CancellationToken cancellationToken)
+    {
+        if (!ratings.Profiles.TryGetValue(userId, out Profile? profile))
+            return Task.FromResult(Result<ProfileDetailsResponse>.Failure(UserIds.NotFound));
+
+        request.ApplyTo(profile, currentYear);
+        return Task.FromResult(Result<ProfileDetailsResponse>.Success(ProfileDetailsResponse.From(profile, currentYear)));
+    }
+
+    /// <inheritdoc />
     public Task<SearchPage<UserSummaryResponse>> SearchAsync(string query, int limit, string excludedUserId, CancellationToken cancellationToken)
     {
         string trimmed = query.Trim();

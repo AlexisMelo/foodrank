@@ -9,19 +9,28 @@ import {
 import { injectUserProfile } from '@/shared/data/user-profile';
 import { ChoiceChips } from '@/shared/ui/choice-chips/choice-chips';
 import { RankedRestaurantItem } from '@/shared/ui/ranked-restaurant-item/ranked-restaurant-item';
+import { FollowButton } from '../follow-button/follow-button';
 import { PinnedTierlists } from '../pinned-tierlists/pinned-tierlists';
 import { ProfileFollows } from '../profile-follows/profile-follows';
+import { injectProfileFollows } from '../profile-follows-state';
 import { ProfileHeader } from '../profile-header/profile-header';
 import { injectProfileRanking } from '../profile-ranking';
 
 /**
  * Profile page: the logged-in user's on /profile, another user's on /user/:id (ownProfileGuard sends the logged-in
- * user's own id to /profile). Shows the user with their followers and the users they follow (and a follow button on
- * another user's profile), their pinned tierlists and the restaurants they rated, the best score first by default, or
- * the most recently rated first, or by name.
+ * user's own id to /profile). Shows the user with their followers and the users they follow (and a follow button next
+ * to their number of restaurants rated, on another user's profile), their pinned tierlists and the restaurants they
+ * rated, the best score first by default, or the most recently rated first, or by name.
  */
 @Component({
-  imports: [ChoiceChips, PinnedTierlists, ProfileFollows, ProfileHeader, RankedRestaurantItem],
+  imports: [
+    ChoiceChips,
+    FollowButton,
+    PinnedTierlists,
+    ProfileFollows,
+    ProfileHeader,
+    RankedRestaurantItem,
+  ],
   selector: 'app-profile',
   styleUrl: './profile.scss',
   templateUrl: './profile.html',
@@ -51,6 +60,12 @@ export class Profile {
    * Restaurants rated by the user shown, best first, with the logged-in user's own scores on another user's profile
    */
   protected readonly ranking = injectProfileRanking(this.profileUserId);
+
+  /**
+   * Followers and users followed of the user shown, loaded by their real id once their profile is loaded: shared by
+   * the counts under their name and the follow button next to their number of restaurants rated
+   */
+  protected readonly follows = injectProfileFollows(this.user.profile);
 
   /**
    * Sort chips of the restaurants, in display order

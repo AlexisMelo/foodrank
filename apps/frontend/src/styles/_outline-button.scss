@@ -1,9 +1,9 @@
 @use 'hover';
 
 // Red outlined button of the settings pages (Log out, Delete account), centered under the content. Used with
-// `@use 'danger-button';` then `@include danger-button.outline;`.
+// `@use 'outline-button';` then `@include outline-button.danger;`.
 
-@mixin outline {
+@mixin danger {
   display: block;
   margin: 0 auto;
   width: 70%;

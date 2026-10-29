@@ -41,6 +41,77 @@ export interface UserProfile extends UserSummary {
 export type Identity = 'man' | 'woman' | 'non_binary';
 
 /**
+ * Profile of the logged-in user as they edit it (GET and PUT /api/users/me/details): what the edit profile page shows
+ * and the fields it edits. Identity and age are private: the API returns them to the user themselves only.
+ */
+export interface ProfileDetails {
+  /**
+   * Unique username, never changed
+   */
+  username: string;
+
+  /**
+   * Name the user chose to be shown, null when there is none: the username is shown instead
+   */
+  displayName: string | null;
+
+  /**
+   * Profile picture, null when there is none
+   */
+  avatarUrl: string | null;
+
+  /**
+   * Identity chosen when signing up; null for older accounts
+   */
+  identity: Identity | null;
+
+  /**
+   * Age this year, computed by the API from the birth year it stores; null for older accounts
+   */
+  age: number | null;
+}
+
+/**
+ * Body of PUT /api/users/me/details: every field of the edit profile page.
+ */
+export interface ProfileDetailsUpdate {
+  /**
+   * Trimmed display name, null to show the username (see `normalizeDisplayName`)
+   */
+  displayName: string | null;
+
+  /**
+   * Identity chosen
+   */
+  identity: Identity;
+
+  /**
+   * Age in years; the API stores the birth year it gives instead
+   */
+  age: number;
+}
+
+/**
+ * Fields of the edit profile page as entered.
+ */
+export interface ProfileDetailsDraft {
+  /**
+   * Display name as typed, not trimmed yet; '' to show the username
+   */
+  displayName: string;
+
+  /**
+   * '' while no identity is chosen (older accounts)
+   */
+  identity: Identity | '';
+
+  /**
+   * Null while empty: the value Signal Forms gives an empty number input
+   */
+  age: number | null;
+}
+
+/**
  * Body of POST /api/auth/signup: everything entered in the sign up steps.
  */
 export interface SignupData {

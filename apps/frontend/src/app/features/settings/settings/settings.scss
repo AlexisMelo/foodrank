@@ -1,5 +1,5 @@
-@use 'danger-button';
-@use 'hover';
+@use 'outline-button';
+@use 'section-links';
 
 .settings {
   color: #ffffff;
@@ -106,40 +106,6 @@
   font-weight: 600;
 }
 
-.sections {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-// A sub-section of the settings, opening its own page; same box as the user bar of the home page
-.section-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 14px;
-  background: #1a1a1a;
-  border: 1.5px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
-  color: #ffffff;
-  text-decoration: none;
-  transition: background 0.2s;
-  @include hover.background(#222);
-}
-
-.section-link-title {
-  flex: 1;
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.section-link-arrow {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  color: rgba(255, 255, 255, 0.35);
-}
-
 .logout-btn {
-  @include danger-button.outline;
+  @include outline-button.danger;
 }

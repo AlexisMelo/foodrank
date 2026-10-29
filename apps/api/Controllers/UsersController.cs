@@ -1,13 +1,15 @@
 using System.ComponentModel.DataAnnotations;
 using api.Common;
+using api.Models;
 using api.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers;
 
 /// <summary>
-/// Endpoints for users' public information (search, profile, ratings, tierlists) and the recent ratings of the users
-/// the logged-in user follows. All of them require a logged-in user; "me" stands for the logged-in user.
+/// Endpoints for users' public information (search, profile, ratings, tierlists), the recent ratings of the users the
+/// logged-in user follows, and the logged-in user's own profile details (read and edited). All of them require a
+/// logged-in user; "me" stands for the logged-in user.
 /// </summary>
 /// <param name="userService">Reads the users' profiles.</param>
 /// <param name="ratingService">Reads the users' ratings.</param>
@@ -39,6 +41,28 @@ public class UsersController(IUserService userService, IRatingService ratingServ
     [HttpGet("me")]
     public async Task<IActionResult> GetMe(CancellationToken cancellationToken)
         => (await _userService.GetProfileAsync(User.GetUserId(), cancellationToken)).ToActionResult();
+
+    /// <summary>
+    /// Returns the logged-in user's profile as they edit it: username, display name and avatar, with their identity
+    /// and age, which no other user can read.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
+    /// <returns>200 with the details, 401 when not logged in, 404 when the user has no profile.</returns>
+    [HttpGet("me/details")]
+    public async Task<IActionResult> GetMyDetails(CancellationToken cancellationToken)
+        => (await _userService.GetDetailsAsync(User.GetUserId(), DateTime.UtcNow.Year, cancellationToken)).ToActionResult();
+
+    /// <summary>
+    /// Saves the display name, identity and age of the logged-in user (edit profile page). The username cannot be
+    /// changed.
+    /// </summary>
+    /// <param name="request">New display name (null or blank to show the username), identity and age.</param>
+    /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
+    /// <returns>200 with the saved details, 400 for a missing or invalid value, 401 when not logged in, 404 when the
+    /// user has no profile.</returns>
+    [HttpPut("me/details")]
+    public async Task<IActionResult> UpdateMyDetails([FromBody] UpdateProfileDetailsRequest request, CancellationToken cancellationToken)
+        => (await _userService.UpdateDetailsAsync(User.GetUserId(), request, DateTime.UtcNow.Year, cancellationToken)).ToActionResult();
 
     /// <summary>
     /// Returns every rating of the logged-in user, with its restaurant, most recent first.

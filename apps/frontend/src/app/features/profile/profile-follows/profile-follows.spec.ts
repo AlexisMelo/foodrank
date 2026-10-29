@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { signal } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Observable, Subject, of, throwError } from 'rxjs';
@@ -8,6 +8,8 @@ import { AuthStore } from '@/core/auth/auth-store';
 import type { UserProfile, UserSummary } from '@/core/models/user.model';
 import { ToastStore } from '@/core/toast/toast-store';
 import { query, queryAll, stubDialogs, textOf, typeIn } from '@/testing/dom-testing';
+import { FollowButton } from '../follow-button/follow-button';
+import { injectProfileFollows } from '../profile-follows-state';
 import { ProfileFollows } from './profile-follows';
 
 /**
@@ -47,12 +49,31 @@ function httpError(status: number): Observable<never> {
   return throwError(() => new HttpErrorResponse({ status }));
 }
 
-describe('ProfileFollows', () => {
+/**
+ * The counts and the follow button of a profile, sharing its follows as on the profile page.
+ */
+@Component({
+  imports: [FollowButton, ProfileFollows],
+  template: `<app-profile-follows [follows]="follows" /><app-follow-button [follows]="follows" />`,
+})
+class ProfileFollowsHost {
+  /**
+   * Profile shown, set by the tests
+   */
+  readonly profile = input<UserProfile | null>(null);
+
+  /**
+   * Follows of the profile shown
+   */
+  protected readonly follows = injectProfileFollows(this.profile);
+}
+
+describe('ProfileFollows and FollowButton', () => {
   let fetchFollowers: ReturnType<typeof vi.fn<(userId: string) => Observable<UserSummary[]>>>;
   let fetchFollowing: ReturnType<typeof vi.fn<(userId: string) => Observable<UserSummary[]>>>;
   let follow: ReturnType<typeof vi.fn<(userId: string) => Observable<UserSummary[]>>>;
   let unfollow: ReturnType<typeof vi.fn<(userId: string) => Observable<UserSummary[]>>>;
-  let fixture: ComponentFixture<ProfileFollows>;
+  let fixture: ComponentFixture<ProfileFollowsHost>;
 
   beforeEach(() => {
     stubDialogs();
@@ -75,7 +96,7 @@ describe('ProfileFollows', () => {
    * Shows the follows of `shown` (Camille by default) and waits for them to load.
    */
   async function open(shown: UserSummary = camille): Promise<void> {
-    fixture = TestBed.createComponent(ProfileFollows);
+    fixture = TestBed.createComponent(ProfileFollowsHost);
     fixture.componentRef.setInput('profile', profileOf(shown));
     await fixture.whenStable();
   }
@@ -321,7 +342,7 @@ describe('ProfileFollows', () => {
   function openLoading(followers: Subject<UserSummary[]>, shown: UserSummary = camille): void {
     fetchFollowers.mockReturnValue(followers);
     // Rendered without waiting: the followers are not answered, so the section would never be stable
-    fixture = TestBed.createComponent(ProfileFollows);
+    fixture = TestBed.createComponent(ProfileFollowsHost);
     fixture.componentRef.setInput('profile', profileOf(shown));
     fixture.detectChanges();
   }

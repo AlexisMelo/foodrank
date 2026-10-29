@@ -72,6 +72,39 @@ describe('UserApi', () => {
     });
   });
 
+  describe('profile details', () => {
+    const details = {
+      username: 'alexis.melo',
+      displayName: 'Alexis Melo',
+      avatarUrl: null,
+      identity: 'man',
+      age: 30,
+    };
+
+    it("reads the logged-in user's details, sending the session cookie", async () => {
+      const result = firstValueFrom(api.fetchProfileDetails());
+      const req = httpTesting.expectOne('http://api.test/api/users/me/details');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(details);
+
+      expect(await result).toEqual(details);
+    });
+
+    it('saves the details with a PUT, returning the saved ones', async () => {
+      const update = { displayName: 'Alexis Melo', identity: 'man' as const, age: 30 };
+
+      const result = firstValueFrom(api.updateProfileDetails(update));
+      const req = httpTesting.expectOne('http://api.test/api/users/me/details');
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual(update);
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(details);
+
+      expect(await result).toEqual(details);
+    });
+  });
+
   describe('searchUsers', () => {
     it('sends the query encoded and the limit, with the session cookie, and returns the users found', async () => {
       const camille = { id: 'u2', username: 'camille', displayName: null, avatarUrl: null };

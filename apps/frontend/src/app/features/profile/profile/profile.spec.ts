@@ -184,7 +184,30 @@ describe('ProfileView', () => {
     expect(textOf(query(harness.fixture, '.follow-btn'))).toBe('Following');
     // Right under the name, above the number of restaurants rated
     expect(follows.previousElementSibling!.classList).toContain('winner-name');
-    expect(follows.nextElementSibling!.classList).toContain('winner-tag');
+    expect(follows.nextElementSibling!.querySelector('.winner-tag')).not.toBeNull();
+  });
+
+  it('offers to edit my own profile, next to my number of restaurants rated', async () => {
+    await open('/profile');
+
+    const edit = query(harness.fixture, '.edit-profile-btn');
+    expect(textOf(edit)).toBe('Edit profile');
+    expect(edit.getAttribute('href')).toBe('/profile/edit');
+    expect(edit.previousElementSibling!.classList).toContain('winner-tag');
+  });
+
+  it("does not offer to edit another user's profile", async () => {
+    await open('/user/u2');
+
+    expect(queryAll(harness.fixture, '.edit-profile-btn')).toHaveLength(0);
+  });
+
+  it("puts the follow button next to another user's number of restaurants rated", async () => {
+    await open('/user/u2');
+
+    expect(
+      queryAll(harness.fixture, '.winner-chips .winner-tag, .winner-chips .follow-btn').map(textOf),
+    ).toEqual(['2 restaurants', 'Follow']);
   });
 
   it('shows my own follows on /profile, loaded by my id rather than "me", without follow button', async () => {
