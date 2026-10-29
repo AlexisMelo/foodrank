@@ -70,4 +70,20 @@ public class RatingServiceTests
         Assert.Contains("is_active=eq.true", url, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("limit=", url);
     }
+
+    /// <summary>
+    /// The query of the ratings of the users followed can be built, and keeps the most recent ratings of any of them,
+    /// active or not, whatever the restaurant.
+    /// </summary>
+    [Fact]
+    public void UsersRecentRatingsQuery_KeepsMostRecentRatingsOfUsers()
+    {
+        string url = Uri.UnescapeDataString(RatingService.UsersRecentRatingsQuery(RatingTable(), ["user-1", "user-2"], 5).GenerateUrl());
+
+        Assert.Contains("id_user=in.(\"user-1\",\"user-2\")", url);
+        Assert.Contains("order=date.desc", url);
+        Assert.Contains("limit=5", url);
+        Assert.DoesNotContain("id_restaurant", url);
+        Assert.DoesNotContain("is_active", url, StringComparison.OrdinalIgnoreCase);
+    }
 }

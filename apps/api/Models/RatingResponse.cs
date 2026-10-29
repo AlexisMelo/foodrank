@@ -30,9 +30,9 @@ public record RatingResponse(
     /// Maps a rating and the profile of its author to the API response.
     /// </summary>
     /// <param name="rating">Rating row.</param>
-    /// <param name="profile">Profile row of the author, null when the user has none.</param>
-    /// <returns>The rating with the author's <see cref="Profile.DisplayName"/> and avatar.</returns>
-    public static RatingResponse From(Rating rating, Profile? profile) => new(
+    /// <param name="profile">Profile row of the author.</param>
+    /// <returns>The rating with the author's user name and avatar.</returns>
+    public static RatingResponse From(Rating rating, Profile profile) => new(
         rating.RestaurantId,
         rating.UserId,
         rating.Date.ToUniversalTime(),
@@ -41,6 +41,6 @@ public record RatingResponse(
         rating.SettingRating,
         rating.Bonus,
         rating.IsActive,
-        Profile.DisplayName(profile),
+        profile.Username,
         Profile.AvatarUrlOrNull(profile));
 }

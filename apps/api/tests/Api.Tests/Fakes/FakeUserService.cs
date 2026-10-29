@@ -19,8 +19,7 @@ public class FakeUserService(FakeRatingService ratings) : IUserService
             return Task.FromResult(Result<UserProfileResponse>.Failure(UserIds.NotFound));
 
         UserProfileResponse profile = UserProfileResponse.From(
-            userId,
-            ratings.Profiles.GetValueOrDefault(userId),
+            ratings.Profiles[userId],
             ratings.Ratings.Where(r => r.UserId == userId).Select(r => r.RestaurantId));
         return Task.FromResult(Result<UserProfileResponse>.Success(profile));
     }
@@ -33,7 +32,7 @@ public class FakeUserService(FakeRatingService ratings) : IUserService
             return Task.FromResult(new SearchPage<UserSummaryResponse>([], false));
 
         IReadOnlyList<Profile> ranked = UserRanking.Rank(ratings.Profiles.Values.Where(p => p.Id != excludedUserId), trimmed);
-        List<UserSummaryResponse> shown = ranked.Take(limit).Select(p => UserSummaryResponse.From(p.Id, p)).ToList();
+        List<UserSummaryResponse> shown = ranked.Take(limit).Select(UserSummaryResponse.From).ToList();
         return Task.FromResult(new SearchPage<UserSummaryResponse>(shown, ranked.Count > limit));
     }
 
@@ -41,7 +40,7 @@ public class FakeUserService(FakeRatingService ratings) : IUserService
     public Task<IReadOnlyList<UserSummaryResponse>> GetProfilesAsync(IReadOnlyList<string> userIds, CancellationToken cancellationToken)
     {
         IReadOnlyList<UserSummaryResponse> users = userIds
-            .Select(id => UserSummaryResponse.From(id, ratings.Profiles.GetValueOrDefault(id)))
+            .Select(id => UserSummaryResponse.From(ratings.Profiles[id]))
             .ToList();
         return Task.FromResult(users);
     }

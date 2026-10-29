@@ -45,6 +45,15 @@ export const routes: Routes = [
         loadComponent: () => import('./features/explore/explore/explore').then((m) => m.Explore),
       },
       {
+        path: 'community',
+        loadComponent: () =>
+          import('./features/community/community/community').then((m) => m.Community),
+      },
+      {
+        path: 'community/friends',
+        loadComponent: () => import('./features/community/friends/friends').then((m) => m.Friends),
+      },
+      {
         path: 'restaurant/:id',
         loadComponent: () =>
           import('./features/restaurant/restaurant-detail/restaurant-detail').then(

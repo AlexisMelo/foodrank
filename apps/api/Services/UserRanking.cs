@@ -48,13 +48,13 @@ public static class UserRanking
     /// Keeps the profiles whose pseudonym contains <paramref name="query"/> (ignoring case), best matches first: the
     /// same pseudonym, then those starting with the query, then the others; alphabetically within each group.
     /// </summary>
-    /// <param name="profiles">Candidate profiles; those without pseudonym are dropped.</param>
+    /// <param name="profiles">Candidate profiles.</param>
     /// <param name="query">Query, already trimmed.</param>
     /// <returns>At most <see cref="MaxResults"/> profiles.</returns>
     public static IReadOnlyList<Profile> Rank(IEnumerable<Profile> profiles, string query)
         => profiles
-            .Where(p => p.Username is not null && p.Username.Contains(query, StringComparison.OrdinalIgnoreCase))
-            .OrderBy(p => MatchGroup(p.Username!, query))
+            .Where(p => p.Username.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(p => MatchGroup(p.Username, query))
             .ThenBy(p => p.Username, StringComparer.OrdinalIgnoreCase)
             .Take(MaxResults)
             .ToList();

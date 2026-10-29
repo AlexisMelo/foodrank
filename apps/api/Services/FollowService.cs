@@ -39,6 +39,31 @@ public class FollowService(Supabase.Client supabase, IUserService userService) :
         => GetProfilesAsync("id_follower", userId, f => f.FollowedId, cancellationToken);
 
     /// <inheritdoc />
+    public async Task<Result<IReadOnlyList<UserSummaryResponse>>> GetFriendsAsync(string userId, CancellationToken cancellationToken)
+    {
+        if (!UserIds.IsValid(userId))
+            return Result<IReadOnlyList<UserSummaryResponse>>.Failure(UserIds.NotFound);
+
+        ModeledResponse<Follow> following = await UserFollowsQuery(_supabase.From<Follow>(), "id_follower", userId).Get(cancellationToken);
+        ModeledResponse<Follow> followers = await UserFollowsQuery(_supabase.From<Follow>(), "id_followed", userId).Get(cancellationToken);
+
+        return Result<IReadOnlyList<UserSummaryResponse>>.Success(
+            await _userService.GetProfilesAsync(FriendIds(following.Models, followers.Models), cancellationToken));
+    }
+
+    /// <summary>
+    /// Keeps the users followed who follow back: the friends of a user, in the order of <paramref name="following"/>.
+    /// </summary>
+    /// <param name="following">Follows of the user (the user is the follower), the most recent first.</param>
+    /// <param name="followers">Follows of the user by others (the user is followed).</param>
+    /// <returns>The ids of the users the user follows who also follow it; empty when there is none.</returns>
+    public static List<string> FriendIds(IEnumerable<Follow> following, IEnumerable<Follow> followers)
+    {
+        HashSet<string> followerIds = followers.Select(f => f.FollowerId).ToHashSet();
+        return following.Select(f => f.FollowedId).Where(followerIds.Contains).ToList();
+    }
+
+    /// <inheritdoc />
     public async Task<Result<IReadOnlyList<UserSummaryResponse>>> FollowAsync(string followerId, string userId, CancellationToken cancellationToken)
     {
         Error? error = CheckFollow(followerId, userId);
@@ -103,6 +128,19 @@ public class FollowService(Supabase.Client supabase, IUserService userService) :
             .Where(f => f.FollowedId == followedId);
 
     /// <summary>
+    /// Query of the follows whose <paramref name="userColumn"/> is <paramref name="userId"/>, the most recent first.
+    /// </summary>
+    /// <param name="follows">Query on the "follow" table to filter.</param>
+    /// <param name="userColumn">"id_followed" for the follows of the user by others, "id_follower" for the follows of
+    /// the user.</param>
+    /// <param name="userId">Supabase Auth id of the user.</param>
+    /// <returns>The filtered and ordered query, ready to send.</returns>
+    public static IPostgrestTable<Follow> UserFollowsQuery(IPostgrestTable<Follow> follows, string userColumn, string userId)
+        => follows
+            .Filter(userColumn, Constants.Operator.Equals, userId)
+            .Order("created_at", Constants.Ordering.Descending);
+
+    /// <summary>
     /// Reads the follows whose <paramref name="userColumn"/> is <paramref name="userId"/>, the most recent first, and
     /// returns the profiles of the users at their other end (<paramref name="otherUserId"/>).
     /// </summary>
@@ -116,10 +154,7 @@ public class FollowService(Supabase.Client supabase, IUserService userService) :
         if (!UserIds.IsValid(userId))
             return Result<IReadOnlyList<UserSummaryResponse>>.Failure(UserIds.NotFound);
 
-        ModeledResponse<Follow> follows = await _supabase.From<Follow>()
-            .Filter(userColumn, Constants.Operator.Equals, userId)
-            .Order("created_at", Constants.Ordering.Descending)
-            .Get(cancellationToken);
+        ModeledResponse<Follow> follows = await UserFollowsQuery(_supabase.From<Follow>(), userColumn, userId).Get(cancellationToken);
         List<string> userIds = follows.Models.Select(otherUserId).ToList();
 
         return Result<IReadOnlyList<UserSummaryResponse>>.Success(await _userService.GetProfilesAsync(userIds, cancellationToken));

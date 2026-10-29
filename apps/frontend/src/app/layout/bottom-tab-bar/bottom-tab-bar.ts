@@ -3,8 +3,8 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NewReviewStore } from '@/core/review/new-review-store';
 
 /**
- * Navigation bar fixed at the bottom of the private pages, with the Search button (magnifying glass) opening the
- * search sheet.
+ * Navigation bar fixed at the bottom of the private pages: Home, Explore, the Search button (magnifying glass) opening
+ * the search sheet, Community and Tierlists.
  */
 @Component({
   imports: [RouterLink, RouterLinkActive],

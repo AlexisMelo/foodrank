@@ -15,17 +15,15 @@ public class UserSummaryResponseTests
     {
         Profile profile = new() { Id = "user-1", Username = "camille", AvatarUrl = "https://img.test/c.png" };
 
-        Assert.Equal(new UserSummaryResponse("user-1", "camille", "https://img.test/c.png"), UserSummaryResponse.From("user-1", profile));
+        Assert.Equal(new UserSummaryResponse("user-1", "camille", "https://img.test/c.png"), UserSummaryResponse.From(profile));
     }
 
     /// <summary>
-    /// Without user name or profile, the user is anonymous, without avatar.
+    /// A blank avatar url is sent as no avatar.
     /// </summary>
     [Fact]
-    public void From_NoUsername_IsAnonymous()
+    public void From_BlankAvatar_HasNoAvatar()
     {
-        Assert.Equal(Profile.AnonymousName, UserSummaryResponse.From("user-1", new Profile { Username = " " }).Name);
-        Assert.Equal(Profile.AnonymousName, UserSummaryResponse.From("user-1", new Profile()).Name);
-        Assert.Equal(new UserSummaryResponse("user-1", Profile.AnonymousName, null), UserSummaryResponse.From("user-1", null));
+        Assert.Null(UserSummaryResponse.From(new Profile { Id = "user-1", Username = "camille", AvatarUrl = " " }).AvatarUrl);
     }
 }

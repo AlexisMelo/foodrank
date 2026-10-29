@@ -70,6 +70,14 @@ export class UserApi {
   }
 
   /**
+   * Get the friends of a user: the users they follow who follow them back, the most recent follow of the user first
+   * @param userId real id of the user ("me" is not accepted by this endpoint)
+   */
+  fetchFriends(userId: string): Observable<UserSummary[]> {
+    return this.http.get<UserSummary[]>(`/api/users/${encodeURIComponent(userId)}/friends`);
+  }
+
+  /**
    * Make the logged-in user follow a user; following a user already followed changes nothing
    * @returns the followers of the user, the logged-in user among them
    */

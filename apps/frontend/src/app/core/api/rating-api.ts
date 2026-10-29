@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import type {
+  FollowedRating,
   RatingAllowance,
   RatingInput,
   RatingSummary,
@@ -74,5 +75,16 @@ export class RatingApi {
    */
   fetchUserRatings(userId: string = ME): Observable<UserRating[]> {
     return this.http.get<UserRating[]>(`/api/users/${encodeURIComponent(userId)}/ratings`);
+  }
+
+  /**
+   * Get the most recent ratings of the users the logged-in user follows, previous ratings included, with their
+   * restaurant and their author, most recent first
+   * @param limit number of ratings, 1 to 50
+   */
+  fetchFollowedRatings(limit = 5): Observable<FollowedRating[]> {
+    return this.http.get<FollowedRating[]>(`/api/users/${ME}/following/ratings`, {
+      params: { limit },
+    });
   }
 }

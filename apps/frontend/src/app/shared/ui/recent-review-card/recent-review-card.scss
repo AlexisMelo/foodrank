@@ -5,7 +5,7 @@
   display: contents;
 }
 
-// Fixed height so the loading skeleton (Home .card-skeleton) can match it:
+// Fixed height so the loading skeleton (.card-skeleton of src/styles/_sections.scss) can match it:
 // padding 2×16 + emoji 60 + name 34 + date 14 + criteria 3×14 + 2×7 + gaps 3×10 = 226
 .review-card {
   flex-shrink: 0;

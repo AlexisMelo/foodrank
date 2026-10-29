@@ -71,7 +71,7 @@ export interface RestaurantRating {
   isActive: boolean;
 
   /**
-   * Full name or user name of the author, "Anonymous" when unknown
+   * User name (pseudonym) of the author
    */
   userName: string;
 
@@ -127,6 +127,73 @@ export interface RatingAllowance {
    * canRate is true
    */
   nextRatingAt: string | null;
+}
+
+/**
+ * A recent rating of a user the logged-in user follows, with the restaurant it rates and its author
+ * (GET /api/users/me/following/ratings).
+ */
+export interface FollowedRating {
+  /**
+   * Id of the restaurant rated
+   */
+  restaurantId: string;
+
+  /**
+   * Name of the restaurant rated
+   */
+  restaurantName: string;
+
+  /**
+   * Emoji of the restaurant rated
+   */
+  restaurantEmoji: string;
+
+  /**
+   * Moment of the rating, ISO 8601 in UTC (e.g. "2026-03-07T21:30:00+00:00"); see `formatRatingDate`
+   */
+  date: string;
+
+  /**
+   * 0 to 100
+   */
+  food: number;
+
+  /**
+   * 0 to 100
+   */
+  service: number;
+
+  /**
+   * Setting (decor), 0 to 100
+   */
+  setting: number;
+
+  /**
+   * "Instant crush" favorite bonus
+   */
+  bonus: boolean;
+
+  /**
+   * True for the author's latest rating of the restaurant, which is their score for it; false for the previous ones,
+   * kept as history
+   */
+  isActive: boolean;
+
+  /**
+   * Id of the author, used in /user/:id; never the logged-in user, who cannot follow themselves
+   */
+  userId: string;
+
+  /**
+   * User name (pseudonym) of the author
+   */
+  userName: string;
+
+  /**
+   * Profile picture of the author, null when there is none
+   */
+  userAvatarUrl: string | null;
 }
 
 /**

@@ -40,7 +40,7 @@ public class UserService(Supabase.Client supabase) : IUserService
             .Get(cancellationToken);
 
         return Result<UserProfileResponse>.Success(
-            UserProfileResponse.From(userId, profiles.Models.FirstOrDefault(), ratings.Models.Select(r => r.RestaurantId)));
+            UserProfileResponse.From(profiles.Models.First(), ratings.Models.Select(r => r.RestaurantId)));
     }
 
     /// <inheritdoc />
@@ -58,7 +58,7 @@ public class UserService(Supabase.Client supabase) : IUserService
             .Get(cancellationToken);
         IReadOnlyList<Profile> ranked = UserRanking.Rank(candidates.Models, trimmed);
         return new SearchPage<UserSummaryResponse>(
-            ranked.Take(limit).Select(p => UserSummaryResponse.From(p.Id, p)).ToList(),
+            ranked.Take(limit).Select(UserSummaryResponse.From).ToList(),
             ranked.Count > limit);
     }
 
@@ -73,7 +73,7 @@ public class UserService(Supabase.Client supabase) : IUserService
             .Get(cancellationToken);
         Dictionary<string, Profile> profilesById = profiles.Models.ToDictionary(p => p.Id);
 
-        return userIds.Select(id => UserSummaryResponse.From(id, profilesById.GetValueOrDefault(id))).ToList();
+        return userIds.Select(id => UserSummaryResponse.From(profilesById[id])).ToList();
     }
 
     /// <inheritdoc />

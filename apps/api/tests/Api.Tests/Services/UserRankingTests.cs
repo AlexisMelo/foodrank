@@ -11,7 +11,7 @@ public class UserRankingTests
     /// <summary>
     /// Profiles of the given pseudonyms, in the given order, with ids "0", "1"...
     /// </summary>
-    private static List<Profile> Profiles(params string?[] usernames)
+    private static List<Profile> Profiles(params string[] usernames)
         => usernames.Select((username, i) => new Profile { Id = i.ToString(), Username = username }).ToList();
 
     /// <summary>
@@ -59,13 +59,12 @@ public class UserRankingTests
     }
 
     /// <summary>
-    /// Profiles whose pseudonym does not really contain the query (matched by a "*" turned wildcard) and profiles
-    /// without pseudonym are dropped.
+    /// Profiles whose pseudonym does not really contain the query (matched by a "*" turned wildcard) are dropped.
     /// </summary>
     [Fact]
     public void Rank_DropsProfilesNotContainingTheQuery()
     {
-        List<Profile> profiles = Profiles("a*b", "axb", null);
+        List<Profile> profiles = Profiles("a*b", "axb");
 
         IReadOnlyList<Profile> ranked = UserRanking.Rank(profiles, "a*b");
 

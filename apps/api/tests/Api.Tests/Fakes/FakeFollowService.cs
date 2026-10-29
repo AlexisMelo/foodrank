@@ -10,8 +10,8 @@ namespace Api.Tests.Fakes;
 /// unfollowing a user not followed changes nothing) and lists the profiles of <see cref="FakeUserService"/>.
 /// </summary>
 /// <param name="users">Reads the profiles listed.</param>
-/// <param name="ratings">Profiles "stored in the database": a user exists when it has one, standing for the foreign
-/// keys to auth.users.</param>
+/// <param name="ratings">Profiles "stored in the database": a user can be followed when it has one, standing for the
+/// foreign keys of the "follow" table to "profiles".</param>
 public class FakeFollowService(FakeUserService users, FakeRatingService ratings) : IFollowService
 {
     /// <summary>
@@ -26,6 +26,19 @@ public class FakeFollowService(FakeUserService users, FakeRatingService ratings)
     /// <inheritdoc />
     public Task<Result<IReadOnlyList<UserSummaryResponse>>> GetFollowingAsync(string userId, CancellationToken cancellationToken)
         => ProfilesAsync(userId, Follows.Where(f => f.FollowerId == userId), f => f.FollowedId, cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<Result<IReadOnlyList<UserSummaryResponse>>> GetFriendsAsync(string userId, CancellationToken cancellationToken)
+    {
+        if (!UserIds.IsValid(userId))
+            return Result<IReadOnlyList<UserSummaryResponse>>.Failure(UserIds.NotFound);
+
+        // Like the real service: the follows of the user, the most recent first, kept when followed back
+        List<string> friendIds = FollowService.FriendIds(
+            MostRecentFirst(Follows.Where(f => f.FollowerId == userId)),
+            Follows.Where(f => f.FollowedId == userId));
+        return Result<IReadOnlyList<UserSummaryResponse>>.Success(await users.GetProfilesAsync(friendIds, cancellationToken));
+    }
 
     /// <inheritdoc />
     public Task<Result<IReadOnlyList<UserSummaryResponse>>> FollowAsync(string followerId, string userId, CancellationToken cancellationToken)
@@ -61,13 +74,18 @@ public class FakeFollowService(FakeUserService users, FakeRatingService ratings)
         if (!UserIds.IsValid(userId))
             return Result<IReadOnlyList<UserSummaryResponse>>.Failure(UserIds.NotFound);
 
-        // Two follows saved in the same tick: the one inserted last is the most recent
-        List<string> userIds = follows
+        List<string> userIds = MostRecentFirst(follows).Select(otherUserId).ToList();
+        return Result<IReadOnlyList<UserSummaryResponse>>.Success(await users.GetProfilesAsync(userIds, cancellationToken));
+    }
+
+    /// <summary>
+    /// Orders <paramref name="follows"/> like the real query, the most recent first. Two follows saved in the same tick:
+    /// the one inserted last is the most recent.
+    /// </summary>
+    private static IEnumerable<Follow> MostRecentFirst(IEnumerable<Follow> follows)
+        => follows
             .Select((follow, index) => (follow, index))
             .OrderByDescending(f => f.follow.CreatedAt)
             .ThenByDescending(f => f.index)
-            .Select(f => otherUserId(f.follow))
-            .ToList();
-        return Result<IReadOnlyList<UserSummaryResponse>>.Success(await users.GetProfilesAsync(userIds, cancellationToken));
-    }
+            .Select(f => f.follow);
 }

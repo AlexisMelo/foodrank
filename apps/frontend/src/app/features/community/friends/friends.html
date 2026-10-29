@@ -1,0 +1,49 @@
+<div class="friends-view">
+  <app-page-top-bar title="Friends" backTo="/community" />
+
+  <input
+    class="search"
+    type="search"
+    autocomplete="off"
+    placeholder="Search your friends"
+    aria-label="Search your friends"
+    [formField]="searchForm"
+  />
+
+  @if (myFriends.loading()) {
+    <div class="list" role="status" aria-label="Loading your friends">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="row-skeleton"></div>
+      }
+    </div>
+  } @else if (myFriends.loadError()) {
+    <div class="empty-state">
+      <p class="empty-title" role="alert">Couldn't load your friends</p>
+      <p class="empty-desc">Check your connection, then come back to this page.</p>
+    </div>
+  } @else if (!myFriends.friends().length) {
+    <div class="empty-state">
+      <div class="empty-icon" aria-hidden="true">🤝</div>
+      <p class="empty-title">No friends yet</p>
+      <p class="empty-desc">Friends are the people you follow who follow you back.</p>
+    </div>
+  } @else {
+    <div class="list">
+      @for (friend of shownFriends(); track friend.id) {
+        <a class="search-row user-row" [routerLink]="['/user', friend.id]">
+          <app-user-avatar
+            class="user-avatar"
+            [name]="friend.name"
+            [avatarUrl]="friend.avatarUrl"
+          />
+          <span class="search-row-info">
+            <span class="search-row-name">{{ friend.name }}</span>
+          </span>
+          <span class="user-arrow" aria-hidden="true">›</span>
+        </a>
+      } @empty {
+        <p class="no-match">No friend matches “{{ query().trim() }}”.</p>
+      }
+    </div>
+  }
+</div>

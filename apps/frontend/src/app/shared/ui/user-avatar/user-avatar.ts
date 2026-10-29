@@ -22,7 +22,7 @@ export class UserAvatar {
   readonly avatarUrl = input.required<string | null>();
 
   /**
-   * Shown instead of the profile picture when the user has none; "?" for a blank name
+   * Shown instead of the profile picture when the user has none
    */
-  protected readonly initial = computed(() => this.name().trim().charAt(0).toUpperCase() || '?');
+  protected readonly initial = computed(() => this.name().charAt(0).toUpperCase());
 }

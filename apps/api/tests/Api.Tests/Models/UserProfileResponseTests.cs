@@ -8,12 +8,17 @@ namespace Api.Tests.Models;
 public class UserProfileResponseTests
 {
     /// <summary>
+    /// Profile mapped by the tests that do not look at it.
+    /// </summary>
+    private static readonly Profile SampleProfile = new() { Id = "user-1", Username = "camille" };
+
+    /// <summary>
     /// A restaurant rated several times counts once.
     /// </summary>
     [Fact]
     public void From_RestaurantRatedTwice_CountsDistinctRestaurants()
     {
-        UserProfileResponse response = UserProfileResponse.From("user-1", null, ["r1", "r2", "r1", "r3", "r2"]);
+        UserProfileResponse response = UserProfileResponse.From(SampleProfile, ["r1", "r2", "r1", "r3", "r2"]);
 
         Assert.Equal(3, response.RatedRestaurantsCount);
     }
@@ -24,7 +29,7 @@ public class UserProfileResponseTests
     [Fact]
     public void From_NoRating_CountsZero()
     {
-        Assert.Equal(0, UserProfileResponse.From("user-1", null, []).RatedRestaurantsCount);
+        Assert.Equal(0, UserProfileResponse.From(SampleProfile, []).RatedRestaurantsCount);
     }
 
     /// <summary>
@@ -35,7 +40,7 @@ public class UserProfileResponseTests
     {
         Profile profile = new() { Id = "user-1", Username = "camille", AvatarUrl = "https://img.test/c.png" };
 
-        UserProfileResponse response = UserProfileResponse.From("user-1", profile, []);
+        UserProfileResponse response = UserProfileResponse.From(profile, []);
 
         Assert.Equal("user-1", response.Id);
         Assert.Equal("camille", response.Name);
@@ -43,14 +48,11 @@ public class UserProfileResponseTests
     }
 
     /// <summary>
-    /// Without user name or profile, the user is anonymous.
+    /// A profile without picture has no avatar.
     /// </summary>
     [Fact]
-    public void From_NoUsername_IsAnonymous()
+    public void From_NoAvatar_HasNoAvatar()
     {
-        Assert.Equal(Profile.AnonymousName, UserProfileResponse.From("user-1", new Profile { Username = " " }, []).Name);
-        Assert.Equal(Profile.AnonymousName, UserProfileResponse.From("user-1", new Profile(), []).Name);
-        Assert.Equal(Profile.AnonymousName, UserProfileResponse.From("user-1", null, []).Name);
-        Assert.Null(UserProfileResponse.From("user-1", null, []).AvatarUrl);
+        Assert.Null(UserProfileResponse.From(SampleProfile, []).AvatarUrl);
     }
 }

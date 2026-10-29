@@ -154,4 +154,25 @@ describe('RatingApi', () => {
       await result;
     });
   });
+
+  describe('fetchFollowedRatings', () => {
+    it('asks for the 5 most recent ratings of the users followed by default, with the session cookie', async () => {
+      const ratings = [{ restaurantId: 'r1', userId: 'u2', userName: 'Camille' }];
+
+      const result = firstValueFrom(api.fetchFollowedRatings());
+      const req = httpTesting.expectOne('http://api.test/api/users/me/following/ratings?limit=5');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(ratings);
+
+      expect(await result).toEqual(ratings);
+    });
+
+    it('sends the limit asked for', async () => {
+      const result = firstValueFrom(api.fetchFollowedRatings(12));
+      httpTesting.expectOne('http://api.test/api/users/me/following/ratings?limit=12').flush([]);
+
+      expect(await result).toEqual([]);
+    });
+  });
 });

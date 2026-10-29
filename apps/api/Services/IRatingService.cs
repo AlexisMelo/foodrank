@@ -49,4 +49,14 @@ public interface IRatingService
     /// <param name="cancellationToken">Cancels the database queries.</param>
     /// <returns>The ratings with their restaurant, or a NotFound failure when <paramref name="userId"/> is not a user id (uuid).</returns>
     Task<Result<IReadOnlyList<UserRatingResponse>>> GetByUserAsync(string userId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Returns the <paramref name="count"/> most recent ratings given by the users <paramref name="userId"/> follows,
+    /// active or not, all restaurants included, most recent first, each with its restaurant and its author.
+    /// </summary>
+    /// <param name="userId">Supabase Auth id of the logged-in user, read from the session.</param>
+    /// <param name="count">Maximum number of ratings.</param>
+    /// <param name="cancellationToken">Cancels the database queries.</param>
+    /// <returns>The ratings; empty when the user follows nobody or the users followed rated nothing.</returns>
+    Task<IReadOnlyList<FollowedRatingResponse>> GetFromFollowedUsersAsync(string userId, int count, CancellationToken cancellationToken);
 }
