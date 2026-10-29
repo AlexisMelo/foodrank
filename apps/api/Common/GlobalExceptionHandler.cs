@@ -1,3 +1,4 @@
+using api.Models;
 using Microsoft.AspNetCore.Diagnostics;
 
 namespace api.Common;
@@ -10,7 +11,7 @@ namespace api.Common;
 public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
 {
     /// <summary>
-    /// Message returned to the client, in the same <c>{ error }</c> shape as the other API errors.
+    /// Message returned to the client, in an <see cref="ErrorResponse"/> like the other API errors.
     /// </summary>
     public const string Message = "An unexpected error occurred. Please try again later.";
 
@@ -20,7 +21,7 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
         logger.LogError(exception, "Unhandled exception on {Method} {Path}", httpContext.Request.Method, httpContext.Request.Path);
 
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        await httpContext.Response.WriteAsJsonAsync(new { error = Message }, cancellationToken);
+        await httpContext.Response.WriteAsJsonAsync(new ErrorResponse(Message), cancellationToken);
         return true;
     }
 }

@@ -1,11 +1,12 @@
 using api.Common;
+using api.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Tests.Common;
 
 /// <summary>
-/// Tests the mapping of a <see cref="Result{T}"/> to an HTTP response.
+/// Tests the mapping of a <see cref="Result{T}"/> and of an <see cref="Error"/> to an HTTP response.
 /// </summary>
 public class ResultExtensionsTests
 {
@@ -15,21 +16,22 @@ public class ResultExtensionsTests
     [Fact]
     public void ToActionResult_Success_Returns200WithValue()
     {
-        IActionResult response = Result<string>.Success("ok").ToActionResult();
+        ActionResult<string> response = Result<string>.Success("ok").ToActionResult();
 
-        OkObjectResult ok = Assert.IsType<OkObjectResult>(response);
+        OkObjectResult ok = Assert.IsType<OkObjectResult>(response.Result);
         Assert.Equal("ok", ok.Value);
     }
 
     /// <summary>
-    /// A NotFound error becomes a 404.
+    /// A NotFound error becomes a 404 holding its message in an <see cref="ErrorResponse"/>.
     /// </summary>
     [Fact]
-    public void ToActionResult_NotFound_Returns404()
+    public void ToActionResult_NotFound_Returns404WithMessage()
     {
-        IActionResult response = Result<string>.Failure(new Error(ErrorType.NotFound, "missing")).ToActionResult();
+        ActionResult<string> response = Result<string>.Failure(new Error(ErrorType.NotFound, "missing")).ToActionResult();
 
-        Assert.IsType<NotFoundObjectResult>(response);
+        NotFoundObjectResult notFound = Assert.IsType<NotFoundObjectResult>(response.Result);
+        Assert.Equal(new ErrorResponse("missing"), notFound.Value);
     }
 
     /// <summary>
@@ -38,9 +40,9 @@ public class ResultExtensionsTests
     [Fact]
     public void ToActionResult_Unavailable_Returns503()
     {
-        IActionResult response = Result<string>.Failure(new Error(ErrorType.Unavailable, "down")).ToActionResult();
+        ActionResult<string> response = Result<string>.Failure(new Error(ErrorType.Unavailable, "down")).ToActionResult();
 
-        ObjectResult result = Assert.IsType<ObjectResult>(response);
+        ObjectResult result = Assert.IsType<ObjectResult>(response.Result);
         Assert.Equal(StatusCodes.Status503ServiceUnavailable, result.StatusCode);
     }
 
@@ -54,9 +56,21 @@ public class ResultExtensionsTests
     [InlineData(ErrorType.Conflict, StatusCodes.Status409Conflict)]
     public void ToActionResult_ClientErrors_ReturnMatchingStatus(ErrorType type, int expectedStatus)
     {
-        IActionResult response = Result<string>.Failure(new Error(type, "error")).ToActionResult();
+        ActionResult<string> response = Result<string>.Failure(new Error(type, "error")).ToActionResult();
 
-        ObjectResult result = Assert.IsAssignableFrom<ObjectResult>(response);
+        ObjectResult result = Assert.IsAssignableFrom<ObjectResult>(response.Result);
         Assert.Equal(expectedStatus, result.StatusCode);
+    }
+
+    /// <summary>
+    /// An error alone (for the actions answering no body on success) gives the same response as a failed result.
+    /// </summary>
+    [Fact]
+    public void ToActionResult_Error_ReturnsStatusAndMessage()
+    {
+        ActionResult response = new Error(ErrorType.Conflict, "taken").ToActionResult();
+
+        ConflictObjectResult conflict = Assert.IsType<ConflictObjectResult>(response);
+        Assert.Equal(new ErrorResponse("taken"), conflict.Value);
     }
 }

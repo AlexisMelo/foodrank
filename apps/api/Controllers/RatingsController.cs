@@ -29,7 +29,7 @@ public class RatingsController(IRatingService ratingService) : ControllerBase
     /// <returns>200 with the saved rating, 401 when not logged in, 404 for an unknown restaurant, 409 when the user
     /// already rated a restaurant today.</returns>
     [HttpPost]
-    public async Task<IActionResult> Create(string restaurantId, [FromBody] RateRestaurantRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<Rating>> Create(string restaurantId, [FromBody] RateRestaurantRequest request, CancellationToken cancellationToken)
         => (await _ratingService.CreateAsync(restaurantId, User.GetUserId(), request, cancellationToken)).ToActionResult();
 
     /// <summary>
@@ -41,7 +41,7 @@ public class RatingsController(IRatingService ratingService) : ControllerBase
     /// <returns>200 with the ratings, 400 when the limit is outside 1-50, 404 for an unknown restaurant.</returns>
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> GetRecent(string restaurantId, [FromQuery, Range(1, 50)] int limit = 5, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<IReadOnlyList<RatingResponse>>> GetRecent(string restaurantId, [FromQuery, Range(1, 50)] int limit = 5, CancellationToken cancellationToken = default)
         => (await _ratingService.GetRecentAsync(restaurantId, limit, cancellationToken)).ToActionResult();
 
     /// <summary>
@@ -52,7 +52,7 @@ public class RatingsController(IRatingService ratingService) : ControllerBase
     /// <returns>200 with the averages (null when the restaurant has no rating), 404 for an unknown restaurant.</returns>
     [HttpGet("summary")]
     [AllowAnonymous]
-    public async Task<IActionResult> GetSummary(string restaurantId, CancellationToken cancellationToken)
+    public async Task<ActionResult<RatingSummaryResponse>> GetSummary(string restaurantId, CancellationToken cancellationToken)
         => (await _ratingService.GetSummaryAsync(restaurantId, cancellationToken)).ToActionResult();
 
     /// <summary>
@@ -62,6 +62,6 @@ public class RatingsController(IRatingService ratingService) : ControllerBase
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
     /// <returns>200 with the ratings, 401 when not logged in, 404 for an unknown restaurant.</returns>
     [HttpGet("mine")]
-    public async Task<IActionResult> GetMine(string restaurantId, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<RatingResponse>>> GetMine(string restaurantId, CancellationToken cancellationToken)
         => (await _ratingService.GetByRestaurantAndUserAsync(restaurantId, User.GetUserId(), cancellationToken)).ToActionResult();
 }

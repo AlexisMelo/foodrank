@@ -39,7 +39,7 @@ public class UsersController(IUserService userService, IRatingService ratingServ
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
     /// <returns>200 with the profile, 401 when not logged in.</returns>
     [HttpGet("me")]
-    public async Task<IActionResult> GetMe(CancellationToken cancellationToken)
+    public async Task<ActionResult<UserProfileResponse>> GetMe(CancellationToken cancellationToken)
         => (await _userService.GetProfileAsync(User.GetUserId(), cancellationToken)).ToActionResult();
 
     /// <summary>
@@ -49,7 +49,7 @@ public class UsersController(IUserService userService, IRatingService ratingServ
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
     /// <returns>200 with the details, 401 when not logged in, 404 when the user has no profile.</returns>
     [HttpGet("me/details")]
-    public async Task<IActionResult> GetMyDetails(CancellationToken cancellationToken)
+    public async Task<ActionResult<ProfileDetailsResponse>> GetMyDetails(CancellationToken cancellationToken)
         => (await _userService.GetDetailsAsync(User.GetUserId(), DateTime.UtcNow.Year, cancellationToken)).ToActionResult();
 
     /// <summary>
@@ -61,7 +61,7 @@ public class UsersController(IUserService userService, IRatingService ratingServ
     /// <returns>200 with the saved details, 400 for a missing or invalid value, 401 when not logged in, 404 when the
     /// user has no profile.</returns>
     [HttpPut("me/details")]
-    public async Task<IActionResult> UpdateMyDetails([FromBody] UpdateProfileDetailsRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<ProfileDetailsResponse>> UpdateMyDetails([FromBody] UpdateProfileDetailsRequest request, CancellationToken cancellationToken)
         => (await _userService.UpdateDetailsAsync(User.GetUserId(), request, DateTime.UtcNow.Year, cancellationToken)).ToActionResult();
 
     /// <summary>
@@ -70,7 +70,7 @@ public class UsersController(IUserService userService, IRatingService ratingServ
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
     /// <returns>200 with the ratings, 401 when not logged in.</returns>
     [HttpGet("me/ratings")]
-    public async Task<IActionResult> GetMyRatings(CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<UserRatingResponse>>> GetMyRatings(CancellationToken cancellationToken)
         => (await _ratingService.GetByUserAsync(User.GetUserId(), cancellationToken)).ToActionResult();
 
     /// <summary>
@@ -79,7 +79,7 @@ public class UsersController(IUserService userService, IRatingService ratingServ
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
     /// <returns>200 with whether the user can rate and, when they cannot, when they can rate again; 401 when not logged in.</returns>
     [HttpGet("me/rating-allowance")]
-    public async Task<IActionResult> GetMyRatingAllowance(CancellationToken cancellationToken)
+    public async Task<ActionResult<RatingAllowanceResponse>> GetMyRatingAllowance(CancellationToken cancellationToken)
         => (await _ratingService.GetAllowanceAsync(User.GetUserId(), cancellationToken)).ToActionResult();
 
     /// <summary>
@@ -88,7 +88,7 @@ public class UsersController(IUserService userService, IRatingService ratingServ
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
     /// <returns>200 with the tierlists, 401 when not logged in.</returns>
     [HttpGet("me/tierlists")]
-    public async Task<IActionResult> GetMyTierlists(CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<TierlistResponse>>> GetMyTierlists(CancellationToken cancellationToken)
         => (await _tierlistService.GetByUserAsync(User.GetUserId(), cancellationToken)).ToActionResult();
 
     /// <summary>
@@ -99,7 +99,7 @@ public class UsersController(IUserService userService, IRatingService ratingServ
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
     /// <returns>200 with the ratings, 400 when the limit is outside 1-50, 401 when not logged in.</returns>
     [HttpGet("me/following/ratings")]
-    public async Task<IActionResult> GetFollowedRatings([FromQuery, Range(1, 50)] int limit = 5, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<IReadOnlyList<FollowedRatingResponse>>> GetFollowedRatings([FromQuery, Range(1, 50)] int limit = 5, CancellationToken cancellationToken = default)
         => Ok(await _ratingService.GetFromFollowedUsersAsync(User.GetUserId(), limit, cancellationToken));
 
     /// <summary>
@@ -112,7 +112,7 @@ public class UsersController(IUserService userService, IRatingService ratingServ
     /// <returns>200 with the users (id, username, display name, avatar) and whether there are more, 400 when the limit is outside 1-50,
     /// 401 when not logged in.</returns>
     [HttpGet("search")]
-    public async Task<IActionResult> Search([FromQuery] string query, [FromQuery, Range(1, UserRanking.MaxResults)] int limit = 5, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<SearchPage<UserSummaryResponse>>> Search([FromQuery] string query, [FromQuery, Range(1, UserRanking.MaxResults)] int limit = 5, CancellationToken cancellationToken = default)
         => Ok(await _userService.SearchAsync(query, limit, User.GetUserId(), cancellationToken));
 
     /// <summary>
@@ -122,7 +122,7 @@ public class UsersController(IUserService userService, IRatingService ratingServ
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
     /// <returns>200 with the profile, 404 when the id is not a user id.</returns>
     [HttpGet("{userId}")]
-    public async Task<IActionResult> GetById(string userId, CancellationToken cancellationToken)
+    public async Task<ActionResult<UserProfileResponse>> GetById(string userId, CancellationToken cancellationToken)
         => (await _userService.GetProfileAsync(userId, cancellationToken)).ToActionResult();
 
     /// <summary>
@@ -132,7 +132,7 @@ public class UsersController(IUserService userService, IRatingService ratingServ
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
     /// <returns>200 with the ratings, 404 when the id is not a user id.</returns>
     [HttpGet("{userId}/ratings")]
-    public async Task<IActionResult> GetRatings(string userId, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<UserRatingResponse>>> GetRatings(string userId, CancellationToken cancellationToken)
         => (await _ratingService.GetByUserAsync(userId, cancellationToken)).ToActionResult();
 
     /// <summary>
@@ -142,6 +142,6 @@ public class UsersController(IUserService userService, IRatingService ratingServ
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
     /// <returns>200 with the tierlists, 404 when the id is not a user id.</returns>
     [HttpGet("{userId}/tierlists")]
-    public async Task<IActionResult> GetTierlists(string userId, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<TierlistResponse>>> GetTierlists(string userId, CancellationToken cancellationToken)
         => (await _tierlistService.GetByUserAsync(userId, cancellationToken)).ToActionResult();
 }

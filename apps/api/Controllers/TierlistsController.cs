@@ -26,7 +26,7 @@ public class TierlistsController(ITierlistService tierlistService) : ControllerB
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
     /// <returns>200 with the created tierlist, 400 for invalid values, 401 when not logged in.</returns>
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateTierlistRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<TierlistResponse>> Create([FromBody] CreateTierlistRequest request, CancellationToken cancellationToken)
         => (await _tierlistService.CreateAsync(User.GetUserId(), request, cancellationToken)).ToActionResult();
 
     /// <summary>
@@ -36,7 +36,7 @@ public class TierlistsController(ITierlistService tierlistService) : ControllerB
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
     /// <returns>200 with the tierlist, 401 when not logged in, 404 when it does not exist (or the id is not a number).</returns>
     [HttpGet("{id:long}")]
-    public async Task<IActionResult> GetById(long id, CancellationToken cancellationToken)
+    public async Task<ActionResult<TierlistResponse>> GetById(long id, CancellationToken cancellationToken)
         => (await _tierlistService.GetByIdAsync(id, cancellationToken)).ToActionResult();
 
     /// <summary>
@@ -48,7 +48,7 @@ public class TierlistsController(ITierlistService tierlistService) : ControllerB
     /// <returns>200 with the updated tierlist, 400 without the flag, 401 when not logged in, 403 for a tierlist of
     /// another user, 404 when it does not exist.</returns>
     [HttpPut("{id:long}/pinned")]
-    public async Task<IActionResult> SetPinned(long id, [FromBody] PinTierlistRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<TierlistResponse>> SetPinned(long id, [FromBody] PinTierlistRequest request, CancellationToken cancellationToken)
         => (await _tierlistService.SetPinnedAsync(id, User.GetUserId(), request.Pinned!.Value, cancellationToken)).ToActionResult();
 
     /// <summary>
@@ -61,7 +61,7 @@ public class TierlistsController(ITierlistService tierlistService) : ControllerB
     /// 401 when not logged in, 403 for a tierlist of another user, 404 when the tierlist or the restaurant does not exist,
     /// 409 when the restaurant is already in the tierlist.</returns>
     [HttpPost("{id:long}/restaurants")]
-    public async Task<IActionResult> AddRestaurant(long id, [FromBody] AddTierlistRestaurantRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<TierlistResponse>> AddRestaurant(long id, [FromBody] AddTierlistRestaurantRequest request, CancellationToken cancellationToken)
         => (await _tierlistService.AddRestaurantAsync(id, User.GetUserId(), request.RestaurantId, cancellationToken)).ToActionResult();
 
     /// <summary>
@@ -73,6 +73,6 @@ public class TierlistsController(ITierlistService tierlistService) : ControllerB
     /// <returns>200 with the updated tierlist, 401 when not logged in, 403 for a tierlist of another user, 404 when the
     /// tierlist does not exist or the restaurant is not in it.</returns>
     [HttpDelete("{id:long}/restaurants/{restaurantId}")]
-    public async Task<IActionResult> RemoveRestaurant(long id, string restaurantId, CancellationToken cancellationToken)
+    public async Task<ActionResult<TierlistResponse>> RemoveRestaurant(long id, string restaurantId, CancellationToken cancellationToken)
         => (await _tierlistService.RemoveRestaurantAsync(id, User.GetUserId(), restaurantId, cancellationToken)).ToActionResult();
 }
