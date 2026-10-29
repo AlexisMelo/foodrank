@@ -10,7 +10,6 @@ public interface IUserService
 {
     /// <summary>
     /// Returns the profile of <paramref name="userId"/> with the number of distinct restaurants it rated.
-    /// A user without profile row is returned as anonymous.
     /// </summary>
     /// <param name="userId">Supabase Auth id of the user.</param>
     /// <param name="cancellationToken">Cancels the database queries.</param>
@@ -33,7 +32,7 @@ public interface IUserService
 
     /// <summary>
     /// Returns the name and avatar of <paramref name="userIds"/>, in the same order, in a single query on the profiles
-    /// (no number of restaurants rated). A user without profile row is returned as anonymous.
+    /// (no number of restaurants rated).
     /// </summary>
     /// <param name="userIds">Supabase Auth ids of the users (uuids), e.g. the followers of a user.</param>
     /// <param name="cancellationToken">Cancels the database query.</param>

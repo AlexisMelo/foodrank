@@ -153,19 +153,6 @@ public class FollowsControllerTests : IDisposable
     }
 
     /// <summary>
-    /// A follower without profile row is listed as anonymous rather than left out.
-    /// </summary>
-    [Fact]
-    public async Task GetFollowers_FollowerWithoutProfile_ListedAsAnonymous()
-    {
-        AddFollow(UnknownId, CamilleId, day: 1);
-
-        List<UserSummaryResponse> followers = await ProfilesAsync(HttpMethod.Get, $"/api/users/{CamilleId}/followers");
-
-        Assert.Equal(new UserSummaryResponse(UnknownId, Profile.AnonymousName, null), Assert.Single(followers));
-    }
-
-    /// <summary>
     /// A user nobody follows, and who follows nobody, has empty lists rather than a 404.
     /// </summary>
     [Theory]
@@ -176,6 +163,41 @@ public class FollowsControllerTests : IDisposable
         AddFollow(MeId, CamilleId, day: 1);
 
         Assert.Empty(await ProfilesAsync(HttpMethod.Get, $"/api/users/{HugoId}/{list}"));
+    }
+
+    /// <summary>
+    /// The friends of a user are the users it follows who follow it back, the most recent follow of the user first; a
+    /// user followed without following back, or following without being followed back, is not listed.
+    /// </summary>
+    [Fact]
+    public async Task GetFriends_ReturnsMutualFollowsMostRecentFirst()
+    {
+        const string LeaId = "44444444-4444-4444-4444-444444444444";
+        const string MarcId = "55555555-5555-5555-5555-555555555555";
+        _factory.RatingService.Profiles[LeaId] = new Profile { Id = LeaId, Username = "lea" };
+        _factory.RatingService.Profiles[MarcId] = new Profile { Id = MarcId, Username = "marc" };
+        AddFollow(MeId, CamilleId, day: 1);
+        AddFollow(CamilleId, MeId, day: 2);
+        AddFollow(MeId, HugoId, day: 3);
+        AddFollow(MarcId, MeId, day: 4);
+        AddFollow(LeaId, MeId, day: 5);
+        AddFollow(MeId, LeaId, day: 6);
+
+        List<UserSummaryResponse> friends = await ProfilesAsync(HttpMethod.Get, $"/api/users/{MeId}/friends");
+
+        Assert.Equal([new UserSummaryResponse(LeaId, "lea", null), new UserSummaryResponse(CamilleId, "camille", "https://img.test/camille.png")], friends);
+    }
+
+    /// <summary>
+    /// A user whose follows all go one way has no friend: an empty list rather than a 404.
+    /// </summary>
+    [Fact]
+    public async Task GetFriends_NoMutualFollow_ReturnsEmptyList()
+    {
+        AddFollow(MeId, CamilleId, day: 1);
+        AddFollow(HugoId, MeId, day: 2);
+
+        Assert.Empty(await ProfilesAsync(HttpMethod.Get, $"/api/users/{MeId}/friends"));
     }
 
     /// <summary>
@@ -291,6 +313,7 @@ public class FollowsControllerTests : IDisposable
     {
         { "GET", "followers" },
         { "GET", "following" },
+        { "GET", "friends" },
         { "PUT", "follow" },
         { "DELETE", "follow" }
     };

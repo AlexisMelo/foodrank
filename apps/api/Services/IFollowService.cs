@@ -28,6 +28,16 @@ public interface IFollowService
     Task<Result<IReadOnlyList<UserSummaryResponse>>> GetFollowingAsync(string userId, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Returns the profiles of the friends of <paramref name="userId"/>: the users it follows who follow it back, the
+    /// most recent follow of <paramref name="userId"/> first.
+    /// </summary>
+    /// <param name="userId">Supabase Auth id of the user.</param>
+    /// <param name="cancellationToken">Cancels the database queries.</param>
+    /// <returns>The profiles (empty when the user has no friend), or a NotFound failure when <paramref name="userId"/>
+    /// is not a user id (uuid).</returns>
+    Task<Result<IReadOnlyList<UserSummaryResponse>>> GetFriendsAsync(string userId, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Makes <paramref name="followerId"/> follow <paramref name="userId"/>. Following a user already followed changes
     /// nothing and succeeds.
     /// </summary>

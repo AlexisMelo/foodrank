@@ -19,9 +19,14 @@ public class FakeRatingService(FakeRestaurantService restaurants) : IRatingServi
     public List<Rating> Ratings { get; } = [];
 
     /// <summary>
-    /// Profiles "stored in the database", by user id; a user without profile is shown as anonymous.
+    /// Profiles "stored in the database", by user id; like in the database, every user listed or rating has one.
     /// </summary>
     public Dictionary<string, Profile> Profiles { get; } = [];
+
+    /// <summary>
+    /// Ids of the users a user follows, standing for the "follow" table read by the real service; nobody by default.
+    /// </summary>
+    public Func<string, IEnumerable<string>> FollowedUserIds { get; set; } = _ => [];
 
     /// <inheritdoc />
     public Task<Result<Rating>> CreateAsync(string restaurantId, string userId, RateRestaurantRequest request, CancellationToken cancellationToken)
@@ -100,6 +105,19 @@ public class FakeRatingService(FakeRestaurantService restaurants) : IRatingServi
         return Task.FromResult(Result<IReadOnlyList<UserRatingResponse>>.Success(userRatings));
     }
 
+    /// <inheritdoc />
+    public Task<IReadOnlyList<FollowedRatingResponse>> GetFromFollowedUsersAsync(string userId, int count, CancellationToken cancellationToken)
+    {
+        HashSet<string> followedIds = FollowedUserIds(userId).ToHashSet();
+        List<FollowedRatingResponse> ratings = Ratings
+            .Where(r => followedIds.Contains(r.UserId))
+            .OrderByDescending(r => r.Date)
+            .Take(count)
+            .Select(r => FollowedRatingResponse.From(r, restaurants.Restaurants.Single(x => x.Id == r.RestaurantId), Profiles[r.UserId]))
+            .ToList();
+        return Task.FromResult<IReadOnlyList<FollowedRatingResponse>>(ratings);
+    }
+
     /// <summary>
     /// Returns at most <paramref name="count"/> ratings of the restaurant matching <paramref name="predicate"/>, most
     /// recent first and with their author, or NotFound when the restaurant does not exist.
@@ -113,7 +131,7 @@ public class FakeRatingService(FakeRestaurantService restaurants) : IRatingServi
             .Where(r => r.RestaurantId == restaurantId && predicate(r))
             .OrderByDescending(r => r.Date)
             .Take(count)
-            .Select(r => RatingResponse.From(r, Profiles.GetValueOrDefault(r.UserId)))
+            .Select(r => RatingResponse.From(r, Profiles[r.UserId]))
             .ToList();
         return Result<IReadOnlyList<RatingResponse>>.Success(ratings);
     }

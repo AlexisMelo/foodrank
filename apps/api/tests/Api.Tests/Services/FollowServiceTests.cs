@@ -52,6 +52,51 @@ public class FollowServiceTests
     }
 
     /// <summary>
+    /// The query of the follows of a user, or of the follows of others to the user, filters on the column given and
+    /// orders them the most recent first.
+    /// </summary>
+    [Theory]
+    [InlineData("id_follower")]
+    [InlineData("id_followed")]
+    public void UserFollowsQuery_FiltersOnUserMostRecentFirst(string userColumn)
+    {
+        IPostgrestTable<Follow> table = new Supabase.Postgrest.Client("http://localhost/rest/v1").Table<Follow>();
+
+        string url = Uri.UnescapeDataString(FollowService.UserFollowsQuery(table, userColumn, FollowerId).GenerateUrl());
+
+        Assert.Contains($"{userColumn}=eq.{FollowerId}", url);
+        Assert.Contains("order=created_at.desc", url);
+    }
+
+    /// <summary>
+    /// Builds <paramref name="followerId"/> following <paramref name="followedId"/>.
+    /// </summary>
+    private static Follow FollowOf(string followerId, string followedId) => new() { FollowerId = followerId, FollowedId = followedId };
+
+    /// <summary>
+    /// The friends of a user are the users it follows who follow it back, in the order of its follows; a user it follows
+    /// without being followed back, or following it without being followed back, is not a friend.
+    /// </summary>
+    [Fact]
+    public void FriendIds_KeepsMutualFollowsInOrderOfFollowing()
+    {
+        Follow[] following = [FollowOf("me", "camille"), FollowOf("me", "hugo"), FollowOf("me", "lea")];
+        Follow[] followers = [FollowOf("lea", "me"), FollowOf("marc", "me"), FollowOf("camille", "me")];
+
+        Assert.Equal(["camille", "lea"], FollowService.FriendIds(following, followers));
+    }
+
+    /// <summary>
+    /// A user who follows nobody, or whom nobody follows, has no friend.
+    /// </summary>
+    [Fact]
+    public void FriendIds_OneWayOnly_ReturnsEmpty()
+    {
+        Assert.Empty(FollowService.FriendIds([FollowOf("me", "camille")], []));
+        Assert.Empty(FollowService.FriendIds([], [FollowOf("camille", "me")]));
+    }
+
+    /// <summary>
     /// Another user can be followed.
     /// </summary>
     [Fact]

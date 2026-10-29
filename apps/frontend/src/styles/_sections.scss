@@ -1,0 +1,76 @@
+@use 'chip';
+@use 'hover';
+
+// Sections of the home and community pages: a title with an optional "See all" chip, then a row of cards scrolling
+// sideways (reviews, tierlists, friends) or a list, with their empty message and loading skeleton. Used with
+// `@use 'sections';`
+
+.section {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: #ffffff;
+  margin: 0;
+}
+
+.cards-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.cards-row::-webkit-scrollbar {
+  display: none;
+}
+
+.see-all-chip {
+  @include chip.size;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.45);
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.see-all-chip {
+  @include hover.background(rgba(255, 255, 255, 0.08));
+}
+
+.empty {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+  padding: 20px 0;
+}
+
+/* Skeleton */
+.card-skeleton {
+  flex-shrink: 0;
+  // Same size as RecentReviewCard (.review-card), so the page does not shift once the reviews are loaded
+  width: 148px;
+  height: 216px;
+  background: #1a1a1a;
+  border-radius: 20px;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}

@@ -105,6 +105,16 @@ describe('UserApi', () => {
       expect(await following).toEqual([]);
     });
 
+    it("reads a user's friends, the id encoded, with the session cookie", async () => {
+      const result = firstValueFrom(api.fetchFriends('a/b'));
+      const req = httpTesting.expectOne('http://api.test/api/users/a%2Fb/friends');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush([camille]);
+
+      expect(await result).toEqual([camille]);
+    });
+
     it('follows a user with a PUT without body, returning their followers', async () => {
       const result = firstValueFrom(api.follow('u3'));
       const req = httpTesting.expectOne('http://api.test/api/users/u3/follow');

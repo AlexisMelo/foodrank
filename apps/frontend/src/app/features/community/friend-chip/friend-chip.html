@@ -1,0 +1,4 @@
+<a [routerLink]="['/user', id()]" class="friend-chip">
+  <app-user-avatar class="friend-avatar" [name]="name()" [avatarUrl]="avatarUrl()" />
+  <span class="friend-name">{{ name() }}</span>
+</a>

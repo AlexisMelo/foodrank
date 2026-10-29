@@ -1,5 +1,6 @@
 /**
- * User listed among others (GET /api/users/search, /api/users/:id/followers and /following): only what a row shows.
+ * User listed among others (GET /api/users/search, /api/users/:id/followers, /following and /friends): only what a
+ * row shows.
  * The API gives no number of restaurants rated here, which would read the ratings of every user listed.
  */
 export interface UserSummary {
@@ -9,7 +10,7 @@ export interface UserSummary {
   id: string;
 
   /**
-   * User name (pseudonym), else "Anonymous"
+   * User name (pseudonym)
    */
   name: string;
 

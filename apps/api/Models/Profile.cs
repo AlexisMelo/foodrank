@@ -16,10 +16,10 @@ public class Profile : BaseModel
     public string Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Unique pseudonym, the name displayed for the user. Chosen when signing up; older accounts may have none.
+    /// Unique pseudonym, the name displayed for the user, chosen when signing up.
     /// </summary>
     [Column("username")]
-    public string? Username { get; set; }
+    public string Username { get; set; } = string.Empty;
 
     /// <summary>
     /// URL of the profile picture, when the user uploaded one.
@@ -40,23 +40,10 @@ public class Profile : BaseModel
     public string? Identity { get; set; }
 
     /// <summary>
-    /// Name displayed when the user has no profile, or no user name.
-    /// </summary>
-    public const string AnonymousName = "Anonymous";
-
-    /// <summary>
-    /// Name displayed for the user owning <paramref name="profile"/>.
-    /// </summary>
-    /// <param name="profile">Profile row of the user, null when the user has none.</param>
-    /// <returns>The user name, or <see cref="AnonymousName"/> when there is none.</returns>
-    public static string DisplayName(Profile? profile)
-        => string.IsNullOrWhiteSpace(profile?.Username) ? AnonymousName : profile.Username;
-
-    /// <summary>
     /// Profile picture of the user owning <paramref name="profile"/>.
     /// </summary>
-    /// <param name="profile">Profile row of the user, null when the user has none.</param>
-    /// <returns>The avatar url, null when there is none (no profile, or a blank url).</returns>
-    public static string? AvatarUrlOrNull(Profile? profile)
-        => string.IsNullOrWhiteSpace(profile?.AvatarUrl) ? null : profile.AvatarUrl;
+    /// <param name="profile">Profile row of the user.</param>
+    /// <returns>The avatar url, null when there is none (or a blank url).</returns>
+    public static string? AvatarUrlOrNull(Profile profile)
+        => string.IsNullOrWhiteSpace(profile.AvatarUrl) ? null : profile.AvatarUrl;
 }

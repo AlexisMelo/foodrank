@@ -1,0 +1,40 @@
+@use 'hover';
+
+// The inner link is the item of the parent row: the host adds no box of its own
+:host {
+  display: contents;
+}
+
+// Same size as a tierlist card of the home page (TierlistChip), with a round picture instead of the square cover
+.friend-chip {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  width: 72px;
+  @include hover.background(#252525, '.friend-avatar');
+}
+
+.friend-avatar {
+  width: 72px;
+  height: 72px;
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 28px;
+  color: #ffffff;
+  transition: background 0.15s;
+}
+
+.friend-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

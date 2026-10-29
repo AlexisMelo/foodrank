@@ -1,0 +1,38 @@
+@use 'sections';
+
+.community {
+  color: #ffffff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.page-title {
+  font-size: 30px;
+  font-weight: 800;
+  margin: 0 0 4px;
+  letter-spacing: -0.5px;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+}
+
+// Same size as a FriendChip: the picture, then the room of the name under it (gap 8 + line 14)
+.friend-skeleton {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 22px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+// Room for the lower half of the author chips, which overflow the cards: the scrolling row would cut it
+.reviews-row {
+  padding-bottom: 18px;
+}

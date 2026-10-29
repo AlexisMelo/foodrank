@@ -1,0 +1,21 @@
+<div class="followed-review">
+  <app-recent-review-card
+    [restaurantId]="rating().restaurantId"
+    [emoji]="rating().restaurantEmoji"
+    [name]="rating().restaurantName"
+    [date]="rating().date"
+    [food]="rating().food"
+    [service]="rating().service"
+    [decor]="rating().setting"
+    [active]="rating().isActive"
+  />
+  <!-- A link of its own next to the card, not inside it: a link cannot hold another one -->
+  <a class="author-chip" [routerLink]="['/user', rating().userId]">
+    <app-user-avatar
+      class="author-avatar"
+      [name]="rating().userName"
+      [avatarUrl]="rating().userAvatarUrl"
+    />
+    <span class="author-name">{{ rating().userName }}</span>
+  </a>
+</div>

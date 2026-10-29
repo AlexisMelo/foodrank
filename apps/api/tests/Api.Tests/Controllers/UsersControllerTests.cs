@@ -27,6 +27,11 @@ public class UsersControllerTests : IDisposable
     private const string OtherId = "22222222-2222-2222-2222-222222222222";
 
     /// <summary>
+    /// Id of a third user, not followed unless a test says so.
+    /// </summary>
+    private const string ThirdId = "33333333-3333-3333-3333-333333333333";
+
+    /// <summary>
     /// In-memory API, recreated for each test so data does not leak between tests.
     /// </summary>
     private readonly ApiFactory _factory = new();
@@ -110,20 +115,6 @@ public class UsersControllerTests : IDisposable
         HttpResponseMessage response = await GetAsync("/api/users/me", token: null);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    /// <summary>
-    /// A logged-in user without profile row is returned as anonymous rather than failing.
-    /// </summary>
-    [Fact]
-    public async Task GetMe_NoProfileRow_ReturnsAnonymous()
-    {
-        _factory.RatingService.Profiles.Clear();
-
-        UserProfileResponse profile = (await (await GetAsync("/api/users/me")).Content.ReadFromJsonAsync<UserProfileResponse>())!;
-
-        Assert.Equal(Profile.AnonymousName, profile.Name);
-        Assert.Equal(0, profile.RatedRestaurantsCount);
     }
 
     /// <summary>
@@ -439,6 +430,117 @@ public class UsersControllerTests : IDisposable
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Empty((await response.Content.ReadFromJsonAsync<List<UserRatingResponse>>())!);
+    }
+
+    /// <summary>
+    /// Stores the logged-in user following <paramref name="userId"/>.
+    /// </summary>
+    private void FollowUser(string userId)
+        => _factory.FollowService.Follows.Add(new Follow { FollowerId = MeId, FollowedId = userId, CreatedAt = DateTime.UtcNow });
+
+    /// <summary>
+    /// Sends a GET to "me/following/ratings" (with <paramref name="query"/>), checks the 200 and reads the ratings.
+    /// </summary>
+    private async Task<List<FollowedRatingResponse>> FollowedRatingsAsync(string query = "")
+    {
+        HttpResponseMessage response = await GetAsync($"/api/users/me/following/ratings{query}");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        return (await response.Content.ReadFromJsonAsync<List<FollowedRatingResponse>>())!;
+    }
+
+    /// <summary>
+    /// "me/following/ratings" returns the ratings of the users the logged-in user follows, most recent first, with
+    /// their restaurant and author, previous ratings included; the logged-in user's own ratings and those of users not
+    /// followed are left out.
+    /// </summary>
+    [Fact]
+    public async Task GetFollowedRatings_ReturnsRatingsOfFollowedUsersMostRecentFirst()
+    {
+        _factory.RatingService.Profiles[OtherId] = new Profile { Id = OtherId, Username = "camille", AvatarUrl = "https://img.test/camille.png" };
+        _factory.RatingService.Profiles[ThirdId] = new Profile { Id = ThirdId, Username = "hugo" };
+        FollowUser(OtherId);
+        FollowUser(ThirdId);
+        AddRating(OtherId, "r1", new DateTime(2026, 3, 1), isActive: false);
+        AddRating(ThirdId, "r1", new DateTime(2026, 3, 2));
+        AddRating(OtherId, "r1", new DateTime(2026, 3, 3), food: 90);
+        AddRating(MeId, "r2", new DateTime(2026, 3, 4));
+        _factory.FollowService.Follows.Add(new Follow { FollowerId = ThirdId, FollowedId = MeId });
+
+        List<FollowedRatingResponse> ratings = await FollowedRatingsAsync();
+
+        Assert.Equal([OtherId, ThirdId, OtherId], ratings.Select(r => r.UserId));
+        Assert.Equal(
+            new FollowedRatingResponse("r1", "Pizza Roma", "🍕", new DateTimeOffset(2026, 3, 3, 0, 0, 0, TimeSpan.Zero), 90, 60, 70, false, true, OtherId, "camille", "https://img.test/camille.png"),
+            ratings[0]);
+        Assert.Equal("hugo", ratings[1].UserName);
+        Assert.False(ratings[2].IsActive);
+    }
+
+    /// <summary>
+    /// Ratings of users followed by someone else, but not by the logged-in user, are left out.
+    /// </summary>
+    [Fact]
+    public async Task GetFollowedRatings_UserNotFollowed_LeftOut()
+    {
+        FollowUser(OtherId);
+        _factory.FollowService.Follows.Add(new Follow { FollowerId = OtherId, FollowedId = ThirdId });
+        AddRating(ThirdId, "r1", new DateTime(2026, 3, 1));
+
+        Assert.Empty(await FollowedRatingsAsync());
+    }
+
+    /// <summary>
+    /// The 5 most recent ratings by default, or as many as the limit asks for.
+    /// </summary>
+    [Theory]
+    [InlineData("", 5)]
+    [InlineData("?limit=2", 2)]
+    public async Task GetFollowedRatings_KeepsMostRecent(string query, int expected)
+    {
+        _factory.RatingService.Profiles[OtherId] = new Profile { Id = OtherId, Username = "camille" };
+        FollowUser(OtherId);
+        for (int day = 1; day <= 7; day++)
+            AddRating(OtherId, day % 2 == 0 ? "r1" : "r2", new DateTime(2026, 3, day));
+
+        List<FollowedRatingResponse> ratings = await FollowedRatingsAsync(query);
+
+        Assert.Equal(expected, ratings.Count);
+        Assert.Equal(new DateTimeOffset(2026, 3, 7, 0, 0, 0, TimeSpan.Zero), ratings[0].Date);
+    }
+
+    /// <summary>
+    /// A user who follows nobody gets an empty list.
+    /// </summary>
+    [Fact]
+    public async Task GetFollowedRatings_FollowsNobody_ReturnsEmptyList()
+    {
+        AddRating(OtherId, "r1", new DateTime(2026, 3, 1));
+
+        Assert.Empty(await FollowedRatingsAsync());
+    }
+
+    /// <summary>
+    /// A limit outside 1-50 is refused with a 400.
+    /// </summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(51)]
+    public async Task GetFollowedRatings_LimitOutOfRange_Returns400(int limit)
+    {
+        HttpResponseMessage response = await GetAsync($"/api/users/me/following/ratings?limit={limit}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    /// <summary>
+    /// Without the auth cookie, "me/following/ratings" is refused with a 401.
+    /// </summary>
+    [Fact]
+    public async Task GetFollowedRatings_NoCookie_Returns401()
+    {
+        HttpResponseMessage response = await GetAsync("/api/users/me/following/ratings", token: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     /// <summary>

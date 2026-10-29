@@ -3,8 +3,8 @@ import { RouterLink } from '@angular/router';
 import { formatRatingDate, ratingAverage, scoreColor } from '@/core/utils/rating';
 
 /**
- * Card of a rating given by the logged-in user: the restaurant, the day, the average and a bar per criterion. Opens
- * the restaurant page.
+ * Card of a rating, given by the logged-in user (home page) or by a user they follow (community page): the restaurant,
+ * the day, the average and a bar per criterion. Opens the restaurant page.
  */
 @Component({
   imports: [RouterLink],

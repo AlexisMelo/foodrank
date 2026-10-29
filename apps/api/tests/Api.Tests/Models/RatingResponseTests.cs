@@ -24,12 +24,17 @@ public class RatingResponseTests
     };
 
     /// <summary>
+    /// Profile of the author of <see cref="SampleRating"/>.
+    /// </summary>
+    private static readonly Profile SampleProfile = new() { Id = "user-1", Username = "alex" };
+
+    /// <summary>
     /// The scores, the bonus and the ids are copied, and the moment is sent in UTC.
     /// </summary>
     [Fact]
     public void From_Rating_CopiesScoresAndSendsMomentInUtc()
     {
-        RatingResponse response = RatingResponse.From(SampleRating, null);
+        RatingResponse response = RatingResponse.From(SampleRating, SampleProfile);
 
         Assert.Equal("r1", response.RestaurantId);
         Assert.Equal("user-1", response.UserId);
@@ -50,7 +55,7 @@ public class RatingResponseTests
     {
         Rating previous = new() { RestaurantId = "r1", UserId = "user-1", Date = new DateTimeOffset(2026, 3, 1, 12, 0, 0, TimeSpan.Zero), IsActive = false };
 
-        Assert.False(RatingResponse.From(previous, null).IsActive);
+        Assert.False(RatingResponse.From(previous, SampleProfile).IsActive);
     }
 
     /// <summary>
@@ -65,33 +70,5 @@ public class RatingResponseTests
 
         Assert.Equal("alex", response.UserName);
         Assert.Equal("https://img.test/a.png", response.UserAvatarUrl);
-    }
-
-    /// <summary>
-    /// A missing or blank user name is shown as anonymous.
-    /// </summary>
-    [Theory]
-    [InlineData(null)]
-    [InlineData("  ")]
-    public void From_BlankUsername_IsAnonymous(string? username)
-    {
-        Profile profile = new() { Id = "user-1", Username = username };
-
-        Assert.Equal(Profile.AnonymousName, RatingResponse.From(SampleRating, profile).UserName);
-    }
-
-    /// <summary>
-    /// A profile with no name, or no profile at all, is shown as anonymous without avatar.
-    /// </summary>
-    [Fact]
-    public void From_NoName_IsAnonymous()
-    {
-        RatingResponse withEmptyProfile = RatingResponse.From(SampleRating, new Profile { Id = "user-1", AvatarUrl = "" });
-        RatingResponse withoutProfile = RatingResponse.From(SampleRating, null);
-
-        Assert.Equal(Profile.AnonymousName, withEmptyProfile.UserName);
-        Assert.Null(withEmptyProfile.UserAvatarUrl);
-        Assert.Equal(Profile.AnonymousName, withoutProfile.UserName);
-        Assert.Null(withoutProfile.UserAvatarUrl);
     }
 }

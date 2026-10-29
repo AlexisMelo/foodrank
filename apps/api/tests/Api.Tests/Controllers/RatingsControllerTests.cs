@@ -37,12 +37,14 @@ public class RatingsControllerTests : IDisposable
     private readonly HttpClient _client;
 
     /// <summary>
-    /// Creates the client, a restaurant and a valid token.
+    /// Creates the client, a restaurant, the profiles of the users rating in the tests and a valid token.
     /// </summary>
     public RatingsControllerTests()
     {
         _client = _factory.CreateClient();
         _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = RestaurantId, Name = "Pizza Roma" });
+        foreach (string userId in new[] { UserId, "user-2", "user-3" })
+            _factory.RatingService.Profiles[userId] = new Profile { Id = userId, Username = userId };
         _factory.AuthService.UserIdsByToken[Token] = UserId;
     }
 

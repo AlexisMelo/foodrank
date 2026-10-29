@@ -153,43 +153,104 @@ public class RatingService(Supabase.Client supabase, IRestaurantService restaura
         return Result<IReadOnlyList<UserRatingResponse>>.Success(await WithRestaurantsAsync(response.Models, cancellationToken));
     }
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<FollowedRatingResponse>> GetFromFollowedUsersAsync(string userId, int count, CancellationToken cancellationToken)
+    {
+        // Only the ids of the users followed are needed
+        ModeledResponse<Follow> follows = await supabase.From<Follow>()
+            .Select("id_followed")
+            .Where(f => f.FollowerId == userId)
+            .Get(cancellationToken);
+        if (follows.Models.Count == 0)
+            return [];
+
+        List<string> followedIds = follows.Models.Select(f => f.FollowedId).ToList();
+        ModeledResponse<Rating> response = await UsersRecentRatingsQuery(supabase.From<Rating>(), followedIds, count).Get(cancellationToken);
+        if (response.Models.Count == 0)
+            return [];
+
+        Dictionary<string, Restaurant> restaurantsById = await RestaurantsByIdAsync(response.Models, cancellationToken);
+        Dictionary<string, Profile> profilesById = await ProfilesByIdAsync(response.Models, cancellationToken);
+
+        // The foreign key guarantees the restaurant exists; skip defensively rather than fail the whole list
+        return response.Models
+            .Where(r => restaurantsById.ContainsKey(r.RestaurantId))
+            .Select(r => FollowedRatingResponse.From(r, restaurantsById[r.RestaurantId], profilesById[r.UserId]))
+            .ToList();
+    }
+
     /// <summary>
-    /// Loads the profiles of the users who gave <paramref name="ratings"/> in one query, and maps each rating with its
-    /// author. "rating.id_user" has no foreign key to "profiles", so PostgREST cannot embed them in the ratings query.
+    /// Query of the <paramref name="count"/> most recent ratings given by any of <paramref name="userIds"/>, active or
+    /// not, all restaurants included, most recent first.
+    /// </summary>
+    /// <param name="ratings">Query on the "rating" table to filter.</param>
+    /// <param name="userIds">Supabase Auth ids of the authors (not empty: PostgREST refuses an empty list).</param>
+    /// <param name="count">Maximum number of ratings.</param>
+    /// <returns>The filtered query, ready to send.</returns>
+    public static IPostgrestTable<Rating> UsersRecentRatingsQuery(IPostgrestTable<Rating> ratings, IReadOnlyList<string> userIds, int count)
+        => ratings
+            .Filter("id_user", Constants.Operator.In, userIds.Cast<object>().ToList())
+            .Order("date", Constants.Ordering.Descending)
+            .Limit(count);
+
+    /// <summary>
+    /// Maps each of <paramref name="ratings"/> with its author.
     /// </summary>
     private async Task<IReadOnlyList<RatingResponse>> WithProfilesAsync(IReadOnlyList<Rating> ratings, CancellationToken cancellationToken)
     {
         if (ratings.Count == 0)
             return [];
 
-        List<object> userIds = ratings.Select(r => r.UserId).Distinct().Cast<object>().ToList();
-        ModeledResponse<Profile> profiles = await supabase.From<Profile>()
-            .Filter("id", Constants.Operator.In, userIds)
-            .Get(cancellationToken);
-        Dictionary<string, Profile> profilesById = profiles.Models.ToDictionary(p => p.Id);
-
-        return ratings.Select(r => RatingResponse.From(r, profilesById.GetValueOrDefault(r.UserId))).ToList();
+        Dictionary<string, Profile> profilesById = await ProfilesByIdAsync(ratings, cancellationToken);
+        return ratings.Select(r => RatingResponse.From(r, profilesById[r.UserId])).ToList();
     }
 
     /// <summary>
-    /// Loads the restaurants rated in <paramref name="ratings"/> in one query, and maps each rating with its restaurant.
+    /// Maps each of <paramref name="ratings"/> with its restaurant.
     /// </summary>
     private async Task<IReadOnlyList<UserRatingResponse>> WithRestaurantsAsync(IReadOnlyList<Rating> ratings, CancellationToken cancellationToken)
     {
         if (ratings.Count == 0)
             return [];
 
-        List<object> restaurantIds = ratings.Select(r => r.RestaurantId).Distinct().Cast<object>().ToList();
-        ModeledResponse<Restaurant> restaurants = await supabase.From<Restaurant>()
-            .Filter("id", Constants.Operator.In, restaurantIds)
-            .Get(cancellationToken);
-        Dictionary<string, Restaurant> restaurantsById = restaurants.Models.ToDictionary(r => r.Id);
+        Dictionary<string, Restaurant> restaurantsById = await RestaurantsByIdAsync(ratings, cancellationToken);
 
         // The foreign key guarantees the restaurant exists; skip defensively rather than fail the whole list
         return ratings
             .Where(r => restaurantsById.ContainsKey(r.RestaurantId))
             .Select(r => UserRatingResponse.From(r, restaurantsById[r.RestaurantId]))
             .ToList();
+    }
+
+    /// <summary>
+    /// Loads the profiles of the users who gave <paramref name="ratings"/> in one query. "rating.id_user" has no foreign
+    /// key to "profiles", so PostgREST cannot embed them in the ratings query.
+    /// </summary>
+    /// <param name="ratings">Ratings whose authors are loaded, not empty.</param>
+    /// <param name="cancellationToken">Cancels the database query.</param>
+    /// <returns>The profiles by user id.</returns>
+    private async Task<Dictionary<string, Profile>> ProfilesByIdAsync(IReadOnlyList<Rating> ratings, CancellationToken cancellationToken)
+    {
+        List<object> userIds = ratings.Select(r => r.UserId).Distinct().Cast<object>().ToList();
+        ModeledResponse<Profile> profiles = await supabase.From<Profile>()
+            .Filter("id", Constants.Operator.In, userIds)
+            .Get(cancellationToken);
+        return profiles.Models.ToDictionary(p => p.Id);
+    }
+
+    /// <summary>
+    /// Loads the restaurants rated in <paramref name="ratings"/> in one query.
+    /// </summary>
+    /// <param name="ratings">Ratings whose restaurants are loaded, not empty.</param>
+    /// <param name="cancellationToken">Cancels the database query.</param>
+    /// <returns>The restaurants by id.</returns>
+    private async Task<Dictionary<string, Restaurant>> RestaurantsByIdAsync(IReadOnlyList<Rating> ratings, CancellationToken cancellationToken)
+    {
+        List<object> restaurantIds = ratings.Select(r => r.RestaurantId).Distinct().Cast<object>().ToList();
+        ModeledResponse<Restaurant> restaurants = await supabase.From<Restaurant>()
+            .Filter("id", Constants.Operator.In, restaurantIds)
+            .Get(cancellationToken);
+        return restaurants.Models.ToDictionary(r => r.Id);
     }
 
     /// <summary>

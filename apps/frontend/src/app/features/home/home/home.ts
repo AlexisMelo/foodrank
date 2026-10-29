@@ -7,10 +7,10 @@ import { byLastUpdate } from '@/core/utils/tierlist';
 import { injectUserProfile } from '@/shared/data/user-profile';
 import { NewReviewChip } from '@/shared/ui/new-review-chip/new-review-chip';
 import { RankedRestaurantItem } from '@/shared/ui/ranked-restaurant-item/ranked-restaurant-item';
+import { RecentReviewCard } from '@/shared/ui/recent-review-card/recent-review-card';
 import { TierlistChip } from '@/shared/ui/tierlist-chip/tierlist-chip';
 import { UserBar } from '@/shared/ui/user-bar/user-bar';
 import { injectMyRatings } from '../my-ratings';
-import { RecentReviewCard } from '../recent-review-card/recent-review-card';
 
 /**
  * Home page (/): the logged-in user, their recent reviews, their latest tierlists and their favorite restaurants.

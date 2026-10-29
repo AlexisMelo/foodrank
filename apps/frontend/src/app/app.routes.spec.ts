@@ -5,7 +5,7 @@ import { Router, provideRouter, withComponentInputBinding } from '@angular/route
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from './app.routes';
 import { apiInterceptor } from './core/api/api-interceptor';
-import { checkSession } from './core/auth/auth-testing';
+import { SESSION_USER_ID, checkSession } from './core/auth/auth-testing';
 import { unauthorizedInterceptor } from './core/auth/unauthorized-interceptor';
 import { query, textOf } from './testing/dom-testing';
 
@@ -49,6 +49,27 @@ describe('routes', () => {
     expect(TestBed.inject(Router).url).toBe('/foo/bar');
     expect(textOf(query(harness.fixture, 'h1'))).toBe('Page not found');
     expect(query(harness.fixture, '.home-link').getAttribute('href')).toBe('/');
+  });
+
+  it('opens the community page and its friends page', async () => {
+    await checkSession(200);
+    const httpTesting = TestBed.inject(HttpTestingController);
+
+    const harness = await RouterTestingHarness.create('/community');
+    httpTesting.expectOne('/api/places/area').flush({ locality: 'Lyon', isDefault: true });
+    httpTesting.expectOne(`/api/users/${SESSION_USER_ID}/friends`).flush([]);
+    httpTesting.expectOne('/api/users/me/following/ratings?limit=5').flush([]);
+    await harness.fixture.whenStable();
+
+    expect(TestBed.inject(Router).url).toBe('/community');
+    expect(textOf(query(harness.fixture, 'h1'))).toBe('Community');
+
+    await harness.navigateByUrl('/community/friends');
+    httpTesting.expectOne(`/api/users/${SESSION_USER_ID}/friends`).flush([]);
+    await harness.fixture.whenStable();
+
+    expect(TestBed.inject(Router).url).toBe('/community/friends');
+    expect(textOf(query(harness.fixture, 'h1'))).toBe('Friends');
   });
 
   it('sends a logged-out user opening an unknown URL to the login page', async () => {
