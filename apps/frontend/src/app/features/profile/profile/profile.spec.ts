@@ -78,10 +78,12 @@ describe('ProfileView', () => {
   let fetchUserRatings: ReturnType<typeof vi.fn>;
   let fetchRatingAllowance: ReturnType<typeof vi.fn>;
   let fetchPinnedTierlistsByUserId: ReturnType<typeof vi.fn>;
+  let fetchFollowers: ReturnType<typeof vi.fn>;
   let harness: RouterTestingHarness;
 
   beforeEach(async () => {
     fetchUserProfile = vi.fn((id = 'me') => of(profiles[id]));
+    fetchFollowers = vi.fn(() => of([]));
     fetchUserRatings = vi.fn((id = 'me') => of(ratings[id] ?? []));
     fetchRatingAllowance = vi.fn(() => of(CAN_REVIEW));
     fetchPinnedTierlistsByUserId = vi.fn(() => of([]));
@@ -93,7 +95,11 @@ describe('ProfileView', () => {
           provide: AuthStore,
           useValue: { isLoggedIn: signal(true), loggedInUserId: signal('u1') },
         },
-        { provide: UserApi, useValue: { fetchUserProfile } },
+        // The follows of the user shown, under their name; nobody follows anybody unless a test says otherwise
+        {
+          provide: UserApi,
+          useValue: { fetchUserProfile, fetchFollowers, fetchFollowing: () => of([]) },
+        },
         // Ratings of the user shown and of the logged-in user, also read by the home and rating pages; the rating
         // allowance locks the "+" of a restaurant
         { provide: RatingApi, useValue: { fetchUserRatings, fetchRatingAllowance } },
@@ -150,6 +156,33 @@ describe('ProfileView', () => {
     expect(textOf(query(harness.fixture, '.winner-name'))).toBe('Alexis Melo');
     expect(textOf(query(harness.fixture, '.winner-tag'))).toBe('2 restaurants');
     expect(textOf(query(harness.fixture, '.winner-avatar'))).toBe('A');
+  });
+
+  it("shows another user's follows under their name, loaded by their id, with a follow button", async () => {
+    fetchFollowers.mockReturnValue(of([profiles['me']]));
+    await open('/user/u2');
+
+    expect(fetchFollowers).toHaveBeenCalledWith('u2');
+    const follows = query(harness.fixture, '.winner-section app-profile-follows');
+    expect(queryAll(harness.fixture, '.count-btn').map(textOf)).toEqual([
+      '1 follower',
+      '0 following',
+    ]);
+    expect(textOf(query(harness.fixture, '.follow-btn'))).toBe('Following');
+    // Right under the name, above the number of restaurants rated
+    expect(follows.previousElementSibling!.classList).toContain('winner-name');
+    expect(follows.nextElementSibling!.classList).toContain('winner-tag');
+  });
+
+  it('shows my own follows on /profile, loaded by my id rather than "me", without follow button', async () => {
+    await open('/profile');
+
+    expect(fetchFollowers).toHaveBeenCalledWith('u1');
+    expect(queryAll(harness.fixture, '.count-btn').map(textOf)).toEqual([
+      '0 followers',
+      '0 following',
+    ]);
+    expect(queryAll(harness.fixture, '.follow-btn')).toHaveLength(0);
   });
 
   it('ranks the restaurants the user rated, best first, each listed once', async () => {

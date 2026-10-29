@@ -1,0 +1,96 @@
+@use 'hover';
+
+// Heights of the counts and of the follow button, shared with their loading placeholders so the profile does not move
+// once the follows arrive
+$count-height: 26px;
+$follow-height: 36px;
+
+.follows {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+/* Loading */
+.skeleton {
+  border-radius: 100px;
+  background: #1a1a1a;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.counts-skeleton {
+  width: 170px;
+  height: $count-height;
+}
+.follow-skeleton {
+  width: 100px;
+  height: $follow-height;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.counts {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.count-btn {
+  height: $count-height;
+  padding: 0 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  @include hover.background(rgba(255, 255, 255, 0.08));
+}
+
+.count-separator {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+// Not followed yet: the call to action, filled; once followed, outlined
+.follow-btn {
+  height: $follow-height;
+  padding: 0 22px;
+  border-radius: 100px;
+  border: 1.5px solid #ffffff;
+  background: #ffffff;
+  color: #0d0d0d;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    opacity 0.15s;
+
+  @include hover.background(#e6e6e6);
+
+  &.following {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+
+    @include hover.background(rgba(255, 255, 255, 0.08));
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}

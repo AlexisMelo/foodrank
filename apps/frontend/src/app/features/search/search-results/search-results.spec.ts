@@ -11,7 +11,7 @@ import type { UserLocation } from '@/core/models/location.model';
 import { CelebrationStore } from '@/core/celebration/celebration-store';
 import type { PlaceSuggestion, RestaurantFromPlace } from '@/core/models/restaurant.model';
 import type { SearchPage } from '@/core/models/search.model';
-import type { UserProfile } from '@/core/models/user.model';
+import type { UserSummary } from '@/core/models/user.model';
 import { clickButton, query, queryAll, submitForm, textOf, typeIn } from '@/testing/dom-testing';
 import { SearchResults } from './search-results';
 
@@ -41,20 +41,20 @@ function page(query: string, limit: number, total = 30): SearchPage<PlaceSuggest
 }
 
 /**
- * Builds the profile of the user `id` named `name`, who rated `count` restaurants.
+ * Builds the user `id` named `name`, as the user search lists them.
  */
-function user(id: string, name: string, count: number): UserProfile {
-  return { id, name, avatarUrl: null, ratedRestaurantsCount: count };
+function user(id: string, name: string): UserSummary {
+  return { id, name, avatarUrl: null };
 }
 
 /**
  * Answer of the user search asked for `limit` users, when it finds `total` users: "User 1", "User 2"... and whether
  * there are more.
  */
-function userPage(limit: number, total = 30): SearchPage<UserProfile> {
+function userPage(limit: number, total = 30): SearchPage<UserSummary> {
   const count = Math.min(limit, total);
   return {
-    results: Array.from({ length: count }, (_, i) => user(`u${i + 1}`, `User ${i + 1}`, 0)),
+    results: Array.from({ length: count }, (_, i) => user(`u${i + 1}`, `User ${i + 1}`)),
     hasMore: total > limit,
   };
 }
@@ -92,7 +92,7 @@ describe('SearchResults', () => {
       of(page(query, limit)),
     );
     searchUsers = vi.fn(() =>
-      of({ results: [user('u2', 'Camille', 2), user('u3', 'Camilou', 1)], hasMore: false }),
+      of({ results: [user('u2', 'Camille'), user('u3', 'Camilou')], hasMore: false }),
     );
     createRestaurantFromPlace = vi.fn(() => of(stored(true)));
     requestLocation = vi.fn();
@@ -257,10 +257,8 @@ describe('SearchResults', () => {
     ]);
     expect(searchUsers).toHaveBeenCalledExactlyOnceWith('pizza', 5);
     expect(profileNames()).toEqual(['Camille', 'Camilou']);
-    expect(queryAll(harness.fixture, '.profile-item .item-meta').map(textOf)).toEqual([
-      '2 restaurants',
-      '1 restaurant',
-    ]);
+    // Only the name: the API gives no number of restaurants rated in the search
+    expect(queryAll(harness.fixture, '.profile-item .item-meta')).toHaveLength(0);
   });
 
   it('shows no "Show more" on the All tab, but "See all" next to each title, even when every result is shown', async () => {
@@ -484,7 +482,7 @@ describe('SearchResults', () => {
   });
 
   it('shows the first 10 profiles of their tab, then 10 more on each "Show more", keeping the ones shown while they load', async () => {
-    const more = new Subject<SearchPage<UserProfile>>();
+    const more = new Subject<SearchPage<UserSummary>>();
     searchUsers.mockReturnValueOnce(of(userPage(10))).mockReturnValueOnce(more);
     await open('/search?q=user&type=profiles');
     expect(profileNames()).toHaveLength(10);

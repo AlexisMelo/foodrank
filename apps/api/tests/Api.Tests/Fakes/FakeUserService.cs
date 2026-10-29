@@ -26,20 +26,24 @@ public class FakeUserService(FakeRatingService ratings) : IUserService
     }
 
     /// <inheritdoc />
-    public Task<SearchPage<UserProfileResponse>> SearchAsync(string query, int limit, string excludedUserId, CancellationToken cancellationToken)
+    public Task<SearchPage<UserSummaryResponse>> SearchAsync(string query, int limit, string excludedUserId, CancellationToken cancellationToken)
     {
         string trimmed = query.Trim();
         if (trimmed.Length < UserRanking.MinQueryLength)
-            return Task.FromResult(new SearchPage<UserProfileResponse>([], false));
+            return Task.FromResult(new SearchPage<UserSummaryResponse>([], false));
 
         IReadOnlyList<Profile> ranked = UserRanking.Rank(ratings.Profiles.Values.Where(p => p.Id != excludedUserId), trimmed);
-        List<UserProfileResponse> shown = ranked.Take(limit)
-            .Select(p => UserProfileResponse.From(
-                p.Id,
-                p,
-                ratings.Ratings.Where(r => r.UserId == p.Id).Select(r => r.RestaurantId)))
+        List<UserSummaryResponse> shown = ranked.Take(limit).Select(p => UserSummaryResponse.From(p.Id, p)).ToList();
+        return Task.FromResult(new SearchPage<UserSummaryResponse>(shown, ranked.Count > limit));
+    }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<UserSummaryResponse>> GetProfilesAsync(IReadOnlyList<string> userIds, CancellationToken cancellationToken)
+    {
+        IReadOnlyList<UserSummaryResponse> users = userIds
+            .Select(id => UserSummaryResponse.From(id, ratings.Profiles.GetValueOrDefault(id)))
             .ToList();
-        return Task.FromResult(new SearchPage<UserProfileResponse>(shown, ranked.Count > limit));
+        return Task.FromResult(users);
     }
 
     /// <inheritdoc />

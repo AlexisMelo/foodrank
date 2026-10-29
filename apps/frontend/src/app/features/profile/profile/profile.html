@@ -4,7 +4,9 @@
   } @else if (user.loadError()) {
     <p class="load-error" role="alert">Couldn't load this profile, try again.</p>
   } @else if (user.profile(); as profile) {
-    <app-profile-header [profile]="profile" />
+    <app-profile-header [profile]="profile">
+      <app-profile-follows [profile]="profile" />
+    </app-profile-header>
 
     <!-- Pinned tierlists -->
     <app-pinned-tierlists [userId]="profile.id" />

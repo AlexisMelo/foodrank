@@ -9,7 +9,6 @@ import {
 import { USER_SEARCH_MAX_RESULTS, USER_SEARCH_MIN_LENGTH, UserApi } from '@/core/api/user-api';
 import { LocationStore } from '@/core/location/location-store';
 import type { PlaceSuggestion } from '@/core/models/restaurant.model';
-import { restaurantCountLabel } from '@/core/utils/profile';
 import { injectOpenPlace } from '@/shared/data/open-place';
 import { injectPagedSearch } from '@/shared/data/paged-search';
 import { type ChipOption, ChoiceChips } from '@/shared/ui/choice-chips/choice-chips';
@@ -179,11 +178,6 @@ export class SearchResults {
    * profiles
    */
   protected readonly profileSkeletons = [1, 2, 3];
-
-  /**
-   * Line under a profile's name, e.g. "3 restaurants"
-   */
-  protected readonly restaurantCountLabel = restaurantCountLabel;
 
   constructor() {
     this.locationStore.requestLocation();
