@@ -7,7 +7,7 @@ import {
   RestaurantApi,
 } from '@/core/api/restaurant-api';
 import { USER_SEARCH_MAX_RESULTS, USER_SEARCH_MIN_LENGTH, UserApi } from '@/core/api/user-api';
-import { UserLocation } from '@/core/location/user-location';
+import { LocationStore } from '@/core/location/location-store';
 import type { PlaceSuggestion } from '@/core/models/restaurant.model';
 import { restaurantCountLabel } from '@/core/utils/profile';
 import { injectOpenPlace } from '@/shared/data/open-place';
@@ -91,7 +91,7 @@ export class SearchResults {
   /**
    * Position of the user, sent with the restaurant search to favor nearby restaurants; asked for when the page opens
    */
-  private readonly userLocation = inject(UserLocation);
+  private readonly locationStore = inject(LocationStore);
 
   /**
    * Query searched, trimmed; empty when missing
@@ -151,7 +151,7 @@ export class SearchResults {
   protected readonly restaurants = injectPagedSearch(
     () =>
       this.searchable() && this.showRestaurants()
-        ? { query: this.query(), location: this.userLocation.location() }
+        ? { query: this.query(), location: this.locationStore.location() }
         : undefined,
     (params, limit) => this.restaurantApi.searchPlaces(params.query, params.location, limit),
     this.firstResults,
@@ -186,7 +186,7 @@ export class SearchResults {
   protected readonly restaurantCountLabel = restaurantCountLabel;
 
   constructor() {
-    this.userLocation.requestLocation();
+    this.locationStore.requestLocation();
   }
 
   /**

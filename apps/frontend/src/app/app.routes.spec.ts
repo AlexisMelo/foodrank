@@ -1,5 +1,5 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -40,6 +40,10 @@ describe('routes', () => {
     await checkSession(200);
 
     const harness = await RouterTestingHarness.create('/foo/bar');
+    // The app layout loads the city searches are centered on as soon as it opens
+    TestBed.inject(HttpTestingController)
+      .expectOne('/api/places/area')
+      .flush({ locality: 'Lyon', isDefault: true });
     await harness.fixture.whenStable();
 
     expect(TestBed.inject(Router).url).toBe('/foo/bar');

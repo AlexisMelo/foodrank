@@ -102,26 +102,6 @@ describe('RestaurantApi', () => {
     });
   });
 
-  describe('fetchSearchArea', () => {
-    it('gets the city around the user position', async () => {
-      const result = firstValueFrom(api.fetchSearchArea({ lat: 49.18, lon: -0.37 }));
-      const req = httpTesting.expectOne('http://api.test/api/places/area?lat=49.18&lon=-0.37');
-      expect(req.request.method).toBe('GET');
-      req.flush({ locality: 'Caen', isDefault: false });
-
-      expect(await result).toEqual({ locality: 'Caen', isDefault: false });
-    });
-
-    it('gets the default city of the API when the position is unknown', async () => {
-      const result = firstValueFrom(api.fetchSearchArea(null));
-      httpTesting
-        .expectOne('http://api.test/api/places/area')
-        .flush({ locality: 'Lyon', isDefault: true });
-
-      expect((await result).isDefault).toBe(true);
-    });
-  });
-
   describe('createRestaurantFromPlace', () => {
     it('posts the place id and returns the restaurant, and whether it was created', async () => {
       const result = firstValueFrom(api.createRestaurantFromPlace('N42'));

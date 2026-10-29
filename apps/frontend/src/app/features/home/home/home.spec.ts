@@ -5,11 +5,10 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 import { routes } from '@/app.routes';
 import { RatingApi } from '@/core/api/rating-api';
-import { RestaurantApi } from '@/core/api/restaurant-api';
 import { TierlistApi } from '@/core/api/tierlist-api';
 import { UserApi } from '@/core/api/user-api';
 import { AuthStore } from '@/core/auth/auth-store';
-import { UserLocation } from '@/core/location/user-location';
+import { LocationStore } from '@/core/location/location-store';
 import type { UserRating } from '@/core/models/rating.model';
 import type { Tierlist } from '@/core/models/tierlist.model';
 import { REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
@@ -79,16 +78,17 @@ describe('Home', () => {
         { provide: UserApi, useValue: { fetchUserProfile } },
         // The rating allowance locks the review buttons
         { provide: RatingApi, useValue: { fetchUserRatings, fetchRatingAllowance } },
-        // Read by the search area hint of the new review sheet
-        {
-          provide: RestaurantApi,
-          useValue: { fetchSearchArea: () => of({ locality: 'Lyon', isDefault: true }) },
-        },
         { provide: TierlistApi, useValue: { fetchTierlistsByUserId } },
-        // Asked for by the new review sheet
+        // Asked for by the app layout when it opens, and refreshed by the new review sheet, whose search area hint
+        // reads the status and the city
         {
-          provide: UserLocation,
-          useValue: { location: signal(null), status: signal('idle'), requestLocation: vi.fn() },
+          provide: LocationStore,
+          useValue: {
+            status: signal('idle'),
+            city: signal('Lyon'),
+            requestLocation: vi.fn(),
+            refreshLocation: vi.fn(),
+          },
         },
       ],
     });

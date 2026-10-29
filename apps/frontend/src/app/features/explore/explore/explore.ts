@@ -3,7 +3,7 @@ import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { map, timer } from 'rxjs';
 import { RestaurantApi } from '@/core/api/restaurant-api';
-import { UserLocation } from '@/core/location/user-location';
+import { LocationStore } from '@/core/location/location-store';
 
 /**
  * Number of restaurants suggested.
@@ -43,7 +43,7 @@ export class Explore {
   /**
    * Position of the user, asked for when the page opens
    */
-  private readonly userLocation = inject(UserLocation);
+  private readonly locationStore = inject(LocationStore);
 
   /**
    * True once LOCATION_WAIT_MS have passed since the page opened
@@ -56,7 +56,7 @@ export class Explore {
    * True until the location is answered (allowed, refused or unavailable), or for LOCATION_WAIT_MS at most
    */
   private readonly locating = computed(
-    () => ['idle', 'pending'].includes(this.userLocation.status()) && !this.locationWaitOver(),
+    () => ['idle', 'pending'].includes(this.locationStore.status()) && !this.locationWaitOver(),
   );
 
   /**
@@ -64,7 +64,7 @@ export class Explore {
    * position when it is answered in time; asked again, sorted, if the position becomes known later
    */
   private readonly suggestionsResource = rxResource({
-    params: () => (this.locating() ? undefined : { location: this.userLocation.location() }),
+    params: () => (this.locating() ? undefined : { location: this.locationStore.location() }),
     stream: ({ params }) => this.restaurantApi.fetchSuggestions(params.location, SUGGESTION_COUNT),
   });
 
@@ -80,7 +80,7 @@ export class Explore {
    * the restaurants are sorted from the API's default city and shown with their address instead of a distance
    */
   protected readonly locationDenied = computed(
-    () => !this.locating() && this.userLocation.status() !== 'granted',
+    () => !this.locating() && this.locationStore.status() !== 'granted',
   );
 
   /**
@@ -96,6 +96,6 @@ export class Explore {
   protected readonly formatDistance = formatDistance;
 
   constructor() {
-    this.userLocation.requestLocation();
+    this.locationStore.requestLocation();
   }
 }

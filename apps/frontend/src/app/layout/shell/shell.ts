@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { LocationStore } from '@/core/location/location-store';
 import { NewReviewSheet } from '@/features/review/new-review-sheet/new-review-sheet';
 import { ToastOutlet } from '@/shared/ui/toast-outlet/toast-outlet';
 import { BottomTabBar } from '../bottom-tab-bar/bottom-tab-bar';
@@ -14,4 +15,10 @@ import { BottomTabBar } from '../bottom-tab-bar/bottom-tab-bar';
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
 })
-export class Shell {}
+export class Shell {
+  constructor() {
+    // Locates the user as soon as the app opens (asking for the permission if needed), so the search sheet shows
+    // their city at once and a query typed fast is already searched near them
+    inject(LocationStore).requestLocation();
+  }
+}

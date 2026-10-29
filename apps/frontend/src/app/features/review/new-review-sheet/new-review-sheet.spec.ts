@@ -1,9 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
-import { RestaurantApi } from '@/core/api/restaurant-api';
-import { UserLocation } from '@/core/location/user-location';
+import { LocationStore } from '@/core/location/location-store';
 import { query, queryAll, stubDialogs, submitForm, typeIn } from '@/testing/dom-testing';
 import { NewReviewStore } from '@/core/review/new-review-store';
 import { NewReviewSheet } from './new-review-sheet';
@@ -15,24 +13,24 @@ import { NewReviewSheet } from './new-review-sheet';
 class StubPage {}
 
 describe('NewReviewSheet', () => {
-  let requestLocation: ReturnType<typeof vi.fn>;
+  let refreshLocation: ReturnType<typeof vi.fn>;
   let fixture: ComponentFixture<NewReviewSheet>;
   let store: NewReviewStore;
 
   beforeEach(async () => {
     stubDialogs();
-    requestLocation = vi.fn();
+    refreshLocation = vi.fn();
     TestBed.configureTestingModule({
       providers: [
         provideRouter([{ path: '**', component: StubPage }]),
         {
-          provide: RestaurantApi,
-          // Read by the location hint; the sheet itself searches nothing
-          useValue: { fetchSearchArea: () => of({ locality: 'Lyon', isDefault: true }) },
-        },
-        {
-          provide: UserLocation,
-          useValue: { location: signal(null), status: signal('idle'), requestLocation },
+          provide: LocationStore,
+          // The status and the city are read by the location hint
+          useValue: {
+            status: signal('idle'),
+            city: signal('Lyon'),
+            refreshLocation,
+          },
         },
       ],
     });
@@ -56,12 +54,22 @@ describe('NewReviewSheet', () => {
     return TestBed.inject(Router).url;
   }
 
-  it('opens as a modal dialog, asking for the location and focusing the search field', async () => {
+  it('opens as a modal dialog, refreshing the location and focusing the search field', async () => {
     await open();
 
     expect(query<HTMLDialogElement>(fixture, 'dialog').open).toBe(true);
-    expect(requestLocation).toHaveBeenCalledTimes(1);
+    expect(refreshLocation).toHaveBeenCalledTimes(1);
     expect(document.activeElement).toBe(query(fixture, '.search-input'));
+  });
+
+  it('refreshes the location each time it opens', async () => {
+    await open();
+    store.close();
+    await fixture.whenStable();
+
+    await open();
+
+    expect(refreshLocation).toHaveBeenCalledTimes(2);
   });
 
   it('searches nothing while typing: there are no suggestions', async () => {

@@ -6,8 +6,8 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { Subject, filter, firstValueFrom, of, throwError } from 'rxjs';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import { UserApi } from '@/core/api/user-api';
-import { UserLocation } from '@/core/location/user-location';
-import type { UserLocation as UserPosition } from '@/core/models/location.model';
+import { LocationStore } from '@/core/location/location-store';
+import type { UserLocation } from '@/core/models/location.model';
 import { CelebrationStore } from '@/core/celebration/celebration-store';
 import type { PlaceSuggestion, RestaurantFromPlace } from '@/core/models/restaurant.model';
 import type { SearchPage } from '@/core/models/search.model';
@@ -83,12 +83,12 @@ describe('SearchResults', () => {
   let createRestaurantFromPlace: ReturnType<typeof vi.fn>;
   let requestLocation: ReturnType<typeof vi.fn>;
   let scrollToPosition: ReturnType<typeof vi.fn>;
-  let location: WritableSignal<UserPosition | null>;
+  let location: WritableSignal<UserLocation | null>;
   let harness: RouterTestingHarness;
 
   beforeEach(async () => {
     location = signal(null);
-    searchPlaces = vi.fn((query: string, _: UserPosition | null, limit: number) =>
+    searchPlaces = vi.fn((query: string, _: UserLocation | null, limit: number) =>
       of(page(query, limit)),
     );
     searchUsers = vi.fn(() =>
@@ -108,16 +108,18 @@ describe('SearchResults', () => {
         ),
         {
           provide: RestaurantApi,
-          useValue: {
-            searchPlaces,
-            createRestaurantFromPlace,
-            fetchSearchArea: () => of({ locality: 'Lyon', isDefault: true }),
-          },
+          useValue: { searchPlaces, createRestaurantFromPlace },
         },
         { provide: UserApi, useValue: { searchUsers } },
         {
-          provide: UserLocation,
-          useValue: { location, status: signal('idle'), requestLocation },
+          provide: LocationStore,
+          // The status and the city are read by the search area hint
+          useValue: {
+            location,
+            status: signal('idle'),
+            city: signal('Lyon'),
+            requestLocation,
+          },
         },
         { provide: ViewportScroller, useValue: { scrollToPosition } },
       ],
@@ -362,7 +364,7 @@ describe('SearchResults', () => {
   });
 
   it('hides "Show more" once every restaurant is shown', async () => {
-    searchPlaces.mockImplementation((q: string, _: UserPosition | null, limit: number) =>
+    searchPlaces.mockImplementation((q: string, _: UserLocation | null, limit: number) =>
       of(page(q, limit, 12)),
     );
     await open('/search?q=pizza&type=restaurants');
@@ -374,7 +376,7 @@ describe('SearchResults', () => {
   });
 
   it('never asks for more restaurants than the API returns at most', async () => {
-    searchPlaces.mockImplementation((q: string, _: UserPosition | null, limit: number) =>
+    searchPlaces.mockImplementation((q: string, _: UserLocation | null, limit: number) =>
       of(page(q, limit, 100)),
     );
     await open('/search?q=pizza&type=restaurants');

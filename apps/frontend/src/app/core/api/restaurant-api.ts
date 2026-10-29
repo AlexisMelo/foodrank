@@ -7,9 +7,9 @@ import type {
   Restaurant,
   RestaurantFromPlace,
   RestaurantSuggestion,
-  SearchArea,
 } from '@/core/models/restaurant.model';
 import type { SearchPage } from '@/core/models/search.model';
+import { locationParams } from './location-params';
 import { recoverOnStatus } from './recover-on-status';
 
 /**
@@ -25,14 +25,7 @@ export const PLACE_SEARCH_MIN_LENGTH = 3;
 export const PLACE_SEARCH_MAX_RESULTS = 50;
 
 /**
- * Query params of the user position, none when it is unknown (the API then uses its default city)
- */
-function locationParams(location?: UserLocation | null): Record<string, number> {
-  return location ? { lat: location.lat, lon: location.lon } : {};
-}
-
-/**
- * Restaurants of the API (/api/restaurants) and place search (/api/places).
+ * Restaurants of the API (/api/restaurants) and place search (/api/places/search).
  */
 @Service()
 export class RestaurantApi {
@@ -79,14 +72,6 @@ export class RestaurantApi {
     return this.http.get<SearchPage<PlaceSuggestion>>('/api/places/search', {
       params: { query, limit, ...locationParams(location) },
     });
-  }
-
-  /**
-   * Get the city searches are centered on
-   * @param location user position; the API returns its default city when omitted
-   */
-  fetchSearchArea(location?: UserLocation | null): Observable<SearchArea> {
-    return this.http.get<SearchArea>('/api/places/area', { params: locationParams(location) });
   }
 
   /**

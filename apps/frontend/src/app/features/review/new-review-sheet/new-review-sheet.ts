@@ -8,7 +8,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { UserLocation } from '@/core/location/user-location';
+import { LocationStore } from '@/core/location/location-store';
 import { NewReviewStore } from '@/core/review/new-review-store';
 import { SearchAreaHint } from '@/shared/ui/search-area-hint/search-area-hint';
 import { SearchBar } from '@/shared/ui/search-bar/search-bar';
@@ -31,10 +31,10 @@ export class NewReviewSheet {
   protected readonly newReview = inject(NewReviewStore);
 
   /**
-   * Position of the user, used by the results page to favor nearby restaurants; asked for each time the sheet opens,
-   * so the location hint shows the city around which restaurants are searched
+   * Position of the user, used by the results page to favor nearby restaurants; located when the app opens, then
+   * refreshed each time the sheet opens, in case the user has moved
    */
-  private readonly userLocation = inject(UserLocation);
+  private readonly locationStore = inject(LocationStore);
 
   /**
    * Opens the search results page
@@ -53,9 +53,10 @@ export class NewReviewSheet {
   private readonly searchBar = viewChild(SearchBar);
 
   constructor() {
-    // Asks for the position each time the sheet opens, so the search favors nearby restaurants
+    // Refreshes the position each time the sheet opens; the known one stays meanwhile, so a query typed fast is still
+    // searched near the user
     effect(() => {
-      if (this.newReview.isOpen()) untracked(() => this.userLocation.requestLocation());
+      if (this.newReview.isOpen()) untracked(() => this.locationStore.refreshLocation());
     });
     // Shows the dialog as a modal (top layer, Esc key, focus kept inside) once rendered, then focuses the search field
     afterRenderEffect({
