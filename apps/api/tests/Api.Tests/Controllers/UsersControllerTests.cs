@@ -167,8 +167,8 @@ public class UsersControllerTests : IDisposable
     }
 
     /// <summary>
-    /// The search finds the users whose pseudonym contains the query, ignoring case, best matches first, with their
-    /// profile (name, avatar, number of restaurants rated).
+    /// The search finds the users whose pseudonym contains the query, ignoring case, best matches first, with their id,
+    /// name and avatar.
     /// </summary>
     [Fact]
     public async Task Search_ReturnsMatchingUsersBestFirst()
@@ -177,16 +177,30 @@ public class UsersControllerTests : IDisposable
         AddUser('3', "Mila");
         AddUser('4', "Camilou");
         AddUser('5', "Hugo");
-        AddRating(camille, "r1", new DateTime(2026, 3, 1));
-        AddRating(camille, "r2", new DateTime(2026, 3, 2));
 
         HttpResponseMessage response = await GetAsync("/api/users/search?query=%20CAMIL%20");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        SearchPage<UserProfileResponse> page = (await response.Content.ReadFromJsonAsync<SearchPage<UserProfileResponse>>())!;
+        SearchPage<UserSummaryResponse> page = (await response.Content.ReadFromJsonAsync<SearchPage<UserSummaryResponse>>())!;
         Assert.Equal(["Camille", "Camilou"], page.Results.Select(u => u.Name));
-        Assert.Equal(new UserProfileResponse(camille, "Camille", null, 2), page.Results[0]);
+        Assert.Equal(new UserSummaryResponse(camille, "Camille", null), page.Results[0]);
         Assert.False(page.HasMore);
+    }
+
+    /// <summary>
+    /// The users found have no number of restaurants rated, even when they rated some: counting them would read the
+    /// ratings of every user found.
+    /// </summary>
+    [Fact]
+    public async Task Search_UsersFound_HaveNoRestaurantsCount()
+    {
+        string camille = AddUser('2', "Camille");
+        AddRating(camille, "r1", new DateTime(2026, 3, 1));
+
+        string json = await (await GetAsync("/api/users/search?query=camil")).Content.ReadAsStringAsync();
+
+        Assert.Contains("\"name\":\"Camille\"", json);
+        Assert.DoesNotContain("ratedRestaurantsCount", json);
     }
 
     /// <summary>
@@ -206,7 +220,7 @@ public class UsersControllerTests : IDisposable
     {
         Add7Users();
 
-        SearchPage<UserProfileResponse> page = (await (await GetAsync("/api/users/search?query=user")).Content.ReadFromJsonAsync<SearchPage<UserProfileResponse>>())!;
+        SearchPage<UserSummaryResponse> page = (await (await GetAsync("/api/users/search?query=user")).Content.ReadFromJsonAsync<SearchPage<UserSummaryResponse>>())!;
 
         Assert.Equal(["user1", "user2", "user3", "user4", "user5"], page.Results.Select(u => u.Name));
         Assert.True(page.HasMore);
@@ -223,7 +237,7 @@ public class UsersControllerTests : IDisposable
     {
         Add7Users();
 
-        SearchPage<UserProfileResponse> page = (await (await GetAsync($"/api/users/search?query=user&limit={limit}")).Content.ReadFromJsonAsync<SearchPage<UserProfileResponse>>())!;
+        SearchPage<UserSummaryResponse> page = (await (await GetAsync($"/api/users/search?query=user&limit={limit}")).Content.ReadFromJsonAsync<SearchPage<UserSummaryResponse>>())!;
 
         Assert.Equal(Enumerable.Range(1, Math.Min(limit, 7)).Select(i => $"user{i}"), page.Results.Select(u => u.Name));
         Assert.Equal(hasMore, page.HasMore);
@@ -250,7 +264,7 @@ public class UsersControllerTests : IDisposable
     {
         AddUser('2', "alexia");
 
-        SearchPage<UserProfileResponse> page = (await (await GetAsync("/api/users/search?query=alex")).Content.ReadFromJsonAsync<SearchPage<UserProfileResponse>>())!;
+        SearchPage<UserSummaryResponse> page = (await (await GetAsync("/api/users/search?query=alex")).Content.ReadFromJsonAsync<SearchPage<UserSummaryResponse>>())!;
 
         Assert.Equal("alexia", Assert.Single(page.Results).Name);
     }
@@ -266,7 +280,7 @@ public class UsersControllerTests : IDisposable
         HttpResponseMessage response = await GetAsync("/api/users/search?query=%20al%20");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        SearchPage<UserProfileResponse> page = (await response.Content.ReadFromJsonAsync<SearchPage<UserProfileResponse>>())!;
+        SearchPage<UserSummaryResponse> page = (await response.Content.ReadFromJsonAsync<SearchPage<UserSummaryResponse>>())!;
         Assert.Empty(page.Results);
         Assert.False(page.HasMore);
     }

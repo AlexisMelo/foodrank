@@ -4,7 +4,8 @@ import { restaurantCountLabel } from '@/core/utils/profile';
 import { UserAvatar } from '@/shared/ui/user-avatar/user-avatar';
 
 /**
- * Top of a profile page: the user's avatar, name and number of restaurants rated.
+ * Top of a profile page: the user's avatar, name and number of restaurants rated. The content given to it (the
+ * follows of the profile) is shown under the name.
  */
 @Component({
   imports: [UserAvatar],

@@ -1,0 +1,44 @@
+@if (!loadError()) {
+  <div class="follows" [class.pending]="!loaded()" [attr.aria-busy]="!loaded()">
+    <div class="counts">
+      <button
+        type="button"
+        class="count-btn followers-btn"
+        [disabled]="!loaded()"
+        (click)="openList.set('followers')"
+      >
+        {{ followersLabel() }}
+      </button>
+      <span class="count-separator" aria-hidden="true">·</span>
+      <button
+        type="button"
+        class="count-btn following-btn"
+        [disabled]="!loaded()"
+        (click)="openList.set('following')"
+      >
+        {{ following().length }} following
+      </button>
+    </div>
+
+    @if (!isOwnProfile()) {
+      <button
+        type="button"
+        class="follow-btn"
+        [class.following]="isFollowing()"
+        [attr.aria-pressed]="isFollowing()"
+        [disabled]="!loaded() || saving()"
+        (click)="toggleFollow()"
+      >
+        {{ followLabel() }}
+      </button>
+    }
+  </div>
+}
+
+@if (openList(); as list) {
+  <app-follow-list-dialog
+    [list]="list"
+    [users]="list === 'followers' ? followers() : following()"
+    (closed)="openList.set(null)"
+  />
+}

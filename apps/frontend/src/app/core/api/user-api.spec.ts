@@ -67,8 +67,8 @@ describe('UserApi', () => {
   });
 
   describe('searchUsers', () => {
-    it('sends the query encoded and the limit, with the session cookie, and returns the profiles found', async () => {
-      const camille = { id: 'u2', name: 'Camille', avatarUrl: null, ratedRestaurantsCount: 1 };
+    it('sends the query encoded and the limit, with the session cookie, and returns the users found', async () => {
+      const camille = { id: 'u2', name: 'Camille', avatarUrl: null };
 
       const result = firstValueFrom(api.searchUsers('cam & co', 15));
       const req = httpTesting.expectOne(
@@ -79,6 +79,51 @@ describe('UserApi', () => {
       req.flush({ results: [camille], hasMore: true });
 
       expect(await result).toEqual({ results: [camille], hasMore: true });
+    });
+  });
+
+  describe('follows', () => {
+    /**
+     * User answered by the follow endpoints
+     */
+    const camille = { id: 'u2', name: 'Camille', avatarUrl: null };
+
+    it("reads a user's followers and the users they follow, the id encoded, with the session cookie", async () => {
+      const followers = firstValueFrom(api.fetchFollowers('a/b'));
+      const followersReq = httpTesting.expectOne('http://api.test/api/users/a%2Fb/followers');
+      expect(followersReq.request.method).toBe('GET');
+      expect(followersReq.request.withCredentials).toBe(true);
+      followersReq.flush([camille]);
+
+      const following = firstValueFrom(api.fetchFollowing('a/b'));
+      const followingReq = httpTesting.expectOne('http://api.test/api/users/a%2Fb/following');
+      expect(followingReq.request.method).toBe('GET');
+      expect(followingReq.request.withCredentials).toBe(true);
+      followingReq.flush([]);
+
+      expect(await followers).toEqual([camille]);
+      expect(await following).toEqual([]);
+    });
+
+    it('follows a user with a PUT without body, returning their followers', async () => {
+      const result = firstValueFrom(api.follow('u3'));
+      const req = httpTesting.expectOne('http://api.test/api/users/u3/follow');
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toBeNull();
+      expect(req.request.withCredentials).toBe(true);
+      req.flush([camille]);
+
+      expect(await result).toEqual([camille]);
+    });
+
+    it('unfollows a user with a DELETE, returning their followers', async () => {
+      const result = firstValueFrom(api.unfollow('u3'));
+      const req = httpTesting.expectOne('http://api.test/api/users/u3/follow');
+      expect(req.request.method).toBe('DELETE');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush([]);
+
+      expect(await result).toEqual([]);
     });
   });
 });

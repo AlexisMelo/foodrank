@@ -7,8 +7,8 @@ using Supabase.Postgrest.Responses;
 namespace api.Services;
 
 /// <summary>
-/// Reads and saves users' profiles in the "profiles" table, with the number of restaurants they rated from the
-/// "rating" table.
+/// Reads and saves users' profiles in the "profiles" table. A single profile comes with the number of restaurants the
+/// user rated, from the "rating" table; lists of users only read the "profiles" table.
 /// </summary>
 /// <param name="supabase">Client of the Supabase database.</param>
 public class UserService(Supabase.Client supabase) : IUserService
@@ -44,11 +44,11 @@ public class UserService(Supabase.Client supabase) : IUserService
     }
 
     /// <inheritdoc />
-    public async Task<SearchPage<UserProfileResponse>> SearchAsync(string query, int limit, string excludedUserId, CancellationToken cancellationToken)
+    public async Task<SearchPage<UserSummaryResponse>> SearchAsync(string query, int limit, string excludedUserId, CancellationToken cancellationToken)
     {
         string trimmed = query.Trim();
         if (trimmed.Length < UserRanking.MinQueryLength)
-            return new SearchPage<UserProfileResponse>([], false);
+            return new SearchPage<UserSummaryResponse>([], false);
 
         ModeledResponse<Profile> candidates = await _supabase.From<Profile>()
             .Filter("username", Constants.Operator.ILike, UserRanking.LikePattern(trimmed))
@@ -57,21 +57,23 @@ public class UserService(Supabase.Client supabase) : IUserService
             .Limit(UserRanking.MaxResults)
             .Get(cancellationToken);
         IReadOnlyList<Profile> ranked = UserRanking.Rank(candidates.Models, trimmed);
-        List<Profile> shown = ranked.Take(limit).ToList();
-        if (shown.Count == 0)
-            return new SearchPage<UserProfileResponse>([], false);
-
-        // Only the user and restaurant columns are needed to count the distinct restaurants each user shown rated
-        List<object> userIds = shown.Select(p => p.Id).Cast<object>().ToList();
-        ModeledResponse<Rating> ratings = await _supabase.From<Rating>()
-            .Select("id_user,id_restaurant")
-            .Filter("id_user", Constants.Operator.In, userIds)
-            .Get(cancellationToken);
-        ILookup<string, string> ratedRestaurantIds = ratings.Models.ToLookup(r => r.UserId, r => r.RestaurantId);
-
-        return new SearchPage<UserProfileResponse>(
-            shown.Select(p => UserProfileResponse.From(p.Id, p, ratedRestaurantIds[p.Id])).ToList(),
+        return new SearchPage<UserSummaryResponse>(
+            ranked.Take(limit).Select(p => UserSummaryResponse.From(p.Id, p)).ToList(),
             ranked.Count > limit);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<UserSummaryResponse>> GetProfilesAsync(IReadOnlyList<string> userIds, CancellationToken cancellationToken)
+    {
+        if (userIds.Count == 0)
+            return [];
+
+        ModeledResponse<Profile> profiles = await _supabase.From<Profile>()
+            .Filter("id", Constants.Operator.In, userIds.Cast<object>().ToList())
+            .Get(cancellationToken);
+        Dictionary<string, Profile> profilesById = profiles.Models.ToDictionary(p => p.Id);
+
+        return userIds.Select(id => UserSummaryResponse.From(id, profilesById.GetValueOrDefault(id))).ToList();
     }
 
     /// <inheritdoc />

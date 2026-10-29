@@ -10,16 +10,18 @@ import { injectUserProfile } from '@/shared/data/user-profile';
 import { ChoiceChips } from '@/shared/ui/choice-chips/choice-chips';
 import { RankedRestaurantItem } from '@/shared/ui/ranked-restaurant-item/ranked-restaurant-item';
 import { PinnedTierlists } from '../pinned-tierlists/pinned-tierlists';
+import { ProfileFollows } from '../profile-follows/profile-follows';
 import { ProfileHeader } from '../profile-header/profile-header';
 import { injectProfileRanking } from '../profile-ranking';
 
 /**
  * Profile page: the logged-in user's on /profile, another user's on /user/:id (ownProfileGuard sends the logged-in
- * user's own id to /profile). Shows the user, their pinned tierlists and the restaurants they rated, the best score
- * first by default, or the most recently rated first, or by name.
+ * user's own id to /profile). Shows the user with their followers and the users they follow (and a follow button on
+ * another user's profile), their pinned tierlists and the restaurants they rated, the best score first by default, or
+ * the most recently rated first, or by name.
  */
 @Component({
-  imports: [ChoiceChips, PinnedTierlists, ProfileHeader, RankedRestaurantItem],
+  imports: [ChoiceChips, PinnedTierlists, ProfileFollows, ProfileHeader, RankedRestaurantItem],
   selector: 'app-profile',
   styleUrl: './profile.scss',
   templateUrl: './profile.html',

@@ -1,7 +1,8 @@
 /**
- * Profile of a user (GET /api/users/:id or /api/users/me).
+ * User listed among others (GET /api/users/search, /api/users/:id/followers and /following): only what a row shows.
+ * The API gives no number of restaurants rated here, which would read the ratings of every user listed.
  */
-export interface UserProfile {
+export interface UserSummary {
   /**
    * Id of the user, used in /user/:id
    */
@@ -16,7 +17,12 @@ export interface UserProfile {
    * Profile picture, null when there is none
    */
   avatarUrl: string | null;
+}
 
+/**
+ * Profile of a user (GET /api/users/:id or /api/users/me): their summary with the number of restaurants rated.
+ */
+export interface UserProfile extends UserSummary {
   /**
    * Number of distinct restaurants rated (a restaurant rated twice counts once)
    */

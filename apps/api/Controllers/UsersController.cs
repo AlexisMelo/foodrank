@@ -74,8 +74,8 @@ public class UsersController(IUserService userService, IRatingService ratingServ
     /// <param name="query">Text typed by the user; shorter than 3 characters once trimmed, it returns no user.</param>
     /// <param name="limit">Maximum number of users, from 1 to 50 (5 by default).</param>
     /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
-    /// <returns>200 with the profiles and whether there are more, 400 when the limit is outside 1-50, 401 when not
-    /// logged in.</returns>
+    /// <returns>200 with the users (id, name, avatar) and whether there are more, 400 when the limit is outside 1-50,
+    /// 401 when not logged in.</returns>
     [HttpGet("search")]
     public async Task<IActionResult> Search([FromQuery] string query, [FromQuery, Range(1, UserRanking.MaxResults)] int limit = 5, CancellationToken cancellationToken = default)
         => Ok(await _userService.SearchAsync(query, limit, User.GetUserId(), cancellationToken));

@@ -41,6 +41,12 @@ public class ApiFactory : WebApplicationFactory<Program>
     public FakeTierlistService TierlistService { get; }
 
     /// <summary>
+    /// Follow service used by the controllers, listing the profiles of <see cref="UserService"/>; only the users with a
+    /// profile in <see cref="RatingService"/> can be followed. Read and fill its follows in the tests.
+    /// </summary>
+    public FakeFollowService FollowService { get; }
+
+    /// <summary>
     /// Supabase Auth replacement; register the valid tokens in the tests.
     /// </summary>
     public FakeSupabaseAuthService AuthService { get; } = new();
@@ -54,6 +60,7 @@ public class ApiFactory : WebApplicationFactory<Program>
         RestaurantService.RatedRestaurantIds = userId => RatingService.Ratings.Where(r => r.UserId == userId).Select(r => r.RestaurantId);
         UserService = new FakeUserService(RatingService);
         TierlistService = new FakeTierlistService(RestaurantService, RatingService);
+        FollowService = new FakeFollowService(UserService, RatingService);
     }
 
     /// <summary>
@@ -78,6 +85,8 @@ public class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IUserService>(UserService);
             services.RemoveAll<ITierlistService>();
             services.AddSingleton<ITierlistService>(TierlistService);
+            services.RemoveAll<IFollowService>();
+            services.AddSingleton<IFollowService>(FollowService);
             services.RemoveAll<ISupabaseAuthService>();
             services.AddSingleton<ISupabaseAuthService>(AuthService);
         });

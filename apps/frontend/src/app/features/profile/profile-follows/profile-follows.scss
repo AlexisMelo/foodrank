@@ -1,0 +1,70 @@
+@use 'hover';
+
+.follows {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+// Loading: the space is kept so the profile does not move once the counts arrive
+.pending {
+  visibility: hidden;
+}
+
+.counts {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.count-btn {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  @include hover.background(rgba(255, 255, 255, 0.08));
+}
+
+.count-separator {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+// Not followed yet: the call to action, filled; once followed, outlined
+.follow-btn {
+  padding: 8px 22px;
+  border-radius: 100px;
+  border: 1.5px solid #ffffff;
+  background: #ffffff;
+  color: #0d0d0d;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    opacity 0.15s;
+
+  @include hover.background(#e6e6e6);
+
+  &.following {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+
+    @include hover.background(rgba(255, 255, 255, 0.08));
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
