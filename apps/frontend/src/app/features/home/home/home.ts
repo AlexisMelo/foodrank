@@ -59,6 +59,11 @@ export class Home {
   });
 
   /**
+   * True while the tierlists load: the section shows placeholders until it knows whether there is any tierlist
+   */
+  protected readonly tierlistsLoading = this.tierlists.isLoading;
+
+  /**
    * The logged-in user's 8 most recently updated tierlists
    */
   protected readonly recentTierlists = computed(() =>

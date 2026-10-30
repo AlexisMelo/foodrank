@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { routes } from '@/app.routes';
 import { RatingApi } from '@/core/api/rating-api';
 import { TierlistApi } from '@/core/api/tierlist-api';
@@ -106,6 +106,14 @@ describe('Home', () => {
   async function openHome(): Promise<void> {
     harness = await RouterTestingHarness.create('/');
     await harness.fixture.whenStable();
+  }
+
+  /**
+   * Opens the home page without waiting for it to load: a request left unanswered keeps it loading, so the page
+   * would never be stable.
+   */
+  async function openHomeLoading(): Promise<void> {
+    harness = await RouterTestingHarness.create('/');
   }
 
   /**
@@ -362,6 +370,34 @@ describe('Home', () => {
       expect(tierlistNames()).toEqual([]);
       expect(queryAll(harness.fixture, '.review-card')).toHaveLength(1);
     });
+
+    it('shows placeholders while the tierlists load, then the tierlists', async () => {
+      const answer = new Subject<Tierlist[]>();
+      fetchTierlistsByUserId.mockReturnValue(answer);
+      await openHomeLoading();
+
+      expect(queryAll(harness.fixture, '.section-title').map(textOf)).toContain('Tierlists');
+      expect(queryAll(harness.fixture, '.tierlist-skeleton')).toHaveLength(5);
+      expect(tierlistNames()).toEqual([]);
+
+      answer.next([tierlist(1, '2026-10-10T10:00:00Z')]);
+      await harness.fixture.whenStable();
+
+      expect(queryAll(harness.fixture, '.tierlist-skeleton')).toHaveLength(0);
+      expect(tierlistNames()).toEqual(['Tierlist 1']);
+    });
+
+    it('hides the placeholders with the section once the user turns out to have no tierlist', async () => {
+      const answer = new Subject<Tierlist[]>();
+      fetchTierlistsByUserId.mockReturnValue(answer);
+      await openHomeLoading();
+
+      answer.next([]);
+      await harness.fixture.whenStable();
+
+      expect(queryAll(harness.fixture, '.tierlist-skeleton')).toHaveLength(0);
+      expect(queryAll(harness.fixture, '.section-title').map(textOf)).not.toContain('Tierlists');
+    });
   });
 
   describe('favorites', () => {
@@ -439,6 +475,34 @@ describe('Home', () => {
       fetchUserRatings.mockReturnValue(throwError(() => new Error('503')));
       await openHome();
 
+      expect(textOf(harness.fixture.nativeElement)).not.toContain('Favorites');
+    });
+
+    it('shows placeholders while my ratings load, then the favorites', async () => {
+      const answer = new Subject<UserRating[]>();
+      fetchUserRatings.mockReturnValue(answer);
+      await openHomeLoading();
+
+      expect(queryAll(harness.fixture, '.section-title').map(textOf)).toContain('Favorites');
+      expect(queryAll(harness.fixture, '.favorite-skeleton')).toHaveLength(3);
+      expect(favorites()).toEqual([]);
+
+      answer.next([scored('top', 10), scored('ok', 6)]);
+      await harness.fixture.whenStable();
+
+      expect(queryAll(harness.fixture, '.favorite-skeleton')).toHaveLength(0);
+      expect(favorites()).toEqual(['Restaurant top', 'Restaurant ok']);
+    });
+
+    it('hides the placeholders with the section when my ratings fail to load, instead of loading forever', async () => {
+      const answer = new Subject<UserRating[]>();
+      fetchUserRatings.mockReturnValue(answer);
+      await openHomeLoading();
+
+      answer.error(new Error('503'));
+      await harness.fixture.whenStable();
+
+      expect(queryAll(harness.fixture, '.favorite-skeleton')).toHaveLength(0);
       expect(textOf(harness.fixture.nativeElement)).not.toContain('Favorites');
     });
   });

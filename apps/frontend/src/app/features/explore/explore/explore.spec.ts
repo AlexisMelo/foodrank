@@ -2,7 +2,7 @@ import { Component, WritableSignal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import { type LocationStatus, LocationStore } from '@/core/location/location-store';
 import type { UserLocation } from '@/core/models/location.model';
@@ -102,11 +102,18 @@ describe('Explore', () => {
     return queryAll(harness.fixture, '.card-name').map(textOf);
   }
 
+  /**
+   * Placeholder cards shown while the page loads.
+   */
+  function skeletons(): HTMLElement[] {
+    return queryAll(harness.fixture, '.restaurant-skeleton');
+  }
+
   it('asks the API for the suggestions near the user once the location is allowed', async () => {
     await openExplore();
     expect(requestLocation).toHaveBeenCalledTimes(1);
-    // Waits for the location before asking anything
-    expect(queryAll(harness.fixture, '.loading')).toHaveLength(1);
+    // Waits for the location before asking anything, with a placeholder for each restaurant suggested
+    expect(skeletons()).toHaveLength(5);
     expect(fetchSuggestions).not.toHaveBeenCalled();
     expect(names()).toEqual([]);
 
@@ -114,6 +121,7 @@ describe('Explore', () => {
     status.set('granted');
     await harness.fixture.whenStable();
 
+    expect(skeletons()).toHaveLength(0);
     expect(fetchSuggestions).toHaveBeenCalledTimes(1);
     expect(fetchSuggestions).toHaveBeenCalledWith(CAEN, 5);
     expect(names()).toEqual([
@@ -137,12 +145,12 @@ describe('Explore', () => {
 
     await vi.advanceTimersByTimeAsync(2999);
     await harness.fixture.whenStable();
-    expect(queryAll(harness.fixture, '.loading')).toHaveLength(1);
+    expect(skeletons()).toHaveLength(5);
     expect(fetchSuggestions).not.toHaveBeenCalled();
 
     await vi.advanceTimersByTimeAsync(1);
     await harness.fixture.whenStable();
-    expect(queryAll(harness.fixture, '.loading')).toHaveLength(0);
+    expect(skeletons()).toHaveLength(0);
     expect(fetchSuggestions).toHaveBeenCalledWith(null, 5);
     expect(names()).toEqual([
       'Restaurant paris',
@@ -212,7 +220,29 @@ describe('Explore', () => {
     status.set('unavailable');
     await openExplore();
 
-    expect(queryAll(harness.fixture, '.loading')).toHaveLength(0);
+    expect(skeletons()).toHaveLength(0);
     expect(names()).toEqual([]);
+  });
+
+  it('keeps the placeholders while the suggestions load once the location is known, then shows the restaurants', async () => {
+    const answer = new Subject<RestaurantSuggestion[]>();
+    fetchSuggestions.mockReturnValue(answer);
+    location.set(CAEN);
+    status.set('granted');
+    // Rendered without waiting: the suggestions are not answered, so the page would never be stable
+    harness = await RouterTestingHarness.create('/explore');
+
+    expect(fetchSuggestions).toHaveBeenCalledWith(CAEN, 5);
+    expect(query(harness.fixture, '[role="status"]').getAttribute('aria-label')).toBe(
+      'Loading restaurants',
+    );
+    expect(skeletons()).toHaveLength(5);
+    expect(names()).toEqual([]);
+
+    answer.next([suggestion('near', 0.556)]);
+    await harness.fixture.whenStable();
+
+    expect(skeletons()).toHaveLength(0);
+    expect(names()).toEqual(['Restaurant near']);
   });
 });

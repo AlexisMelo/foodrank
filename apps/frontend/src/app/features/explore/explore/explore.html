@@ -5,7 +5,11 @@
   </div>
 
   @if (loading()) {
-    <div class="loading" role="status" aria-label="Loading">🍽️</div>
+    <div class="cards-scroll" role="status" aria-label="Loading restaurants">
+      @for (i of [1, 2, 3, 4, 5]; track i) {
+        <div class="restaurant-skeleton"></div>
+      }
+    </div>
   } @else {
     @if (locationDenied()) {
       <div class="location-notice">📍 Enable location to sort by distance</div>
