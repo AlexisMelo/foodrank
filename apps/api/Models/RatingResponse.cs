@@ -6,9 +6,12 @@ namespace api.Models;
 /// <param name="RestaurantId">Database identifier of the rated restaurant.</param>
 /// <param name="UserId">Supabase Auth identifier of the user who rated.</param>
 /// <param name="Date">Moment of the rating, in UTC.</param>
-/// <param name="Food">Food rating, from 0 to 100.</param>
-/// <param name="Service">Service rating, from 0 to 100.</param>
-/// <param name="Setting">Setting (decor) rating, from 0 to 100.</param>
+/// <param name="Food">Food rating, whole number from <see cref="Rating.MinScore"/> to
+/// <see cref="Rating.MaxScore"/>.</param>
+/// <param name="Service">Service rating, whole number from <see cref="Rating.MinScore"/> to
+/// <see cref="Rating.MaxScore"/>.</param>
+/// <param name="Setting">Setting (decor) rating, whole number from <see cref="Rating.MinScore"/> to
+/// <see cref="Rating.MaxScore"/>.</param>
 /// <param name="Bonus">True when the user gave the "instant crush" favorite bonus.</param>
 /// <param name="IsActive">True for the user's latest rating of the restaurant, which is their score for it; false for
 /// the previous ones, kept as history.</param>
@@ -19,9 +22,9 @@ public record RatingResponse(
     string RestaurantId,
     string UserId,
     DateTimeOffset Date,
-    float Food,
-    float Service,
-    float Setting,
+    int Food,
+    int Service,
+    int Setting,
     bool Bonus,
     bool IsActive,
     string UserName,

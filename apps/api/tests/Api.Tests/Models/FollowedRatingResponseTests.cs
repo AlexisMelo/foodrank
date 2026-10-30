@@ -16,9 +16,9 @@ public class FollowedRatingResponseTests
         UserId = "user-1",
         // 20:15 in Paris (UTC+2)
         Date = new DateTimeOffset(2026, 3, 7, 20, 15, 0, TimeSpan.FromHours(2)),
-        FoodRating = 80.5f,
-        ServiceRating = 60,
-        SettingRating = 40,
+        FoodRating = 8,
+        ServiceRating = 6,
+        SettingRating = 4,
         Bonus = true,
         IsActive = true
     };
@@ -48,9 +48,9 @@ public class FollowedRatingResponseTests
         Assert.Equal("user-1", response.UserId);
         Assert.Equal(new DateTimeOffset(2026, 3, 7, 18, 15, 0, TimeSpan.Zero), response.Date);
         Assert.Equal(TimeSpan.Zero, response.Date.Offset);
-        Assert.Equal(80.5f, response.Food);
-        Assert.Equal(60, response.Service);
-        Assert.Equal(40, response.Setting);
+        Assert.Equal(8, response.Food);
+        Assert.Equal(6, response.Service);
+        Assert.Equal(4, response.Setting);
         Assert.True(response.Bonus);
         Assert.True(response.IsActive);
     }

@@ -13,6 +13,16 @@ namespace api.Models;
 public class Rating : BaseModel
 {
     /// <summary>
+    /// Lowest score of a criterion.
+    /// </summary>
+    public const int MinScore = 1;
+
+    /// <summary>
+    /// Highest score of a criterion.
+    /// </summary>
+    public const int MaxScore = 10;
+
+    /// <summary>
     /// Database identifier of the rated restaurant.
     /// </summary>
     [PrimaryKey("id_restaurant", true)]
@@ -32,22 +42,22 @@ public class Rating : BaseModel
     public DateTimeOffset Date { get; set; }
 
     /// <summary>
-    /// Food rating, from 0 to 100.
+    /// Food rating, whole number from <see cref="MinScore"/> to <see cref="MaxScore"/>.
     /// </summary>
     [Column("food_rating")]
-    public float FoodRating { get; set; }
+    public int FoodRating { get; set; }
 
     /// <summary>
-    /// Service rating, from 0 to 100.
+    /// Service rating, whole number from <see cref="MinScore"/> to <see cref="MaxScore"/>.
     /// </summary>
     [Column("service_rating")]
-    public float ServiceRating { get; set; }
+    public int ServiceRating { get; set; }
 
     /// <summary>
-    /// Setting (decor) rating, from 0 to 100.
+    /// Setting (decor) rating, whole number from <see cref="MinScore"/> to <see cref="MaxScore"/>.
     /// </summary>
     [Column("setting_rating")]
-    public float SettingRating { get; set; }
+    public int SettingRating { get; set; }
 
     /// <summary>
     /// "Instant crush": favorite bonus added to the global score, with no real criterion.

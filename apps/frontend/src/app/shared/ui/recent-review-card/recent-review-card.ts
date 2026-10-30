@@ -1,13 +1,15 @@
 import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { formatRatingDate, ratingAverage, scoreColor } from '@/core/utils/rating';
+import { ScorePipe } from '@/shared/pipes/score-pipe';
+import { RatingScores } from '../rating-scores/rating-scores';
 
 /**
  * Card of a rating, given by the logged-in user (home page) or by a user they follow (community page): the restaurant,
- * the day, the average and a bar per criterion. Opens the restaurant page.
+ * the day, the average and the score of each criterion under its emoji. Opens the restaurant page.
  */
 @Component({
-  imports: [RouterLink],
+  imports: [RatingScores, RouterLink, ScorePipe],
   selector: 'app-recent-review-card',
   styleUrl: './recent-review-card.scss',
   templateUrl: './recent-review-card.html',
@@ -34,17 +36,17 @@ export class RecentReviewCard {
   readonly date = input.required<string>();
 
   /**
-   * Food score, 0 to 100
+   * Food score, whole number from 1 to 10
    */
   readonly food = input.required<number>();
 
   /**
-   * Service score, 0 to 100
+   * Service score, whole number from 1 to 10
    */
   readonly service = input.required<number>();
 
   /**
-   * Decor (setting) score, 0 to 100
+   * Decor (setting) score, whole number from 1 to 10
    */
   readonly decor = input.required<number>();
 
@@ -54,7 +56,7 @@ export class RecentReviewCard {
   readonly active = input.required<boolean>();
 
   /**
-   * Average of the three criteria, rounded, shown in the bubble
+   * Average of the three criteria, rounded to one decimal, shown in the bubble
    */
   protected readonly average = computed(() =>
     ratingAverage({ food: this.food(), service: this.service(), setting: this.decor() }),
@@ -68,16 +70,7 @@ export class RecentReviewCard {
   );
 
   /**
-   * One entry per criterion, in display order: its emoji and its score
-   */
-  protected readonly criteria = computed(() => [
-    { label: '🍽️', score: this.food() },
-    { label: '🤝', score: this.service() },
-    { label: '✨', score: this.decor() },
-  ]);
-
-  /**
-   * Color of a 0-100 score
+   * Color of a 1-10 score
    */
   protected readonly scoreColor = scoreColor;
 }

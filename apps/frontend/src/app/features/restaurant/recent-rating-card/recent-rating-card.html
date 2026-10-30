@@ -22,7 +22,7 @@
       [decor]="rating().setting"
     />
     <span class="community-avg" [style.background-color]="scoreColor(average())">
-      {{ average() }}
+      {{ average() | score }}
     </span>
   </div>
 </a>

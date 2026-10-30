@@ -120,9 +120,9 @@ describe('rating a restaurant from its page', () => {
         restaurantId: 'r1',
         userId: 'me',
         date: '2026-01-02T12:00:00+00:00',
-        food: 50,
-        service: 50,
-        setting: 50,
+        food: 5,
+        service: 5,
+        setting: 5,
         bonus: false,
         isActive: true,
         userName: 'Me',
@@ -186,9 +186,9 @@ describe('rating a restaurant from its page', () => {
       harness.fixture,
       'input[type="range"]',
     );
-    await setValue(harness.fixture, food!, '92');
-    await setValue(harness.fixture, service!, '71');
-    await setValue(harness.fixture, decor!, '40');
+    await setValue(harness.fixture, food!, '9');
+    await setValue(harness.fixture, service!, '7');
+    await setValue(harness.fixture, decor!, '4');
     await click('.crush-toggle');
     await click('.submit-btn');
 
@@ -198,11 +198,9 @@ describe('rating a restaurant from its page', () => {
     expect(cards).toHaveLength(2);
     expect(textOf(cards[0]!)).toContain('October 9, 2026');
     expect(textOf(cards[0]!)).toContain('💘');
-    expect(Array.from(cards[0]!.querySelectorAll('.criterion-score'), textOf)).toEqual([
-      '92',
-      '71',
-      '40',
-    ]);
+    // The scores under the emojis, and their average with one decimal: (9 + 7 + 4) / 3 = 6.67
+    expect(Array.from(cards[0]!.querySelectorAll('.score-value'), textOf)).toEqual(['9', '7', '4']);
+    expect(textOf(cards[0]!.querySelector('.visit-avg')!)).toBe('6.7');
     expect(textOf(cards[1]!)).toContain('January 2, 2026');
     // The new review is the active one: the previous one stays, dimmed
     expect(cards.map((c) => c.classList.contains('inactive'))).toEqual([false, true]);
@@ -236,19 +234,28 @@ describe('rating a restaurant from its page', () => {
   it("shows the restaurant's global rating and criteria averages, updated after a new rating", async () => {
     const other = { ...api.ratings[0]!, userId: 'camille', userName: 'Camille' };
     api.ratings.push(
-      { ...other, food: 90, service: 60, setting: 30 },
+      { ...other, food: 9, service: 6, setting: 3 },
       // A previous rating of Camille, replaced: not counted
-      { ...other, date: '2025-12-01T12:00:00+00:00', food: 0, service: 0, setting: 0, isActive: false },
+      {
+        ...other,
+        date: '2025-12-01T12:00:00+00:00',
+        food: 1,
+        service: 1,
+        setting: 1,
+        isActive: false,
+      },
     );
 
     await openApp('/restaurant/r1');
 
-    // (50 + 50 + 50 + 90 + 60 + 30) / 6
-    expect(textOf(query(harness.fixture, '.global-score'))).toBe('55');
+    // Global rating with one decimal: (5 + 5 + 5 + 9 + 6 + 3) / 6 = 5.5
+    expect(textOf(query(harness.fixture, '.global-score'))).toBe('5.5');
+    expect(query(harness.fixture, 'span.global-score').title).toBe('Global rating: 5.5/10');
+    // Criteria averages rounded to whole numbers: food (5 + 9) / 2, service (5 + 6) / 2 = 5.5, decor (5 + 3) / 2
     expect(queryAll(harness.fixture, '.criteria-averages .criterion-score').map(textOf)).toEqual([
-      '70',
-      '55',
-      '40',
+      '7',
+      '6',
+      '4',
     ]);
     expect(textOf(query(harness.fixture, '.rating-count'))).toBe('2 ratings');
 
@@ -259,17 +266,18 @@ describe('rating a restaurant from its page', () => {
       harness.fixture,
       'input[type="range"]',
     );
-    await setValue(harness.fixture, food!, '92');
-    await setValue(harness.fixture, service!, '71');
-    await setValue(harness.fixture, decor!, '40');
+    await setValue(harness.fixture, food!, '9');
+    await setValue(harness.fixture, service!, '7');
+    await setValue(harness.fixture, decor!, '4');
     await click('.submit-btn');
 
-    // (92 + 71 + 40 + 90 + 60 + 30) / 6 = 63.8
-    expect(textOf(query(harness.fixture, '.global-score'))).toBe('64');
+    // (9 + 7 + 4 + 9 + 6 + 3) / 6 = 6.33
+    expect(textOf(query(harness.fixture, '.global-score'))).toBe('6.3');
+    // Food 9, service (7 + 6) / 2 = 6.5, decor (4 + 3) / 2 = 3.5: halves rounded up
     expect(queryAll(harness.fixture, '.criteria-averages .criterion-score').map(textOf)).toEqual([
-      '91',
-      '66',
-      '35',
+      '9',
+      '7',
+      '4',
     ]);
   });
 

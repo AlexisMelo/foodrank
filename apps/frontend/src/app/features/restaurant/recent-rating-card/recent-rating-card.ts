@@ -2,6 +2,7 @@ import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { RestaurantRating } from '@/core/models/rating.model';
 import { formatRatingDate, ratingAverage, scoreColor } from '@/core/utils/rating';
+import { ScorePipe } from '@/shared/pipes/score-pipe';
 import { RatingScores } from '@/shared/ui/rating-scores/rating-scores';
 
 /**
@@ -9,7 +10,7 @@ import { RatingScores } from '@/shared/ui/rating-scores/rating-scores';
  * and the average. Opens the author's profile.
  */
 @Component({
-  imports: [RouterLink, RatingScores],
+  imports: [RouterLink, RatingScores, ScorePipe],
   selector: 'app-recent-rating-card',
   styleUrl: './recent-rating-card.scss',
   templateUrl: './recent-rating-card.html',
@@ -33,7 +34,7 @@ export class RecentRatingCard {
   );
 
   /**
-   * Average of the three criteria, rounded, shown in the bubble
+   * Average of the three criteria, rounded to one decimal, shown in the bubble
    */
   protected readonly average = computed(() => ratingAverage(this.rating()));
 
@@ -48,7 +49,7 @@ export class RecentRatingCard {
   protected readonly initial = computed(() => this.rating().userName.charAt(0).toUpperCase());
 
   /**
-   * Color of a 0-100 score
+   * Color of a 1-10 score
    */
   protected readonly scoreColor = scoreColor;
 }

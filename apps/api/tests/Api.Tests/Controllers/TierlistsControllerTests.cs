@@ -434,9 +434,9 @@ public class TierlistsControllerTests : IDisposable
                 RestaurantId = restaurantId,
                 UserId = ratedBy,
                 Date = DateTimeOffset.UtcNow,
-                FoodRating = 80,
-                ServiceRating = 70,
-                SettingRating = 60,
+                FoodRating = 8,
+                ServiceRating = 7,
+                SettingRating = 6,
                 IsActive = true
             });
     }

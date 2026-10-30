@@ -13,6 +13,7 @@ import type { Restaurant } from '@/core/models/restaurant.model';
 import type { Tierlist } from '@/core/models/tierlist.model';
 import { DailyReviewStore, REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
 import { ToastStore } from '@/core/toast/toast-store';
+import { MAX_SCORE, MIN_SCORE } from '@/core/utils/rating';
 import { byLastUpdate, containsRestaurant, isAlreadyInTierlist } from '@/core/utils/tierlist';
 import { LockIcon } from '@/shared/ui/lock-icon/lock-icon';
 import { CriterionSlider, type ReviewMarker } from '../criterion-slider/criterion-slider';
@@ -248,22 +249,23 @@ export class NewReview {
   protected readonly decorMarkers = computed(() => this.markers('decor'));
 
   /**
-   * Scores (0 to 100, 50 to start with) and favorite bonus being given
+   * Scores (whole numbers from 1 to 10, 5 to start with) and favorite bonus being given
    */
   private readonly rating = signal<RatingInput>({
-    food: 50,
-    service: 50,
-    setting: 50,
+    food: 5,
+    service: 5,
+    setting: 5,
     bonus: false,
   });
 
   /**
-   * Rating fields: the three sliders, from 0 to 100
+   * Rating fields: the three sliders, from MIN_SCORE to MAX_SCORE. The bounds are also set on the native range inputs
+   * by `[formField]`, whose step of 1 leaves only the 10 whole scores
    */
   protected readonly ratingForm = form(this.rating, (rating) => {
     for (const score of [rating.food, rating.service, rating.setting]) {
-      min(score, 0);
-      max(score, 100);
+      min(score, MIN_SCORE);
+      max(score, MAX_SCORE);
     }
   });
 

@@ -18,9 +18,9 @@ function rating(userName: string, date: string, overrides: Partial<RestaurantRat
     restaurantId: 'r1',
     userId: userName.toLowerCase(),
     date,
-    food: 90,
-    service: 60,
-    setting: 30,
+    food: 9,
+    service: 6,
+    setting: 3,
     bonus: false,
     isActive: true,
     userName,
@@ -141,12 +141,9 @@ describe('RestaurantRatingsTabs', () => {
     expect(cards).toHaveLength(2);
     expect(textOf(cards[0]!)).toContain('March 7, 2026');
     expect(textOf(cards[0]!)).toContain('💘');
-    expect(Array.from(cards[0]!.querySelectorAll('.criterion-score'), textOf)).toEqual([
-      '90',
-      '60',
-      '30',
-    ]);
-    expect(textOf(cards[0]!.querySelector('.visit-avg')!)).toBe('60');
+    // Like the "Recent" tab: the scores under the emojis, and their average (a round 6, without decimal)
+    expect(Array.from(cards[0]!.querySelectorAll('.score-value'), textOf)).toEqual(['9', '6', '3']);
+    expect(textOf(cards[0]!.querySelector('.visit-avg')!)).toBe('6');
     expect(textOf(cards[1]!)).toContain('January 2, 2026');
     expect(textOf(cards[1]!)).not.toContain('💘');
     expect(textOf(fixture.nativeElement)).not.toContain('Camille');

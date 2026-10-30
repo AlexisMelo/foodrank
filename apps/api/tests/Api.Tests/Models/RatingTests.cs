@@ -19,7 +19,7 @@ public class RatingTests
     /// <summary>
     /// Builds a rating of restaurant "r1" by "user-1" given at <paramref name="date"/>.
     /// </summary>
-    private static Rating NewRating(DateTimeOffset date, bool isActive = false, float food = 50) => new()
+    private static Rating NewRating(DateTimeOffset date, bool isActive = false, int food = 5) => new()
     {
         RestaurantId = "r1",
         UserId = "user-1",
@@ -48,10 +48,10 @@ public class RatingTests
     [Fact]
     public void PlanNew_PreviousActiveRating_DeactivatesItAndActivatesNewOne()
     {
-        IReadOnlyList<Rating> rows = Rating.PlanNew([NewRating(March(1), isActive: true, food: 20)], NewRating(March(9), food: 90));
+        IReadOnlyList<Rating> rows = Rating.PlanNew([NewRating(March(1), isActive: true, food: 2)], NewRating(March(9), food: 9));
 
         Assert.Equal(
-            [(March(1), 20f, false), (March(9), 90f, true)],
+            [(March(1), 2, false), (March(9), 9, true)],
             rows.Select(r => (r.Date, r.FoodRating, r.IsActive)));
     }
 

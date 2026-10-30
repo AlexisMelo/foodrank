@@ -35,9 +35,9 @@ function rating(
 describe('rankRestaurants', () => {
   it('ranks the restaurants by the score of their rating (mean of the three criteria), best first', () => {
     const ranked = rankRestaurants([
-      rating('meh', 50, 50, 50),
-      rating('great', 90, 90, 90),
-      rating('good', 70, 70, 70),
+      rating('meh', 5, 5, 5),
+      rating('great', 9, 9, 9),
+      rating('good', 7, 7, 7),
     ]);
 
     expect(ranked.map((r) => r.restaurantId)).toEqual(['great', 'good', 'meh']);
@@ -51,14 +51,14 @@ describe('rankRestaurants', () => {
 
   it('lists a restaurant rated several times once, with its active rating only', () => {
     const ranked = rankRestaurants([
-      rating('r1', 60, 40, 20),
-      rating('r2', 10, 10, 10),
-      rating('r1', 100, 100, 100, false),
+      rating('r1', 6, 4, 2),
+      rating('r2', 1, 1, 1),
+      rating('r1', 10, 10, 10, false),
     ]);
 
     expect(ranked).toHaveLength(2);
-    expect(ranked[0]).toMatchObject({ restaurantId: 'r1', food: 60, service: 40, setting: 20 });
-    expect(ranked[0]!.overall).toBe(40);
+    expect(ranked[0]).toMatchObject({ restaurantId: 'r1', food: 6, service: 4, setting: 2 });
+    expect(ranked[0]!.overall).toBe(4);
   });
 
   it('returns nothing without rating', () => {
@@ -85,9 +85,9 @@ describe('sortRestaurants', () => {
   }
 
   const restaurants = [
-    restaurant('Sushi Bar', 60, '2026-10-01T12:00:00+00:00'),
-    restaurant('Crêperie du Port', 90, '2026-09-01T12:00:00+00:00'),
-    restaurant('Arepas', 60, '2026-10-20T12:00:00+00:00'),
+    restaurant('Sushi Bar', 6, '2026-10-01T12:00:00+00:00'),
+    restaurant('Crêperie du Port', 9, '2026-09-01T12:00:00+00:00'),
+    restaurant('Arepas', 6, '2026-10-20T12:00:00+00:00'),
   ];
 
   /**
@@ -118,9 +118,9 @@ describe('sortRestaurants', () => {
 
 describe('overallByRestaurant', () => {
   it("gives the score of the user's active rating of each restaurant", () => {
-    const scores = overallByRestaurant([rating('r1', 30, 30, 30), rating('r1', 90, 60, 30, false)]);
+    const scores = overallByRestaurant([rating('r1', 3, 3, 3), rating('r1', 9, 6, 3, false)]);
 
-    expect(scores.get('r1')).toBe(30);
+    expect(scores.get('r1')).toBe(3);
     expect(scores.has('r2')).toBe(false);
   });
 });
@@ -138,21 +138,21 @@ describe('rankTierlistRestaurants', () => {
     const ranked = rankTierlistRestaurants(
       ['meh', 'great'],
       [
-        rating('meh', 40, 40, 40),
-        rating('great', 90, 90, 90),
-        rating('meh', 100, 100, 100, false),
-        rating('other', 100, 100, 100),
+        rating('meh', 4, 4, 4),
+        rating('great', 9, 9, 9),
+        rating('meh', 10, 10, 10, false),
+        rating('other', 10, 10, 10),
       ],
     );
 
     expect(ranked.map((r) => [r.restaurantId, r.overall])).toEqual([
-      ['great', 90],
-      ['meh', 40],
+      ['great', 9],
+      ['meh', 4],
     ]);
   });
 
   it('never lists a restaurant the owner did not rate, rather than giving it a made-up score', () => {
-    const ranked = rankTierlistRestaurants(['unrated', 'rated'], [rating('rated', 20, 20, 20)]);
+    const ranked = rankTierlistRestaurants(['unrated', 'rated'], [rating('rated', 2, 2, 2)]);
 
     expect(ranked.map((r) => r.restaurantId)).toEqual(['rated']);
   });

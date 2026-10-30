@@ -25,22 +25,22 @@ export interface RankedRestaurant {
   address: string;
 
   /**
-   * 0 to 100
+   * Whole number from 1 to 10
    */
   food: number;
 
   /**
-   * 0 to 100
+   * Whole number from 1 to 10
    */
   service: number;
 
   /**
-   * Setting (decor), 0 to 100
+   * Setting (decor), whole number from 1 to 10
    */
   setting: number;
 
   /**
-   * Score of the rating: mean of its three criteria
+   * Score of the rating: mean of its three criteria, 1 to 10, not rounded
    */
   overall: number;
 

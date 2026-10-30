@@ -63,9 +63,9 @@ function rating(
  * Ratings served by the fake API, by user id
  */
 const ratings: Record<string, UserRating[]> = {
-  me: [rating('r1', 40)],
-  u1: [rating('r1', 40)],
-  u2: [rating('r1', 60), rating('r2', 90), rating('elsewhere', 100)],
+  me: [rating('r1', 4)],
+  u1: [rating('r1', 4)],
+  u2: [rating('r1', 6), rating('r2', 9), rating('elsewhere', 10)],
 };
 
 /**
@@ -231,7 +231,7 @@ describe('TierlistDetailView', () => {
       'Restaurant r2',
       'Restaurant r1',
     ]);
-    expect(textOf(items[0]!.querySelector('.item-avg')!)).toBe('90');
+    expect(textOf(items[0]!.querySelector('.item-avg')!)).toBe('9');
   });
 
   it('sorts the restaurants by score, the default, by the moment of their rating or by name', async () => {
@@ -239,7 +239,7 @@ describe('TierlistDetailView', () => {
     fetchUserRatings.mockImplementation((id = 'me') =>
       of(
         id === 'u2'
-          ? [rating('r1', 60, '2026-10-20T12:00:00+00:00'), rating('r2', 90)]
+          ? [rating('r1', 6, '2026-10-20T12:00:00+00:00'), rating('r2', 9)]
           : (ratings[id] ?? []),
       ),
     );
@@ -285,7 +285,7 @@ describe('TierlistDetailView', () => {
     const r1 = queryAll(harness.fixture, '.list-item').find((i) =>
       textOf(i).includes('Restaurant r1'),
     )!;
-    expect(textOf(r1.querySelector('.my-score')!)).toBe('40');
+    expect(textOf(r1.querySelector('.my-score')!)).toBe('4');
     expect(queryAll(harness.fixture, '.pin-btn')).toHaveLength(0);
     expect(fetchUserRatings.mock.calls).toEqual([['u2'], ['me']]);
   });
@@ -550,7 +550,7 @@ describe('TierlistDetailView', () => {
     beforeEach(() => {
       // u1 also rated r3, which is not in the tierlist
       fetchUserRatings.mockImplementation((id = 'me') =>
-        of(id === 'u1' ? [rating('r3', 70), rating('r1', 40)] : (ratings[id] ?? [])),
+        of(id === 'u1' ? [rating('r3', 7), rating('r1', 4)] : (ratings[id] ?? [])),
       );
     });
 

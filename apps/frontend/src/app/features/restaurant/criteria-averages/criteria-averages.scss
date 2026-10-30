@@ -19,12 +19,8 @@
 }
 .criterion {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.criterion-header {
-  display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 8px;
 }
 .criterion-label {
@@ -32,21 +28,10 @@
   font-weight: 700;
   color: rgba(255, 255, 255, 0.7);
 }
+// Colored by value, like the scores under the emojis of the rating cards (RatingScores)
 .criterion-score {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
-  color: rgba(255, 255, 255, 0.8);
-}
-.criterion-bar-wrap {
-  height: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 100px;
-  overflow: hidden;
-}
-.criterion-bar {
-  height: 100%;
-  border-radius: 100px;
-  transition: width 0.4s ease;
 }
 .rating-count {
   font-size: 11px;

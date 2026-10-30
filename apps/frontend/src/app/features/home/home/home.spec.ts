@@ -26,9 +26,9 @@ function rating(restaurantId: string, date: string): UserRating {
     restaurantEmoji: '🍕',
     restaurantAddress: '',
     date,
-    food: 90,
-    service: 60,
-    setting: 30,
+    food: 9,
+    service: 6,
+    setting: 3,
     bonus: false,
     isActive: true,
   };
@@ -264,11 +264,13 @@ describe('Home', () => {
         'Restaurant r4',
       ]);
       expect(textOf(cards[0]!.querySelector('.visit-date')!)).toBe('Oct 8');
-      expect(Array.from(cards[0]!.querySelectorAll('.criterion-score'), textOf)).toEqual([
-        '90',
-        '60',
-        '30',
+      // The scores under the emojis, and their average in the bubble: a round 6, without decimal
+      expect(Array.from(cards[0]!.querySelectorAll('.score-value'), textOf)).toEqual([
+        '9',
+        '6',
+        '3',
       ]);
+      expect(textOf(cards[0]!.querySelector('.avg-bubble')!)).toBe('6');
     });
 
     it('dims a previous review, replaced by a more recent one of the same restaurant', async () => {
@@ -385,7 +387,7 @@ describe('Home', () => {
 
     it("shows the logged-in user's 3 best rated restaurants, best first", async () => {
       fetchUserRatings.mockReturnValue(
-        of([scored('ok', 60), scored('top', 95), scored('low', 20), scored('good', 80)]),
+        of([scored('ok', 6), scored('top', 10), scored('low', 2), scored('good', 8)]),
       );
       await openHome();
 
@@ -396,7 +398,7 @@ describe('Home', () => {
     });
 
     it('shows the address of each favorite under its name', async () => {
-      fetchUserRatings.mockReturnValue(of([scored('top', 95), scored('good', 80)]));
+      fetchUserRatings.mockReturnValue(of([scored('top', 10), scored('good', 8)]));
       await openHome();
 
       expect(queryAll(harness.fixture, '.favorites-list .item-sub').map(textOf)).toEqual([
@@ -408,9 +410,9 @@ describe('Home', () => {
     it('ranks a restaurant by its active rating, its previous ratings left out', async () => {
       fetchUserRatings.mockReturnValue(
         of([
-          scored('changed', 30),
-          { ...scored('changed', 100), date: '2026-01-01T12:00:00+00:00', isActive: false },
-          scored('steady', 70),
+          scored('changed', 3),
+          { ...scored('changed', 10), date: '2026-01-01T12:00:00+00:00', isActive: false },
+          scored('steady', 7),
         ]),
       );
       await openHome();
@@ -425,7 +427,7 @@ describe('Home', () => {
     });
 
     it('shares a single request of my ratings with the recent reviews', async () => {
-      fetchUserRatings.mockReturnValue(of([scored('top', 95), scored('ok', 60)]));
+      fetchUserRatings.mockReturnValue(of([scored('top', 10), scored('ok', 6)]));
       await openHome();
 
       expect(fetchUserRatings.mock.calls).toEqual([['me']]);

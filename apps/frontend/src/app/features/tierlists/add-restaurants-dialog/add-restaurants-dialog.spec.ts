@@ -63,11 +63,11 @@ function httpError(status: number): Observable<never> {
  * and Pizza Roma already in the tierlist (see `open`)
  */
 const myRatings = [
-  rating('r3', 'Sushi Bar', '3 quai Vendeuvre, Caen', 70, 20),
-  rating('r4', 'Arepas', '', 60, 18),
-  rating('r2', 'Crêperie du Port', '', 90, 15),
-  rating('r1', 'Pizza Roma', '1 rue de Caen', 50, 10),
-  rating('r3', 'Sushi Bar', '3 quai Vendeuvre, Caen', 100, 5, false),
+  rating('r3', 'Sushi Bar', '3 quai Vendeuvre, Caen', 7, 20),
+  rating('r4', 'Arepas', '', 6, 18),
+  rating('r2', 'Crêperie du Port', '', 9, 15),
+  rating('r1', 'Pizza Roma', '1 rue de Caen', 5, 10),
+  rating('r3', 'Sushi Bar', '3 quai Vendeuvre, Caen', 10, 5, false),
 ];
 
 describe('AddRestaurantsDialog', () => {

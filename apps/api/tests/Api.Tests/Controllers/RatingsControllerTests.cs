@@ -73,15 +73,15 @@ public class RatingsControllerTests : IDisposable
     [Fact]
     public async Task Create_LoggedIn_SavesRatingForUser()
     {
-        HttpResponseMessage response = await RateAsync(RestaurantId, new { food = 80, service = 60.5, setting = 40, bonus = true });
+        HttpResponseMessage response = await RateAsync(RestaurantId, new { food = 8, service = 6, setting = 4, bonus = true });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Rating rating = Assert.Single(_factory.RatingService.Ratings);
         Assert.Equal(RestaurantId, rating.RestaurantId);
         Assert.Equal(UserId, rating.UserId);
-        Assert.Equal(80, rating.FoodRating);
-        Assert.Equal(60.5f, rating.ServiceRating);
-        Assert.Equal(40, rating.SettingRating);
+        Assert.Equal(8, rating.FoodRating);
+        Assert.Equal(6, rating.ServiceRating);
+        Assert.Equal(4, rating.SettingRating);
         Assert.True(rating.Bonus);
     }
 
@@ -91,7 +91,7 @@ public class RatingsControllerTests : IDisposable
     [Fact]
     public async Task Create_NoCookie_Returns401()
     {
-        HttpResponseMessage response = await RateAsync(RestaurantId, new { food = 50, service = 50, setting = 50, bonus = false }, token: null);
+        HttpResponseMessage response = await RateAsync(RestaurantId, new { food = 5, service = 5, setting = 5, bonus = false }, token: null);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Empty(_factory.RatingService.Ratings);
@@ -103,22 +103,49 @@ public class RatingsControllerTests : IDisposable
     [Fact]
     public async Task Create_InvalidToken_Returns401()
     {
-        HttpResponseMessage response = await RateAsync(RestaurantId, new { food = 50, service = 50, setting = 50, bonus = false }, token: "expired");
+        HttpResponseMessage response = await RateAsync(RestaurantId, new { food = 5, service = 5, setting = 5, bonus = false }, token: "expired");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Empty(_factory.RatingService.Ratings);
     }
 
     /// <summary>
-    /// A rating outside 0-100 is refused with a 400.
+    /// A rating outside 1-10 is refused with a 400, including the old 0-100 scale.
     /// </summary>
     [Theory]
-    [InlineData(101, 50, 50)]
-    [InlineData(50, -1, 50)]
-    [InlineData(50, 50, 150)]
-    public async Task Create_OutOfRange_Returns400(float food, float service, float setting)
+    [InlineData(0, 5, 5)]
+    [InlineData(11, 5, 5)]
+    [InlineData(5, -1, 5)]
+    [InlineData(5, 5, 100)]
+    public async Task Create_OutOfRange_Returns400(int food, int service, int setting)
     {
         HttpResponseMessage response = await RateAsync(RestaurantId, new { food, service, setting, bonus = false });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Empty(_factory.RatingService.Ratings);
+    }
+
+    /// <summary>
+    /// The lowest and highest scores, 1 and 10, are accepted.
+    /// </summary>
+    [Theory]
+    [InlineData(Rating.MinScore)]
+    [InlineData(Rating.MaxScore)]
+    public async Task Create_ScoreAtBound_SavesRating(int score)
+    {
+        HttpResponseMessage response = await RateAsync(RestaurantId, new { food = score, service = score, setting = score, bonus = false });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(score, Assert.Single(_factory.RatingService.Ratings).FoodRating);
+    }
+
+    /// <summary>
+    /// A criterion is a whole number: a decimal score is refused with a 400.
+    /// </summary>
+    [Fact]
+    public async Task Create_DecimalScore_Returns400()
+    {
+        HttpResponseMessage response = await RateAsync(RestaurantId, new { food = 7.5, service = 5, setting = 5, bonus = false });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Empty(_factory.RatingService.Ratings);
@@ -130,7 +157,7 @@ public class RatingsControllerTests : IDisposable
     [Fact]
     public async Task Create_UnknownRestaurant_Returns404()
     {
-        HttpResponseMessage response = await RateAsync("unknown", new { food = 50, service = 50, setting = 50, bonus = false });
+        HttpResponseMessage response = await RateAsync("unknown", new { food = 5, service = 5, setting = 5, bonus = false });
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -141,12 +168,12 @@ public class RatingsControllerTests : IDisposable
     [Fact]
     public async Task Create_TwiceSameDay_Returns409()
     {
-        await RateAsync(RestaurantId, new { food = 80, service = 80, setting = 80, bonus = false });
-        HttpResponseMessage response = await RateAsync(RestaurantId, new { food = 10, service = 10, setting = 10, bonus = false });
+        await RateAsync(RestaurantId, new { food = 8, service = 8, setting = 8, bonus = false });
+        HttpResponseMessage response = await RateAsync(RestaurantId, new { food = 1, service = 1, setting = 1, bonus = false });
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         Assert.Contains("already rated", await response.Content.ReadAsStringAsync());
-        Assert.Equal(80, Assert.Single(_factory.RatingService.Ratings).FoodRating);
+        Assert.Equal(8, Assert.Single(_factory.RatingService.Ratings).FoodRating);
     }
 
     /// <summary>
@@ -157,9 +184,9 @@ public class RatingsControllerTests : IDisposable
     public async Task Create_OtherRestaurantSameDay_Returns409()
     {
         _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = "r2", Name = "Sushi Bar" });
-        await RateAsync(RestaurantId, new { food = 80, service = 80, setting = 80, bonus = false });
+        await RateAsync(RestaurantId, new { food = 8, service = 8, setting = 8, bonus = false });
 
-        HttpResponseMessage response = await RateAsync("r2", new { food = 10, service = 10, setting = 10, bonus = false });
+        HttpResponseMessage response = await RateAsync("r2", new { food = 1, service = 1, setting = 1, bonus = false });
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         Assert.Contains("You already rated a restaurant today.", await response.Content.ReadAsStringAsync());
@@ -175,7 +202,7 @@ public class RatingsControllerTests : IDisposable
         _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = "r2", Name = "Sushi Bar" });
         AddRating(UserId, DateTime.UtcNow.AddDays(-1), restaurantId: "r2");
 
-        HttpResponseMessage response = await RateAsync(RestaurantId, new { food = 80, service = 80, setting = 80, bonus = false });
+        HttpResponseMessage response = await RateAsync(RestaurantId, new { food = 8, service = 8, setting = 8, bonus = false });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(2, _factory.RatingService.Ratings.Count);
@@ -189,7 +216,7 @@ public class RatingsControllerTests : IDisposable
     {
         AddRating("user-2", DateTime.UtcNow);
 
-        HttpResponseMessage response = await RateAsync(RestaurantId, new { food = 80, service = 80, setting = 80, bonus = false });
+        HttpResponseMessage response = await RateAsync(RestaurantId, new { food = 8, service = 8, setting = 8, bonus = false });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -209,8 +236,8 @@ public class RatingsControllerTests : IDisposable
     /// Stores a rating of <paramref name="restaurantId"/> by <paramref name="userId"/> at <paramref name="date"/> (UTC),
     /// active unless <paramref name="isActive"/> is false.
     /// </summary>
-    private void AddRating(string userId, DateTime date, float food = 50, string restaurantId = RestaurantId, bool isActive = true,
-        float service = 50, float setting = 50)
+    private void AddRating(string userId, DateTime date, int food = 5, string restaurantId = RestaurantId, bool isActive = true,
+        int service = 5, int setting = 5)
         => _factory.RatingService.Ratings.Add(new Rating
         {
             RestaurantId = restaurantId,
@@ -278,14 +305,14 @@ public class RatingsControllerTests : IDisposable
     public async Task GetRecent_WithProfile_ReturnsAuthorName()
     {
         _factory.RatingService.Profiles["user-2"] = new Profile { Id = "user-2", Username = "camille", DisplayName = "Camille", AvatarUrl = "https://img.test/c.png" };
-        AddRating("user-2", new DateTime(2026, 3, 1, 21, 30, 0), food: 72.5f);
+        AddRating("user-2", new DateTime(2026, 3, 1, 21, 30, 0), food: 7);
 
         HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings");
 
         string json = await response.Content.ReadAsStringAsync();
         Assert.Contains("\"userName\":\"Camille\"", json);
         Assert.Contains("\"userAvatarUrl\":\"https://img.test/c.png\"", json);
-        Assert.Contains("\"food\":72.5", json);
+        Assert.Contains("\"food\":7,", json);
         // ISO 8601 moment in UTC: the frontend displays its day in the browser's time zone
         Assert.Contains("\"date\":\"2026-03-01T21:30:00+00:00\"", json);
     }
@@ -317,13 +344,13 @@ public class RatingsControllerTests : IDisposable
     [Fact]
     public async Task GetRecent_AfterNewRating_ReplacesPreviousOne()
     {
-        AddRating(UserId, new DateTime(2026, 3, 1), food: 20);
-        await RateAsync(RestaurantId, new { food = 91, service = 70, setting = 30, bonus = false });
+        AddRating(UserId, new DateTime(2026, 3, 1), food: 2);
+        await RateAsync(RestaurantId, new { food = 9, service = 7, setting = 3, bonus = false });
 
         HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings");
 
         RatingResponse rating = Assert.Single((await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!);
-        Assert.Equal(91, rating.Food);
+        Assert.Equal(9, rating.Food);
     }
 
     /// <summary>
@@ -346,15 +373,15 @@ public class RatingsControllerTests : IDisposable
     {
         _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = "r2", Name = "Sushi Bar" });
         for (int day = 1; day <= 6; day++)
-            AddRating($"user-{day}", new DateTime(2026, 3, day), food: 90, service: 60, setting: 30);
-        AddRating("user-1", new DateTime(2026, 2, 1), food: 0, service: 0, setting: 0, isActive: false);
-        AddRating("user-1", new DateTime(2026, 3, 1), food: 0, service: 0, setting: 0, restaurantId: "r2");
+            AddRating($"user-{day}", new DateTime(2026, 3, day), food: 9, service: 6, setting: 3);
+        AddRating("user-1", new DateTime(2026, 2, 1), food: 1, service: 1, setting: 1, isActive: false);
+        AddRating("user-1", new DateTime(2026, 3, 1), food: 1, service: 1, setting: 1, restaurantId: "r2");
 
         HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings/summary", token: null);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(new RatingSummaryResponse(6, 90, 60, 30, 60), await response.Content.ReadFromJsonAsync<RatingSummaryResponse>());
-        Assert.Contains("\"global\":60", await response.Content.ReadAsStringAsync());
+        Assert.Equal(new RatingSummaryResponse(6, 9, 6, 3, 6), await response.Content.ReadFromJsonAsync<RatingSummaryResponse>());
+        Assert.Contains("\"global\":6", await response.Content.ReadAsStringAsync());
     }
 
     /// <summary>
@@ -375,12 +402,12 @@ public class RatingsControllerTests : IDisposable
     [Fact]
     public async Task GetSummary_AfterNewRating_ReplacesPreviousOne()
     {
-        AddRating(UserId, new DateTime(2026, 3, 1), food: 20, service: 20, setting: 20);
-        await RateAsync(RestaurantId, new { food = 90, service = 60, setting = 30, bonus = false });
+        AddRating(UserId, new DateTime(2026, 3, 1), food: 2, service: 2, setting: 2);
+        await RateAsync(RestaurantId, new { food = 9, service = 6, setting = 3, bonus = false });
 
         HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings/summary");
 
-        Assert.Equal(new RatingSummaryResponse(1, 90, 60, 30, 60), await response.Content.ReadFromJsonAsync<RatingSummaryResponse>());
+        Assert.Equal(new RatingSummaryResponse(1, 9, 6, 3, 6), await response.Content.ReadFromJsonAsync<RatingSummaryResponse>());
     }
 
     /// <summary>
@@ -423,12 +450,12 @@ public class RatingsControllerTests : IDisposable
     [Fact]
     public async Task GetMine_AfterCreate_ReturnsNewRating()
     {
-        await RateAsync(RestaurantId, new { food = 91, service = 70, setting = 30, bonus = true });
+        await RateAsync(RestaurantId, new { food = 9, service = 7, setting = 3, bonus = true });
 
         HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings/mine");
 
         RatingResponse rating = Assert.Single((await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!);
-        Assert.Equal(91, rating.Food);
+        Assert.Equal(9, rating.Food);
         Assert.True(rating.Bonus);
     }
 
@@ -440,15 +467,15 @@ public class RatingsControllerTests : IDisposable
     public async Task GetMine_AfterNewRating_NewOneIsActiveAndPreviousIsKept()
     {
         _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = "r2", Name = "Sushi Bar" });
-        AddRating(UserId, new DateTime(2026, 3, 1), food: 20);
+        AddRating(UserId, new DateTime(2026, 3, 1), food: 2);
         AddRating("user-2", new DateTime(2026, 3, 1));
         AddRating(UserId, new DateTime(2026, 3, 1), restaurantId: "r2");
-        await RateAsync(RestaurantId, new { food = 91, service = 70, setting = 30, bonus = false });
+        await RateAsync(RestaurantId, new { food = 9, service = 7, setting = 3, bonus = false });
 
         HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings/mine");
 
         List<RatingResponse> ratings = (await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!;
-        Assert.Equal([(91f, true), (20f, false)], ratings.Select(r => (r.Food, r.IsActive)));
+        Assert.Equal([(9, true), (2, false)], ratings.Select(r => (r.Food, r.IsActive)));
         Assert.Equal(3, _factory.RatingService.Ratings.Count(r => r.IsActive));
     }
 

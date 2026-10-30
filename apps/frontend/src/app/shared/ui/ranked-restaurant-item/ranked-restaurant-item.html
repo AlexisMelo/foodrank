@@ -13,11 +13,11 @@
       <app-rating-scores [food]="food()" [service]="service()" [decor]="decor()" />
       <div class="score-wrap">
         <div class="item-avg" [style.background-color]="scoreColor(roundedOverall())">
-          {{ roundedOverall() }}
+          {{ roundedOverall() | score }}
         </div>
         @if (myScore() !== undefined) {
           <div class="my-score" [style.background-color]="scoreColor(roundedMyScore())">
-            {{ roundedMyScore() }}
+            {{ roundedMyScore() | score }}
           </div>
         }
       </div>

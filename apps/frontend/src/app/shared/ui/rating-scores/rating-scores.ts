@@ -12,17 +12,17 @@ import { scoreColor } from '@/core/utils/rating';
 })
 export class RatingScores {
   /**
-   * Food score, 0 to 100, decimals allowed (e.g. an average)
+   * Food score, 1 to 10; shown rounded to a whole number, as a criterion
    */
   readonly food = input.required<number>();
 
   /**
-   * Service score, 0 to 100, decimals allowed
+   * Service score, 1 to 10; shown rounded to a whole number
    */
   readonly service = input.required<number>();
 
   /**
-   * Decor (setting) score, 0 to 100, decimals allowed
+   * Decor (setting) score, 1 to 10; shown rounded to a whole number
    */
   readonly decor = input.required<number>();
 

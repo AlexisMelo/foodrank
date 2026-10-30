@@ -3,28 +3,20 @@
   [class.inactive]="!rating().isActive"
   [attr.title]="rating().isActive ? null : 'Replaced by a more recent rating'"
 >
-  <div class="visit-header">
-    <span class="visit-date">
-      {{ displayedDate() }}
-      @if (rating().bonus) {
-        <span class="crush" title="Instant crush">💘</span>
-      }
-    </span>
-    <span class="visit-avg" [style.background-color]="scoreColor(average())">{{ average() }}</span>
-  </div>
-  <div class="criteria-list">
-    @for (criterion of criteria(); track criterion.label) {
-      <div class="criterion">
-        <span class="criterion-label">{{ criterion.label }}</span>
-        <div class="criterion-bar-wrap">
-          <div
-            class="criterion-bar"
-            [style.width.%]="criterion.score"
-            [style.background-color]="scoreColor(criterion.score)"
-          ></div>
-        </div>
-        <span class="criterion-score">{{ criterion.score }}</span>
-      </div>
+  <span class="visit-date">
+    {{ displayedDate() }}
+    @if (rating().bonus) {
+      <span class="crush" title="Instant crush">💘</span>
     }
+  </span>
+  <div class="visit-scores">
+    <app-rating-scores
+      [food]="rating().food"
+      [service]="rating().service"
+      [decor]="rating().setting"
+    />
+    <span class="visit-avg" [style.background-color]="scoreColor(average())">
+      {{ average() | score }}
+    </span>
   </div>
 </div>

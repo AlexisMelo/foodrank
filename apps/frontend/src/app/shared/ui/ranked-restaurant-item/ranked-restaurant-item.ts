@@ -1,7 +1,8 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DailyReviewStore, REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
-import { scoreColor } from '@/core/utils/rating';
+import { roundScore, scoreColor } from '@/core/utils/rating';
+import { ScorePipe } from '@/shared/pipes/score-pipe';
 import { type Action, Actions } from '../actions/actions';
 import { LockIcon } from '../lock-icon/lock-icon';
 import { RatingScores } from '../rating-scores/rating-scores';
@@ -12,7 +13,7 @@ import { RatingScores } from '../rating-scores/rating-scores';
  * reviewed a restaurant today), and a menu of actions at the right of the score. Opens the restaurant page.
  */
 @Component({
-  imports: [Actions, LockIcon, RouterLink, RatingScores],
+  imports: [Actions, LockIcon, RouterLink, RatingScores, ScorePipe],
   selector: 'app-ranked-restaurant-item',
   styleUrl: './ranked-restaurant-item.scss',
   templateUrl: './ranked-restaurant-item.html',
@@ -39,27 +40,28 @@ export class RankedRestaurantItem {
   readonly address = input.required<string>();
 
   /**
-   * Food score, 0 to 100, decimals allowed
+   * Food score, whole number from 1 to 10
    */
   readonly food = input.required<number>();
 
   /**
-   * Service score, 0 to 100, decimals allowed
+   * Service score, whole number from 1 to 10
    */
   readonly service = input.required<number>();
 
   /**
-   * Decor (setting) score, 0 to 100, decimals allowed
+   * Decor (setting) score, whole number from 1 to 10
    */
   readonly decor = input.required<number>();
 
   /**
-   * Overall score, 0 to 100, decimals allowed; shown rounded in the colored bubble
+   * Overall score, 1 to 10, decimals allowed (an average); shown rounded to one decimal in the colored bubble
    */
   readonly overall = input.required<number>();
 
   /**
-   * The logged-in user's own score, 0 to 100, shown in a small bubble; undefined when they did not rate it
+   * The logged-in user's own score, 1 to 10, decimals allowed (an average), shown rounded to one decimal in a small
+   * bubble; undefined when they did not rate it
    */
   readonly myScore = input<number>();
 
@@ -86,17 +88,17 @@ export class RankedRestaurantItem {
   protected readonly lockedReason = REVIEW_LOCKED_REASON;
 
   /**
-   * Overall score rounded, shown in the bubble
+   * Overall score rounded to one decimal, shown and colored in the bubble
    */
-  protected readonly roundedOverall = computed(() => Math.round(this.overall()));
+  protected readonly roundedOverall = computed(() => roundScore(this.overall()));
 
   /**
-   * The user's score rounded; only shown when myScore is defined
+   * The user's score rounded to one decimal; only shown when myScore is defined
    */
-  protected readonly roundedMyScore = computed(() => Math.round(this.myScore() ?? 0));
+  protected readonly roundedMyScore = computed(() => roundScore(this.myScore() ?? 0));
 
   /**
-   * Color of a rounded 0-100 score
+   * Color of a rounded 1-10 score
    */
   protected readonly scoreColor = scoreColor;
 }

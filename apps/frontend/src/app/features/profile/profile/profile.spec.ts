@@ -64,8 +64,8 @@ function rating(
  */
 const ratings: Record<string, UserRating[]> = {
   // r1 rated twice: listed once, with the latest (active) rating
-  me: [rating('r1', 70), rating('r2', 90), rating('r1', 80, false)],
-  u2: [rating('r1', 50), rating('r3', 95)],
+  me: [rating('r1', 7), rating('r2', 9), rating('r1', 8, false)],
+  u2: [rating('r1', 5), rating('r3', 10)],
 };
 
 /**
@@ -229,14 +229,15 @@ describe('ProfileView', () => {
       'Restaurant r2',
       'Restaurant r1',
     ]);
-    expect(textOf(items[1]!.querySelector('.item-avg')!)).toBe('70');
+    // The overall score, a round 7: no decimal
+    expect(textOf(items[1]!.querySelector('.item-avg')!)).toBe('7');
     expect(queryAll(harness.fixture, '.my-score')).toHaveLength(0);
   });
 
   it('sorts the restaurants by score, the default, by the moment of their rating or by name', async () => {
     // r1 has the lowest score but was rated last
     fetchUserRatings.mockReturnValue(
-      of([rating('r1', 70, true, '2026-10-20T12:00:00+00:00'), rating('r2', 90)]),
+      of([rating('r1', 7, true, '2026-10-20T12:00:00+00:00'), rating('r2', 9)]),
     );
     await open('/profile');
 
@@ -296,8 +297,8 @@ describe('ProfileView', () => {
     ]);
     // Never rated r3: offer to rate it
     expect(items[0]!.querySelector('.my-score-rate')).not.toBeNull();
-    // Rated r1 twice (70, then 80 before): my active rating
-    expect(textOf(items[1]!.querySelector('.my-score')!)).toBe('70');
+    // Rated r1 twice (7, then 8 before): my active rating
+    expect(textOf(items[1]!.querySelector('.my-score')!)).toBe('7');
   });
 
   it('opens the rating page from the "+" of a restaurant I never rated, not the restaurant page', async () => {

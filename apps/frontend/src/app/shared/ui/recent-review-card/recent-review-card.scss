@@ -6,11 +6,11 @@
 }
 
 // Fixed height so the loading skeleton (.card-skeleton of src/styles/_sections.scss) can match it:
-// padding 2×16 + emoji 60 + name 34 + date 14 + criteria 3×14 + 2×7 + gaps 3×10 = 226
+// padding 2×16 + emoji 60 + name 17 + date 14 + scores 34 + gaps 3×10 = 187, plus some room above the scores
 .review-card {
   flex-shrink: 0;
   width: 148px;
-  height: 216px;
+  height: 195px;
   background: #1a1a1a;
   border-radius: 20px;
   padding: 16px 14px;
@@ -87,44 +87,12 @@
   line-height: 14px;
 }
 
-.criteria {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.criterion {
+// The scores of the criteria (RatingScores), at the bottom of the card. Fixed height (2 lines of 16px and their gap)
+// whatever the font of the emojis, for the fixed height of the card
+.scores {
+  height: 34px;
+  line-height: 16px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  height: 14px;
-  line-height: 14px;
-}
-
-.criterion-label {
-  font-size: 11px;
-  flex-shrink: 0;
-}
-
-.criterion-bar-wrap {
-  flex: 1;
-  height: 5px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 100px;
-  overflow: hidden;
-}
-
-.criterion-bar {
-  height: 100%;
-  border-radius: 100px;
-  transition: width 0.4s ease;
-}
-
-.criterion-score {
-  font-size: 11px;
-  font-weight: 800;
-  width: 22px;
-  text-align: right;
   flex-shrink: 0;
 }

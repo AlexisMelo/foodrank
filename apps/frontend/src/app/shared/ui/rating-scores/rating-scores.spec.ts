@@ -19,14 +19,13 @@ describe('RatingScores', () => {
     return queryAll(fixture, '.score-value');
   }
 
-  it('shows the food, service and decor scores rounded', async () => {
-    const values = (await render(84.6, 70.2, 12.5)).map(textOf);
-
-    expect(values).toEqual(['85', '70', '13']);
+  it('shows the food, service and decor scores as whole numbers', async () => {
+    expect((await render(9, 7, 1)).map(textOf)).toEqual(['9', '7', '1']);
+    expect((await render(8.6, 7.2, 1.5)).map(textOf)).toEqual(['9', '7', '2']);
   });
 
-  it('colors scores green from 85, yellow from 65, red below', async () => {
-    const colors = (await render(85, 65, 64.9)).map((v) => v.style.color);
+  it('colors scores green from 9, yellow from 7, red below', async () => {
+    const colors = (await render(9, 7, 6)).map((v) => v.style.color);
 
     expect(colors).toEqual([GREEN, YELLOW, RED]);
   });

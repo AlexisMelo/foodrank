@@ -1,9 +1,11 @@
+import { MAX_SCORE, MIN_SCORE } from '@/core/utils/rating';
+
 /**
  * A word shown on the rating scale, from the score it starts at.
  */
 export interface ThresholdMarker {
   /**
-   * Lowest score of the word, 0 to 100
+   * Lowest score of the word, 1 to 10
    */
   value: number;
 
@@ -15,14 +17,14 @@ export interface ThresholdMarker {
 
 /**
  * Words of the rating scale, by increasing score: the chip of a criterion shows the one of its score, and the
- * slider marks where each one starts (except "Awful", at 0)
+ * slider marks where each one starts (except "Awful", at 1)
  */
 export const THRESHOLD_MARKERS: readonly ThresholdMarker[] = [
-  { value: 0, label: 'Awful' },
-  { value: 10, label: 'Okay' },
-  { value: 35, label: 'Good' },
-  { value: 65, label: 'Great !' },
-  { value: 90, label: 'Amazing !' },
+  { value: 1, label: 'Awful' },
+  { value: 2, label: 'Okay' },
+  { value: 4, label: 'Good' },
+  { value: 7, label: 'Great !' },
+  { value: 9, label: 'Amazing !' },
 ];
 
 /**
@@ -35,38 +37,46 @@ export interface PastReview {
   id: string;
 
   /**
-   * 0 to 100
+   * 1 to 10
    */
   food: number;
 
   /**
-   * 0 to 100
+   * 1 to 10
    */
   service: number;
 
   /**
-   * Setting, 0 to 100 (named setting in the API ratings)
+   * Setting, 1 to 10 (named setting in the API ratings)
    */
   decor: number;
 }
 
 /**
- * Scores (0 to 100) around which a past review of the user is shown on the slider, at most one per target
+ * Scores (1 to 10) around which a past review of the user is shown on the slider, at most one per target: the left,
+ * the middle and the right of the slider
  */
-const MARKER_TARGETS = [22, 50, 78];
+const MARKER_TARGETS = [3, 5.5, 8];
 
 /**
- * Largest gap between a review's score and a target for the review to be shown at that target
+ * Largest gap between a review's score and a target for the review to be shown at that target: 2 to 4, 5 to 6, 7 to 9
  */
-const MARKER_TOLERANCE = 10;
+const MARKER_TOLERANCE = 1;
 
 /**
- * Color of a score: red at 0, orange-yellow at 50, green at 100, as `rgb(r, g, b)`, or `rgba(r, g, b, alpha)` when
- * an opacity is given.
+ * Position of a score along the slider, from 0 (MIN_SCORE, left end) to 1 (MAX_SCORE, right end)
+ */
+function scaleFraction(value: number): number {
+  return (value - MIN_SCORE) / (MAX_SCORE - MIN_SCORE);
+}
+
+/**
+ * Color of a score: red at 1, orange-yellow in the middle, green at 10, as `rgb(r, g, b)`, or `rgba(r, g, b, alpha)`
+ * when an opacity is given.
  * @param alpha opacity, 0 to 1; opaque when omitted
  */
 export function sliderColor(value: number, alpha?: number): string {
-  const pct = value / 100;
+  const pct = scaleFraction(value);
   const r = pct < 0.5 ? 220 : Math.round(220 - (pct - 0.5) * 2 * 180);
   const g = pct < 0.5 ? Math.round(pct * 2 * 200) : Math.min(200, Math.round(100 + pct * 120));
   return alpha === undefined ? `rgb(${r}, ${g}, 40)` : `rgba(${r}, ${g}, 40, ${alpha})`;
@@ -77,11 +87,12 @@ export function sliderColor(value: number, alpha?: number): string {
  */
 export function sliderGradient(value: number): string {
   const color = sliderColor(value);
-  return `linear-gradient(to right, ${color} 0%, ${color} ${value}%, rgba(255,255,255,0.1) ${value}%, rgba(255,255,255,0.1) 100%)`;
+  const filled = Math.round(scaleFraction(value) * 100);
+  return `linear-gradient(to right, ${color} 0%, ${color} ${filled}%, rgba(255,255,255,0.1) ${filled}%, rgba(255,255,255,0.1) 100%)`;
 }
 
 /**
- * Word of the rating scale matching a score, e.g. "Good" from 35 to 64.
+ * Word of the rating scale matching a score, e.g. "Good" from 4 to 6.
  */
 export function ratingLabel(value: number): string {
   const match = [...THRESHOLD_MARKERS].reverse().find((t) => value >= t.value);
@@ -92,7 +103,7 @@ export function ratingLabel(value: number): string {
  * Position a marker on the slider track, accounting for the 22px thumb offset
  */
 export function markerLeft(value: number): string {
-  return `calc(${value / 100} * (100% - 22px) + 11px)`;
+  return `calc(${scaleFraction(value)} * (100% - 22px) + 11px)`;
 }
 
 /**
