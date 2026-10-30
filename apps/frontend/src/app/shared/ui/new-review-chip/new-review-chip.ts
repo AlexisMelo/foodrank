@@ -1,11 +1,11 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { DailyReviewStore, REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
-import { NewReviewStore } from '@/core/review/new-review-store';
+import { SearchSheetStore } from '@/core/search/search-sheet-store';
 import { NewChip } from '../new-chip/new-chip';
 
 /**
- * "+ New" chip starting a review: a link to the rating page of the given restaurant, or a button opening the new
- * review sheet to pick any restaurant. Locked once the user reviewed a restaurant today.
+ * "+ New" chip starting a review: a link to the rating page of the given restaurant, or a button opening the search
+ * sheet to pick any restaurant. Locked once the user reviewed a restaurant today.
  */
 @Component({
   imports: [NewChip],
@@ -14,19 +14,19 @@ import { NewChip } from '../new-chip/new-chip';
     [link]="reviewLink()"
     [locked]="dailyReview.locked()"
     [lockedReason]="lockedReason"
-    (pressed)="newReview.open()"
+    (pressed)="searchSheet.open()"
   />`,
 })
 export class NewReviewChip {
   /**
-   * Restaurant to review directly; undefined to let the user pick it in the new review sheet
+   * Restaurant to review directly; undefined to let the user pick it in the search sheet
    */
   readonly restaurantId = input<string>();
 
   /**
-   * Opens the new review sheet when there is no restaurantId
+   * Opens the search sheet when there is no restaurantId
    */
-  protected readonly newReview = inject(NewReviewStore);
+  protected readonly searchSheet = inject(SearchSheetStore);
 
   /**
    * Locks the chip once the user reviewed a restaurant today

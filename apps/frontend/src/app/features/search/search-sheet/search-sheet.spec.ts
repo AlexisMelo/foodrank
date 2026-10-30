@@ -3,8 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { LocationStore } from '@/core/location/location-store';
 import { query, queryAll, stubDialogs, submitForm, typeIn } from '@/testing/dom-testing';
-import { NewReviewStore } from '@/core/review/new-review-store';
-import { NewReviewSheet } from './new-review-sheet';
+import { SearchSheetStore } from '@/core/search/search-sheet-store';
+import { SearchSheet } from './search-sheet';
 
 /**
  * Empty page standing for the search results page, which these tests do not need.
@@ -12,10 +12,10 @@ import { NewReviewSheet } from './new-review-sheet';
 @Component({ template: '' })
 class StubPage {}
 
-describe('NewReviewSheet', () => {
+describe('SearchSheet', () => {
   let refreshLocation: ReturnType<typeof vi.fn>;
-  let fixture: ComponentFixture<NewReviewSheet>;
-  let store: NewReviewStore;
+  let fixture: ComponentFixture<SearchSheet>;
+  let store: SearchSheetStore;
 
   beforeEach(async () => {
     stubDialogs();
@@ -34,8 +34,8 @@ describe('NewReviewSheet', () => {
         },
       ],
     });
-    store = TestBed.inject(NewReviewStore);
-    fixture = TestBed.createComponent(NewReviewSheet);
+    store = TestBed.inject(SearchSheetStore);
+    fixture = TestBed.createComponent(SearchSheet);
     await fixture.whenStable();
   });
 

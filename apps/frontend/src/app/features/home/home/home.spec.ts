@@ -13,7 +13,7 @@ import type { UserRating } from '@/core/models/rating.model';
 import type { Tierlist } from '@/core/models/tierlist.model';
 import { REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
 import { CAN_REVIEW, alreadyReviewed } from '@/core/review/daily-review-testing';
-import { NewReviewStore } from '@/core/review/new-review-store';
+import { SearchSheetStore } from '@/core/search/search-sheet-store';
 import { query, queryAll, stubDialogs, textOf } from '@/testing/dom-testing';
 
 /**
@@ -59,7 +59,7 @@ describe('Home', () => {
   let harness: RouterTestingHarness;
 
   beforeEach(() => {
-    // The new review sheet of the app layout is a native dialog
+    // The search sheet of the app layout is a native dialog
     stubDialogs();
     fetchUserProfile = vi.fn(() =>
       of({
@@ -85,7 +85,7 @@ describe('Home', () => {
         // The rating allowance locks the review buttons
         { provide: RatingApi, useValue: { fetchUserRatings, fetchRatingAllowance } },
         { provide: TierlistApi, useValue: { fetchTierlistsByUserId } },
-        // Asked for by the app layout when it opens, and refreshed by the new review sheet, whose search area hint
+        // Asked for by the app layout when it opens, and refreshed by the search sheet, whose search area hint
         // reads the status and the city
         {
           provide: LocationStore,
@@ -187,13 +187,13 @@ describe('Home', () => {
 
   describe('new review', () => {
     /**
-     * True while the new review sheet is shown.
+     * True while the search sheet is shown.
      */
     function sheetOpen(): boolean {
       return (harness.fixture.nativeElement as HTMLElement).querySelector('dialog')?.open ?? false;
     }
 
-    it('opens the new review sheet from the "+ New" chip of the recent reviews', async () => {
+    it('opens the search sheet from the "+ New" chip of the recent reviews', async () => {
       await openHome();
       expect(sheetOpen()).toBe(false);
       // An action, not a page: a button, not a link
@@ -203,12 +203,12 @@ describe('Home', () => {
       chip.click();
       await harness.fixture.whenStable();
 
-      expect(TestBed.inject(NewReviewStore).isOpen()).toBe(true);
+      expect(TestBed.inject(SearchSheetStore).isOpen()).toBe(true);
       expect(sheetOpen()).toBe(true);
       expect(url()).toBe('/');
     });
 
-    it('opens the new review sheet from the button of the tab bar', async () => {
+    it('opens the search sheet from the button of the tab bar', async () => {
       await openHome();
 
       query(harness.fixture, '.tab-btn-search').click();
