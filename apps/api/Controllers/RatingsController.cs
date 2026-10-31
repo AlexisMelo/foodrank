@@ -45,6 +45,19 @@ public class RatingsController(IRatingService ratingService) : ControllerBase
         => (await _ratingService.GetRecentAsync(restaurantId, limit, cancellationToken)).ToActionResult();
 
     /// <summary>
+    /// Returns the most recent active ratings of a restaurant (each user's latest) given by the users the logged-in user
+    /// follows, most recent first.
+    /// </summary>
+    /// <param name="restaurantId">Database id of the restaurant.</param>
+    /// <param name="limit">Maximum number of ratings returned, from 1 to 50 (5 by default).</param>
+    /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
+    /// <returns>200 with the ratings (empty when the user follows nobody who rated the restaurant), 400 when the limit is
+    /// outside 1-50, 401 when not logged in, 404 for an unknown restaurant.</returns>
+    [HttpGet("followed")]
+    public async Task<ActionResult<IReadOnlyList<RatingResponse>>> GetFollowed(string restaurantId, [FromQuery, Range(1, 50)] int limit = 5, CancellationToken cancellationToken = default)
+        => (await _ratingService.GetRecentFromFollowedUsersAsync(restaurantId, User.GetUserId(), limit, cancellationToken)).ToActionResult();
+
+    /// <summary>
     /// Returns the averages of a restaurant's active ratings (each user's latest), per criterion and globally.
     /// </summary>
     /// <param name="restaurantId">Database id of the restaurant.</param>

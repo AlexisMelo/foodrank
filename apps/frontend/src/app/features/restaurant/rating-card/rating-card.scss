@@ -5,7 +5,7 @@
   display: contents;
 }
 
-.community-card {
+.rating-card {
   background: #1a1a1a;
   border-radius: 14px;
   padding: 12px 14px;
@@ -16,17 +16,19 @@
   text-decoration: none;
   color: inherit;
   transition: background 0.2s;
-}
-.community-card {
   @include hover.background(#222);
 }
-.community-user {
+// A previous rating of the user, kept as history: their latest one is their score
+.inactive {
+  opacity: 0.45;
+}
+.rating-author {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
 }
-.community-avatar {
+.author-avatar {
   font-size: 16px;
   font-weight: 800;
   width: 40px;
@@ -38,34 +40,34 @@
   justify-content: center;
   flex-shrink: 0;
 }
-.community-avatar-img {
+.author-avatar-img {
   object-fit: cover;
 }
-.community-user-info {
+.author-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
 }
-.community-name {
+.author-name {
   font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.community-date {
+.rating-date {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.38);
   font-weight: 600;
 }
-.community-scores {
+.rating-scores {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
 }
-.community-avg {
+.rating-avg {
   width: 34px;
   height: 34px;
   border-radius: 50%;

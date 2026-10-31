@@ -11,21 +11,24 @@
   gap: 12px;
   margin-top: 8px;
 }
+// The three tabs and the "+ New" chip are narrow enough to share a line on a phone; when the screen is too narrow, the
+// chip goes below rather than overflowing the page
 .tab-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
 }
 .tab-bar {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   background: #1a1a1a;
   padding: 4px;
   border-radius: 100px;
   align-self: flex-start;
 }
 .tab-btn {
-  padding: 7px 18px;
+  padding: 7px 12px;
   border-radius: 100px;
   border: none;
   background: transparent;

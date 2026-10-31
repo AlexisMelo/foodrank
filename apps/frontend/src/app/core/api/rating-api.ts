@@ -45,6 +45,21 @@ export class RatingApi {
   }
 
   /**
+   * Get the most recent active ratings of a restaurant (each user's latest) given by the users the logged-in user
+   * follows, most recent first
+   * @param limit number of ratings, 1 to 50
+   * @returns an empty list when the user is not logged in (401)
+   */
+  fetchRecentFollowedRatings(restaurantId: string, limit = 5): Observable<RestaurantRating[]> {
+    return this.http
+      .get<RestaurantRating[]>(
+        `/api/restaurants/${encodeURIComponent(restaurantId)}/ratings/followed`,
+        { params: { limit } },
+      )
+      .pipe(recoverOnStatus(401, []));
+  }
+
+  /**
    * Get the averages of every active rating of a restaurant, per criterion and globally
    */
   fetchRatingSummary(restaurantId: string): Observable<RatingSummary> {

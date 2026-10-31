@@ -34,6 +34,7 @@ function restaurant(id: string): Restaurant {
 describe('RestaurantDetail', () => {
   let fetchRestaurantById: ReturnType<typeof vi.fn>;
   let fetchRecentRatings: ReturnType<typeof vi.fn>;
+  let fetchRecentFollowedRatings: ReturnType<typeof vi.fn>;
   let fetchMyRatings: ReturnType<typeof vi.fn>;
   let fetchRatingSummary: ReturnType<typeof vi.fn>;
   let fetchRatingAllowance: ReturnType<typeof vi.fn>;
@@ -48,6 +49,7 @@ describe('RestaurantDetail', () => {
     shareNavigator = { share };
     fetchRestaurantById = vi.fn((id: string) => of(restaurant(id)));
     fetchRecentRatings = vi.fn(() => of([]));
+    fetchRecentFollowedRatings = vi.fn(() => of([]));
     fetchMyRatings = vi.fn(() => of([]));
     fetchRatingSummary = vi.fn(() =>
       of({ count: 0, food: null, service: null, setting: null, global: null }),
@@ -72,6 +74,7 @@ describe('RestaurantDetail', () => {
           provide: RatingApi,
           useValue: {
             fetchRecentRatings,
+            fetchRecentFollowedRatings,
             fetchMyRatings,
             fetchRatingSummary,
             // Locks the review buttons
@@ -113,6 +116,32 @@ describe('RestaurantDetail', () => {
     expect(fetchRestaurantById).toHaveBeenCalledWith('r1');
     expect(textOf(query(harness.fixture, '.name'))).toBe('Restaurant r1');
     expect(textOf(query(harness.fixture, '.info-text'))).toBe('1 rue de la Paix');
+  });
+
+  it('lists the recent ratings of the users I follow under "Followed"', async () => {
+    fetchRecentFollowedRatings.mockReturnValue(
+      of([
+        {
+          restaurantId: 'r1',
+          userId: 'camille',
+          date: '2026-10-01T12:00:00+00:00',
+          food: 8,
+          service: 7,
+          setting: 6,
+          bonus: false,
+          isActive: true,
+          userName: 'Camille',
+          userAvatarUrl: null,
+        },
+      ]),
+    );
+    await open('/restaurant/r1');
+
+    query(harness.fixture, '.tab-followed').click();
+    await harness.fixture.whenStable();
+
+    expect(fetchRecentFollowedRatings).toHaveBeenCalledWith('r1', 5);
+    expect(queryAll(harness.fixture, '.rating-card .author-name').map(textOf)).toEqual(['Camille']);
   });
 
   it('leaves for the home page when the restaurant does not exist', async () => {
@@ -204,6 +233,7 @@ describe('RestaurantDetail', () => {
       expect(textOf(query(harness.fixture, '.name'))).toBe('Restaurant r1');
       expect(fetchRestaurantById.mock.calls).toEqual([['r1']]);
       expect(fetchRecentRatings).toHaveBeenCalledTimes(1);
+      expect(fetchRecentFollowedRatings).toHaveBeenCalledTimes(1);
       expect(fetchMyRatings).toHaveBeenCalledTimes(1);
       expect(fetchRatingSummary).toHaveBeenCalledTimes(1);
     });

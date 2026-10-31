@@ -59,6 +59,22 @@ public class RatingServiceTests
     }
 
     /// <summary>
+    /// The query of the "Followed" tab can be built, and keeps the restaurant's active ratings given by the users
+    /// followed, most recent first.
+    /// </summary>
+    [Fact]
+    public void UsersRecentActiveRatingsQuery_FiltersOnRestaurantUsersAndActiveFlag()
+    {
+        string url = Uri.UnescapeDataString(RatingService.UsersRecentActiveRatingsQuery(RatingTable(), "r1", ["user-1", "user-2"], 5).GenerateUrl());
+
+        Assert.Contains("id_restaurant=eq.r1", url);
+        Assert.Contains("id_user=in.(\"user-1\",\"user-2\")", url);
+        Assert.Contains("is_active=eq.true", url, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("order=date.desc", url);
+        Assert.Contains("limit=5", url);
+    }
+
+    /// <summary>
     /// The query of the restaurant's averages can be built, and keeps every active rating of the restaurant (no limit).
     /// </summary>
     [Fact]

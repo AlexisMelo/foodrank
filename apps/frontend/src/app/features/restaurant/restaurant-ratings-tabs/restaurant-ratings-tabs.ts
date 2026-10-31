@@ -2,15 +2,28 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { AuthStore } from '@/core/auth/auth-store';
 import type { RestaurantRating } from '@/core/models/rating.model';
 import { NewReviewChip } from '@/shared/ui/new-review-chip/new-review-chip';
-import { MyRatingCard } from '../my-rating-card/my-rating-card';
-import { RecentRatingCard } from '../recent-rating-card/recent-rating-card';
+import { RatingCard } from '../rating-card/rating-card';
 
 /**
- * Ratings of a restaurant in two tabs: the logged-in user's ("My Visits", shown first) and the most recent of every
- * user ("Recent"), with the "+ New" button rating the restaurant.
+ * Tab of the ratings: the logged-in user's, the recent ones of every user, or the recent ones of the users followed.
+ */
+type RatingsTab = 'mine' | 'recent' | 'followed';
+
+/**
+ * Shown in each tab when it has no rating.
+ */
+const EMPTY_MESSAGES: Record<RatingsTab, string> = {
+  mine: 'No visits yet 🍽️',
+  recent: 'No recent visits 🍽️',
+  followed: 'Nobody you follow ate here yet 🍽️',
+};
+
+/**
+ * Ratings of a restaurant in three tabs: the logged-in user's ("My Visits", shown first), the most recent of every user
+ * ("Recent") and the most recent of the users followed ("Followed"), with the "+ New" button rating the restaurant.
  */
 @Component({
-  imports: [MyRatingCard, NewReviewChip, RecentRatingCard],
+  imports: [NewReviewChip, RatingCard],
   selector: 'app-restaurant-ratings-tabs',
   styleUrl: './restaurant-ratings-tabs.scss',
   templateUrl: './restaurant-ratings-tabs.html',
@@ -32,6 +45,11 @@ export class RestaurantRatingsTabs {
   readonly recentRatings = input.required<readonly RestaurantRating[]>();
 
   /**
+   * Most recent active ratings of the restaurant by the users the logged-in user follows, most recent first
+   */
+  readonly followedRatings = input.required<readonly RestaurantRating[]>();
+
+  /**
    * True while the ratings load: shown instead of an empty list
    */
   readonly loading = input.required<boolean>();
@@ -42,28 +60,33 @@ export class RestaurantRatingsTabs {
   readonly loadError = input.required<boolean>();
 
   /**
-   * Tab shown: the logged-in user's ratings or the recent ratings of every user
+   * Tab shown
    */
-  protected readonly activeTab = signal<'mine' | 'recent'>('mine');
+  protected readonly activeTab = signal<RatingsTab>('mine');
 
   /**
    * Ratings of the tab shown
    */
-  protected readonly ratings = computed(() =>
-    this.activeTab() === 'mine' ? this.myRatings() : this.recentRatings(),
-  );
+  protected readonly ratings = computed(() => {
+    switch (this.activeTab()) {
+      case 'mine':
+        return this.myRatings();
+      case 'recent':
+        return this.recentRatings();
+      case 'followed':
+        return this.followedRatings();
+    }
+  });
 
   /**
-   * Id of the logged-in user, which tells their own recent ratings apart; null when logged out
+   * Id of the logged-in user, which tells their own ratings apart (they open /profile); null when logged out
    */
   protected readonly myUserId = inject(AuthStore).loggedInUserId;
 
   /**
    * Shown when the tab has no rating
    */
-  protected readonly emptyMessage = computed(() =>
-    this.activeTab() === 'mine' ? 'No visits yet 🍽️' : 'No recent visits 🍽️',
-  );
+  protected readonly emptyMessage = computed(() => EMPTY_MESSAGES[this.activeTab()]);
 
   /**
    * Identifies a rating in the list: a user rates a restaurant at most once per day

@@ -49,6 +49,11 @@ interface TabsInputs {
   recentRatings: RestaurantRating[];
 
   /**
+   * Recent ratings of the users followed
+   */
+  followedRatings: RestaurantRating[];
+
+  /**
    * True while the ratings load
    */
   loading: boolean;
@@ -86,6 +91,7 @@ describe('RestaurantRatingsTabs', () => {
       restaurantId: 'r1',
       myRatings: [],
       recentRatings: [],
+      followedRatings: [],
       loading: false,
       loadError: false,
       ...inputs,
@@ -110,6 +116,21 @@ describe('RestaurantRatingsTabs', () => {
     await fixture.whenStable();
   }
 
+  /**
+   * Opens the "Followed" tab.
+   */
+  async function openFollowedTab(): Promise<void> {
+    query(fixture, '.tab-followed').click();
+    await fixture.whenStable();
+  }
+
+  /**
+   * Names of the authors of the cards shown.
+   */
+  function authorNames(): string[] {
+    return queryAll(fixture, '.rating-card .author-name').map(textOf);
+  }
+
   it('links the "New" chip to the rating page of the restaurant', async () => {
     await render();
 
@@ -131,62 +152,80 @@ describe('RestaurantRatingsTabs', () => {
     expect(queryAll(fixture, 'a[href="/review/r1"]')).toHaveLength(0);
   });
 
-  it("shows the user's own ratings first, with their date and scores", async () => {
+  it("shows the user's own ratings first, like the recent ones: their author, date and scores", async () => {
     await render({
-      myRatings: [rating('Me', '2026-03-07T12:00:00+00:00', { bonus: true }), rating('Me', '2026-01-02T12:00:00+00:00')],
+      myRatings: [
+        rating('Me', '2026-03-07T12:00:00+00:00', { bonus: true }),
+        rating('Me', '2026-01-02T12:00:00+00:00'),
+      ],
       recentRatings: [rating('Camille', '2026-03-08T12:00:00+00:00')],
     });
 
-    const cards = queryAll(fixture, '.visit-card');
+    const cards = queryAll(fixture, '.rating-card');
     expect(cards).toHaveLength(2);
+    expect(authorNames()).toEqual(['Me', 'Me']);
+    expect(textOf(cards[0]!.querySelector('.author-avatar')!)).toBe('M');
     expect(textOf(cards[0]!)).toContain('March 7, 2026');
     expect(textOf(cards[0]!)).toContain('💘');
-    // Like the "Recent" tab: the scores under the emojis, and their average (a round 6, without decimal)
+    // The scores under the emojis, and their average (a round 6, without decimal)
     expect(Array.from(cards[0]!.querySelectorAll('.score-value'), textOf)).toEqual(['9', '6', '3']);
-    expect(textOf(cards[0]!.querySelector('.visit-avg')!)).toBe('6');
+    expect(textOf(cards[0]!.querySelector('.rating-avg')!)).toBe('6');
     expect(textOf(cards[1]!)).toContain('January 2, 2026');
     expect(textOf(cards[1]!)).not.toContain('💘');
     expect(textOf(fixture.nativeElement)).not.toContain('Camille');
   });
 
+  it('opens my own profile from my ratings', async () => {
+    await render({ myRatings: [rating('Me', '2026-03-07T12:00:00+00:00')] });
+
+    expect(query(fixture, 'a.rating-card').getAttribute('href')).toBe('/profile');
+  });
+
   it('dims my previous ratings, replaced by a more recent one', async () => {
     await render({
-      myRatings: [rating('Me', '2026-03-07T12:00:00+00:00'), rating('Me', '2026-01-02T12:00:00+00:00', { isActive: false })],
+      myRatings: [
+        rating('Me', '2026-03-07T12:00:00+00:00'),
+        rating('Me', '2026-01-02T12:00:00+00:00', { isActive: false }),
+      ],
     });
 
-    expect(queryAll(fixture, '.visit-card').map((c) => c.classList.contains('inactive'))).toEqual([
-      false,
-      true,
+    const cards = queryAll(fixture, '.rating-card');
+    expect(cards.map((c) => c.classList.contains('inactive'))).toEqual([false, true]);
+    expect(cards.map((c) => c.getAttribute('title'))).toEqual([
+      null,
+      'Replaced by a more recent rating',
     ]);
   });
 
   it('shows the recent ratings of every user under "Recent"', async () => {
     await render({
       myRatings: [rating('Me', '2026-03-07T12:00:00+00:00')],
-      recentRatings: [rating('Camille', '2026-03-08T12:00:00+00:00'), rating('Me', '2026-03-07T12:00:00+00:00')],
+      recentRatings: [
+        rating('Camille', '2026-03-08T12:00:00+00:00'),
+        rating('Me', '2026-03-07T12:00:00+00:00'),
+      ],
     });
 
     await openRecentTab();
 
-    const cards = queryAll(fixture, '.community-card');
-    expect(cards.map((c) => textOf(c.querySelector('.community-name')!))).toEqual([
-      'Camille',
-      'Me',
-    ]);
+    expect(authorNames()).toEqual(['Camille', 'Me']);
+    const cards = queryAll(fixture, '.rating-card');
     expect(textOf(cards[0]!)).toContain('March 8, 2026');
-    expect(textOf(cards[0]!.querySelector('.community-avatar')!)).toBe('C');
-    expect(queryAll(fixture, '.visit-card')).toHaveLength(0);
+    expect(textOf(cards[0]!.querySelector('.author-avatar')!)).toBe('C');
   });
 
   it("opens the author's profile from a recent rating, or my own profile from mine", async () => {
     await render({
       myRatings: [rating('Me', '2026-03-07T12:00:00+00:00')],
-      recentRatings: [rating('Camille', '2026-03-08T12:00:00+00:00'), rating('Me', '2026-03-07T12:00:00+00:00')],
+      recentRatings: [
+        rating('Camille', '2026-03-08T12:00:00+00:00'),
+        rating('Me', '2026-03-07T12:00:00+00:00'),
+      ],
     });
 
     await openRecentTab();
 
-    expect(queryAll(fixture, 'a.community-card').map((c) => c.getAttribute('href'))).toEqual([
+    expect(queryAll(fixture, 'a.rating-card').map((c) => c.getAttribute('href'))).toEqual([
       '/user/camille',
       '/profile',
     ]);
@@ -194,12 +233,15 @@ describe('RestaurantRatingsTabs', () => {
 
   it('opens my own profile from my recent rating even when my own ratings are not given', async () => {
     await render({
-      recentRatings: [rating('Me', '2026-03-07T12:00:00+00:00'), rating('Camille', '2026-03-06T12:00:00+00:00')],
+      recentRatings: [
+        rating('Me', '2026-03-07T12:00:00+00:00'),
+        rating('Camille', '2026-03-06T12:00:00+00:00'),
+      ],
     });
 
     await openRecentTab();
 
-    expect(queryAll(fixture, 'a.community-card').map((c) => c.getAttribute('href'))).toEqual([
+    expect(queryAll(fixture, 'a.rating-card').map((c) => c.getAttribute('href'))).toEqual([
       '/profile',
       '/user/camille',
     ]);
@@ -207,14 +249,39 @@ describe('RestaurantRatingsTabs', () => {
 
   it("shows the author's picture when there is one", async () => {
     await render({
-      recentRatings: [rating('Camille', '2026-03-08T12:00:00+00:00', { userAvatarUrl: 'https://img.test/c.png' })],
+      recentRatings: [
+        rating('Camille', '2026-03-08T12:00:00+00:00', { userAvatarUrl: 'https://img.test/c.png' }),
+      ],
     });
 
     await openRecentTab();
 
-    expect(query(fixture, 'img.community-avatar').getAttribute('src')).toBe(
-      'https://img.test/c.png',
-    );
+    expect(query(fixture, 'img.author-avatar').getAttribute('src')).toBe('https://img.test/c.png');
+  });
+
+  it('shows the recent ratings of the users followed under "Followed", opening their profile', async () => {
+    await render({
+      myRatings: [rating('Me', '2026-03-07T12:00:00+00:00')],
+      recentRatings: [
+        rating('Camille', '2026-03-08T12:00:00+00:00'),
+        rating('Stranger', '2026-03-06T12:00:00+00:00'),
+      ],
+      followedRatings: [
+        rating('Camille', '2026-03-08T12:00:00+00:00'),
+        rating('Hugo', '2026-02-01T12:00:00+00:00'),
+      ],
+    });
+
+    await openFollowedTab();
+
+    expect(authorNames()).toEqual(['Camille', 'Hugo']);
+    expect(textOf(queryAll(fixture, '.rating-card')[1]!)).toContain('February 1, 2026');
+    expect(queryAll(fixture, 'a.rating-card').map((c) => c.getAttribute('href'))).toEqual([
+      '/user/camille',
+      '/user/hugo',
+    ]);
+    expect(query(fixture, '.tab-followed').getAttribute('aria-pressed')).toBe('true');
+    expect(query(fixture, '.tab-mine').getAttribute('aria-pressed')).toBe('false');
   });
 
   it('explains when there is no rating in the selected tab', async () => {
@@ -227,6 +294,9 @@ describe('RestaurantRatingsTabs', () => {
 
     await setInputs({ recentRatings: [] });
     expect(textOf(fixture.nativeElement)).toContain('No recent visits');
+
+    await openFollowedTab();
+    expect(textOf(query(fixture, '.no-visits'))).toBe('Nobody you follow ate here yet 🍽️');
   });
 
   it('shows the loading state, then the error, instead of an empty list', async () => {

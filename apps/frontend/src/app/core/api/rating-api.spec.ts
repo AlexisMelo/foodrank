@@ -86,6 +86,40 @@ describe('RatingApi', () => {
     });
   });
 
+  describe('fetchRecentFollowedRatings', () => {
+    it('asks for the 5 most recent ratings of the users followed by default, with the session cookie', async () => {
+      const ratings = [{ userId: 'u1', date: '2026-03-07T12:00:00+00:00', userName: 'Camille' }];
+
+      const result = firstValueFrom(api.fetchRecentFollowedRatings('a/b'));
+      const req = httpTesting.expectOne(
+        'http://api.test/api/restaurants/a%2Fb/ratings/followed?limit=5',
+      );
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(ratings);
+
+      expect(await result).toEqual(ratings);
+    });
+
+    it('returns no rating when the user is not logged in', async () => {
+      const result = firstValueFrom(api.fetchRecentFollowedRatings('r1'));
+      httpTesting
+        .expectOne('http://api.test/api/restaurants/r1/ratings/followed?limit=5')
+        .flush(null, { status: 401, statusText: 'Unauthorized' });
+
+      expect(await result).toEqual([]);
+    });
+
+    it('rethrows other errors', async () => {
+      const result = firstValueFrom(api.fetchRecentFollowedRatings('r1'));
+      httpTesting
+        .expectOne('http://api.test/api/restaurants/r1/ratings/followed?limit=5')
+        .flush(null, { status: 404, statusText: 'Not Found' });
+
+      await expect(result).rejects.toMatchObject({ name: 'HttpErrorResponse', status: 404 });
+    });
+  });
+
   describe('fetchMyRatings', () => {
     it("returns the logged-in user's ratings, sending the session cookie", async () => {
       const ratings = [{ userId: 'me', date: '2026-03-07T12:00:00+00:00' }];

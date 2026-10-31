@@ -19,6 +19,15 @@
       >
         Recent
       </button>
+      <button
+        type="button"
+        class="tab-btn tab-followed"
+        [class.tab-btn-active]="activeTab() === 'followed'"
+        [attr.aria-pressed]="activeTab() === 'followed'"
+        (click)="activeTab.set('followed')"
+      >
+        Followed
+      </button>
     </div>
     <app-new-review-chip [restaurantId]="restaurantId()" />
   </div>
@@ -27,15 +36,11 @@
     <div class="no-visits">Loading…</div>
   } @else if (loadError()) {
     <div class="no-visits load-error">Couldn't load the ratings</div>
-  } @else if (!ratings().length) {
-    <div class="no-visits">{{ emptyMessage() }}</div>
-  } @else if (activeTab() === 'mine') {
-    @for (rating of ratings(); track ratingKey(rating)) {
-      <app-my-rating-card [rating]="rating" />
-    }
   } @else {
     @for (rating of ratings(); track ratingKey(rating)) {
-      <app-recent-rating-card [rating]="rating" [own]="rating.userId === myUserId()" />
+      <app-rating-card [rating]="rating" [own]="rating.userId === myUserId()" />
+    } @empty {
+      <div class="no-visits">{{ emptyMessage() }}</div>
     }
   }
 </div>

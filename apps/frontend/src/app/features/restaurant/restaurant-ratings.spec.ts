@@ -13,7 +13,11 @@ const SUMMARY: RatingSummary = { count: 2, food: 80, service: 70, setting: 60, g
 /**
  * Builds a rating of `restaurantId` by `userId`.
  */
-function rating(restaurantId: string, userId: string, date = '2026-03-07T12:00:00+00:00'): RestaurantRating {
+function rating(
+  restaurantId: string,
+  userId: string,
+  date = '2026-03-07T12:00:00+00:00',
+): RestaurantRating {
   return {
     restaurantId,
     userId,
@@ -30,18 +34,25 @@ function rating(restaurantId: string, userId: string, date = '2026-03-07T12:00:0
 
 describe('injectRestaurantRatings', () => {
   let fetchRecentRatings: ReturnType<typeof vi.fn>;
+  let fetchRecentFollowedRatings: ReturnType<typeof vi.fn>;
   let fetchMyRatings: ReturnType<typeof vi.fn>;
   let fetchRatingSummary: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     fetchRecentRatings = vi.fn(() => of([]));
+    fetchRecentFollowedRatings = vi.fn(() => of([]));
     fetchMyRatings = vi.fn(() => of([]));
     fetchRatingSummary = vi.fn(() => of(SUMMARY));
     TestBed.configureTestingModule({
       providers: [
         {
           provide: RatingApi,
-          useValue: { fetchRecentRatings, fetchMyRatings, fetchRatingSummary },
+          useValue: {
+            fetchRecentRatings,
+            fetchRecentFollowedRatings,
+            fetchMyRatings,
+            fetchRatingSummary,
+          },
         },
       ],
     });
@@ -54,20 +65,22 @@ describe('injectRestaurantRatings', () => {
     await TestBed.inject(ApplicationRef).whenStable();
   }
 
-  it("loads the 5 most recent ratings, the user's own ratings and the averages of the restaurant", async () => {
+  it("loads the 5 most recent ratings of everyone and of the users followed, the user's own ratings and the averages of the restaurant", async () => {
     fetchRecentRatings.mockReturnValue(of([rating('r1', 'camille'), rating('r1', 'me')]));
+    fetchRecentFollowedRatings.mockReturnValue(of([rating('r1', 'camille')]));
     fetchMyRatings.mockReturnValue(of([rating('r1', 'me')]));
 
-    const { recentRatings, myRatings, summary, loading, loadError } = TestBed.runInInjectionContext(
-      () => injectRestaurantRatings(() => 'r1'),
-    );
+    const { recentRatings, followedRatings, myRatings, summary, loading, loadError } =
+      TestBed.runInInjectionContext(() => injectRestaurantRatings(() => 'r1'));
     expect(loading()).toBe(true);
     await settle();
 
     expect(fetchRecentRatings).toHaveBeenCalledWith('r1', 5);
+    expect(fetchRecentFollowedRatings).toHaveBeenCalledWith('r1', 5);
     expect(fetchMyRatings).toHaveBeenCalledWith('r1');
     expect(fetchRatingSummary).toHaveBeenCalledWith('r1');
     expect(recentRatings().map((r) => r.userId)).toEqual(['camille', 'me']);
+    expect(followedRatings().map((r) => r.userId)).toEqual(['camille']);
     expect(myRatings().map((r) => r.userId)).toEqual(['me']);
     expect(summary()).toEqual(SUMMARY);
     expect(loading()).toBe(false);
@@ -75,15 +88,16 @@ describe('injectRestaurantRatings', () => {
   });
 
   it('loads nothing while the restaurant is unknown', async () => {
-    const { recentRatings, myRatings, summary, loading } = TestBed.runInInjectionContext(() =>
-      injectRestaurantRatings(() => null),
-    );
+    const { recentRatings, followedRatings, myRatings, summary, loading } =
+      TestBed.runInInjectionContext(() => injectRestaurantRatings(() => null));
     await settle();
 
     expect(fetchRecentRatings).not.toHaveBeenCalled();
+    expect(fetchRecentFollowedRatings).not.toHaveBeenCalled();
     expect(fetchMyRatings).not.toHaveBeenCalled();
     expect(fetchRatingSummary).not.toHaveBeenCalled();
     expect(recentRatings()).toEqual([]);
+    expect(followedRatings()).toEqual([]);
     expect(myRatings()).toEqual([]);
     expect(summary()).toBeNull();
     expect(loading()).toBe(false);
@@ -99,6 +113,18 @@ describe('injectRestaurantRatings', () => {
 
     expect(loadError()).toBe(true);
     expect(loading()).toBe(false);
+  });
+
+  it('reports an error when the ratings of the users followed cannot be loaded', async () => {
+    fetchRecentFollowedRatings.mockReturnValue(throwError(() => new Error('503')));
+
+    const { followedRatings, loadError } = TestBed.runInInjectionContext(() =>
+      injectRestaurantRatings(() => 'r1'),
+    );
+    await settle();
+
+    expect(loadError()).toBe(true);
+    expect(followedRatings()).toEqual([]);
   });
 
   it('reports an error when the averages cannot be loaded', async () => {

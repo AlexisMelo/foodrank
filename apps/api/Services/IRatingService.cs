@@ -31,6 +31,18 @@ public interface IRatingService
     Task<Result<IReadOnlyList<RatingResponse>>> GetRecentAsync(string restaurantId, int count, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Returns the <paramref name="count"/> most recent active ratings of <paramref name="restaurantId"/> (each user's
+    /// latest) given by the users <paramref name="userId"/> follows, most recent first.
+    /// </summary>
+    /// <param name="restaurantId">Database id of the restaurant.</param>
+    /// <param name="userId">Supabase Auth id of the logged-in user, read from the session.</param>
+    /// <param name="count">Maximum number of ratings.</param>
+    /// <param name="cancellationToken">Cancels the database queries.</param>
+    /// <returns>The ratings with their author, empty when the user follows nobody who rated the restaurant, or a
+    /// NotFound failure when the restaurant does not exist.</returns>
+    Task<Result<IReadOnlyList<RatingResponse>>> GetRecentFromFollowedUsersAsync(string restaurantId, string userId, int count, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Returns the averages of every active rating of <paramref name="restaurantId"/> (each user's latest), per
     /// criterion and globally. Fails with NotFound when the restaurant does not exist.
     /// </summary>

@@ -502,6 +502,106 @@ public class RatingsControllerTests : IDisposable
     }
 
     /// <summary>
+    /// The logged-in user follows user-2 and user-3, not user-4.
+    /// </summary>
+    private void FollowUsers2And3()
+    {
+        _factory.RatingService.Profiles["user-4"] = new Profile { Id = "user-4", Username = "user-4" };
+        _factory.RatingService.FollowedUserIds = id => id == UserId ? ["user-2", "user-3"] : [];
+    }
+
+    /// <summary>
+    /// "Followed" returns the active rating of each user followed who rated the restaurant, most recent first, with its
+    /// author: not their previous ratings, nor the ratings of the users not followed, of the logged-in user or of other
+    /// restaurants.
+    /// </summary>
+    [Fact]
+    public async Task GetFollowed_LoggedIn_ReturnsActiveRatingsOfFollowedUsers()
+    {
+        FollowUsers2And3();
+        _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = "r2", Name = "Sushi Bar" });
+        AddRating("user-3", new DateTime(2026, 3, 1));
+        AddRating("user-2", new DateTime(2026, 3, 2), isActive: false);
+        AddRating("user-2", new DateTime(2026, 3, 3), food: 9);
+        AddRating("user-4", new DateTime(2026, 3, 4));
+        AddRating(UserId, new DateTime(2026, 3, 5));
+        AddRating("user-3", new DateTime(2026, 3, 6), restaurantId: "r2");
+
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings/followed");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        List<RatingResponse> ratings = (await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!;
+        Assert.Equal([("user-2", 3), ("user-3", 1)], ratings.Select(r => (r.UserId, r.Date.Day)));
+        Assert.Equal(9, ratings[0].Food);
+        Assert.Equal("user-2", ratings[0].UserName);
+    }
+
+    /// <summary>
+    /// The limit query parameter changes the number of ratings returned, the most recent ones kept.
+    /// </summary>
+    [Fact]
+    public async Task GetFollowed_WithLimit_ReturnsThatMany()
+    {
+        FollowUsers2And3();
+        AddRating("user-2", new DateTime(2026, 3, 1));
+        AddRating("user-3", new DateTime(2026, 3, 2));
+
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings/followed?limit=1");
+
+        RatingResponse rating = Assert.Single((await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!);
+        Assert.Equal("user-3", rating.UserId);
+    }
+
+    /// <summary>
+    /// A user following nobody gets no rating, even when other users rated the restaurant.
+    /// </summary>
+    [Fact]
+    public async Task GetFollowed_FollowsNobody_ReturnsEmpty()
+    {
+        AddRating("user-2", new DateTime(2026, 3, 1));
+
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings/followed");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Empty((await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!);
+    }
+
+    /// <summary>
+    /// A limit outside 1-50 is refused with a 400.
+    /// </summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(51)]
+    public async Task GetFollowed_LimitOutOfRange_Returns400(int limit)
+    {
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings/followed?limit={limit}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    /// <summary>
+    /// Without the auth cookie, "followed" is refused with a 401: an anonymous visitor follows nobody.
+    /// </summary>
+    [Fact]
+    public async Task GetFollowed_NoCookie_Returns401()
+    {
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/{RestaurantId}/ratings/followed", token: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    /// <summary>
+    /// "Followed" for an unknown restaurant returns a 404.
+    /// </summary>
+    [Fact]
+    public async Task GetFollowed_UnknownRestaurant_Returns404()
+    {
+        HttpResponseMessage response = await GetAsync("/api/restaurants/unknown/ratings/followed");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    /// <summary>
     /// The controller refuses a null service instead of failing on the first request.
     /// </summary>
     [Fact]

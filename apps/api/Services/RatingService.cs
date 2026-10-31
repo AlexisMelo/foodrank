@@ -72,6 +72,21 @@ public class RatingService(Supabase.Client supabase, IRestaurantService restaura
     }
 
     /// <inheritdoc />
+    public async Task<Result<IReadOnlyList<RatingResponse>>> GetRecentFromFollowedUsersAsync(string restaurantId, string userId, int count, CancellationToken cancellationToken)
+    {
+        Result<Restaurant> restaurant = await restaurantService.GetByIdAsync(restaurantId, cancellationToken);
+        if (!restaurant.IsSuccess)
+            return Result<IReadOnlyList<RatingResponse>>.Failure(restaurant.Error!);
+
+        List<string> followedIds = await FollowedIdsAsync(userId, cancellationToken);
+        if (followedIds.Count == 0)
+            return Result<IReadOnlyList<RatingResponse>>.Success([]);
+
+        ModeledResponse<Rating> response = await UsersRecentActiveRatingsQuery(supabase.From<Rating>(), restaurant.Value!.Id, followedIds, count).Get(cancellationToken);
+        return Result<IReadOnlyList<RatingResponse>>.Success(await WithProfilesAsync(response.Models, cancellationToken));
+    }
+
+    /// <inheritdoc />
     public async Task<Result<RatingSummaryResponse>> GetSummaryAsync(string restaurantId, CancellationToken cancellationToken)
     {
         Result<Restaurant> restaurant = await restaurantService.GetByIdAsync(restaurantId, cancellationToken);
@@ -106,6 +121,19 @@ public class RatingService(Supabase.Client supabase, IRestaurantService restaura
         => RestaurantActiveRatingsQuery(ratings, restaurantId)
             .Order("date", Constants.Ordering.Descending)
             .Limit(count);
+
+    /// <summary>
+    /// Query of the <paramref name="count"/> most recent active ratings of <paramref name="restaurantId"/> given by any
+    /// of <paramref name="userIds"/>, most recent first.
+    /// </summary>
+    /// <param name="ratings">Query on the "rating" table to filter.</param>
+    /// <param name="restaurantId">Database id of the restaurant.</param>
+    /// <param name="userIds">Supabase Auth ids of the authors (not empty: PostgREST refuses an empty list).</param>
+    /// <param name="count">Maximum number of ratings.</param>
+    /// <returns>The filtered query, ready to send.</returns>
+    public static IPostgrestTable<Rating> UsersRecentActiveRatingsQuery(IPostgrestTable<Rating> ratings, string restaurantId, IReadOnlyList<string> userIds, int count)
+        => RecentActiveRatingsQuery(ratings, restaurantId, count)
+            .Filter("id_user", Constants.Operator.In, userIds.Cast<object>().ToList());
 
     /// <summary>
     /// Query of every active rating of <paramref name="restaurantId"/> (each user's latest).
@@ -156,15 +184,10 @@ public class RatingService(Supabase.Client supabase, IRestaurantService restaura
     /// <inheritdoc />
     public async Task<IReadOnlyList<FollowedRatingResponse>> GetFromFollowedUsersAsync(string userId, int count, CancellationToken cancellationToken)
     {
-        // Only the ids of the users followed are needed
-        ModeledResponse<Follow> follows = await supabase.From<Follow>()
-            .Select("id_followed")
-            .Where(f => f.FollowerId == userId)
-            .Get(cancellationToken);
-        if (follows.Models.Count == 0)
+        List<string> followedIds = await FollowedIdsAsync(userId, cancellationToken);
+        if (followedIds.Count == 0)
             return [];
 
-        List<string> followedIds = follows.Models.Select(f => f.FollowedId).ToList();
         ModeledResponse<Rating> response = await UsersRecentRatingsQuery(supabase.From<Rating>(), followedIds, count).Get(cancellationToken);
         if (response.Models.Count == 0)
             return [];
@@ -192,6 +215,22 @@ public class RatingService(Supabase.Client supabase, IRestaurantService restaura
             .Filter("id_user", Constants.Operator.In, userIds.Cast<object>().ToList())
             .Order("date", Constants.Ordering.Descending)
             .Limit(count);
+
+    /// <summary>
+    /// Loads the ids of the users <paramref name="userId"/> follows.
+    /// </summary>
+    /// <param name="userId">Supabase Auth id of the follower.</param>
+    /// <param name="cancellationToken">Cancels the database query.</param>
+    /// <returns>The ids, empty when the user follows nobody.</returns>
+    private async Task<List<string>> FollowedIdsAsync(string userId, CancellationToken cancellationToken)
+    {
+        // Only the ids of the users followed are needed
+        ModeledResponse<Follow> follows = await supabase.From<Follow>()
+            .Select("id_followed")
+            .Where(f => f.FollowerId == userId)
+            .Get(cancellationToken);
+        return follows.Models.Select(f => f.FollowedId).ToList();
+    }
 
     /// <summary>
     /// Maps each of <paramref name="ratings"/> with its author.

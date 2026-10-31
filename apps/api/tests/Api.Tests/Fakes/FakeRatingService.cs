@@ -77,6 +77,13 @@ public class FakeRatingService(FakeRestaurantService restaurants) : IRatingServi
         => Task.FromResult(Find(restaurantId, r => r.IsActive, count));
 
     /// <inheritdoc />
+    public Task<Result<IReadOnlyList<RatingResponse>>> GetRecentFromFollowedUsersAsync(string restaurantId, string userId, int count, CancellationToken cancellationToken)
+    {
+        HashSet<string> followedIds = FollowedUserIds(userId).ToHashSet();
+        return Task.FromResult(Find(restaurantId, r => r.IsActive && followedIds.Contains(r.UserId), count));
+    }
+
+    /// <inheritdoc />
     public Task<Result<RatingSummaryResponse>> GetSummaryAsync(string restaurantId, CancellationToken cancellationToken)
     {
         if (restaurants.Restaurants.All(r => r.Id != restaurantId))

@@ -6,16 +6,17 @@ import { ScorePipe } from '@/shared/pipes/score-pipe';
 import { RatingScores } from '@/shared/ui/rating-scores/rating-scores';
 
 /**
- * Card of a recent rating of the restaurant by any user: the author, the day, the "instant crush" bonus, the scores
- * and the average. Opens the author's profile.
+ * Card of a rating of the restaurant, in every tab of its ratings (the logged-in user's, the recent ones of every user,
+ * the users followed): the author, the day, the "instant crush" bonus, the scores and the average. Opens the author's
+ * profile. A previous rating, replaced by a more recent one, is dimmed.
  */
 @Component({
   imports: [RouterLink, RatingScores, ScorePipe],
-  selector: 'app-recent-rating-card',
-  styleUrl: './recent-rating-card.scss',
-  templateUrl: './recent-rating-card.html',
+  selector: 'app-rating-card',
+  styleUrl: './rating-card.scss',
+  templateUrl: './rating-card.html',
 })
-export class RecentRatingCard {
+export class RatingCard {
   /**
    * Rating shown
    */
@@ -39,6 +40,11 @@ export class RecentRatingCard {
   protected readonly average = computed(() => ratingAverage(this.rating()));
 
   /**
+   * Color of the bubble of the average
+   */
+  protected readonly averageColor = computed(() => scoreColor(this.average()));
+
+  /**
    * Day of the rating, e.g. "March 7, 2026"
    */
   protected readonly displayedDate = computed(() => formatRatingDate(this.rating().date));
@@ -47,9 +53,4 @@ export class RecentRatingCard {
    * Shown instead of the profile picture when the user has none
    */
   protected readonly initial = computed(() => this.rating().userName.charAt(0).toUpperCase());
-
-  /**
-   * Color of a 1-10 score
-   */
-  protected readonly scoreColor = scoreColor;
 }

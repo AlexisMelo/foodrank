@@ -42,6 +42,13 @@ class FakeRatingApi {
   }
 
   /**
+   * The logged-in user follows nobody: no rating under "Followed"
+   */
+  fetchRecentFollowedRatings() {
+    return of<RestaurantRating[]>([]);
+  }
+
+  /**
    * Like the API: every rating of the logged-in user ("me")
    */
   fetchMyRatings(id: string) {
@@ -175,7 +182,7 @@ describe('rating a restaurant from its page', () => {
 
   it('shows the new review on the restaurant page once saved', async () => {
     await openApp('/restaurant/r1');
-    expect(queryAll(harness.fixture, '.visit-card')).toHaveLength(1);
+    expect(queryAll(harness.fixture, '.rating-card')).toHaveLength(1);
 
     // "New" → rating page
     expect(query(harness.fixture, '.add-chip').getAttribute('href')).toBe('/review/r1');
@@ -194,13 +201,13 @@ describe('rating a restaurant from its page', () => {
 
     // Back on the restaurant page, "My Visits" lists the new review first
     expect(url()).toBe('/restaurant/r1');
-    const cards = queryAll(harness.fixture, '.visit-card');
+    const cards = queryAll(harness.fixture, '.rating-card');
     expect(cards).toHaveLength(2);
     expect(textOf(cards[0]!)).toContain('October 9, 2026');
     expect(textOf(cards[0]!)).toContain('💘');
     // The scores under the emojis, and their average with one decimal: (9 + 7 + 4) / 3 = 6.67
     expect(Array.from(cards[0]!.querySelectorAll('.score-value'), textOf)).toEqual(['9', '7', '4']);
-    expect(textOf(cards[0]!.querySelector('.visit-avg')!)).toBe('6.7');
+    expect(textOf(cards[0]!.querySelector('.rating-avg')!)).toBe('6.7');
     expect(textOf(cards[1]!)).toContain('January 2, 2026');
     // The new review is the active one: the previous one stays, dimmed
     expect(cards.map((c) => c.classList.contains('inactive'))).toEqual([false, true]);
@@ -208,7 +215,7 @@ describe('rating a restaurant from its page', () => {
     // ..."Recent" shows only the new one, in place of the previous one
     query(harness.fixture, '.tab-recent').click();
     await harness.fixture.whenStable();
-    const recentCards = queryAll(harness.fixture, '.community-card');
+    const recentCards = queryAll(harness.fixture, '.rating-card');
     expect(recentCards).toHaveLength(1);
     expect(textOf(recentCards[0]!)).toContain('October 9, 2026');
   });
