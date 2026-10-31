@@ -28,6 +28,12 @@ public class FakeRatingService(FakeRestaurantService restaurants) : IRatingServi
     /// </summary>
     public Func<string, IEnumerable<string>> FollowedUserIds { get; set; } = _ => [];
 
+    /// <summary>
+    /// Tierlists the restaurant leaves once its user no longer rates it, as with the real service; set by
+    /// <see cref="ApiFactory"/> (the tierlist fake reads the ratings of this one).
+    /// </summary>
+    public ITierlistService? Tierlists { get; set; }
+
     /// <inheritdoc />
     public Task<Result<Rating>> CreateAsync(string restaurantId, string userId, RateRestaurantRequest request, CancellationToken cancellationToken)
     {
@@ -97,6 +103,40 @@ public class FakeRatingService(FakeRestaurantService restaurants) : IRatingServi
     /// <inheritdoc />
     public Task<Result<IReadOnlyList<RatingResponse>>> GetByRestaurantAndUserAsync(string restaurantId, string userId, CancellationToken cancellationToken)
         => Task.FromResult(Find(restaurantId, r => r.UserId == userId, int.MaxValue));
+
+    /// <inheritdoc />
+    public async Task<Result<IReadOnlyList<RatingResponse>>> DeleteAsync(string restaurantId, string userId, DateTimeOffset date, CancellationToken cancellationToken)
+    {
+        if (restaurants.Restaurants.All(r => r.Id != restaurantId))
+            return Result<IReadOnlyList<RatingResponse>>.Failure(new Error(ErrorType.NotFound, "Restaurant not found."));
+
+        // Like the real service: the plan of Rating.PlanDeletion, applied to the user's ratings of the restaurant
+        RatingDeletion? deletion = Rating.PlanDeletion(Ratings.Where(r => r.RestaurantId == restaurantId && r.UserId == userId).ToList(), date);
+        if (deletion is null)
+            return Result<IReadOnlyList<RatingResponse>>.Failure(RatingService.RatingNotFound);
+
+        Ratings.Remove(deletion.Deleted);
+        if (deletion.Activated is { } activated)
+        {
+            Ratings.RemoveAll(r => r.RestaurantId == activated.RestaurantId && r.UserId == activated.UserId && r.Date == activated.Date);
+            Ratings.Add(activated);
+        }
+        if (deletion.Remaining.Count == 0 && Tierlists is not null)
+            await Tierlists.RemoveRestaurantFromAllAsync(userId, restaurantId, cancellationToken);
+        return Result<IReadOnlyList<RatingResponse>>.Success(deletion.Remaining.Select(r => RatingResponse.From(r, Profiles[r.UserId])).ToList());
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<IReadOnlyList<RatingResponse>>> DeleteAllAsync(string restaurantId, string userId, CancellationToken cancellationToken)
+    {
+        if (restaurants.Restaurants.All(r => r.Id != restaurantId))
+            return Result<IReadOnlyList<RatingResponse>>.Failure(new Error(ErrorType.NotFound, "Restaurant not found."));
+
+        Ratings.RemoveAll(r => r.RestaurantId == restaurantId && r.UserId == userId);
+        if (Tierlists is not null)
+            await Tierlists.RemoveRestaurantFromAllAsync(userId, restaurantId, cancellationToken);
+        return Result<IReadOnlyList<RatingResponse>>.Success([]);
+    }
 
     /// <inheritdoc />
     public Task<Result<IReadOnlyList<UserRatingResponse>>> GetByUserAsync(string userId, CancellationToken cancellationToken)

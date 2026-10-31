@@ -46,11 +46,13 @@
 
       <app-restaurant-ratings-tabs
         [restaurantId]="restaurant.id"
+        [restaurantName]="restaurant.name"
         [myRatings]="ratings.myRatings()"
         [recentRatings]="ratings.recentRatings()"
         [followedRatings]="ratings.followedRatings()"
         [loading]="ratings.loading()"
         [loadError]="ratings.loadError()"
+        (ratingsDeleted)="ratings.reload()"
       />
     </div>
 

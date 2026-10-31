@@ -37,10 +37,23 @@
   } @else if (loadError()) {
     <div class="no-visits load-error">Couldn't load the ratings</div>
   } @else {
-    @for (rating of ratings(); track ratingKey(rating)) {
-      <app-rating-card [rating]="rating" [own]="rating.userId === myUserId()" />
+    @for (card of cards(); track ratingKey(card.rating)) {
+      <app-rating-card [rating]="card.rating" [own]="card.own" [actions]="card.actions" />
     } @empty {
       <div class="no-visits">{{ emptyMessage() }}</div>
     }
   }
 </div>
+
+@if (pendingDeletion()) {
+  <app-confirm-dialog
+    [heading]="deletionHeading()"
+    [message]="deletionMessage()"
+    confirmLabel="Delete"
+    busyLabel="Deleting…"
+    [busy]="deleting()"
+    [error]="deleteError()"
+    (confirmed)="confirmDeletion()"
+    (closed)="cancelDeletion()"
+  />
+}

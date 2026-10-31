@@ -39,4 +39,21 @@ public class TierlistServiceTests
         Assert.Contains("id_tierlist=eq.7", url);
         Assert.Contains("id_restaurant=eq.r1", url);
     }
+
+    /// <summary>
+    /// The query of a restaurant in several tierlists (sent to remove it from the tierlists of a user who no longer
+    /// rates it) filters on those tierlists and the restaurant, so the delete never removes other restaurants nor
+    /// touches other users' tierlists.
+    /// </summary>
+    [Fact]
+    public void EntriesQuery_FiltersOnTierlistsAndRestaurant()
+    {
+        IPostgrestTable<TierlistRestaurant> table = new Supabase.Postgrest.Client("http://localhost/rest/v1").Table<TierlistRestaurant>();
+
+        string url = Uri.UnescapeDataString(TierlistService.EntriesQuery(table, [7, 9], "r1").GenerateUrl());
+
+        // The ids are quoted, which PostgREST casts to the type of the column
+        Assert.Contains("id_tierlist=in.(\"7\",\"9\")", url);
+        Assert.Contains("id_restaurant=eq.r1", url);
+    }
 }

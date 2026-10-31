@@ -59,6 +59,38 @@ public class RatingServiceTests
     }
 
     /// <summary>
+    /// The query of a user's ratings of a restaurant (read, or sent to delete them all) filters on both the restaurant
+    /// and the user, active or not, so the delete never removes other users' or restaurants' ratings.
+    /// </summary>
+    [Fact]
+    public void UserRatingsQuery_FiltersOnRestaurantAndUser()
+    {
+        string url = Uri.UnescapeDataString(RatingService.UserRatingsQuery(RatingTable(), "r1", "user-1").GenerateUrl());
+
+        Assert.Contains("id_restaurant=eq.r1", url);
+        Assert.Contains("id_user=eq.user-1", url);
+        Assert.DoesNotContain("is_active", url, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// The query of one rating (sent to delete it) filters on its whole primary key, the moment written in UTC with its
+    /// microseconds and without a "+", which the URL would turn into a space.
+    /// </summary>
+    [Fact]
+    public void RatingQuery_FiltersOnTheWholePrimaryKey()
+    {
+        DateTimeOffset date = new DateTimeOffset(2026, 3, 7, 21, 30, 0, TimeSpan.FromHours(2)).AddTicks(1_234_560);
+
+        string rawUrl = RatingService.RatingQuery(RatingTable(), "r1", "user-1", date).GenerateUrl();
+        string url = Uri.UnescapeDataString(rawUrl);
+
+        Assert.Contains("id_restaurant=eq.r1", url);
+        Assert.Contains("id_user=eq.user-1", url);
+        Assert.Contains("date=eq.2026-03-07T19:30:00.123456Z", url);
+        Assert.DoesNotContain("+", rawUrl);
+    }
+
+    /// <summary>
     /// The query of the "Followed" tab can be built, and keeps the restaurant's active ratings given by the users
     /// followed, most recent first.
     /// </summary>

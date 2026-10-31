@@ -79,6 +79,30 @@ export class RatingApi {
   }
 
   /**
+   * Delete one rating the logged-in user gave to a restaurant. When it was their active rating, their previous one
+   * becomes active again; when it was their only one, the restaurant leaves their tierlists
+   * @param date moment of the rating, exactly as the API returned it (`RestaurantRating.date`)
+   * @returns the ratings the user has left for the restaurant, most recent first
+   * @throws the HttpErrorResponse: 401 when not logged in, 404 for an unknown restaurant or rating
+   */
+  deleteMyRating(restaurantId: string, date: string): Observable<RestaurantRating[]> {
+    return this.http.delete<RestaurantRating[]>(
+      `/api/restaurants/${encodeURIComponent(restaurantId)}/ratings/mine/${encodeURIComponent(date)}`,
+    );
+  }
+
+  /**
+   * Delete every rating the logged-in user gave to a restaurant; the restaurant leaves their tierlists
+   * @returns the ratings the user has left for the restaurant: none
+   * @throws the HttpErrorResponse: 401 when not logged in, 404 for an unknown restaurant
+   */
+  deleteMyRatings(restaurantId: string): Observable<RestaurantRating[]> {
+    return this.http.delete<RestaurantRating[]>(
+      `/api/restaurants/${encodeURIComponent(restaurantId)}/ratings/mine`,
+    );
+  }
+
+  /**
    * Get whether the logged-in user can rate a restaurant now: a user rates at most one restaurant per day (UTC)
    */
   fetchRatingAllowance(): Observable<RatingAllowance> {

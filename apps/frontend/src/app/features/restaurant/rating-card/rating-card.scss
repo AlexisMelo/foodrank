@@ -1,26 +1,42 @@
 @use 'hover';
 
-// The inner link is the item of the parent column: the host adds no box of its own
+// The inner card is the item of the parent column: the host adds no box of its own
 :host {
   display: contents;
 }
 
+// The card, lighter on hover: the link to the author's profile, which fills it, then the menu of actions. The end
+// padding of the link is smaller next to the menu, leaving more room to the author
 .rating-card {
+  --link-padding-end: 14px;
+  display: flex;
+  align-items: center;
   background: #1a1a1a;
   border-radius: 14px;
-  padding: 12px 14px;
+  transition: background 0.2s;
+  @include hover.background(#222);
+}
+.rating-card-with-actions {
+  --link-padding-end: 8px;
+}
+// A previous rating of the user, kept as history: their latest one is their score
+.inactive {
+  opacity: 0.45;
+}
+.rating-link {
+  flex: 1;
+  min-width: 0;
+  padding: 12px var(--link-padding-end) 12px 14px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   text-decoration: none;
   color: inherit;
-  transition: background 0.2s;
-  @include hover.background(#222);
 }
-// A previous rating of the user, kept as history: their latest one is their score
-.inactive {
-  opacity: 0.45;
+.rating-actions {
+  margin-right: 8px;
 }
 .rating-author {
   display: flex;

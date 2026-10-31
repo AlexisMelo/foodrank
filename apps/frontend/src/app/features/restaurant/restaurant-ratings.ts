@@ -37,7 +37,8 @@ export interface RestaurantRatingsState {
   summary: Signal<RatingSummary | null>;
 
   /**
-   * True while the ratings load, including after a change of restaurant
+   * True while the ratings load, including after a change of restaurant; false while they reload (`reload`), the
+   * ratings loaded staying shown until the new ones replace them
    */
   loading: Signal<boolean>;
 
@@ -45,6 +46,11 @@ export interface RestaurantRatingsState {
    * True when one of the four requests failed
    */
   loadError: Signal<boolean>;
+
+  /**
+   * Loads the ratings of the restaurant again, e.g. once the user deleted some of theirs
+   */
+  reload: () => void;
 }
 
 /**
@@ -79,7 +85,9 @@ export function injectRestaurantRatings(restaurantId: () => string | null): Rest
     followedRatings: computed(() => loaded()?.followed ?? []),
     myRatings: computed(() => loaded()?.mine ?? []),
     summary: computed(() => loaded()?.summary ?? null),
-    loading: resource.isLoading,
+    // 'reloading' is left out: the ratings loaded stay shown meanwhile
+    loading: computed(() => resource.status() === 'loading'),
     loadError: computed(() => resource.status() === 'error'),
+    reload: () => void resource.reload(),
   };
 }

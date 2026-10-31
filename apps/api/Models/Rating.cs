@@ -67,7 +67,8 @@ public class Rating : BaseModel
 
     /// <summary>
     /// True for the user's latest rating of the restaurant, which is their score for it; false for the previous ones.
-    /// Maintained by the API when a rating is created (see <see cref="PlanNew"/>).
+    /// Maintained by the API when a rating is created (see <see cref="PlanNew"/>) or deleted (see
+    /// <see cref="PlanDeletion"/>).
     /// </summary>
     [Column("is_active")]
     public bool IsActive { get; set; }
@@ -85,6 +86,30 @@ public class Rating : BaseModel
         List<Rating> rows = currentActive.Select(r => r.WithIsActive(false)).ToList();
         rows.Add(newRating.WithIsActive(true));
         return rows;
+    }
+
+    /// <summary>
+    /// Plans the deletion of the rating of <paramref name="date"/>: when it is the active one, the most recent of the
+    /// others becomes active, so the user's score for the restaurant goes back to their previous rating.
+    /// </summary>
+    /// <param name="ratings">Every rating of the same restaurant and user, as read before deleting.</param>
+    /// <param name="date">Moment of the rating to delete; the same instant in another time zone matches it.</param>
+    /// <returns>The plan, or null when none of <paramref name="ratings"/> was given at <paramref name="date"/>.</returns>
+    public static RatingDeletion? PlanDeletion(IReadOnlyList<Rating> ratings, DateTimeOffset date)
+    {
+        Rating? deleted = ratings.FirstOrDefault(r => r.Date == date);
+        if (deleted is null)
+            return null;
+
+        List<Rating> remaining = ratings.Where(r => r != deleted).OrderByDescending(r => r.Date).ToList();
+        // A deleted inactive rating leaves the active one as it is; so does a deleted active one when another is still
+        // active (data not written by the API)
+        Rating? activated = deleted.IsActive && remaining.Count > 0 && !remaining.Any(r => r.IsActive)
+            ? remaining[0].WithIsActive(true)
+            : null;
+        if (activated is not null)
+            remaining[0] = activated;
+        return new RatingDeletion(deleted, activated, remaining);
     }
 
     /// <summary>

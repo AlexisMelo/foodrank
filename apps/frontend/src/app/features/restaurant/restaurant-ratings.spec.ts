@@ -158,6 +158,35 @@ describe('injectRestaurantRatings', () => {
     expect(summary()?.global).toBe(42);
   });
 
+  it('reloads the ratings on demand, keeping the ones loaded shown meanwhile', async () => {
+    const secondAnswer = new Subject<RestaurantRating[]>();
+    fetchMyRatings
+      .mockReturnValueOnce(
+        of([
+          rating('r1', 'me', '2026-03-07T12:00:00+00:00'),
+          rating('r1', 'me', '2026-01-02T12:00:00+00:00'),
+        ]),
+      )
+      .mockReturnValueOnce(secondAnswer);
+
+    const { myRatings, loading, reload } = TestBed.runInInjectionContext(() =>
+      injectRestaurantRatings(() => 'r1'),
+    );
+    await settle();
+    reload();
+    TestBed.inject(ApplicationRef).tick();
+
+    expect(fetchMyRatings).toHaveBeenCalledTimes(2);
+    expect(loading()).toBe(false);
+    expect(myRatings()).toHaveLength(2);
+
+    secondAnswer.next([rating('r1', 'me', '2026-01-02T12:00:00+00:00')]);
+    secondAnswer.complete();
+    await settle();
+
+    expect(myRatings().map((r) => r.date)).toEqual(['2026-01-02T12:00:00+00:00']);
+  });
+
   it('ignores the late answer of the previous restaurant', async () => {
     const firstAnswer = new Subject<RestaurantRating[]>();
     fetchRecentRatings

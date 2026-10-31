@@ -67,4 +67,14 @@ public interface ITierlistService
     /// <returns>The updated tierlist; a NotFound failure when the tierlist does not exist or the restaurant is not in it,
     /// or a Forbidden failure when the tierlist belongs to another user.</returns>
     Task<Result<TierlistResponse>> RemoveRestaurantAsync(long id, string userId, string restaurantId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Removes a restaurant from every tierlist of <paramref name="userId"/> holding it, once they no longer rate it:
+    /// a tierlist only holds restaurants its owner rated.
+    /// </summary>
+    /// <param name="userId">Supabase Auth id of the user, read from the session.</param>
+    /// <param name="restaurantId">Database id of the restaurant to remove.</param>
+    /// <param name="cancellationToken">Cancels the database queries.</param>
+    /// <returns>A task completed once the restaurant is removed; nothing changes when no tierlist of the user holds it.</returns>
+    Task RemoveRestaurantFromAllAsync(string userId, string restaurantId, CancellationToken cancellationToken);
 }

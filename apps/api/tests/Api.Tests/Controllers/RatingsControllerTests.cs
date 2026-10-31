@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using api.Common;
 using api.Controllers;
 using api.Models;
@@ -7,7 +8,8 @@ using api.Models;
 namespace Api.Tests.Controllers;
 
 /// <summary>
-/// Tests the /api/restaurants/{id}/ratings endpoints through HTTP, with in-memory auth, restaurant and rating services.
+/// Tests the /api/restaurants/{id}/ratings endpoints through HTTP, with in-memory auth, restaurant, rating and tierlist
+/// services.
 /// </summary>
 public class RatingsControllerTests : IDisposable
 {
@@ -497,6 +499,219 @@ public class RatingsControllerTests : IDisposable
     public async Task GetMine_UnknownRestaurant_Returns404()
     {
         HttpResponseMessage response = await GetAsync("/api/restaurants/unknown/ratings/mine");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    /// <summary>
+    /// Sends a DELETE to <paramref name="url"/>, with the auth cookie when <paramref name="token"/> is given.
+    /// </summary>
+    private Task<HttpResponseMessage> DeleteAsync(string url, string? token = Token)
+    {
+        HttpRequestMessage request = new(HttpMethod.Delete, url);
+        if (token is not null)
+            request.Headers.Add("Cookie", $"{SupabaseAuthenticationHandler.CookieName}={token}");
+        return _client.SendAsync(request);
+    }
+
+    /// <summary>
+    /// URL deleting the logged-in user's rating of <paramref name="restaurantId"/> given at <paramref name="date"/> (UTC),
+    /// the date written as the API returns it ("2026-03-01T21:30:00+00:00") and URL-encoded, as the frontend sends it.
+    /// </summary>
+    private static string DeleteMineUrl(DateTime date, string restaurantId = RestaurantId)
+        => $"/api/restaurants/{restaurantId}/ratings/mine/{Uri.EscapeDataString(new DateTimeOffset(date, TimeSpan.Zero).ToString("yyyy-MM-ddTHH:mm:sszzz"))}";
+
+    /// <summary>
+    /// Stores the tierlists 1 of the logged-in user and 2 of user-2, both holding the restaurant, the first one also
+    /// holding r2.
+    /// </summary>
+    private void AddTierlistsHoldingRestaurant()
+    {
+        _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = "r2", Name = "Sushi Bar" });
+        _factory.TierlistService.Tierlists.Add(new Tierlist { Id = 1, UserId = UserId, Name = "Mine" });
+        _factory.TierlistService.Tierlists.Add(new Tierlist { Id = 2, UserId = "user-2", Name = "Theirs" });
+        _factory.TierlistService.Restaurants.Add(new TierlistRestaurant { TierlistId = 1, RestaurantId = RestaurantId });
+        _factory.TierlistService.Restaurants.Add(new TierlistRestaurant { TierlistId = 1, RestaurantId = "r2" });
+        _factory.TierlistService.Restaurants.Add(new TierlistRestaurant { TierlistId = 2, RestaurantId = RestaurantId });
+    }
+
+    /// <summary>
+    /// Restaurants of the tierlist <paramref name="tierlistId"/>.
+    /// </summary>
+    private IEnumerable<string> TierlistRestaurantIds(long tierlistId)
+        => _factory.TierlistService.Restaurants.Where(r => r.TierlistId == tierlistId).Select(r => r.RestaurantId);
+
+    /// <summary>
+    /// Deleting my active rating deletes it only (not another user's of the same moment), makes my previous rating the
+    /// active one again, and returns my ratings left, most recent first; the restaurant stays in my tierlists.
+    /// </summary>
+    [Fact]
+    public async Task DeleteMine_ActiveRating_DeletesItAndActivatesThePreviousOne()
+    {
+        AddTierlistsHoldingRestaurant();
+        AddRating(UserId, new DateTime(2026, 3, 1), food: 2, isActive: false);
+        AddRating(UserId, new DateTime(2026, 3, 2), food: 4, isActive: false);
+        AddRating(UserId, new DateTime(2026, 3, 3), food: 9);
+        AddRating("user-2", new DateTime(2026, 3, 3), food: 7);
+
+        HttpResponseMessage response = await DeleteAsync(DeleteMineUrl(new DateTime(2026, 3, 3)));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        List<RatingResponse> left = (await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!;
+        Assert.Equal([(2, 4, true), (1, 2, false)], left.Select(r => (r.Date.Day, r.Food, r.IsActive)));
+        Assert.Equal(
+            [(UserId, 1, false), (UserId, 2, true), ("user-2", 3, true)],
+            _factory.RatingService.Ratings.OrderBy(r => r.UserId).ThenBy(r => r.Date).Select(r => (r.UserId, r.Date.Day, r.IsActive)));
+        Assert.Contains(RestaurantId, TierlistRestaurantIds(1));
+    }
+
+    /// <summary>
+    /// Deleting one of my previous ratings leaves my active rating, my score, as it is.
+    /// </summary>
+    [Fact]
+    public async Task DeleteMine_PreviousRating_KeepsTheActiveOne()
+    {
+        AddRating(UserId, new DateTime(2026, 3, 1), isActive: false);
+        AddRating(UserId, new DateTime(2026, 3, 2), food: 9);
+
+        HttpResponseMessage response = await DeleteAsync(DeleteMineUrl(new DateTime(2026, 3, 1)));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Rating left = Assert.Single(_factory.RatingService.Ratings);
+        Assert.Equal((2, 9, true), (left.Date.Day, left.FoodRating, left.IsActive));
+    }
+
+    /// <summary>
+    /// Deleting my only rating of the restaurant removes it from my tierlists, which only hold rated restaurants; the
+    /// other restaurants of my tierlists and the tierlists of other users are untouched.
+    /// </summary>
+    [Fact]
+    public async Task DeleteMine_OnlyRating_RemovesTheRestaurantFromMyTierlists()
+    {
+        AddTierlistsHoldingRestaurant();
+        AddRating(UserId, new DateTime(2026, 3, 1));
+
+        HttpResponseMessage response = await DeleteAsync(DeleteMineUrl(new DateTime(2026, 3, 1)));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Empty((await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!);
+        Assert.Empty(_factory.RatingService.Ratings);
+        Assert.Equal(["r2"], TierlistRestaurantIds(1));
+        Assert.Equal([RestaurantId], TierlistRestaurantIds(2));
+    }
+
+    /// <summary>
+    /// The date returned by "mine", to the microsecond, is the one the frontend sends back to delete the rating.
+    /// </summary>
+    [Fact]
+    public async Task DeleteMine_DateReturnedByMine_DeletesTheRating()
+    {
+        AddRating(UserId, new DateTime(2026, 3, 1, 21, 30, 12).AddTicks(1_234_560));
+        HttpResponseMessage mine = await GetAsync($"/api/restaurants/{RestaurantId}/ratings/mine");
+        string date = JsonDocument.Parse(await mine.Content.ReadAsStringAsync()).RootElement[0].GetProperty("date").GetString()!;
+
+        HttpResponseMessage response = await DeleteAsync($"/api/restaurants/{RestaurantId}/ratings/mine/{Uri.EscapeDataString(date)}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Empty(_factory.RatingService.Ratings);
+    }
+
+    /// <summary>
+    /// A moment at which I gave no rating (another user's) returns a 404, and deletes nothing.
+    /// </summary>
+    [Fact]
+    public async Task DeleteMine_NoRatingOfMineAtThatMoment_Returns404()
+    {
+        AddRating(UserId, new DateTime(2026, 3, 1));
+        AddRating("user-2", new DateTime(2026, 3, 2));
+
+        HttpResponseMessage response = await DeleteAsync(DeleteMineUrl(new DateTime(2026, 3, 2)));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(2, _factory.RatingService.Ratings.Count);
+    }
+
+    /// <summary>
+    /// A date that is not a date is refused with a 400.
+    /// </summary>
+    [Fact]
+    public async Task DeleteMine_NotADate_Returns400()
+    {
+        HttpResponseMessage response = await DeleteAsync($"/api/restaurants/{RestaurantId}/ratings/mine/yesterday");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    /// <summary>
+    /// Without the auth cookie, the deletion is refused with a 401 and deletes nothing.
+    /// </summary>
+    [Fact]
+    public async Task DeleteMine_NoCookie_Returns401()
+    {
+        AddRating(UserId, new DateTime(2026, 3, 1));
+
+        HttpResponseMessage response = await DeleteAsync(DeleteMineUrl(new DateTime(2026, 3, 1)), token: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Single(_factory.RatingService.Ratings);
+    }
+
+    /// <summary>
+    /// Deleting a rating of an unknown restaurant returns a 404.
+    /// </summary>
+    [Fact]
+    public async Task DeleteMine_UnknownRestaurant_Returns404()
+    {
+        HttpResponseMessage response = await DeleteAsync(DeleteMineUrl(new DateTime(2026, 3, 1), restaurantId: "unknown"));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    /// <summary>
+    /// Deleting all my ratings of the restaurant deletes them, active or not, but not other users' ratings nor mine of
+    /// other restaurants, and removes the restaurant from my tierlists only.
+    /// </summary>
+    [Fact]
+    public async Task DeleteAllMine_DeletesMyRatingsOfTheRestaurantAndItFromMyTierlists()
+    {
+        AddTierlistsHoldingRestaurant();
+        AddRating(UserId, new DateTime(2026, 3, 1), isActive: false);
+        AddRating(UserId, new DateTime(2026, 3, 2));
+        AddRating("user-2", new DateTime(2026, 3, 3));
+        AddRating(UserId, new DateTime(2026, 3, 4), restaurantId: "r2");
+
+        HttpResponseMessage response = await DeleteAsync($"/api/restaurants/{RestaurantId}/ratings/mine");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Empty((await response.Content.ReadFromJsonAsync<List<RatingResponse>>())!);
+        Assert.Equal(
+            [("user-2", RestaurantId), (UserId, "r2")],
+            _factory.RatingService.Ratings.OrderBy(r => r.Date).Select(r => (r.UserId, r.RestaurantId)));
+        Assert.Equal(["r2"], TierlistRestaurantIds(1));
+        Assert.Equal([RestaurantId], TierlistRestaurantIds(2));
+    }
+
+    /// <summary>
+    /// Without the auth cookie, deleting all the ratings is refused with a 401 and deletes nothing.
+    /// </summary>
+    [Fact]
+    public async Task DeleteAllMine_NoCookie_Returns401()
+    {
+        AddRating(UserId, new DateTime(2026, 3, 1));
+
+        HttpResponseMessage response = await DeleteAsync($"/api/restaurants/{RestaurantId}/ratings/mine", token: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Single(_factory.RatingService.Ratings);
+    }
+
+    /// <summary>
+    /// Deleting all the ratings of an unknown restaurant returns a 404.
+    /// </summary>
+    [Fact]
+    public async Task DeleteAllMine_UnknownRestaurant_Returns404()
+    {
+        HttpResponseMessage response = await DeleteAsync("/api/restaurants/unknown/ratings/mine");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }

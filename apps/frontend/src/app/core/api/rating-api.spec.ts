@@ -152,6 +152,54 @@ describe('RatingApi', () => {
     });
   });
 
+  describe('deleteMyRating', () => {
+    it('deletes the rating of the moment given, encoding it in the URL, with the session cookie', async () => {
+      const left = [{ userId: 'me', date: '2026-01-02T12:00:00+00:00', isActive: true }];
+
+      const result = firstValueFrom(api.deleteMyRating('a/b', '2026-03-07T21:30:00.123456+00:00'));
+      const req = httpTesting.expectOne(
+        'http://api.test/api/restaurants/a%2Fb/ratings/mine/2026-03-07T21%3A30%3A00.123456%2B00%3A00',
+      );
+      expect(req.request.method).toBe('DELETE');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(left);
+
+      expect(await result).toEqual(left);
+    });
+
+    it('rethrows API errors so the page can explain them', async () => {
+      const result = firstValueFrom(api.deleteMyRating('r1', '2026-03-07T21:30:00+00:00'));
+      httpTesting
+        .expectOne(
+          'http://api.test/api/restaurants/r1/ratings/mine/2026-03-07T21%3A30%3A00%2B00%3A00',
+        )
+        .flush(null, { status: 404, statusText: 'Not Found' });
+
+      await expect(result).rejects.toMatchObject({ name: 'HttpErrorResponse', status: 404 });
+    });
+  });
+
+  describe('deleteMyRatings', () => {
+    it('deletes every rating of the logged-in user, with the session cookie', async () => {
+      const result = firstValueFrom(api.deleteMyRatings('a/b'));
+      const req = httpTesting.expectOne('http://api.test/api/restaurants/a%2Fb/ratings/mine');
+      expect(req.request.method).toBe('DELETE');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush([]);
+
+      expect(await result).toEqual([]);
+    });
+
+    it('rethrows API errors so the page can explain them', async () => {
+      const result = firstValueFrom(api.deleteMyRatings('r1'));
+      httpTesting
+        .expectOne('http://api.test/api/restaurants/r1/ratings/mine')
+        .flush(null, { status: 503, statusText: 'Service Unavailable' });
+
+      await expect(result).rejects.toMatchObject({ name: 'HttpErrorResponse', status: 503 });
+    });
+  });
+
   describe('fetchRatingAllowance', () => {
     it('asks whether the logged-in user can rate, with the session cookie', async () => {
       const allowance = { canRate: false, nextRatingAt: '2026-10-25T00:00:00+00:00' };

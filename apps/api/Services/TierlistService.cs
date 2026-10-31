@@ -176,6 +176,41 @@ public class TierlistService(Supabase.Client supabase, IRestaurantService restau
             .Where(e => e.TierlistId == tierlistId)
             .Where(e => e.RestaurantId == restaurantId);
 
+    /// <inheritdoc />
+    public async Task RemoveRestaurantFromAllAsync(string userId, string restaurantId, CancellationToken cancellationToken)
+    {
+        ModeledResponse<Tierlist> tierlists = await _supabase.From<Tierlist>()
+            .Where(t => t.UserId == userId)
+            .Get(cancellationToken);
+        if (tierlists.Models.Count == 0)
+            return;
+
+        List<long> tierlistIds = tierlists.Models.Select(t => t.Id).ToList();
+        ModeledResponse<TierlistRestaurant> entries = await EntriesQuery(_supabase.From<TierlistRestaurant>(), tierlistIds, restaurantId).Get(cancellationToken);
+        if (entries.Models.Count == 0)
+            return;
+
+        // Only the tierlists holding the restaurant change: their update date too
+        HashSet<long> changedIds = entries.Models.Select(e => e.TierlistId).ToHashSet();
+        await EntriesQuery(_supabase.From<TierlistRestaurant>(), changedIds.ToList(), restaurantId).Delete(cancellationToken: cancellationToken);
+        DateTime now = DateTime.UtcNow;
+        foreach (Tierlist tierlist in tierlists.Models.Where(t => changedIds.Contains(t.Id)))
+            await SetUpdatedAtAsync(tierlist, now, cancellationToken);
+    }
+
+    /// <summary>
+    /// Query of the rows of <paramref name="restaurantId"/> in any of the tierlists <paramref name="tierlistIds"/>. Both
+    /// keys are filtered, so a delete sent with it never removes other restaurants nor touches other tierlists.
+    /// </summary>
+    /// <param name="entries">Query on the "tierlist_restaurant" table to filter.</param>
+    /// <param name="tierlistIds">Database ids of the tierlists (not empty: PostgREST refuses an empty list).</param>
+    /// <param name="restaurantId">Database id of the restaurant.</param>
+    /// <returns>The filtered query, ready to send.</returns>
+    public static IPostgrestTable<TierlistRestaurant> EntriesQuery(IPostgrestTable<TierlistRestaurant> entries, IReadOnlyList<long> tierlistIds, string restaurantId)
+        => entries
+            .Filter("id_tierlist", Constants.Operator.In, tierlistIds.Cast<object>().ToList())
+            .Where(e => e.RestaurantId == restaurantId);
+
     /// <summary>
     /// Reads the tierlist <paramref name="id"/>, without its restaurants; null when it does not exist.
     /// </summary>

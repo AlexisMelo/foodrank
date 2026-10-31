@@ -26,8 +26,8 @@ public class ApiFactory : WebApplicationFactory<Program>
     public FakeRestaurantService RestaurantService { get; } = new();
 
     /// <summary>
-    /// Rating service used by the controllers, attached to the restaurants of <see cref="RestaurantService"/> and to the
-    /// follows of <see cref="FollowService"/>.
+    /// Rating service used by the controllers, attached to the restaurants of <see cref="RestaurantService"/>, to the
+    /// follows of <see cref="FollowService"/> and to the tierlists of <see cref="TierlistService"/>.
     /// </summary>
     public FakeRatingService RatingService { get; }
 
@@ -62,6 +62,7 @@ public class ApiFactory : WebApplicationFactory<Program>
         RestaurantService.RatedRestaurantIds = userId => RatingService.Ratings.Where(r => r.UserId == userId).Select(r => r.RestaurantId);
         UserService = new FakeUserService(RatingService);
         TierlistService = new FakeTierlistService(RestaurantService, RatingService);
+        RatingService.Tierlists = TierlistService;
         FollowService = new FakeFollowService(UserService, RatingService);
         RatingService.FollowedUserIds = userId => FollowService.Follows.Where(f => f.FollowerId == userId).Select(f => f.FollowedId);
         RestaurantService.Ratings = () => RatingService.Ratings;

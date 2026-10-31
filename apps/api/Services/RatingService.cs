@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Linq.Expressions;
 using api.Common;
 using api.Models;
@@ -8,10 +9,18 @@ using Supabase.Postgrest.Responses;
 namespace api.Services;
 
 /// <summary>
-/// Saves and reads the ratings users give to restaurants in the "rating" table.
+/// Saves, reads and deletes the ratings users give to restaurants in the "rating" table.
 /// </summary>
-public class RatingService(Supabase.Client supabase, IRestaurantService restaurantService) : IRatingService
+/// <param name="supabase">Client of the Supabase database.</param>
+/// <param name="restaurantService">Checks that the restaurant rated exists.</param>
+/// <param name="tierlistService">Removes a restaurant from the tierlists of a user who no longer rates it.</param>
+public class RatingService(Supabase.Client supabase, IRestaurantService restaurantService, ITierlistService tierlistService) : IRatingService
 {
+    /// <summary>
+    /// Error returned when deleting a rating the user did not give.
+    /// </summary>
+    public static Error RatingNotFound { get; } = new(ErrorType.NotFound, "Rating not found.");
+
     /// <inheritdoc />
     public async Task<Result<Rating>> CreateAsync(string restaurantId, string userId, RateRestaurantRequest request, CancellationToken cancellationToken)
     {
@@ -160,13 +169,75 @@ public class RatingService(Supabase.Client supabase, IRestaurantService restaura
         if (!restaurant.IsSuccess)
             return Result<IReadOnlyList<RatingResponse>>.Failure(restaurant.Error!);
 
-        string id = restaurant.Value!.Id;
-        ModeledResponse<Rating> response = await supabase.From<Rating>()
-            .Where(r => r.RestaurantId == id && r.UserId == userId)
+        ModeledResponse<Rating> response = await UserRatingsQuery(supabase.From<Rating>(), restaurant.Value!.Id, userId)
             .Order("date", Constants.Ordering.Descending)
             .Get(cancellationToken);
         return Result<IReadOnlyList<RatingResponse>>.Success(await WithProfilesAsync(response.Models, cancellationToken));
     }
+
+    /// <inheritdoc />
+    public async Task<Result<IReadOnlyList<RatingResponse>>> DeleteAsync(string restaurantId, string userId, DateTimeOffset date, CancellationToken cancellationToken)
+    {
+        Result<Restaurant> restaurant = await restaurantService.GetByIdAsync(restaurantId, cancellationToken);
+        if (!restaurant.IsSuccess)
+            return Result<IReadOnlyList<RatingResponse>>.Failure(restaurant.Error!);
+
+        string id = restaurant.Value!.Id;
+        ModeledResponse<Rating> ratings = await UserRatingsQuery(supabase.From<Rating>(), id, userId).Get(cancellationToken);
+        RatingDeletion? deletion = Rating.PlanDeletion(ratings.Models, date);
+        if (deletion is null)
+            return Result<IReadOnlyList<RatingResponse>>.Failure(RatingNotFound);
+
+        // Deleted first, then the previous rating activated, in two requests: a failure in between leaves the user
+        // without an active rating (their next rating becomes active), never with two. The moment read from the
+        // database is the one filtered, to the microsecond
+        await RatingQuery(supabase.From<Rating>(), id, userId, deletion.Deleted.Date).Delete(cancellationToken: cancellationToken);
+        if (deletion.Activated is not null)
+            await supabase.From<Rating>().Upsert(deletion.Activated, cancellationToken: cancellationToken);
+        if (deletion.Remaining.Count == 0)
+            await tierlistService.RemoveRestaurantFromAllAsync(userId, id, cancellationToken);
+        return Result<IReadOnlyList<RatingResponse>>.Success(await WithProfilesAsync(deletion.Remaining, cancellationToken));
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<IReadOnlyList<RatingResponse>>> DeleteAllAsync(string restaurantId, string userId, CancellationToken cancellationToken)
+    {
+        Result<Restaurant> restaurant = await restaurantService.GetByIdAsync(restaurantId, cancellationToken);
+        if (!restaurant.IsSuccess)
+            return Result<IReadOnlyList<RatingResponse>>.Failure(restaurant.Error!);
+
+        string id = restaurant.Value!.Id;
+        await UserRatingsQuery(supabase.From<Rating>(), id, userId).Delete(cancellationToken: cancellationToken);
+        await tierlistService.RemoveRestaurantFromAllAsync(userId, id, cancellationToken);
+        return Result<IReadOnlyList<RatingResponse>>.Success([]);
+    }
+
+    /// <summary>
+    /// Query of every rating of <paramref name="restaurantId"/> by <paramref name="userId"/>, active or not. Both keys
+    /// are filtered, each in its own Where, so a delete sent with it never removes other users' or restaurants' ratings.
+    /// </summary>
+    /// <param name="ratings">Query on the "rating" table to filter.</param>
+    /// <param name="restaurantId">Database id of the restaurant.</param>
+    /// <param name="userId">Supabase Auth id of the user.</param>
+    /// <returns>The filtered query, ready to send.</returns>
+    public static IPostgrestTable<Rating> UserRatingsQuery(IPostgrestTable<Rating> ratings, string restaurantId, string userId)
+        => ratings
+            .Where(r => r.RestaurantId == restaurantId)
+            .Where(r => r.UserId == userId);
+
+    /// <summary>
+    /// Query of the rating of <paramref name="restaurantId"/> given by <paramref name="userId"/> at
+    /// <paramref name="date"/>: its whole primary key, so a delete sent with it removes this rating only.
+    /// </summary>
+    /// <param name="ratings">Query on the "rating" table to filter.</param>
+    /// <param name="restaurantId">Database id of the restaurant.</param>
+    /// <param name="userId">Supabase Auth id of the user.</param>
+    /// <param name="date">Moment of the rating, as read from the database (microseconds).</param>
+    /// <returns>The filtered query, ready to send.</returns>
+    public static IPostgrestTable<Rating> RatingQuery(IPostgrestTable<Rating> ratings, string restaurantId, string userId, DateTimeOffset date)
+        // Written in UTC with its microseconds, without the "+" of an offset, which an URL would read as a space
+        => UserRatingsQuery(ratings, restaurantId, userId)
+            .Filter("date", Constants.Operator.Equals, date.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss.ffffff'Z'", CultureInfo.InvariantCulture));
 
     /// <inheritdoc />
     public async Task<Result<IReadOnlyList<UserRatingResponse>>> GetByUserAsync(string userId, CancellationToken cancellationToken)
