@@ -7,7 +7,8 @@ namespace Api.Tests.Models;
 
 /// <summary>
 /// Tests the rows written when a rating is created: the new rating becomes the active one and the previous one is
-/// deactivated, so only the latest rating of a user for a restaurant counts as their score.
+/// deactivated, so only the latest rating of a user for a restaurant counts as their score; and when a rating is
+/// deleted: the previous one becomes active again.
 /// </summary>
 public class RatingTests
 {
@@ -19,7 +20,7 @@ public class RatingTests
     /// <summary>
     /// Builds a rating of restaurant "r1" by "user-1" given at <paramref name="date"/>.
     /// </summary>
-    private static Rating NewRating(DateTimeOffset date, bool isActive = false, float food = 50) => new()
+    private static Rating NewRating(DateTimeOffset date, bool isActive = false, int food = 5) => new()
     {
         RestaurantId = "r1",
         UserId = "user-1",
@@ -48,10 +49,10 @@ public class RatingTests
     [Fact]
     public void PlanNew_PreviousActiveRating_DeactivatesItAndActivatesNewOne()
     {
-        IReadOnlyList<Rating> rows = Rating.PlanNew([NewRating(March(1), isActive: true, food: 20)], NewRating(March(9), food: 90));
+        IReadOnlyList<Rating> rows = Rating.PlanNew([NewRating(March(1), isActive: true, food: 2)], NewRating(March(9), food: 9));
 
         Assert.Equal(
-            [(March(1), 20f, false), (March(9), 90f, true)],
+            [(March(1), 2, false), (March(9), 9, true)],
             rows.Select(r => (r.Date, r.FoodRating, r.IsActive)));
     }
 
@@ -64,6 +65,72 @@ public class RatingTests
         IReadOnlyList<Rating> rows = Rating.PlanNew([NewRating(March(1), isActive: true), NewRating(March(5), isActive: true)], NewRating(March(9)));
 
         Assert.Equal([false, false, true], rows.Select(r => r.IsActive));
+    }
+
+    /// <summary>
+    /// Deleting the active rating activates the most recent of the others, with its moment and scores unchanged; the
+    /// older ones stay inactive.
+    /// </summary>
+    [Fact]
+    public void PlanDeletion_ActiveRating_ActivatesTheMostRecentOfTheOthers()
+    {
+        Rating active = NewRating(March(9), isActive: true);
+
+        RatingDeletion? deletion = Rating.PlanDeletion([NewRating(March(1)), active, NewRating(March(5), food: 7)], March(9));
+
+        Assert.NotNull(deletion);
+        Assert.Same(active, deletion.Deleted);
+        Assert.Equal((March(5), 7, true), (deletion.Activated!.Date, deletion.Activated.FoodRating, deletion.Activated.IsActive));
+        Assert.Equal([(March(5), true), (March(1), false)], deletion.Remaining.Select(r => (r.Date, r.IsActive)));
+    }
+
+    /// <summary>
+    /// Deleting a previous rating leaves the active one as it is: nothing is activated.
+    /// </summary>
+    [Fact]
+    public void PlanDeletion_PreviousRating_KeepsTheActiveOne()
+    {
+        RatingDeletion? deletion = Rating.PlanDeletion([NewRating(March(1)), NewRating(March(9), isActive: true)], March(1));
+
+        Assert.NotNull(deletion);
+        Assert.Null(deletion.Activated);
+        Assert.Equal([(March(9), true)], deletion.Remaining.Select(r => (r.Date, r.IsActive)));
+    }
+
+    /// <summary>
+    /// Deleting the only rating leaves none: nothing to activate.
+    /// </summary>
+    [Fact]
+    public void PlanDeletion_OnlyRating_LeavesNone()
+    {
+        RatingDeletion? deletion = Rating.PlanDeletion([NewRating(March(9), isActive: true)], March(9));
+
+        Assert.NotNull(deletion);
+        Assert.Null(deletion.Activated);
+        Assert.Empty(deletion.Remaining);
+    }
+
+    /// <summary>
+    /// The date is an instant: the same moment written in another time zone finds the rating.
+    /// </summary>
+    [Fact]
+    public void PlanDeletion_SameInstantInAnotherTimeZone_FindsTheRating()
+    {
+        DateTimeOffset inParis = new(2026, 3, 9, 13, 0, 0, TimeSpan.FromHours(1));
+
+        RatingDeletion? deletion = Rating.PlanDeletion([NewRating(March(9), isActive: true)], inParis);
+
+        Assert.Equal(March(9), deletion?.Deleted.Date);
+    }
+
+    /// <summary>
+    /// No rating at that moment, even a second off: nothing is planned.
+    /// </summary>
+    [Fact]
+    public void PlanDeletion_UnknownMoment_ReturnsNull()
+    {
+        Assert.Null(Rating.PlanDeletion([NewRating(March(9), isActive: true)], March(9).AddSeconds(1)));
+        Assert.Null(Rating.PlanDeletion([], March(9)));
     }
 
     /// <summary>

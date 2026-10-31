@@ -4,17 +4,10 @@
   } @else {
     @for (criterion of criteria(); track criterion.label) {
       <div class="criterion">
-        <div class="criterion-header">
-          <span class="criterion-label">{{ criterion.label }}</span>
-          <span class="criterion-score">{{ criterion.score }}</span>
-        </div>
-        <div class="criterion-bar-wrap">
-          <div
-            class="criterion-bar"
-            [style.width.%]="criterion.score"
-            [style.background-color]="scoreColor(criterion.score)"
-          ></div>
-        </div>
+        <span class="criterion-label">{{ criterion.label }}</span>
+        <span class="criterion-score" [style.color]="scoreColor(criterion.score)">{{
+          criterion.score
+        }}</span>
       </div>
     }
     <span class="rating-count">{{ countLabel() }}</span>

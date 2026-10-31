@@ -37,11 +37,7 @@
             [decor]="restaurant.setting"
             [overall]="restaurant.overall"
             [myScore]="restaurant.myScore"
-            [rateLink]="
-              !ranking.isOwnProfile() && restaurant.myScore === undefined
-                ? '/review/' + restaurant.restaurantId
-                : undefined
-            "
+            [showUnrated]="!ranking.isOwnProfile()"
           />
         }
       </div>

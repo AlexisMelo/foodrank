@@ -45,6 +45,21 @@ export class RatingApi {
   }
 
   /**
+   * Get the most recent active ratings of a restaurant (each user's latest) given by the users the logged-in user
+   * follows, most recent first
+   * @param limit number of ratings, 1 to 50
+   * @returns an empty list when the user is not logged in (401)
+   */
+  fetchRecentFollowedRatings(restaurantId: string, limit = 5): Observable<RestaurantRating[]> {
+    return this.http
+      .get<RestaurantRating[]>(
+        `/api/restaurants/${encodeURIComponent(restaurantId)}/ratings/followed`,
+        { params: { limit } },
+      )
+      .pipe(recoverOnStatus(401, []));
+  }
+
+  /**
    * Get the averages of every active rating of a restaurant, per criterion and globally
    */
   fetchRatingSummary(restaurantId: string): Observable<RatingSummary> {
@@ -61,6 +76,30 @@ export class RatingApi {
     return this.http
       .get<RestaurantRating[]>(`/api/restaurants/${encodeURIComponent(restaurantId)}/ratings/mine`)
       .pipe(recoverOnStatus(401, []));
+  }
+
+  /**
+   * Delete one rating the logged-in user gave to a restaurant. When it was their active rating, their previous one
+   * becomes active again; when it was their only one, the restaurant leaves their tierlists
+   * @param date moment of the rating, exactly as the API returned it (`RestaurantRating.date`)
+   * @returns the ratings the user has left for the restaurant, most recent first
+   * @throws the HttpErrorResponse: 401 when not logged in, 404 for an unknown restaurant or rating
+   */
+  deleteMyRating(restaurantId: string, date: string): Observable<RestaurantRating[]> {
+    return this.http.delete<RestaurantRating[]>(
+      `/api/restaurants/${encodeURIComponent(restaurantId)}/ratings/mine/${encodeURIComponent(date)}`,
+    );
+  }
+
+  /**
+   * Delete every rating the logged-in user gave to a restaurant; the restaurant leaves their tierlists
+   * @returns the ratings the user has left for the restaurant: none
+   * @throws the HttpErrorResponse: 401 when not logged in, 404 for an unknown restaurant
+   */
+  deleteMyRatings(restaurantId: string): Observable<RestaurantRating[]> {
+    return this.http.delete<RestaurantRating[]>(
+      `/api/restaurants/${encodeURIComponent(restaurantId)}/ratings/mine`,
+    );
   }
 
   /**

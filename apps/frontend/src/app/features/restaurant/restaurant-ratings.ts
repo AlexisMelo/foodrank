@@ -5,7 +5,7 @@ import { RatingApi } from '@/core/api/rating-api';
 import type { RatingSummary, RestaurantRating } from '@/core/models/rating.model';
 
 /**
- * Number of ratings shown in the "Recent" tab.
+ * Number of ratings shown in the "Recent" tab, and in the "Followed" tab.
  */
 export const RECENT_RATINGS_COUNT = 5;
 
@@ -20,6 +20,12 @@ export interface RestaurantRatingsState {
   recentRatings: Signal<RestaurantRating[]>;
 
   /**
+   * Most recent active ratings (each user's latest) of the users the logged-in user follows, most recent first; empty
+   * while loading, when the restaurant is unknown, when the user follows nobody who rated it and when the API fails
+   */
+  followedRatings: Signal<RestaurantRating[]>;
+
+  /**
    * Every rating of the logged-in user, most recent first; empty while loading, when the restaurant is unknown and
    * when the API fails
    */
@@ -31,19 +37,25 @@ export interface RestaurantRatingsState {
   summary: Signal<RatingSummary | null>;
 
   /**
-   * True while the ratings load, including after a change of restaurant
+   * True while the ratings load, including after a change of restaurant; false while they reload (`reload`), the
+   * ratings loaded staying shown until the new ones replace them
    */
   loading: Signal<boolean>;
 
   /**
-   * True when one of the three requests failed
+   * True when one of the four requests failed
    */
   loadError: Signal<boolean>;
+
+  /**
+   * Loads the ratings of the restaurant again, e.g. once the user deleted some of theirs
+   */
+  reload: () => void;
 }
 
 /**
- * Ratings displayed on a restaurant page: the most recent ones (every user), all of the logged-in user's, and the
- * averages of every active rating, loaded from the API by an rxResource of the calling page.
+ * Ratings displayed on a restaurant page: the most recent ones (every user, and the users followed), all of the
+ * logged-in user's, and the averages of every active rating, loaded from the API by an rxResource of the calling page.
  * Reloaded each time the restaurant id changes, so a rating saved just before opening the page is shown, and a late
  * answer for a previous restaurant is ignored. State is per call (not shared between pages). Must run in an injection
  * context.
@@ -57,21 +69,25 @@ export function injectRestaurantRatings(restaurantId: () => string | null): Rest
     stream: ({ params: id }) =>
       forkJoin({
         recent: api.fetchRecentRatings(id, RECENT_RATINGS_COUNT),
+        followed: api.fetchRecentFollowedRatings(id, RECENT_RATINGS_COUNT),
         mine: api.fetchMyRatings(id),
         summary: api.fetchRatingSummary(id),
       }),
   });
 
   /**
-   * The three answers, undefined until they are all loaded
+   * The four answers, undefined until they are all loaded
    */
   const loaded = computed(() => (resource.hasValue() ? resource.value() : undefined));
 
   return {
     recentRatings: computed(() => loaded()?.recent ?? []),
+    followedRatings: computed(() => loaded()?.followed ?? []),
     myRatings: computed(() => loaded()?.mine ?? []),
     summary: computed(() => loaded()?.summary ?? null),
-    loading: resource.isLoading,
+    // 'reloading' is left out: the ratings loaded stay shown meanwhile
+    loading: computed(() => resource.status() === 'loading'),
     loadError: computed(() => resource.status() === 'error'),
+    reload: () => void resource.reload(),
   };
 }

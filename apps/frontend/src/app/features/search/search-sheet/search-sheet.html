@@ -1,20 +1,20 @@
-@if (newReview.isOpen()) {
+@if (searchSheet.isOpen()) {
   <!-- The overlay click is a mouse shortcut: Esc (cancel event) and the Close button are its keyboard equivalents -->
   <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
   <dialog
     #dialog
     class="overlay"
-    aria-labelledby="new-review-sheet-title"
+    aria-labelledby="search-sheet-title"
     animate.enter="overlay-enter"
     animate.leave="overlay-leave"
     (cancel)="cancel($event)"
-    (close)="newReview.close()"
+    (close)="searchSheet.close()"
     (click)="closeOnOverlay($event)"
   >
     <div class="sheet" animate.enter="sheet-enter">
       <div class="header">
-        <h2 id="new-review-sheet-title" class="title">Search</h2>
-        <button type="button" class="close-btn" aria-label="Close" (click)="newReview.close()">
+        <h2 id="search-sheet-title" class="title">Search</h2>
+        <button type="button" class="close-btn" aria-label="Close" (click)="searchSheet.close()">
           ✕
         </button>
       </div>

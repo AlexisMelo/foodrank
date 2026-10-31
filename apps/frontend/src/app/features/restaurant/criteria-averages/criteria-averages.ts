@@ -3,8 +3,8 @@ import type { RatingSummary } from '@/core/models/rating.model';
 import { scoreColor } from '@/core/utils/rating';
 
 /**
- * Average of each criterion of a restaurant (food, service, decor), with a bar per criterion and the number of
- * ratings averaged. Its size comes from the parent, through a class set on the component.
+ * Average of each criterion of a restaurant (food, service, decor), rounded to a whole number and colored by value,
+ * and the number of ratings averaged. Its size comes from the parent, through a class set on the component.
  */
 @Component({
   imports: [],
@@ -19,7 +19,8 @@ export class CriteriaAverages {
   readonly summary = input.required<RatingSummary>();
 
   /**
-   * One entry per criterion, in display order: its label and its rounded average (0 when nobody rated it)
+   * One entry per criterion, in display order: its label and its average rounded to a whole number, like the criteria
+   * of a rating (0 when nobody rated it, never shown: the template shows "No ratings yet" instead)
    */
   protected readonly criteria = computed(() => {
     const summary = this.summary();
@@ -39,7 +40,7 @@ export class CriteriaAverages {
   });
 
   /**
-   * Color of a 0-100 score
+   * Color of a 1-10 score
    */
   protected readonly scoreColor = scoreColor;
 }

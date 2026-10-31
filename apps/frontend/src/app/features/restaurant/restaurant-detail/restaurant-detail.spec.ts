@@ -14,7 +14,14 @@ import { CelebrationStore } from '@/core/celebration/celebration-store';
 import { REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
 import { CAN_REVIEW, alreadyReviewed } from '@/core/review/daily-review-testing';
 import { SHARE_NAVIGATOR } from '@/core/share/web-share';
-import { clickButton, query, queryAll, stubDialogs, textOf } from '@/testing/dom-testing';
+import {
+  clickButton,
+  query,
+  queryAll,
+  stubDialogs,
+  stubPopovers,
+  textOf,
+} from '@/testing/dom-testing';
 
 /**
  * Builds the restaurant `id` of the database.
@@ -34,25 +41,30 @@ function restaurant(id: string): Restaurant {
 describe('RestaurantDetail', () => {
   let fetchRestaurantById: ReturnType<typeof vi.fn>;
   let fetchRecentRatings: ReturnType<typeof vi.fn>;
+  let fetchRecentFollowedRatings: ReturnType<typeof vi.fn>;
   let fetchMyRatings: ReturnType<typeof vi.fn>;
   let fetchRatingSummary: ReturnType<typeof vi.fn>;
   let fetchRatingAllowance: ReturnType<typeof vi.fn>;
+  let deleteMyRating: ReturnType<typeof vi.fn>;
   let share: ReturnType<typeof vi.fn<(data?: ShareData) => Promise<void>>>;
   let shareNavigator: { share?: Navigator['share']; clipboard?: Clipboard };
   let harness: RouterTestingHarness;
 
   beforeEach(async () => {
-    // The celebration modals are native dialogs
+    // The celebration modals are native dialogs, the actions of a rating a popover
     stubDialogs();
+    stubPopovers();
     share = vi.fn(() => Promise.resolve());
     shareNavigator = { share };
     fetchRestaurantById = vi.fn((id: string) => of(restaurant(id)));
     fetchRecentRatings = vi.fn(() => of([]));
+    fetchRecentFollowedRatings = vi.fn(() => of([]));
     fetchMyRatings = vi.fn(() => of([]));
     fetchRatingSummary = vi.fn(() =>
       of({ count: 0, food: null, service: null, setting: null, global: null }),
     );
     fetchRatingAllowance = vi.fn(() => of(CAN_REVIEW));
+    deleteMyRating = vi.fn(() => of([]));
     TestBed.configureTestingModule({
       providers: [
         // The real routes, with a logged-in user
@@ -72,8 +84,10 @@ describe('RestaurantDetail', () => {
           provide: RatingApi,
           useValue: {
             fetchRecentRatings,
+            fetchRecentFollowedRatings,
             fetchMyRatings,
             fetchRatingSummary,
+            deleteMyRating,
             // Locks the review buttons
             fetchRatingAllowance,
             // Read by the home page
@@ -115,6 +129,32 @@ describe('RestaurantDetail', () => {
     expect(textOf(query(harness.fixture, '.info-text'))).toBe('1 rue de la Paix');
   });
 
+  it('lists the recent ratings of the users I follow under "Followed"', async () => {
+    fetchRecentFollowedRatings.mockReturnValue(
+      of([
+        {
+          restaurantId: 'r1',
+          userId: 'camille',
+          date: '2026-10-01T12:00:00+00:00',
+          food: 8,
+          service: 7,
+          setting: 6,
+          bonus: false,
+          isActive: true,
+          userName: 'Camille',
+          userAvatarUrl: null,
+        },
+      ]),
+    );
+    await open('/restaurant/r1');
+
+    query(harness.fixture, '.tab-followed').click();
+    await harness.fixture.whenStable();
+
+    expect(fetchRecentFollowedRatings).toHaveBeenCalledWith('r1', 5);
+    expect(queryAll(harness.fixture, '.rating-card .author-name').map(textOf)).toEqual(['Camille']);
+  });
+
   it('leaves for the home page when the restaurant does not exist', async () => {
     fetchRestaurantById.mockReturnValue(of(undefined));
 
@@ -139,6 +179,39 @@ describe('RestaurantDetail', () => {
     await clickButton(harness.fixture, 'Go back');
     await navigated;
     expect(url()).toBe('/restaurant/r1');
+  });
+
+  it('loads the ratings and averages again once I deleted one of my ratings', async () => {
+    const myRating = {
+      restaurantId: 'r1',
+      userId: 'u1',
+      date: '2026-10-01T12:00:00+00:00',
+      food: 8,
+      service: 7,
+      setting: 6,
+      bonus: false,
+      isActive: true,
+      userName: 'Alexis Melo',
+      userAvatarUrl: null,
+    };
+    fetchMyRatings.mockReturnValueOnce(of([myRating])).mockReturnValue(of([]));
+    await open('/restaurant/r1');
+
+    query(harness.fixture, '.rating-card .actions-btn').click();
+    await harness.fixture.whenStable();
+    queryAll(harness.fixture, '.actions-item-label')
+      .find((label) => textOf(label) === 'Delete this rating')!
+      .closest<HTMLElement>('button')!
+      .click();
+    await harness.fixture.whenStable();
+    query(harness.fixture, 'dialog .confirm-btn').click();
+    await harness.fixture.whenStable();
+
+    expect(deleteMyRating).toHaveBeenCalledWith('r1', '2026-10-01T12:00:00+00:00');
+    expect(fetchMyRatings).toHaveBeenCalledTimes(2);
+    expect(fetchRatingSummary).toHaveBeenCalledTimes(2);
+    expect(queryAll(harness.fixture, '.rating-card')).toHaveLength(0);
+    expect(textOf(query(harness.fixture, '.no-visits'))).toBe('No visits yet 🍽️');
   });
 
   describe('adding the restaurant to a tierlist', () => {
@@ -204,6 +277,7 @@ describe('RestaurantDetail', () => {
       expect(textOf(query(harness.fixture, '.name'))).toBe('Restaurant r1');
       expect(fetchRestaurantById.mock.calls).toEqual([['r1']]);
       expect(fetchRecentRatings).toHaveBeenCalledTimes(1);
+      expect(fetchRecentFollowedRatings).toHaveBeenCalledTimes(1);
       expect(fetchMyRatings).toHaveBeenCalledTimes(1);
       expect(fetchRatingSummary).toHaveBeenCalledTimes(1);
     });

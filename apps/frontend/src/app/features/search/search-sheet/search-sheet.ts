@@ -9,26 +9,26 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { LocationStore } from '@/core/location/location-store';
-import { NewReviewStore } from '@/core/review/new-review-store';
+import { SearchSheetStore } from '@/core/search/search-sheet-store';
 import { SearchAreaHint } from '@/shared/ui/search-area-hint/search-area-hint';
 import { SearchBar } from '@/shared/ui/search-bar/search-bar';
 
 /**
  * Sheet sliding from the top to search restaurants and users: the search runs on Enter or the search button, and
- * opens the search results page, where the restaurant to review is picked. Opened by NewReviewStore, from the bottom
+ * opens the search results page, where the restaurant to review is picked. Opened by SearchSheetStore, from the bottom
  * tab bar or the "+ New" chips.
  */
 @Component({
   imports: [SearchAreaHint, SearchBar],
-  selector: 'app-new-review-sheet',
-  styleUrl: './new-review-sheet.scss',
-  templateUrl: './new-review-sheet.html',
+  selector: 'app-search-sheet',
+  styleUrl: './search-sheet.scss',
+  templateUrl: './search-sheet.html',
 })
-export class NewReviewSheet {
+export class SearchSheet {
   /**
    * Whether the sheet is open, and closes it
    */
-  protected readonly newReview = inject(NewReviewStore);
+  protected readonly searchSheet = inject(SearchSheetStore);
 
   /**
    * Position of the user, used by the results page to favor nearby restaurants; located when the app opens, then
@@ -56,7 +56,7 @@ export class NewReviewSheet {
     // Refreshes the position each time the sheet opens; the known one stays meanwhile, so a query typed fast is still
     // searched near the user
     effect(() => {
-      if (this.newReview.isOpen()) untracked(() => this.locationStore.refreshLocation());
+      if (this.searchSheet.isOpen()) untracked(() => this.locationStore.refreshLocation());
     });
     // Shows the dialog as a modal (top layer, Esc key, focus kept inside) once rendered, then focuses the search field
     afterRenderEffect({
@@ -73,7 +73,7 @@ export class NewReviewSheet {
    * Opens the search results of the query (already trimmed, never empty), then closes
    */
   protected search(query: string): void {
-    this.newReview.close();
+    this.searchSheet.close();
     void this.router.navigate(['/search'], { queryParams: { q: query } });
   }
 
@@ -82,13 +82,13 @@ export class NewReviewSheet {
    */
   protected cancel(event: Event): void {
     event.preventDefault();
-    this.newReview.close();
+    this.searchSheet.close();
   }
 
   /**
    * Closes the sheet on a click on the dark overlay around it, not inside it
    */
   protected closeOnOverlay(event: MouseEvent): void {
-    if (event.target === event.currentTarget) this.newReview.close();
+    if (event.target === event.currentTarget) this.searchSheet.close();
   }
 }

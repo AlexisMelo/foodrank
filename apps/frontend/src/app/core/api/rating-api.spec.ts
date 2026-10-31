@@ -86,6 +86,40 @@ describe('RatingApi', () => {
     });
   });
 
+  describe('fetchRecentFollowedRatings', () => {
+    it('asks for the 5 most recent ratings of the users followed by default, with the session cookie', async () => {
+      const ratings = [{ userId: 'u1', date: '2026-03-07T12:00:00+00:00', userName: 'Camille' }];
+
+      const result = firstValueFrom(api.fetchRecentFollowedRatings('a/b'));
+      const req = httpTesting.expectOne(
+        'http://api.test/api/restaurants/a%2Fb/ratings/followed?limit=5',
+      );
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(ratings);
+
+      expect(await result).toEqual(ratings);
+    });
+
+    it('returns no rating when the user is not logged in', async () => {
+      const result = firstValueFrom(api.fetchRecentFollowedRatings('r1'));
+      httpTesting
+        .expectOne('http://api.test/api/restaurants/r1/ratings/followed?limit=5')
+        .flush(null, { status: 401, statusText: 'Unauthorized' });
+
+      expect(await result).toEqual([]);
+    });
+
+    it('rethrows other errors', async () => {
+      const result = firstValueFrom(api.fetchRecentFollowedRatings('r1'));
+      httpTesting
+        .expectOne('http://api.test/api/restaurants/r1/ratings/followed?limit=5')
+        .flush(null, { status: 404, statusText: 'Not Found' });
+
+      await expect(result).rejects.toMatchObject({ name: 'HttpErrorResponse', status: 404 });
+    });
+  });
+
   describe('fetchMyRatings', () => {
     it("returns the logged-in user's ratings, sending the session cookie", async () => {
       const ratings = [{ userId: 'me', date: '2026-03-07T12:00:00+00:00' }];
@@ -115,6 +149,54 @@ describe('RatingApi', () => {
         .flush(null, { status: 404, statusText: 'Not Found' });
 
       await expect(result).rejects.toMatchObject({ name: 'HttpErrorResponse', status: 404 });
+    });
+  });
+
+  describe('deleteMyRating', () => {
+    it('deletes the rating of the moment given, encoding it in the URL, with the session cookie', async () => {
+      const left = [{ userId: 'me', date: '2026-01-02T12:00:00+00:00', isActive: true }];
+
+      const result = firstValueFrom(api.deleteMyRating('a/b', '2026-03-07T21:30:00.123456+00:00'));
+      const req = httpTesting.expectOne(
+        'http://api.test/api/restaurants/a%2Fb/ratings/mine/2026-03-07T21%3A30%3A00.123456%2B00%3A00',
+      );
+      expect(req.request.method).toBe('DELETE');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(left);
+
+      expect(await result).toEqual(left);
+    });
+
+    it('rethrows API errors so the page can explain them', async () => {
+      const result = firstValueFrom(api.deleteMyRating('r1', '2026-03-07T21:30:00+00:00'));
+      httpTesting
+        .expectOne(
+          'http://api.test/api/restaurants/r1/ratings/mine/2026-03-07T21%3A30%3A00%2B00%3A00',
+        )
+        .flush(null, { status: 404, statusText: 'Not Found' });
+
+      await expect(result).rejects.toMatchObject({ name: 'HttpErrorResponse', status: 404 });
+    });
+  });
+
+  describe('deleteMyRatings', () => {
+    it('deletes every rating of the logged-in user, with the session cookie', async () => {
+      const result = firstValueFrom(api.deleteMyRatings('a/b'));
+      const req = httpTesting.expectOne('http://api.test/api/restaurants/a%2Fb/ratings/mine');
+      expect(req.request.method).toBe('DELETE');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush([]);
+
+      expect(await result).toEqual([]);
+    });
+
+    it('rethrows API errors so the page can explain them', async () => {
+      const result = firstValueFrom(api.deleteMyRatings('r1'));
+      httpTesting
+        .expectOne('http://api.test/api/restaurants/r1/ratings/mine')
+        .flush(null, { status: 503, statusText: 'Service Unavailable' });
+
+      await expect(result).rejects.toMatchObject({ name: 'HttpErrorResponse', status: 503 });
     });
   });
 

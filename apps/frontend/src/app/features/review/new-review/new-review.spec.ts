@@ -185,9 +185,9 @@ describe('NewReview', () => {
     await click('.submit-btn');
 
     expect(rateRestaurant).toHaveBeenCalledWith('r1', {
-      food: 50,
-      service: 50,
-      setting: 50,
+      food: 5,
+      service: 5,
+      setting: 5,
       bonus: false,
     });
     expect(TestBed.inject(Router).url).toBe('/restaurant/r1');
@@ -201,25 +201,52 @@ describe('NewReview', () => {
       harness.fixture,
       'input[type="range"]',
     );
-    await setValue(harness.fixture, food!, '80');
-    await setValue(harness.fixture, service!, '35');
-    await setValue(harness.fixture, decor!, '12');
+    await setValue(harness.fixture, food!, '8');
+    await setValue(harness.fixture, service!, '4');
+    await setValue(harness.fixture, decor!, '2');
     await click('.crush-toggle');
     await click('.submit-btn');
 
     expect(rateRestaurant).toHaveBeenCalledWith('r1', {
-      food: 80,
-      service: 35,
-      setting: 12,
+      food: 8,
+      service: 4,
+      setting: 2,
       bonus: true,
     });
     expect(TestBed.inject(Router).url).toBe('/restaurant/r1');
   });
 
+  it('rates each criterion with one of the 10 whole scores from 1 to 10, starting at 5', async () => {
+    rateRestaurant.mockReturnValue(of(undefined));
+    await openPage();
+
+    const sliders = queryAll<HTMLInputElement>(harness.fixture, 'input[type="range"]');
+    expect(sliders.map((s) => [s.min, s.max, s.step, s.value])).toEqual([
+      ['1', '10', '1', '5'],
+      ['1', '10', '1', '5'],
+      ['1', '10', '1', '5'],
+    ]);
+    expect(queryAll(harness.fixture, '.rating-chip').map(textOf)).toEqual(['Good', 'Good', 'Good']);
+
+    // The browser keeps the value within the bounds of the slider
+    const [food, service, decor] = sliders;
+    await setValue(harness.fixture, food!, '0');
+    await setValue(harness.fixture, service!, '50');
+    await setValue(harness.fixture, decor!, '10');
+    await click('.submit-btn');
+
+    expect(rateRestaurant).toHaveBeenCalledWith('r1', {
+      food: 1,
+      service: 10,
+      setting: 10,
+      bonus: false,
+    });
+  });
+
   it('asks the restaurant page to congratulate the user after their first rating of it', async () => {
     rateRestaurant.mockReturnValue(of(undefined));
     // Only other restaurants rated so far
-    fetchUserRatings.mockReturnValue(of([rating('r2', 70, 60, 50)]));
+    fetchUserRatings.mockReturnValue(of([rating('r2', 7, 6, 5)]));
     await openPage();
 
     await click('.submit-btn');
@@ -233,7 +260,7 @@ describe('NewReview', () => {
 
   it('does not congratulate a user who already rated the restaurant', async () => {
     rateRestaurant.mockReturnValue(of(undefined));
-    fetchUserRatings.mockReturnValue(of([{ ...rating('r1', 70, 60, 50), isActive: false }]));
+    fetchUserRatings.mockReturnValue(of([{ ...rating('r1', 7, 6, 5), isActive: false }]));
     await openPage();
 
     await click('.submit-btn');
@@ -338,10 +365,10 @@ describe('NewReview', () => {
   it("shows the user's past reviews under the sliders, with their score of each criterion", async () => {
     fetchUserRatings.mockReturnValue(
       of([
-        rating('a', 20, 50, 80),
-        rating('b', 52, 75, 21),
+        rating('a', 3, 5, 8),
+        rating('b', 5, 8, 3),
         // A previous rating, replaced by the active one: not shown
-        { ...rating('a', 78, 78, 78), date: '2026-01-01T12:00:00+00:00', isActive: false },
+        { ...rating('a', 8, 8, 8), date: '2026-01-01T12:00:00+00:00', isActive: false },
       ]),
     );
     await openPage();
@@ -357,15 +384,15 @@ describe('NewReview', () => {
         ),
         textOf,
       );
-    // Food: 22 → a, 50 → b; service: 50 → a, 78 → b; decor (the API's setting): 22 → b, 78 → a
+    // Food: 3 → a, 5.5 → b; service: 5.5 → a, 8 → b; decor (the API's setting): 3 → b, 8 → a
     expect(markers(0)).toEqual(['Restaurant a', 'Restaurant b']);
     expect(markers(1)).toEqual(['Restaurant a', 'Restaurant b']);
     expect(markers(2)).toEqual(['Restaurant b', 'Restaurant a']);
   });
 
   it('leaves the restaurant being rated out of the past reviews, only the other ones are shown', async () => {
-    // r1 is the restaurant being rated: alone at 78, it would be shown under every slider
-    fetchUserRatings.mockReturnValue(of([rating('r1', 78, 78, 78), rating('b', 50, 50, 50)]));
+    // r1 is the restaurant being rated: alone at 8, it would be shown under every slider
+    fetchUserRatings.mockReturnValue(of([rating('r1', 8, 8, 8), rating('b', 5, 5, 5)]));
     await openPage();
 
     const names = queryAll(harness.fixture, '.marker:not(.threshold-marker) .marker-name').map(

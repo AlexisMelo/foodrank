@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { routes } from '@/app.routes';
 import { RatingApi } from '@/core/api/rating-api';
 import { TierlistApi } from '@/core/api/tierlist-api';
@@ -13,7 +13,7 @@ import type { UserRating } from '@/core/models/rating.model';
 import type { Tierlist } from '@/core/models/tierlist.model';
 import { REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
 import { CAN_REVIEW, alreadyReviewed } from '@/core/review/daily-review-testing';
-import { NewReviewStore } from '@/core/review/new-review-store';
+import { SearchSheetStore } from '@/core/search/search-sheet-store';
 import { query, queryAll, stubDialogs, textOf } from '@/testing/dom-testing';
 
 /**
@@ -26,9 +26,9 @@ function rating(restaurantId: string, date: string): UserRating {
     restaurantEmoji: '🍕',
     restaurantAddress: '',
     date,
-    food: 90,
-    service: 60,
-    setting: 30,
+    food: 9,
+    service: 6,
+    setting: 3,
     bonus: false,
     isActive: true,
   };
@@ -59,7 +59,7 @@ describe('Home', () => {
   let harness: RouterTestingHarness;
 
   beforeEach(() => {
-    // The new review sheet of the app layout is a native dialog
+    // The search sheet of the app layout is a native dialog
     stubDialogs();
     fetchUserProfile = vi.fn(() =>
       of({
@@ -85,7 +85,7 @@ describe('Home', () => {
         // The rating allowance locks the review buttons
         { provide: RatingApi, useValue: { fetchUserRatings, fetchRatingAllowance } },
         { provide: TierlistApi, useValue: { fetchTierlistsByUserId } },
-        // Asked for by the app layout when it opens, and refreshed by the new review sheet, whose search area hint
+        // Asked for by the app layout when it opens, and refreshed by the search sheet, whose search area hint
         // reads the status and the city
         {
           provide: LocationStore,
@@ -106,6 +106,14 @@ describe('Home', () => {
   async function openHome(): Promise<void> {
     harness = await RouterTestingHarness.create('/');
     await harness.fixture.whenStable();
+  }
+
+  /**
+   * Opens the home page without waiting for it to load: a request left unanswered keeps it loading, so the page
+   * would never be stable.
+   */
+  async function openHomeLoading(): Promise<void> {
+    harness = await RouterTestingHarness.create('/');
   }
 
   /**
@@ -179,13 +187,13 @@ describe('Home', () => {
 
   describe('new review', () => {
     /**
-     * True while the new review sheet is shown.
+     * True while the search sheet is shown.
      */
     function sheetOpen(): boolean {
       return (harness.fixture.nativeElement as HTMLElement).querySelector('dialog')?.open ?? false;
     }
 
-    it('opens the new review sheet from the "+ New" chip of the recent reviews', async () => {
+    it('opens the search sheet from the "+ New" chip of the recent reviews', async () => {
       await openHome();
       expect(sheetOpen()).toBe(false);
       // An action, not a page: a button, not a link
@@ -195,12 +203,12 @@ describe('Home', () => {
       chip.click();
       await harness.fixture.whenStable();
 
-      expect(TestBed.inject(NewReviewStore).isOpen()).toBe(true);
+      expect(TestBed.inject(SearchSheetStore).isOpen()).toBe(true);
       expect(sheetOpen()).toBe(true);
       expect(url()).toBe('/');
     });
 
-    it('opens the new review sheet from the button of the tab bar', async () => {
+    it('opens the search sheet from the button of the tab bar', async () => {
       await openHome();
 
       query(harness.fixture, '.tab-btn-search').click();
@@ -264,11 +272,13 @@ describe('Home', () => {
         'Restaurant r4',
       ]);
       expect(textOf(cards[0]!.querySelector('.visit-date')!)).toBe('Oct 8');
-      expect(Array.from(cards[0]!.querySelectorAll('.criterion-score'), textOf)).toEqual([
-        '90',
-        '60',
-        '30',
+      // The scores under the emojis, and their average in the bubble: a round 6, without decimal
+      expect(Array.from(cards[0]!.querySelectorAll('.score-value'), textOf)).toEqual([
+        '9',
+        '6',
+        '3',
       ]);
+      expect(textOf(cards[0]!.querySelector('.avg-bubble')!)).toBe('6');
     });
 
     it('dims a previous review, replaced by a more recent one of the same restaurant', async () => {
@@ -360,6 +370,34 @@ describe('Home', () => {
       expect(tierlistNames()).toEqual([]);
       expect(queryAll(harness.fixture, '.review-card')).toHaveLength(1);
     });
+
+    it('shows placeholders while the tierlists load, then the tierlists', async () => {
+      const answer = new Subject<Tierlist[]>();
+      fetchTierlistsByUserId.mockReturnValue(answer);
+      await openHomeLoading();
+
+      expect(queryAll(harness.fixture, '.section-title').map(textOf)).toContain('Tierlists');
+      expect(queryAll(harness.fixture, '.tierlist-skeleton')).toHaveLength(5);
+      expect(tierlistNames()).toEqual([]);
+
+      answer.next([tierlist(1, '2026-10-10T10:00:00Z')]);
+      await harness.fixture.whenStable();
+
+      expect(queryAll(harness.fixture, '.tierlist-skeleton')).toHaveLength(0);
+      expect(tierlistNames()).toEqual(['Tierlist 1']);
+    });
+
+    it('hides the placeholders with the section once the user turns out to have no tierlist', async () => {
+      const answer = new Subject<Tierlist[]>();
+      fetchTierlistsByUserId.mockReturnValue(answer);
+      await openHomeLoading();
+
+      answer.next([]);
+      await harness.fixture.whenStable();
+
+      expect(queryAll(harness.fixture, '.tierlist-skeleton')).toHaveLength(0);
+      expect(queryAll(harness.fixture, '.section-title').map(textOf)).not.toContain('Tierlists');
+    });
   });
 
   describe('favorites', () => {
@@ -385,7 +423,7 @@ describe('Home', () => {
 
     it("shows the logged-in user's 3 best rated restaurants, best first", async () => {
       fetchUserRatings.mockReturnValue(
-        of([scored('ok', 60), scored('top', 95), scored('low', 20), scored('good', 80)]),
+        of([scored('ok', 6), scored('top', 10), scored('low', 2), scored('good', 8)]),
       );
       await openHome();
 
@@ -396,7 +434,7 @@ describe('Home', () => {
     });
 
     it('shows the address of each favorite under its name', async () => {
-      fetchUserRatings.mockReturnValue(of([scored('top', 95), scored('good', 80)]));
+      fetchUserRatings.mockReturnValue(of([scored('top', 10), scored('good', 8)]));
       await openHome();
 
       expect(queryAll(harness.fixture, '.favorites-list .item-sub').map(textOf)).toEqual([
@@ -408,9 +446,9 @@ describe('Home', () => {
     it('ranks a restaurant by its active rating, its previous ratings left out', async () => {
       fetchUserRatings.mockReturnValue(
         of([
-          scored('changed', 30),
-          { ...scored('changed', 100), date: '2026-01-01T12:00:00+00:00', isActive: false },
-          scored('steady', 70),
+          scored('changed', 3),
+          { ...scored('changed', 10), date: '2026-01-01T12:00:00+00:00', isActive: false },
+          scored('steady', 7),
         ]),
       );
       await openHome();
@@ -425,7 +463,7 @@ describe('Home', () => {
     });
 
     it('shares a single request of my ratings with the recent reviews', async () => {
-      fetchUserRatings.mockReturnValue(of([scored('top', 95), scored('ok', 60)]));
+      fetchUserRatings.mockReturnValue(of([scored('top', 10), scored('ok', 6)]));
       await openHome();
 
       expect(fetchUserRatings.mock.calls).toEqual([['me']]);
@@ -437,6 +475,34 @@ describe('Home', () => {
       fetchUserRatings.mockReturnValue(throwError(() => new Error('503')));
       await openHome();
 
+      expect(textOf(harness.fixture.nativeElement)).not.toContain('Favorites');
+    });
+
+    it('shows placeholders while my ratings load, then the favorites', async () => {
+      const answer = new Subject<UserRating[]>();
+      fetchUserRatings.mockReturnValue(answer);
+      await openHomeLoading();
+
+      expect(queryAll(harness.fixture, '.section-title').map(textOf)).toContain('Favorites');
+      expect(queryAll(harness.fixture, '.favorite-skeleton')).toHaveLength(3);
+      expect(favorites()).toEqual([]);
+
+      answer.next([scored('top', 10), scored('ok', 6)]);
+      await harness.fixture.whenStable();
+
+      expect(queryAll(harness.fixture, '.favorite-skeleton')).toHaveLength(0);
+      expect(favorites()).toEqual(['Restaurant top', 'Restaurant ok']);
+    });
+
+    it('hides the placeholders with the section when my ratings fail to load, instead of loading forever', async () => {
+      const answer = new Subject<UserRating[]>();
+      fetchUserRatings.mockReturnValue(answer);
+      await openHomeLoading();
+
+      answer.error(new Error('503'));
+      await harness.fixture.whenStable();
+
+      expect(queryAll(harness.fixture, '.favorite-skeleton')).toHaveLength(0);
       expect(textOf(harness.fixture.nativeElement)).not.toContain('Favorites');
     });
   });

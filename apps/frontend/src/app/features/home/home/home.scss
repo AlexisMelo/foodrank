@@ -65,3 +65,22 @@
   flex-direction: column;
   gap: 8px;
 }
+
+// Same size as a TierlistChip: the cover, then the room of the name under it (gap 8 + line 14)
+.tierlist-skeleton {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 22px;
+  border-radius: 14px;
+  background: #1a1a1a;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+// Same height as a RankedRestaurantItem: avatar 46 + padding 2×12
+.favorite-skeleton {
+  height: 70px;
+  border-radius: 16px;
+  background: #1a1a1a;
+  animation: pulse 1.2s ease-in-out infinite;
+}

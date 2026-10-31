@@ -27,6 +27,11 @@ public class RestaurantsControllerTests : IDisposable
     private const string OtherId = "22222222-2222-2222-2222-222222222222";
 
     /// <summary>
+    /// Id of a user the logged-in user does not follow in the recommendation tests.
+    /// </summary>
+    private const string StrangerId = "33333333-3333-3333-3333-333333333333";
+
+    /// <summary>
     /// In-memory API, recreated for each test so restaurants do not leak between tests.
     /// </summary>
     private readonly ApiFactory _factory = new();
@@ -144,6 +149,36 @@ public class RestaurantsControllerTests : IDisposable
     }
 
     /// <summary>
+    /// Each suggestion carries the global score of the restaurant and the users followed who rated it, with their name
+    /// and picture; a restaurant nobody rated has a null score and no rater.
+    /// </summary>
+    [Fact]
+    public async Task GetSuggestions_ReturnsGlobalScoreAndFollowedRaters()
+    {
+        AddRestaurant("near", 49.185, -0.37);
+        AddRestaurant("unrated", 49.19, -0.37);
+        _factory.RatingService.Profiles[OtherId] = new Profile { Id = OtherId, Username = "camille", DisplayName = "Camille", AvatarUrl = "https://img.test/camille.png" };
+        _factory.FollowService.Follows.Add(new Follow { FollowerId = MeId, FollowedId = OtherId, CreatedAt = DateTime.UtcNow });
+        AddRating(OtherId, "near", isActive: true, score: 8);
+
+        HttpResponseMessage response = await GetAsync("/api/restaurants/suggestions?lat=49.18&lon=-0.37");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using JsonDocument body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        JsonElement near = body.RootElement[0];
+        Assert.Equal(8, near.GetProperty("globalScore").GetDouble());
+        JsonElement rater = Assert.Single(near.GetProperty("followedRaters").EnumerateArray().ToList());
+        Assert.Equal(OtherId, rater.GetProperty("id").GetString());
+        Assert.Equal("camille", rater.GetProperty("username").GetString());
+        Assert.Equal("Camille", rater.GetProperty("displayName").GetString());
+        Assert.Equal("https://img.test/camille.png", rater.GetProperty("avatarUrl").GetString());
+        JsonElement unrated = body.RootElement[1];
+        Assert.Equal("unrated", unrated.GetProperty("restaurant").GetProperty("id").GetString());
+        Assert.Equal(JsonValueKind.Null, unrated.GetProperty("globalScore").ValueKind);
+        Assert.Empty(unrated.GetProperty("followedRaters").EnumerateArray());
+    }
+
+    /// <summary>
     /// At most <c>limit</c> suggestions are returned, 5 by default.
     /// </summary>
     [Theory]
@@ -173,6 +208,132 @@ public class RestaurantsControllerTests : IDisposable
     }
 
     /// <summary>
+    /// The logged-in user follows <see cref="OtherId"/> (Camille), not <see cref="StrangerId"/>.
+    /// </summary>
+    private void FollowCamille()
+    {
+        _factory.RatingService.Profiles[OtherId] = new Profile { Id = OtherId, Username = "camille", DisplayName = "Camille" };
+        _factory.RatingService.Profiles[StrangerId] = new Profile { Id = StrangerId, Username = "stranger" };
+        _factory.FollowService.Follows.Add(new Follow { FollowerId = MeId, FollowedId = OtherId, CreatedAt = DateTime.UtcNow });
+    }
+
+    /// <summary>
+    /// The recommendations are personal: a visitor who is not logged in gets a 401.
+    /// </summary>
+    [Fact]
+    public async Task GetRecommendations_NotLoggedIn_Returns401()
+    {
+        HttpResponseMessage response = await GetAsync("/api/restaurants/recommendations", token: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    /// <summary>
+    /// The restaurants a user followed rated more than 7 on average, which I never rated, within 10 km of my position,
+    /// come nearest first with their distance and the users followed who rated them. An average of 7 or less, a rating by
+    /// a user not followed, a restaurant I rated (even long ago) or one farther than 10 km is left out.
+    /// </summary>
+    [Fact]
+    public async Task GetRecommendations_WithPosition_ReturnsWhatFollowedUsersRecommendNearby()
+    {
+        FollowCamille();
+        AddRestaurant("mid", 49.25, -0.37);
+        AddRestaurant("near", 49.185, -0.37);
+        AddRestaurant("far", 49.28, -0.37);
+        AddRestaurant("only-seven", 49.19, -0.37);
+        AddRestaurant("stranger-pick", 49.19, -0.37);
+        AddRestaurant("tried", 49.19, -0.37);
+        AddRestaurant("unrated", 49.19, -0.37);
+        AddRating(OtherId, "mid", isActive: true, score: 8);
+        AddRating(OtherId, "near", isActive: true, score: 8);
+        AddRating(OtherId, "far", isActive: true, score: 9);
+        AddRating(OtherId, "only-seven", isActive: true, score: 7);
+        AddRating(StrangerId, "stranger-pick", isActive: true, score: 10);
+        AddRating(OtherId, "tried", isActive: true, score: 9);
+        AddRating(MeId, "tried", isActive: false);
+
+        HttpResponseMessage response = await GetAsync("/api/restaurants/recommendations?lat=49.18&lon=-0.37");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        List<(string Id, double? DistanceKm)> recommendations = await ReadSuggestionsAsync(response);
+        Assert.Equal(["near", "mid"], recommendations.Select(r => r.Id));
+        Assert.Equal(0.556, recommendations[0].DistanceKm!.Value, precision: 3);
+        using JsonDocument body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        JsonElement near = body.RootElement[0];
+        Assert.Equal(8, near.GetProperty("globalScore").GetDouble());
+        Assert.Equal("camille", Assert.Single(near.GetProperty("followedRaters").EnumerateArray().ToList()).GetProperty("username").GetString());
+    }
+
+    /// <summary>
+    /// Without a position, the 10 km are measured from the default city (Paris in the tests), and no distance is
+    /// returned.
+    /// </summary>
+    [Fact]
+    public async Task GetRecommendations_WithoutPosition_AroundTheDefaultCityWithoutDistance()
+    {
+        FollowCamille();
+        AddRestaurant("caen", 49.18, -0.37);
+        AddRestaurant("paris", 48.85, 2.35);
+        AddRating(OtherId, "caen", isActive: true, score: 9);
+        AddRating(OtherId, "paris", isActive: true, score: 9);
+
+        HttpResponseMessage response = await GetAsync("/api/restaurants/recommendations");
+
+        List<(string Id, double? DistanceKm)> recommendations = await ReadSuggestionsAsync(response);
+        Assert.Equal(["paris"], recommendations.Select(r => r.Id));
+        Assert.Null(recommendations[0].DistanceKm);
+    }
+
+    /// <summary>
+    /// A user who follows nobody gets no recommendation, even with well rated restaurants around.
+    /// </summary>
+    [Fact]
+    public async Task GetRecommendations_FollowsNobody_ReturnsEmpty()
+    {
+        AddRestaurant("near", 49.185, -0.37);
+        AddRating(OtherId, "near", isActive: true, score: 9);
+
+        HttpResponseMessage response = await GetAsync("/api/restaurants/recommendations?lat=49.18&lon=-0.37");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Empty(await ReadSuggestionsAsync(response));
+    }
+
+    /// <summary>
+    /// At most <c>limit</c> recommendations are returned, 5 by default, the nearest ones.
+    /// </summary>
+    [Theory]
+    [InlineData("", 5)]
+    [InlineData("&limit=2", 2)]
+    public async Task GetRecommendations_ReturnsAtMostLimit(string limitParam, int expectedCount)
+    {
+        FollowCamille();
+        for (int i = 0; i < 6; i++)
+        {
+            AddRestaurant($"r{i}", 49.18 + i * 0.01, -0.37);
+            AddRating(OtherId, $"r{i}", isActive: true, score: 9);
+        }
+
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/recommendations?lat=49.18&lon=-0.37{limitParam}");
+
+        List<(string Id, double? DistanceKm)> recommendations = await ReadSuggestionsAsync(response);
+        Assert.Equal(Enumerable.Range(0, expectedCount).Select(i => $"r{i}"), recommendations.Select(r => r.Id));
+    }
+
+    /// <summary>
+    /// A limit outside 1-50 is rejected with a 400.
+    /// </summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(51)]
+    public async Task GetRecommendations_LimitOutOfRange_Returns400(int limit)
+    {
+        HttpResponseMessage response = await GetAsync($"/api/restaurants/recommendations?limit={limit}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    /// <summary>
     /// Sends a GET to <paramref name="url"/>, with the auth cookie when <paramref name="token"/> is given.
     /// </summary>
     private Task<HttpResponseMessage> GetAsync(string url, string? token = Token)
@@ -190,14 +351,18 @@ public class RestaurantsControllerTests : IDisposable
         => _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = id, Name = id, Lat = lat, Lng = lng });
 
     /// <summary>
-    /// Stores a rating of <paramref name="restaurantId"/> by <paramref name="userId"/>, a day apart from the previous one.
+    /// Stores a rating of <paramref name="restaurantId"/> by <paramref name="userId"/>, a day apart from the previous one,
+    /// with the same <paramref name="score"/> for the three criteria.
     /// </summary>
-    private void AddRating(string userId, string restaurantId, bool isActive)
+    private void AddRating(string userId, string restaurantId, bool isActive, int score = Rating.MinScore)
         => _factory.RatingService.Ratings.Add(new Rating
         {
             RestaurantId = restaurantId,
             UserId = userId,
             Date = DateTimeOffset.UtcNow.AddDays(-_factory.RatingService.Ratings.Count - 1),
+            FoodRating = score,
+            ServiceRating = score,
+            SettingRating = score,
             IsActive = isActive
         });
 

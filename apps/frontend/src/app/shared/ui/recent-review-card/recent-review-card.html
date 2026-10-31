@@ -7,26 +7,12 @@
   <div class="emoji-wrap">
     <div class="emoji-circle">{{ emoji() }}</div>
     <div class="avg-bubble" [style.background-color]="scoreColor(average())">
-      {{ average() }}
+      {{ average() | score }}
     </div>
   </div>
   <span class="restaurant-name">{{ name() }}</span>
   <span class="visit-date">{{ displayedDate() }}</span>
-  <div class="criteria">
-    @for (criterion of criteria(); track criterion.label) {
-      <div class="criterion">
-        <span class="criterion-label">{{ criterion.label }}</span>
-        <div class="criterion-bar-wrap">
-          <div
-            class="criterion-bar"
-            [style.width.%]="criterion.score"
-            [style.background-color]="scoreColor(criterion.score)"
-          ></div>
-        </div>
-        <span class="criterion-score" [style.color]="scoreColor(criterion.score)">{{
-          criterion.score
-        }}</span>
-      </div>
-    }
+  <div class="scores">
+    <app-rating-scores [food]="food()" [service]="service()" [decor]="decor()" />
   </div>
 </a>

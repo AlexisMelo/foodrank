@@ -73,15 +73,15 @@ public class UsersControllerTests : IDisposable
     /// Stores a rating of <paramref name="restaurantId"/> by <paramref name="userId"/> at <paramref name="date"/> (UTC),
     /// active unless <paramref name="isActive"/> is false.
     /// </summary>
-    private void AddRating(string userId, string restaurantId, DateTime date, float food = 50, bool isActive = true)
+    private void AddRating(string userId, string restaurantId, DateTime date, int food = 5, bool isActive = true)
         => _factory.RatingService.Ratings.Add(new Rating
         {
             RestaurantId = restaurantId,
             UserId = userId,
             Date = new DateTimeOffset(date, TimeSpan.Zero),
             FoodRating = food,
-            ServiceRating = 60,
-            SettingRating = 70,
+            ServiceRating = 6,
+            SettingRating = 7,
             IsActive = isActive
         });
 
@@ -464,8 +464,8 @@ public class UsersControllerTests : IDisposable
     [Fact]
     public async Task GetMyRatings_LoggedIn_ReturnsOwnRatingsWithRestaurant()
     {
-        AddRating(MeId, "r1", new DateTime(2026, 3, 1), food: 90);
-        AddRating(MeId, "r2", new DateTime(2026, 3, 5), food: 40);
+        AddRating(MeId, "r1", new DateTime(2026, 3, 1), food: 9);
+        AddRating(MeId, "r2", new DateTime(2026, 3, 5), food: 4);
         AddRating(OtherId, "r1", new DateTime(2026, 3, 9));
 
         HttpResponseMessage response = await GetAsync("/api/users/me/ratings");
@@ -478,9 +478,9 @@ public class UsersControllerTests : IDisposable
         Assert.Equal("Pizza Roma", pizza.RestaurantName);
         Assert.Equal("🍕", pizza.RestaurantEmoji);
         Assert.Equal("1 rue de Caen", pizza.RestaurantAddress);
-        Assert.Equal(90, pizza.Food);
-        Assert.Equal(60, pizza.Service);
-        Assert.Equal(70, pizza.Setting);
+        Assert.Equal(9, pizza.Food);
+        Assert.Equal(6, pizza.Service);
+        Assert.Equal(7, pizza.Setting);
     }
 
     /// <summary>
@@ -621,7 +621,7 @@ public class UsersControllerTests : IDisposable
         FollowUser(ThirdId);
         AddRating(OtherId, "r1", new DateTime(2026, 3, 1), isActive: false);
         AddRating(ThirdId, "r1", new DateTime(2026, 3, 2));
-        AddRating(OtherId, "r1", new DateTime(2026, 3, 3), food: 90);
+        AddRating(OtherId, "r1", new DateTime(2026, 3, 3), food: 9);
         AddRating(MeId, "r2", new DateTime(2026, 3, 4));
         _factory.FollowService.Follows.Add(new Follow { FollowerId = ThirdId, FollowedId = MeId });
 
@@ -629,7 +629,7 @@ public class UsersControllerTests : IDisposable
 
         Assert.Equal([OtherId, ThirdId, OtherId], ratings.Select(r => r.UserId));
         Assert.Equal(
-            new FollowedRatingResponse("r1", "Pizza Roma", "🍕", new DateTimeOffset(2026, 3, 3, 0, 0, 0, TimeSpan.Zero), 90, 60, 70, false, true, OtherId, "camille", "https://img.test/camille.png"),
+            new FollowedRatingResponse("r1", "Pizza Roma", "🍕", new DateTimeOffset(2026, 3, 3, 0, 0, 0, TimeSpan.Zero), 9, 6, 7, false, true, OtherId, "camille", "https://img.test/camille.png"),
             ratings[0]);
         Assert.Equal("hugo", ratings[1].UserName);
         Assert.False(ratings[2].IsActive);

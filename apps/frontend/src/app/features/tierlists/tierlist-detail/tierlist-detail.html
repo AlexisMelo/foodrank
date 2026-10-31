@@ -75,9 +75,7 @@
             [decor]="r.setting"
             [overall]="r.overall"
             [myScore]="r.myScore"
-            [rateLink]="
-              !isOwner() && r.myScore === undefined ? '/review/' + r.restaurantId : undefined
-            "
+            [showUnrated]="!isOwner()"
             [actions]="row.actions"
           />
         }

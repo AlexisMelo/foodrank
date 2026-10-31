@@ -27,7 +27,8 @@
       "Bash(python -m json.tool)",
       "Bash(curl -s -A \"FoodRank/1.0 \\(dev test\\)\" \"https://nominatim.openstreetmap.org/lookup?osm_ids=N5287924742&format=jsonv2&extratags=1\")",
       "Bash(grep -E \"^\\(lines-between-class-members|padding-line-between-statements|require-jsdoc|valid-jsdoc\\)\\\\.js$\")",
-      "Bash(npx oxlint *)"
+      "Bash(npx oxlint *)",
+      "Bash(npm run *)"
     ]
   }
 }

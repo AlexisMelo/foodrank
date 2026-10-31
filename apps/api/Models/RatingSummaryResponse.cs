@@ -5,10 +5,10 @@ namespace api.Models;
 /// The averages are null when the restaurant has no active rating.
 /// </summary>
 /// <param name="Count">Number of active ratings averaged.</param>
-/// <param name="Food">Average food rating, from 0 to 100.</param>
-/// <param name="Service">Average service rating, from 0 to 100.</param>
-/// <param name="Setting">Average setting (decor) rating, from 0 to 100.</param>
-/// <param name="Global">Average of every criterion of every active rating, from 0 to 100 (the "instant crush" bonus is
+/// <param name="Food">Average food rating, from 1 to 10.</param>
+/// <param name="Service">Average service rating, from 1 to 10.</param>
+/// <param name="Setting">Average setting (decor) rating, from 1 to 10.</param>
+/// <param name="Global">Average of every criterion of every active rating, from 1 to 10 (the "instant crush" bonus is
 /// not included).</param>
 public record RatingSummaryResponse(int Count, float? Food, float? Service, float? Setting, float? Global)
 {
@@ -23,9 +23,9 @@ public record RatingSummaryResponse(int Count, float? Food, float? Service, floa
         if (active.Count == 0)
             return new RatingSummaryResponse(0, null, null, null, null);
 
-        float food = active.Average(r => r.FoodRating);
-        float service = active.Average(r => r.ServiceRating);
-        float setting = active.Average(r => r.SettingRating);
+        float food = (float)active.Average(r => r.FoodRating);
+        float service = (float)active.Average(r => r.ServiceRating);
+        float setting = (float)active.Average(r => r.SettingRating);
         // Each rating has the three criteria: the average of all criteria is the average of the three averages
         return new RatingSummaryResponse(active.Count, food, service, setting, (food + service + setting) / 3);
     }

@@ -18,7 +18,7 @@ export interface ReviewMarker {
   id: string;
 
   /**
-   * Score the review gave to this criterion, 0 to 100
+   * Score the review gave to this criterion, whole number from 1 to 10
    */
   value: number;
 
@@ -34,7 +34,7 @@ export interface ReviewMarker {
 }
 
 /**
- * Card rating one criterion of the rating page: its title and question, a chip naming the score, and a 0 to 100
+ * Card rating one criterion of the rating page: its title and question, a chip naming the score, and a 1 to 10
  * slider with the scale words and a few past reviews of the user under it.
  */
 @Component({
@@ -46,7 +46,7 @@ export interface ReviewMarker {
 })
 export class CriterionSlider {
   /**
-   * Score of the criterion in the rating form, 0 to 100
+   * Score of the criterion in the rating form, whole number from 1 to 10
    */
   readonly field = input.required<FieldTree<number>>();
 
@@ -71,7 +71,7 @@ export class CriterionSlider {
   readonly markers = input<ReviewMarker[]>([]);
 
   /**
-   * Words of the scale marked under the slider, "Awful" (at 0) left out
+   * Words of the scale marked under the slider, "Awful" (at 1) left out
    */
   protected readonly thresholds = THRESHOLD_MARKERS.slice(1);
 

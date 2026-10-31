@@ -10,8 +10,8 @@ import { type RankedRestaurant, overallByRestaurant, rankRestaurants } from '@/c
  */
 export interface ProfileRankedRestaurant extends RankedRestaurant {
   /**
-   * Score ("overall", 0 to 100) of the logged-in user's active rating of the restaurant; undefined on their own
-   * profile, and when they never rated it
+   * Score ("overall", 1 to 10, not rounded) of the logged-in user's active rating of the restaurant; undefined on
+   * their own profile, and when they never rated it
    */
   myScore: number | undefined;
 }

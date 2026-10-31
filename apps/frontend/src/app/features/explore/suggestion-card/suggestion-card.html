@@ -1,0 +1,44 @@
+@let restaurant = suggestion().restaurant;
+@let score = suggestion().globalScore;
+<a class="suggestion-card" [routerLink]="['/restaurant', restaurant.id]">
+  <div class="emoji-wrap">
+    <div class="emoji-circle" aria-hidden="true">{{ restaurant.emoji }}</div>
+    @if (score !== null) {
+      <div
+        class="score-bubble"
+        [style.background-color]="globalScoreColor()"
+        [title]="'Global rating: ' + (score | score) + '/10'"
+      >
+        {{ score | score }}
+      </div>
+    } @else {
+      <div class="score-bubble score-bubble-unrated" title="Not rated yet">?</div>
+    }
+  </div>
+  <span class="restaurant-name">{{ restaurant.name }}</span>
+  <!-- In the place of the date of a review card -->
+  @if (restaurant.address) {
+    <span class="card-address" [title]="restaurant.address">{{ restaurant.address }}</span>
+  }
+  <!-- In the place of the scores of a review card -->
+  <div class="card-place">
+    @if (distance(); as distance) {
+      <span class="card-distance">📍 {{ distance }}</span>
+    }
+  </div>
+  @if (shownRaters().length) {
+    <!-- Inside the card link, not a link of its own: it tells who ate there, the card opens the restaurant -->
+    <span class="raters-chip" role="img" [attr.aria-label]="ratersLabel()" [title]="ratersLabel()">
+      @for (rater of shownRaters(); track rater.id) {
+        <app-user-avatar
+          class="rater-avatar"
+          [name]="rater | displayedName"
+          [avatarUrl]="rater.avatarUrl"
+        />
+      }
+      @if (hiddenRaterCount()) {
+        <span class="raters-more">+{{ hiddenRaterCount() }}</span>
+      }
+    </span>
+  }
+</a>

@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { NewReviewStore } from '@/core/review/new-review-store';
+import { SearchSheetStore } from '@/core/search/search-sheet-store';
 
 /**
  * Navigation bar fixed at the bottom of the private pages: Home, Explore, the Search button (magnifying glass) opening
@@ -14,9 +14,9 @@ import { NewReviewStore } from '@/core/review/new-review-store';
 })
 export class BottomTabBar {
   /**
-   * Opens the search sheet (NewReviewSheet) from the Search button
+   * Opens the search sheet (SearchSheet) from the Search button
    */
-  protected readonly newReview = inject(NewReviewStore);
+  protected readonly searchSheet = inject(SearchSheetStore);
 
   /**
    * A tab is active on its exact path only, whatever the query (e.g. not on /tierlists/42)

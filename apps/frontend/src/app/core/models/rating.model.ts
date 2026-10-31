@@ -4,17 +4,17 @@
  */
 export interface RatingInput {
   /**
-   * 0 to 100
+   * Whole number from 1 to 10
    */
   food: number;
 
   /**
-   * 0 to 100
+   * Whole number from 1 to 10
    */
   service: number;
 
   /**
-   * Setting (decor), 0 to 100
+   * Setting (decor), whole number from 1 to 10
    */
   setting: number;
 
@@ -45,17 +45,17 @@ export interface RestaurantRating {
   date: string;
 
   /**
-   * 0 to 100
+   * Whole number from 1 to 10
    */
   food: number;
 
   /**
-   * 0 to 100
+   * Whole number from 1 to 10
    */
   service: number;
 
   /**
-   * Setting (decor), 0 to 100
+   * Setting (decor), whole number from 1 to 10
    */
   setting: number;
 
@@ -92,22 +92,22 @@ export interface RatingSummary {
   count: number;
 
   /**
-   * 0 to 100
+   * 1 to 10, decimals allowed (an average)
    */
   food: number | null;
 
   /**
-   * 0 to 100
+   * 1 to 10, decimals allowed (an average)
    */
   service: number | null;
 
   /**
-   * Setting (decor), 0 to 100
+   * Setting (decor), 1 to 10, decimals allowed (an average)
    */
   setting: number | null;
 
   /**
-   * Average of every criterion of every active rating, 0 to 100 ("instant crush" bonus not included)
+   * Average of every criterion of every active rating, 1 to 10, decimals allowed ("instant crush" bonus not included)
    */
   global: number | null;
 }
@@ -155,17 +155,17 @@ export interface FollowedRating {
   date: string;
 
   /**
-   * 0 to 100
+   * Whole number from 1 to 10
    */
   food: number;
 
   /**
-   * 0 to 100
+   * Whole number from 1 to 10
    */
   service: number;
 
   /**
-   * Setting (decor), 0 to 100
+   * Setting (decor), whole number from 1 to 10
    */
   setting: number;
 
@@ -226,17 +226,17 @@ export interface UserRating {
   date: string;
 
   /**
-   * 0 to 100
+   * Whole number from 1 to 10
    */
   food: number;
 
   /**
-   * 0 to 100
+   * Whole number from 1 to 10
    */
   service: number;
 
   /**
-   * Setting (decor), 0 to 100
+   * Setting (decor), whole number from 1 to 10
    */
   setting: number;
 

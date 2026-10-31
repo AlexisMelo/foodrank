@@ -1,0 +1,106 @@
+@use 'chip';
+@use 'restaurant-card';
+
+// The inner link is the item of the parent row: the host adds no box of its own
+:host {
+  display: contents;
+}
+
+// Positions the chip of the followed raters on its bottom border
+.suggestion-card {
+  @include restaurant-card.box;
+  position: relative;
+}
+
+.emoji-wrap {
+  @include restaurant-card.emoji-wrap;
+}
+
+.emoji-circle {
+  @include restaurant-card.emoji-circle;
+}
+
+.score-bubble {
+  @include restaurant-card.score-bubble;
+}
+// Nobody rated the restaurant: a "?" in a neutral bubble, no score color
+.score-bubble-unrated {
+  background: #3a3a3a;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.restaurant-name {
+  @include restaurant-card.name;
+}
+
+// In the place of the date of a review card: wraps on a second line, a longer address is cut at its end (shown whole on
+// hover)
+.card-address {
+  flex-shrink: 0;
+  width: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 14px;
+  color: rgba(255, 255, 255, 0.35);
+  text-align: center;
+  overflow-wrap: anywhere;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+// The place of the scores of a review card, at the bottom of the card, holding the distance; empty when the position of
+// the user is unknown. 28px high, so an address on 2 lines fits in the card: padding 2×16 + emoji 60 + name 17 +
+// address 28 + gaps 3×10 + 28 = 195
+.card-place {
+  margin-top: auto;
+  height: 28px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.card-distance {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+}
+
+// Centered on the bottom border of the card, half inside it, half below, as the author chip of the community reviews:
+// the parent row leaves room for the lower half
+.raters-chip {
+  @include chip.size;
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, 50%);
+  padding: 0 3px;
+  background: #242424;
+  border-color: #0d0d0d;
+  color: #ffffff;
+}
+
+.rater-avatar {
+  width: 20px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 10px;
+}
+
+// The avatars overlap, each one ringed with the color of the chip
+.rater-avatar + .rater-avatar {
+  margin-left: -6px;
+  box-shadow: 0 0 0 2px #242424;
+}
+
+.raters-more {
+  padding: 0 5px 0 4px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+}

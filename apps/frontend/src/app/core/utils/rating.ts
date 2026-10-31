@@ -1,36 +1,61 @@
 /**
- * The three criteria of a rating, each from 0 to 100.
+ * Lowest score of a criterion, same as the API (Rating.MinScore)
+ */
+export const MIN_SCORE = 1;
+
+/**
+ * Highest score of a criterion, same as the API (Rating.MaxScore)
+ */
+export const MAX_SCORE = 10;
+
+/**
+ * The three criteria of a rating, each a whole number from 1 to 10.
  */
 interface RatingCriteria {
   /**
-   * 0 to 100
+   * 1 to 10
    */
   food: number;
 
   /**
-   * 0 to 100
+   * 1 to 10
    */
   service: number;
 
   /**
-   * Setting (decor), 0 to 100
+   * Setting (decor), 1 to 10
    */
   setting: number;
 }
 
 /**
- * Average of the three criteria, rounded to an integer (the "instant crush" bonus is not included)
+ * A computed score (an average) rounded to one decimal, as it is displayed, e.g. 7.3
  */
-export function ratingAverage({ food, service, setting }: RatingCriteria): number {
-  return Math.round((food + service + setting) / 3);
+export function roundScore(score: number): number {
+  return Math.round(score * 10) / 10;
 }
 
 /**
- * Color of a 0-100 score: green when great, yellow when good, red otherwise
+ * A computed score (an average) as displayed: rounded to one decimal, written only when it is not 0, e.g. "7.3", "8",
+ * "10"
+ */
+export function formatScore(score: number): string {
+  return String(roundScore(score));
+}
+
+/**
+ * Average of the three criteria, rounded to one decimal (the "instant crush" bonus is not included)
+ */
+export function ratingAverage({ food, service, setting }: RatingCriteria): number {
+  return roundScore((food + service + setting) / 3);
+}
+
+/**
+ * Color of a 1-10 score: green when great (from 8.5), yellow when good (from 6.5), red otherwise
  */
 export function scoreColor(score: number): string {
-  if (score >= 85) return '#90be6d';
-  if (score >= 65) return '#f9c74f';
+  if (score >= 8.5) return '#90be6d';
+  if (score >= 6.5) return '#f9c74f';
   return '#ff6b6b';
 }
 

@@ -190,6 +190,7 @@ describe('LocationStore', () => {
       await answerCity(defaultCityUrl, 'Lyon');
 
       expect(locationStore.city()).toBe('Lyon');
+      expect(locationStore.cityIsDefault()).toBe(true);
     });
 
     it("is the user's city once located", async () => {
@@ -200,6 +201,18 @@ describe('LocationStore', () => {
       await answerCity(caenUrl, 'Caen');
 
       expect(locationStore.city()).toBe('Caen');
+      expect(locationStore.cityIsDefault()).toBe(false);
+    });
+
+    it('is still told to be the default city once located, until the city of the position is known', async () => {
+      const locationStore = stubGeolocation((success) => success(caen));
+      await answerCity(defaultCityUrl, 'Lyon');
+
+      locationStore.requestLocation();
+
+      expect(locationStore.status()).toBe('granted');
+      expect(locationStore.city()).toBe('Lyon');
+      expect(locationStore.cityIsDefault()).toBe(true);
     });
 
     it('keeps the previous city until the one of the new position is known', async () => {
@@ -248,6 +261,7 @@ describe('LocationStore', () => {
       await answerCity(defaultCityUrl, 'Lyon');
 
       expect(locationStore.city()).toBe('Lyon');
+      expect(locationStore.cityIsDefault()).toBe(true);
     });
 
     it('keeps the previous city when the API fails', async () => {
@@ -259,6 +273,7 @@ describe('LocationStore', () => {
       await flushPromises();
 
       expect(locationStore.city()).toBe('Caen');
+      expect(locationStore.cityIsDefault()).toBe(false);
     });
 
     it('keeps the previous city when the API finds none at the position', async () => {

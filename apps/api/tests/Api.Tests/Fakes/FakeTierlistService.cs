@@ -109,6 +109,17 @@ public class FakeTierlistService(FakeRestaurantService restaurantService, FakeRa
         return Task.FromResult(Result<TierlistResponse>.Success(WithRestaurants(tierlist)));
     }
 
+    /// <inheritdoc />
+    public Task RemoveRestaurantFromAllAsync(string userId, string restaurantId, CancellationToken cancellationToken)
+    {
+        foreach (Tierlist tierlist in Tierlists.Where(t => t.IsOwnedBy(userId)))
+        {
+            if (Restaurants.RemoveAll(r => r.TierlistId == tierlist.Id && r.RestaurantId == restaurantId) > 0)
+                tierlist.UpdatedAt = DateTime.UtcNow;
+        }
+        return Task.CompletedTask;
+    }
+
     /// <summary>
     /// Maps a tierlist with its restaurants from <see cref="Restaurants"/>.
     /// </summary>

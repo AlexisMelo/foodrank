@@ -26,8 +26,9 @@ public class RestaurantsController(IRestaurantService restaurantService) : Contr
         => Ok(await restaurantService.GetAllAsync(cancellationToken));
 
     /// <summary>
-    /// Returns the restaurants the logged-in user has not rated yet, nearest first, with their distance. Without a
-    /// valid position, they are sorted from the default city and returned without distance.
+    /// Returns the restaurants the logged-in user has not rated yet, nearest first, with their distance, their global
+    /// score and the users the logged-in user follows who rated them. Without a valid position, they are sorted from the
+    /// default city and returned without distance.
     /// </summary>
     /// <param name="lat">Latitude of the user in degrees; omitted when unknown.</param>
     /// <param name="lon">Longitude of the user in degrees; omitted when unknown.</param>
@@ -37,6 +38,22 @@ public class RestaurantsController(IRestaurantService restaurantService) : Contr
     [HttpGet("suggestions")]
     public async Task<ActionResult<IReadOnlyList<RestaurantSuggestionResponse>>> GetSuggestions([FromQuery] double? lat, [FromQuery] double? lon, [FromQuery, Range(1, 50)] int limit = 5, CancellationToken cancellationToken = default)
         => Ok(await restaurantService.GetSuggestionsAsync(User.GetUserId(), lat, lon, limit, cancellationToken));
+
+    /// <summary>
+    /// Returns the restaurants the users the logged-in user follows recommend (an active rating of at least 5 on average
+    /// by one of them), which the logged-in user never rated, at most 10 km away, nearest first, with their distance,
+    /// their global score and the users followed who rated them. Without a valid position, the 10 km are measured from
+    /// the default city and no distance is returned.
+    /// </summary>
+    /// <param name="lat">Latitude of the user in degrees; omitted when unknown.</param>
+    /// <param name="lon">Longitude of the user in degrees; omitted when unknown.</param>
+    /// <param name="limit">Maximum number of recommendations, from 1 to 50 (5 by default).</param>
+    /// <param name="cancellationToken">Cancels the request when the client disconnects.</param>
+    /// <returns>200 with the recommendations (empty when the user follows nobody or nothing matches), 400 when the limit
+    /// is outside 1-50, 401 when not logged in.</returns>
+    [HttpGet("recommendations")]
+    public async Task<ActionResult<IReadOnlyList<RestaurantSuggestionResponse>>> GetRecommendations([FromQuery] double? lat, [FromQuery] double? lon, [FromQuery, Range(1, 50)] int limit = 5, CancellationToken cancellationToken = default)
+        => Ok(await restaurantService.GetRecommendationsAsync(User.GetUserId(), lat, lon, limit, cancellationToken));
 
     /// <summary>
     /// Returns a single restaurant from its database identifier (404 when it does not exist).

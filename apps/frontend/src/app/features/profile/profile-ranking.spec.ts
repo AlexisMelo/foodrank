@@ -41,7 +41,7 @@ describe('injectProfileRanking', () => {
   }
 
   it("ranks the logged-in user's restaurants without loading anything else", async () => {
-    fetchUserRatings.mockReturnValue(of([rating('ok', 60), rating('top', 90)]));
+    fetchUserRatings.mockReturnValue(of([rating('ok', 6), rating('top', 9)]));
 
     const { rankedRestaurants, isOwnProfile, loading } = TestBed.runInInjectionContext(() =>
       injectProfileRanking(),
@@ -60,8 +60,8 @@ describe('injectProfileRanking', () => {
     fetchUserRatings.mockImplementation((id: string) =>
       of(
         id === 'me'
-          ? [rating('both', 40), rating('both', 100, false)]
-          : [rating('both', 80), rating('only-them', 70), rating('both', 10, false)],
+          ? [rating('both', 4), rating('both', 10, false)]
+          : [rating('both', 8), rating('only-them', 7), rating('both', 1, false)],
       ),
     );
 
@@ -72,8 +72,8 @@ describe('injectProfileRanking', () => {
 
     expect(isOwnProfile()).toBe(false);
     expect(rankedRestaurants()).toMatchObject([
-      { restaurantId: 'both', overall: 80, myScore: 40 },
-      { restaurantId: 'only-them', overall: 70, myScore: undefined },
+      { restaurantId: 'both', overall: 8, myScore: 4 },
+      { restaurantId: 'only-them', overall: 7, myScore: undefined },
     ]);
   });
 
