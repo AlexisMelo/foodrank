@@ -61,9 +61,13 @@ describe('RestaurantApi', () => {
         'http://api.test/api/restaurants/suggestions?limit=5&lat=49.18&lon=-0.37',
       );
       expect(req.request.method).toBe('GET');
-      req.flush([{ restaurant: { id: 'r1' }, distanceKm: 0.556 }]);
+      req.flush([
+        { restaurant: { id: 'r1' }, distanceKm: 0.556, globalScore: 7.5, followedRaters: [] },
+      ]);
 
-      expect(await result).toEqual([{ restaurant: { id: 'r1' }, distanceKm: 0.556 }]);
+      expect(await result).toEqual([
+        { restaurant: { id: 'r1' }, distanceKm: 0.556, globalScore: 7.5, followedRaters: [] },
+      ]);
     });
 
     it('omits the position when unknown, so the API sorts from its default city', async () => {

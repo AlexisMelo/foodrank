@@ -1,32 +1,38 @@
 <div class="explore">
-  <div class="page-header">
-    <h1 class="page-title">Explore</h1>
-    <p class="page-subtitle">Places you haven't tried yet</p>
-  </div>
-
-  @if (loading()) {
-    <div class="cards-scroll" role="status" aria-label="Loading restaurants">
-      @for (i of [1, 2, 3, 4, 5]; track i) {
-        <div class="restaurant-skeleton"></div>
-      }
+  <header class="page-header">
+    <div class="page-heading">
+      <h1 class="page-title">Explore</h1>
+      <p class="page-subtitle">Places you haven't tried yet</p>
     </div>
-  } @else {
-    @if (locationDenied()) {
-      <div class="location-notice">📍 Enable location to sort by distance</div>
+    @if (city(); as city) {
+      <p class="city-chip" [class.city-chip-default]="cityIsDefault()" [title]="cityLabel()">
+        <span class="city-name" aria-hidden="true">📍 {{ city }}</span>
+        <span class="visually-hidden">{{ cityLabel() }}</span>
+      </p>
     }
+  </header>
 
-    <div class="cards-scroll">
-      @for (suggestion of suggestions(); track suggestion.restaurant.id) {
-        <a class="restaurant-card" [routerLink]="['/restaurant', suggestion.restaurant.id]">
-          <span class="card-emoji" aria-hidden="true">{{ suggestion.restaurant.emoji }}</span>
-          <span class="card-name">{{ suggestion.restaurant.name }}</span>
-          @if (suggestion.distanceKm !== null) {
-            <span class="card-distance">📍 {{ formatDistance(suggestion.distanceKm) }}</span>
-          } @else if (suggestion.restaurant.address) {
-            <span class="card-distance card-address">{{ suggestion.restaurant.address }}</span>
-          }
-        </a>
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Near you</h2>
+    </div>
+    @if (!loading() && locationDenied()) {
+      <p class="location-notice">📍 Enable location to sort by distance</p>
+    }
+    <div class="cards-row suggestions-row" [attr.aria-busy]="loading()">
+      @if (loading()) {
+        @for (i of [1, 2, 3, 4, 5]; track i) {
+          <div class="card-skeleton"></div>
+        }
+      } @else if (loadError()) {
+        <p class="empty">Couldn't load the restaurants</p>
+      } @else {
+        @for (suggestion of suggestions(); track suggestion.restaurant.id) {
+          <app-suggestion-card [suggestion]="suggestion" />
+        } @empty {
+          <p class="empty">No restaurant left to try around here 🍽️</p>
+        }
       }
     </div>
-  }
+  </section>
 </div>

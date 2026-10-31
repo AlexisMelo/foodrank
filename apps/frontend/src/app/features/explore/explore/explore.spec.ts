@@ -7,6 +7,7 @@ import { RestaurantApi } from '@/core/api/restaurant-api';
 import { type LocationStatus, LocationStore } from '@/core/location/location-store';
 import type { UserLocation } from '@/core/models/location.model';
 import type { RestaurantSuggestion } from '@/core/models/restaurant.model';
+import type { UserSummary } from '@/core/models/user.model';
 import { query, queryAll, textOf } from '@/testing/dom-testing';
 import { Explore } from './explore';
 
@@ -17,9 +18,15 @@ import { Explore } from './explore';
 class StubPage {}
 
 /**
- * Builds the suggestion of the restaurant `id`, at `distanceKm` from the user (null: position not sent).
+ * Builds the suggestion of the restaurant `id`, at `distanceKm` from the user (null: position not sent), rated
+ * `globalScore` on average (null: nobody rated it) and rated by `followedRaters`.
  */
-function suggestion(id: string, distanceKm: number | null): RestaurantSuggestion {
+function suggestion(
+  id: string,
+  distanceKm: number | null,
+  globalScore: number | null = null,
+  followedRaters: UserSummary[] = [],
+): RestaurantSuggestion {
   return {
     restaurant: {
       id,
@@ -31,7 +38,16 @@ function suggestion(id: string, distanceKm: number | null): RestaurantSuggestion
       lng: -0.37,
     },
     distanceKm,
+    globalScore,
+    followedRaters,
   };
+}
+
+/**
+ * Builds the user `username`, followed by the logged-in user, with a display name and no profile picture.
+ */
+function user(username: string, displayName: string | null = null): UserSummary {
+  return { id: `id-${username}`, username, displayName, avatarUrl: null };
 }
 
 /**
@@ -43,6 +59,8 @@ describe('Explore', () => {
   let location: WritableSignal<UserLocation | null>;
   let status: WritableSignal<LocationStatus>;
   let requestLocation: ReturnType<typeof vi.fn>;
+  let city: WritableSignal<string | null>;
+  let cityIsDefault: WritableSignal<boolean>;
   let fetchSuggestions: ReturnType<typeof vi.fn>;
   let harness: RouterTestingHarness;
 
@@ -50,6 +68,9 @@ describe('Explore', () => {
     location = signal(null);
     status = signal('pending');
     requestLocation = vi.fn();
+    // The default city of the API, until the user is located
+    city = signal('Paris');
+    cityIsDefault = signal(true);
     // Like the API: nearest first with distances from the user's position, from the default city without distances
     // otherwise
     fetchSuggestions = vi.fn((position: UserLocation | null) =>
@@ -78,7 +99,10 @@ describe('Explore', () => {
           { path: '**', component: StubPage },
         ]),
         { provide: RestaurantApi, useValue: { fetchSuggestions } },
-        { provide: LocationStore, useValue: { location, status, requestLocation } },
+        {
+          provide: LocationStore,
+          useValue: { location, status, requestLocation, city, cityIsDefault },
+        },
       ],
     });
   });
@@ -99,14 +123,14 @@ describe('Explore', () => {
    * Names of the restaurants suggested, in order.
    */
   function names(): string[] {
-    return queryAll(harness.fixture, '.card-name').map(textOf);
+    return queryAll(harness.fixture, '.restaurant-name').map(textOf);
   }
 
   /**
    * Placeholder cards shown while the page loads.
    */
   function skeletons(): HTMLElement[] {
-    return queryAll(harness.fixture, '.restaurant-skeleton');
+    return queryAll(harness.fixture, '.card-skeleton');
   }
 
   it('asks the API for the suggestions near the user once the location is allowed', async () => {
@@ -135,6 +159,11 @@ describe('Explore', () => {
       '📍 556 m',
       '📍 2.2 km',
     ]);
+    // The address between the name and the distance
+    const card = query(harness.fixture, '.suggestion-card');
+    expect(
+      Array.from(card.querySelectorAll('.restaurant-name, .card-address, .card-distance'), textOf),
+    ).toEqual(['Restaurant near', 'near street, Caen', '📍 556 m']);
     expect(queryAll(harness.fixture, '.location-notice')).toHaveLength(0);
   });
 
@@ -172,7 +201,7 @@ describe('Explore', () => {
     expect(queryAll(harness.fixture, '.location-notice')).toHaveLength(0);
   });
 
-  it('asks without position, and shows the address and a notice, when the location is denied', async () => {
+  it('asks without position, and shows the address without distance and a notice, when the location is denied', async () => {
     status.set('dismissed');
     await openExplore();
 
@@ -185,28 +214,33 @@ describe('Explore', () => {
       'Restaurant near',
       'Restaurant rouen',
     ]);
-    expect(textOf(query(harness.fixture, '.card-address'))).toBe('paris street, Caen');
+    const address = query(harness.fixture, '.card-address');
+    expect(textOf(address)).toBe('paris street, Caen');
+    // Cut after 2 lines: whole on hover
+    expect(address.title).toBe('paris street, Caen');
+    expect(queryAll(harness.fixture, '.card-distance')).toHaveLength(0);
     expect(textOf(query(harness.fixture, '.location-notice'))).toBe(
       '📍 Enable location to sort by distance',
     );
   });
 
-  it('shows no line under the name of a restaurant without address, when the location is denied', async () => {
-    const paris = suggestion('paris', null);
+  it('shows no address line for a restaurant without address, the distance still shown', async () => {
+    const near = suggestion('near', 0.556);
     fetchSuggestions.mockReturnValue(
-      of([{ ...paris, restaurant: { ...paris.restaurant, address: '' } }]),
+      of([{ ...near, restaurant: { ...near.restaurant, address: '' } }]),
     );
-    status.set('dismissed');
+    status.set('blocked');
     await openExplore();
 
-    expect(names()).toEqual(['Restaurant paris']);
-    expect(queryAll(harness.fixture, '.card-distance')).toHaveLength(0);
+    expect(names()).toEqual(['Restaurant near']);
+    expect(queryAll(harness.fixture, '.card-address')).toHaveLength(0);
+    expect(textOf(query(harness.fixture, '.card-distance'))).toBe('📍 556 m');
   });
 
   it('links each card to its restaurant page', async () => {
     status.set('blocked');
     await openExplore();
-    const card = query(harness.fixture, '.restaurant-card');
+    const card = query(harness.fixture, '.suggestion-card');
     expect(card.getAttribute('href')).toBe('/restaurant/paris');
 
     card.click();
@@ -215,13 +249,186 @@ describe('Explore', () => {
     expect(TestBed.inject(Router).url).toBe('/restaurant/paris');
   });
 
-  it('shows no suggestion when the API fails', async () => {
+  it('explains when the suggestions cannot be loaded, instead of loading forever', async () => {
     fetchSuggestions.mockReturnValue(throwError(() => new Error('API down')));
     status.set('unavailable');
     await openExplore();
 
     expect(skeletons()).toHaveLength(0);
     expect(names()).toEqual([]);
+    expect(textOf(query(harness.fixture, '.empty'))).toBe("Couldn't load the restaurants");
+  });
+
+  it('explains when there is no restaurant left to try', async () => {
+    fetchSuggestions.mockReturnValue(of([]));
+    status.set('blocked');
+    await openExplore();
+
+    expect(names()).toEqual([]);
+    expect(textOf(query(harness.fixture, '.empty'))).toContain('No restaurant left to try');
+  });
+
+  it('shows the suggestions in a section titled "Near you"', async () => {
+    status.set('blocked');
+    await openExplore();
+
+    expect(queryAll(harness.fixture, '.section-title').map(textOf)).toEqual(['Near you']);
+    expect(queryAll(harness.fixture, '.section .suggestion-card')).toHaveLength(5);
+  });
+
+  describe('city of the results', () => {
+    /**
+     * Chip of the city at the top right of the page; null when there is none.
+     */
+    function cityChip(): HTMLElement | null {
+      return (harness.fixture.nativeElement as HTMLElement).querySelector(
+        '.page-header .city-chip',
+      );
+    }
+
+    it("shows the user's city at the top right once located", async () => {
+      location.set(CAEN);
+      status.set('granted');
+      city.set('Caen');
+      cityIsDefault.set(false);
+      await openExplore();
+
+      const chip = cityChip()!;
+      expect(textOf(chip.querySelector('.city-name')!)).toBe('📍 Caen');
+      expect(chip.classList.contains('city-chip-default')).toBe(false);
+      // What it means, for screen readers and on hover
+      expect(textOf(chip.querySelector('.visually-hidden')!)).toBe('Your location: Caen');
+      expect(chip.title).toBe('Your location: Caen');
+    });
+
+    it('shows the default city of the API, dimmed and said so, while the location is unknown', async () => {
+      status.set('blocked');
+      await openExplore();
+
+      const chip = cityChip()!;
+      expect(textOf(chip.querySelector('.city-name')!)).toBe('📍 Paris');
+      expect(chip.classList.contains('city-chip-default')).toBe(true);
+      expect(chip.title).toBe('Location unknown: restaurants around Paris');
+    });
+
+    it("follows the city of the store: the default one until the user's is known", async () => {
+      await openExplore();
+      expect(cityChip()!.title).toBe('Location unknown: restaurants around Paris');
+
+      location.set(CAEN);
+      status.set('granted');
+      city.set('Caen');
+      cityIsDefault.set(false);
+      await harness.fixture.whenStable();
+
+      expect(cityChip()!.title).toBe('Your location: Caen');
+    });
+
+    it('shows no chip until the city is known', async () => {
+      city.set(null);
+      status.set('blocked');
+      await openExplore();
+
+      expect(cityChip()).toBeNull();
+      expect(names()).toHaveLength(5);
+    });
+  });
+
+  describe('global score', () => {
+    it('shows the global score of each restaurant in its bubble, rounded to one decimal', async () => {
+      fetchSuggestions.mockReturnValue(
+        of([suggestion('near', 0.556, 6.6667), suggestion('mid', 2.224, 9)]),
+      );
+      status.set('blocked');
+      await openExplore();
+
+      const bubbles = queryAll(harness.fixture, '.score-bubble');
+      expect(bubbles.map(textOf)).toEqual(['6.7', '9']);
+      expect(bubbles[0]!.title).toBe('Global rating: 6.7/10');
+      // Colored as every score: yellow when good, green when great
+      expect(bubbles.map((b) => b.style.backgroundColor)).toEqual([
+        'rgb(249, 199, 79)',
+        'rgb(144, 190, 109)',
+      ]);
+    });
+
+    it('shows a "?" in a neutral bubble on a restaurant nobody rated, and no score of the criteria', async () => {
+      fetchSuggestions.mockReturnValue(
+        of([suggestion('near', 0.556), suggestion('mid', 2.224, 9)]),
+      );
+      status.set('blocked');
+      await openExplore();
+
+      const [unrated, rated] = queryAll(harness.fixture, '.score-bubble');
+      expect(textOf(unrated!)).toBe('?');
+      expect(unrated!.title).toBe('Not rated yet');
+      // No score color: the neutral background of its class
+      expect(unrated!.classList.contains('score-bubble-unrated')).toBe(true);
+      expect(unrated!.style.backgroundColor).toBe('');
+      expect(rated!.classList.contains('score-bubble-unrated')).toBe(false);
+      expect(queryAll(harness.fixture, 'app-rating-scores')).toHaveLength(0);
+    });
+  });
+
+  describe('followed raters', () => {
+    /**
+     * Chip of the users followed who rated the first restaurant; null when there is none.
+     */
+    function ratersChip(): HTMLElement | null {
+      return (harness.fixture.nativeElement as HTMLElement).querySelector('.raters-chip');
+    }
+
+    it('shows the avatars of the users followed who ate there, without their names', async () => {
+      fetchSuggestions.mockReturnValue(
+        of([suggestion('near', 0.556, 8, [user('camille', 'Camille'), user('hugo')])]),
+      );
+      status.set('blocked');
+      await openExplore();
+
+      const chip = ratersChip()!;
+      expect(queryAll(harness.fixture, '.raters-chip .rater-avatar').map(textOf)).toEqual([
+        'C',
+        'H',
+      ]);
+      expect(textOf(chip)).not.toContain('Camille');
+      // The names, for screen readers and on hover: the display name, or the username when there is none
+      expect(chip.getAttribute('role')).toBe('img');
+      expect(chip.getAttribute('aria-label')).toBe('Camille and hugo ate here');
+      expect(chip.title).toBe('Camille and hugo ate here');
+      // Part of the card, which opens the restaurant
+      expect(chip.closest('a')?.getAttribute('href')).toBe('/restaurant/near');
+    });
+
+    it('shows the first 3 avatars, then the number of the other users followed who ate there', async () => {
+      fetchSuggestions.mockReturnValue(
+        of([
+          suggestion('near', 0.556, 8, [
+            user('ana'),
+            user('ben'),
+            user('cleo'),
+            user('dan'),
+            user('eve'),
+          ]),
+        ]),
+      );
+      status.set('blocked');
+      await openExplore();
+
+      expect(queryAll(harness.fixture, '.rater-avatar').map(textOf)).toEqual(['A', 'B', 'C']);
+      expect(textOf(query(harness.fixture, '.raters-more'))).toBe('+2');
+      expect(ratersChip()!.getAttribute('aria-label')).toBe(
+        'ana, ben, cleo, dan, and eve ate here',
+      );
+    });
+
+    it('shows no chip when nobody followed ate there', async () => {
+      fetchSuggestions.mockReturnValue(of([suggestion('near', 0.556, 8)]));
+      status.set('blocked');
+      await openExplore();
+
+      expect(ratersChip()).toBeNull();
+      expect(queryAll(harness.fixture, '.raters-more')).toHaveLength(0);
+    });
   });
 
   it('keeps the placeholders while the suggestions load once the location is known, then shows the restaurants', async () => {
@@ -233,15 +440,16 @@ describe('Explore', () => {
     harness = await RouterTestingHarness.create('/explore');
 
     expect(fetchSuggestions).toHaveBeenCalledWith(CAEN, 5);
-    expect(query(harness.fixture, '[role="status"]').getAttribute('aria-label')).toBe(
-      'Loading restaurants',
-    );
+    // Told to screen readers as loading, under the title of the section
+    expect(query(harness.fixture, '.suggestions-row').getAttribute('aria-busy')).toBe('true');
+    expect(queryAll(harness.fixture, '.section-title').map(textOf)).toEqual(['Near you']);
     expect(skeletons()).toHaveLength(5);
     expect(names()).toEqual([]);
 
     answer.next([suggestion('near', 0.556)]);
     await harness.fixture.whenStable();
 
+    expect(query(harness.fixture, '.suggestions-row').getAttribute('aria-busy')).toBe('false');
     expect(skeletons()).toHaveLength(0);
     expect(names()).toEqual(['Restaurant near']);
   });

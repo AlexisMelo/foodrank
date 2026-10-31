@@ -1,3 +1,5 @@
+import type { UserSummary } from './user.model';
+
 /**
  * A restaurant stored in our database (GET /api/restaurants, GET /api/restaurants/:id).
  */
@@ -51,6 +53,18 @@ export interface RestaurantSuggestion {
    * Distance from the user in kilometers, computed by the API; null when the user's position was not sent
    */
   distanceKm: number | null;
+
+  /**
+   * Average of every criterion of the restaurant's active ratings (each user's latest), 1 to 10, not rounded; null when
+   * nobody rated it
+   */
+  globalScore: number | null;
+
+  /**
+   * Users the logged-in user follows who rated the restaurant, the most recent rating first, each listed once; empty
+   * when none did
+   */
+  followedRaters: UserSummary[];
 }
 
 /**

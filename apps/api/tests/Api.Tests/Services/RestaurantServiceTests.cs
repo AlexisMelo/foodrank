@@ -36,4 +36,17 @@ public class RestaurantServiceTests
         Assert.DoesNotContain("id=", url);
     }
 
+    /// <summary>
+    /// The ratings read for the suggestions are those of the suggested restaurants only, active or not.
+    /// </summary>
+    [Fact]
+    public void RestaurantsRatingsQuery_ReadsTheRatingsOfTheGivenRestaurants()
+    {
+        IPostgrestTable<Rating> ratings = new Supabase.Postgrest.Client("http://localhost/rest/v1").Table<Rating>();
+
+        string url = Uri.UnescapeDataString(RestaurantService.RestaurantsRatingsQuery(ratings, ["r1", "r2"]).GenerateUrl());
+
+        Assert.Contains("id_restaurant=in.(\"r1\",\"r2\")", url);
+        Assert.DoesNotContain("is_active", url);
+    }
 }

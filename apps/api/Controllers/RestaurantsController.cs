@@ -26,8 +26,9 @@ public class RestaurantsController(IRestaurantService restaurantService) : Contr
         => Ok(await restaurantService.GetAllAsync(cancellationToken));
 
     /// <summary>
-    /// Returns the restaurants the logged-in user has not rated yet, nearest first, with their distance. Without a
-    /// valid position, they are sorted from the default city and returned without distance.
+    /// Returns the restaurants the logged-in user has not rated yet, nearest first, with their distance, their global
+    /// score and the users the logged-in user follows who rated them. Without a valid position, they are sorted from the
+    /// default city and returned without distance.
     /// </summary>
     /// <param name="lat">Latitude of the user in degrees; omitted when unknown.</param>
     /// <param name="lon">Longitude of the user in degrees; omitted when unknown.</param>

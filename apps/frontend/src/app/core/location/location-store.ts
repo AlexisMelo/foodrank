@@ -56,6 +56,11 @@ export class LocationStore {
   private readonly loadedCity = signal<string | null>(null);
 
   /**
+   * Writable state behind cityIsDefault
+   */
+  private readonly loadedCityIsDefault = signal(true);
+
+  /**
    * True while the browser is asked for the position, so it is only asked once at a time
    */
   private locating = false;
@@ -80,6 +85,12 @@ export class LocationStore {
    * first answer; the previous city stays while the next one loads
    */
   readonly city = this.loadedCity.asReadonly();
+
+  /**
+   * True while city is the default city of the API (position unknown, or the city of the position not loaded yet:
+   * status can be `granted` meanwhile); false once it is the city of the user's position
+   */
+  readonly cityIsDefault = this.loadedCityIsDefault.asReadonly();
 
   constructor() {
     // The default city, until the user is located
@@ -151,10 +162,13 @@ export class LocationStore {
   private async loadCity(): Promise<void> {
     const position = this.position();
     try {
-      const { locality } = await firstValueFrom(
+      const { locality, isDefault } = await firstValueFrom(
         this.http.get<SearchArea>('/api/places/area', { params: locationParams(position) }),
       );
-      if (locality && this.position() === position) this.loadedCity.set(locality);
+      if (locality && this.position() === position) {
+        this.loadedCity.set(locality);
+        this.loadedCityIsDefault.set(isDefault);
+      }
     } catch {
       // The previous city stays
     }

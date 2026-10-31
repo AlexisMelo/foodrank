@@ -95,8 +95,41 @@ public class RestaurantService(Supabase.Client supabase, IPlaceProvider placePro
         // suggestions are sent to the client.
         ModeledResponse<Restaurant> unrated = await UnratedRestaurantsQuery(supabase.From<Restaurant>(), ratedIds).Get(cancellationToken);
         GeoPoint? userPosition = SearchPosition.FromQuery(lat, lon);
-        return RestaurantSuggestionResponse.Rank(unrated.Models, userPosition ?? SearchPosition.Default(configuration), userPosition is not null, limit);
+        IReadOnlyList<RestaurantSuggestionResponse> suggestions = RestaurantSuggestionResponse.Rank(unrated.Models, userPosition ?? SearchPosition.Default(configuration), userPosition is not null, limit);
+        if (suggestions.Count == 0)
+            return suggestions;
+
+        // The ratings of the suggested restaurants only: their global score, and the users followed who ate there
+        List<string> suggestedIds = suggestions.Select(s => s.Restaurant.Id).ToList();
+        ModeledResponse<Rating> ratings = await RestaurantsRatingsQuery(supabase.From<Rating>(), suggestedIds).Get(cancellationToken);
+        ModeledResponse<Follow> follows = await supabase.From<Follow>()
+            .Select("id_followed")
+            .Where(f => f.FollowerId == userId)
+            .Get(cancellationToken);
+        HashSet<string> followedIds = follows.Models.Select(f => f.FollowedId).ToHashSet();
+
+        // "rating.id_user" has no foreign key to "profiles": the profiles of the followed raters are read apart
+        List<object> followedRaterIds = ratings.Models.Select(r => r.UserId).Where(followedIds.Contains).Distinct().Cast<object>().ToList();
+        Dictionary<string, Profile> profilesById = [];
+        if (followedRaterIds.Count > 0)
+        {
+            ModeledResponse<Profile> profiles = await supabase.From<Profile>()
+                .Filter("id", Constants.Operator.In, followedRaterIds)
+                .Get(cancellationToken);
+            profilesById = profiles.Models.ToDictionary(p => p.Id);
+        }
+
+        return RestaurantSuggestionResponse.WithRatings(suggestions, ratings.Models, followedIds, profilesById);
     }
+
+    /// <summary>
+    /// Query of every rating, active or not, of the restaurants <paramref name="restaurantIds"/>.
+    /// </summary>
+    /// <param name="ratings">Query on the "rating" table to filter.</param>
+    /// <param name="restaurantIds">Database ids of the restaurants (not empty: PostgREST refuses an empty list).</param>
+    /// <returns>The filtered query, ready to send.</returns>
+    public static IPostgrestTable<Rating> RestaurantsRatingsQuery(IPostgrestTable<Rating> ratings, IReadOnlyList<string> restaurantIds)
+        => ratings.Filter("id_restaurant", Constants.Operator.In, restaurantIds.Cast<object>().ToList());
 
     /// <summary>
     /// Query of the restaurants whose id is not in <paramref name="ratedIds"/>.

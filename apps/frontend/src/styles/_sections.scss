@@ -58,7 +58,8 @@
 /* Skeleton */
 .card-skeleton {
   flex-shrink: 0;
-  // Same size as RecentReviewCard (.review-card), so the page does not shift once the reviews are loaded
+  // Same size as the restaurant cards (restaurant-card.box of src/styles/_restaurant-card.scss: review cards, suggestions
+  // of the Explore page), so the page does not shift once they are loaded
   width: 148px;
   height: 195px;
   background: #1a1a1a;

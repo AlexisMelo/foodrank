@@ -20,7 +20,8 @@ public class ApiFactory : WebApplicationFactory<Program>
     public FakePlaceProvider PlaceProvider { get; } = new();
 
     /// <summary>
-    /// Restaurant service used by the controllers; fill its restaurants in the tests.
+    /// Restaurant service used by the controllers; fill its restaurants in the tests. Its suggestions read the ratings
+    /// and profiles of <see cref="RatingService"/> and the follows of <see cref="FollowService"/>.
     /// </summary>
     public FakeRestaurantService RestaurantService { get; } = new();
 
@@ -63,6 +64,9 @@ public class ApiFactory : WebApplicationFactory<Program>
         TierlistService = new FakeTierlistService(RestaurantService, RatingService);
         FollowService = new FakeFollowService(UserService, RatingService);
         RatingService.FollowedUserIds = userId => FollowService.Follows.Where(f => f.FollowerId == userId).Select(f => f.FollowedId);
+        RestaurantService.Ratings = () => RatingService.Ratings;
+        RestaurantService.FollowedUserIds = RatingService.FollowedUserIds;
+        RestaurantService.Profiles = () => RatingService.Profiles;
     }
 
     /// <summary>

@@ -144,6 +144,36 @@ public class RestaurantsControllerTests : IDisposable
     }
 
     /// <summary>
+    /// Each suggestion carries the global score of the restaurant and the users followed who rated it, with their name
+    /// and picture; a restaurant nobody rated has a null score and no rater.
+    /// </summary>
+    [Fact]
+    public async Task GetSuggestions_ReturnsGlobalScoreAndFollowedRaters()
+    {
+        AddRestaurant("near", 49.185, -0.37);
+        AddRestaurant("unrated", 49.19, -0.37);
+        _factory.RatingService.Profiles[OtherId] = new Profile { Id = OtherId, Username = "camille", DisplayName = "Camille", AvatarUrl = "https://img.test/camille.png" };
+        _factory.FollowService.Follows.Add(new Follow { FollowerId = MeId, FollowedId = OtherId, CreatedAt = DateTime.UtcNow });
+        AddRating(OtherId, "near", isActive: true, score: 8);
+
+        HttpResponseMessage response = await GetAsync("/api/restaurants/suggestions?lat=49.18&lon=-0.37");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using JsonDocument body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        JsonElement near = body.RootElement[0];
+        Assert.Equal(8, near.GetProperty("globalScore").GetDouble());
+        JsonElement rater = Assert.Single(near.GetProperty("followedRaters").EnumerateArray().ToList());
+        Assert.Equal(OtherId, rater.GetProperty("id").GetString());
+        Assert.Equal("camille", rater.GetProperty("username").GetString());
+        Assert.Equal("Camille", rater.GetProperty("displayName").GetString());
+        Assert.Equal("https://img.test/camille.png", rater.GetProperty("avatarUrl").GetString());
+        JsonElement unrated = body.RootElement[1];
+        Assert.Equal("unrated", unrated.GetProperty("restaurant").GetProperty("id").GetString());
+        Assert.Equal(JsonValueKind.Null, unrated.GetProperty("globalScore").ValueKind);
+        Assert.Empty(unrated.GetProperty("followedRaters").EnumerateArray());
+    }
+
+    /// <summary>
     /// At most <c>limit</c> suggestions are returned, 5 by default.
     /// </summary>
     [Theory]
@@ -190,14 +220,18 @@ public class RestaurantsControllerTests : IDisposable
         => _factory.RestaurantService.Restaurants.Add(new Restaurant { Id = id, Name = id, Lat = lat, Lng = lng });
 
     /// <summary>
-    /// Stores a rating of <paramref name="restaurantId"/> by <paramref name="userId"/>, a day apart from the previous one.
+    /// Stores a rating of <paramref name="restaurantId"/> by <paramref name="userId"/>, a day apart from the previous one,
+    /// with the same <paramref name="score"/> for the three criteria.
     /// </summary>
-    private void AddRating(string userId, string restaurantId, bool isActive)
+    private void AddRating(string userId, string restaurantId, bool isActive, int score = Rating.MinScore)
         => _factory.RatingService.Ratings.Add(new Rating
         {
             RestaurantId = restaurantId,
             UserId = userId,
             Date = DateTimeOffset.UtcNow.AddDays(-_factory.RatingService.Ratings.Count - 1),
+            FoodRating = score,
+            ServiceRating = score,
+            SettingRating = score,
             IsActive = isActive
         });
 

@@ -47,6 +47,7 @@ Enforced by the local ESLint rules in `eslint-rules.js` (auto-fixable with `npm 
 - **Toasts**: `ToastStore.show(message)` (errors, 4 s), `show(message, 'success')` to confirm a change saved. A modal dialog hides the page below it, so a modal open while a toast can show (search dialogs, celebration) renders its own `<app-toast-outlet />` inside the `<dialog>`: the last outlet created renders the toasts.
 - **Styles**: global reset and `body` styles in `src/styles.scss`. `responsive.scss` and `_auth-forms.scss` in `src/styles/`, imported with `@use 'responsive';` (`stylePreprocessorOptions.includePaths`).
 - **Chips**: every pill chip takes its size from `@include chip.size;` (`src/styles/_chip.scss`, 28px high like the "See all" chips of the home page) and only sets its colors.
+- **Restaurant cards**: the cards of a row of restaurants (review cards of home and community, suggestions of Explore) take their box, emoji, score bubble and name from the mixins of `src/styles/_restaurant-card.scss`, so they keep the same look and the size of `.card-skeleton`.
 - **Hover**: every link, button and chip has one, and it only changes the background: never a transform (translate, scale), a shadow, or a change of opacity, color or border.
 - **Import alias**: `@/*` → `src/app/*`.
 

@@ -1,0 +1,75 @@
+@use 'hover';
+
+// Card of a restaurant in a row of cards, shared by the review cards (RecentReviewCard, home and community pages) and
+// the suggestions of the Explore page, so they look the same. Used with `@use 'restaurant-card';` then
+// `@include restaurant-card.<part>;` in the rule of each part.
+
+// The card, a link lighter on hover. Fixed size so the loading skeleton (.card-skeleton of src/styles/_sections.scss)
+// can match it. A review card fills it: padding 2×16 + emoji 60 + name 17 + date 14 + scores 34 + gaps 3×10 = 187, plus
+// some room above the scores
+@mixin box {
+  flex-shrink: 0;
+  width: 148px;
+  height: 195px;
+  background: #1a1a1a;
+  border-radius: 20px;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.2s;
+  @include hover.background(#242424);
+}
+
+// Holds the emoji circle and the score bubble on its bottom right
+@mixin emoji-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+@mixin emoji-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+// Score on the emoji circle; its background is the color of the score
+@mixin score-bubble {
+  position: absolute;
+  bottom: 0;
+  right: -4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 900;
+  color: #0d0d0d;
+  border: 2px solid #1a1a1a;
+}
+
+// Name of the restaurant, always 2 lines high so the rest of the card does not move up with a short name
+@mixin name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  text-align: center;
+  line-height: 17px;
+  flex-shrink: 0;
+  width: 100%;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: nowrap;
+}

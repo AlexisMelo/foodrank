@@ -1,9 +1,9 @@
 import { Component, computed, inject } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
 import { map, timer } from 'rxjs';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import { LocationStore } from '@/core/location/location-store';
+import { SuggestionCard } from '../suggestion-card/suggestion-card';
 
 /**
  * Number of restaurants suggested.
@@ -18,18 +18,11 @@ const SUGGESTION_COUNT = 5;
 const LOCATION_WAIT_MS = 3000;
 
 /**
- * A distance for display: "850 m" under 1 km, "2.3 km" above.
- */
-function formatDistance(km: number): string {
-  if (km < 1) return `${Math.round(km * 1000)} m`;
-  return `${km.toFixed(1)} km`;
-}
-
-/**
- * Explore page (/explore): a few restaurants the user has not tried yet, nearest first when the location is allowed.
+ * Explore page (/explore): the section of a few restaurants near the user they have not tried yet, nearest first when
+ * the location is allowed, with their global score and the users followed who ate there.
  */
 @Component({
-  imports: [RouterLink],
+  imports: [SuggestionCard],
   selector: 'app-explore',
   styleUrl: './explore.scss',
   templateUrl: './explore.html',
@@ -76,6 +69,11 @@ export class Explore {
   );
 
   /**
+   * True when the API failed to return the suggestions
+   */
+  protected readonly loadError = computed(() => this.suggestionsResource.status() === 'error');
+
+  /**
    * True when the position is not known once the wait is over (refused, blocked, unavailable or still not answered):
    * the restaurants are sorted from the API's default city and shown with their address instead of a distance
    */
@@ -84,16 +82,31 @@ export class Explore {
   );
 
   /**
+   * City the suggestions are around, shown at the top right so the user understands them: theirs once located, the
+   * default city of the API otherwise; null until the API first answered (no chip)
+   */
+  protected readonly city = this.locationStore.city;
+
+  /**
+   * True while the city shown is the default city of the API, not the user's: the chip is dimmed
+   */
+  protected readonly cityIsDefault = this.locationStore.cityIsDefault;
+
+  /**
+   * What the chip of the city means, which it does not write: read by screen readers and shown on hover
+   */
+  protected readonly cityLabel = computed(() =>
+    this.cityIsDefault()
+      ? `Location unknown: restaurants around ${this.city()}`
+      : `Your location: ${this.city()}`,
+  );
+
+  /**
    * Restaurants suggested, in the API order; empty while loading and when the API fails
    */
   protected readonly suggestions = computed(() =>
     this.suggestionsResource.hasValue() ? this.suggestionsResource.value() : [],
   );
-
-  /**
-   * Formats the distance shown on a card
-   */
-  protected readonly formatDistance = formatDistance;
 
   constructor() {
     this.locationStore.requestLocation();
