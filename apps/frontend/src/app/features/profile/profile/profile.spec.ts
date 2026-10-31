@@ -12,8 +12,7 @@ import { AuthStore } from '@/core/auth/auth-store';
 import type { UserRating } from '@/core/models/rating.model';
 import type { Tierlist } from '@/core/models/tierlist.model';
 import type { UserProfile } from '@/core/models/user.model';
-import { REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
-import { CAN_REVIEW, alreadyReviewed } from '@/core/review/daily-review-testing';
+import { CAN_REVIEW } from '@/core/review/daily-review-testing';
 import { query, queryAll, textOf } from '@/testing/dom-testing';
 
 /**
@@ -88,7 +87,6 @@ function pinnedTierlist(id: number, userId: string): Tierlist {
 describe('ProfileView', () => {
   let fetchUserProfile: ReturnType<typeof vi.fn>;
   let fetchUserRatings: ReturnType<typeof vi.fn>;
-  let fetchRatingAllowance: ReturnType<typeof vi.fn>;
   let fetchPinnedTierlistsByUserId: ReturnType<typeof vi.fn>;
   let fetchFollowers: ReturnType<typeof vi.fn>;
   let harness: RouterTestingHarness;
@@ -97,7 +95,6 @@ describe('ProfileView', () => {
     fetchUserProfile = vi.fn((id = 'me') => of(profiles[id]));
     fetchFollowers = vi.fn(() => of([]));
     fetchUserRatings = vi.fn((id = 'me') => of(ratings[id] ?? []));
-    fetchRatingAllowance = vi.fn(() => of(CAN_REVIEW));
     fetchPinnedTierlistsByUserId = vi.fn(() => of([]));
     TestBed.configureTestingModule({
       providers: [
@@ -112,9 +109,12 @@ describe('ProfileView', () => {
           provide: UserApi,
           useValue: { fetchUserProfile, fetchFollowers, fetchFollowing: () => of([]) },
         },
-        // Ratings of the user shown and of the logged-in user, also read by the home and rating pages; the rating
-        // allowance locks the "+" of a restaurant
-        { provide: RatingApi, useValue: { fetchUserRatings, fetchRatingAllowance } },
+        // Ratings of the user shown and of the logged-in user, also read by the home page, where the rating allowance
+        // locks the "+ New" chip (opened for an unknown user)
+        {
+          provide: RatingApi,
+          useValue: { fetchUserRatings, fetchRatingAllowance: () => of(CAN_REVIEW) },
+        },
         {
           provide: TierlistApi,
           useValue: {
@@ -283,7 +283,7 @@ describe('ProfileView', () => {
     expect(textOf(harness.fixture.nativeElement)).not.toContain('No restaurant rated yet');
   });
 
-  it("shows another user's profile with my own score, or a link to rate", async () => {
+  it('shows another user\'s profile with my own score, or a "?" where I never rated', async () => {
     await open('/user/u2');
 
     expect(fetchUserProfile).toHaveBeenCalledWith('u2');
@@ -295,40 +295,17 @@ describe('ProfileView', () => {
       'Restaurant r3',
       'Restaurant r1',
     ]);
-    // Never rated r3: offer to rate it
-    expect(items[0]!.querySelector('.my-score-rate')).not.toBeNull();
-    // Rated r1 twice (7, then 8 before): my active rating
-    expect(textOf(items[1]!.querySelector('.my-score')!)).toBe('7');
-  });
-
-  it('opens the rating page from the "+" of a restaurant I never rated, not the restaurant page', async () => {
-    await open('/user/u2');
-    const rate = query(harness.fixture, '.my-score-rate');
-    expect(rate.getAttribute('href')).toBe('/review/r3');
-    // Next to the link to the restaurant page, not nested in it
-    expect(rate.parentElement!.closest('a')).toBeNull();
-    expect(query(harness.fixture, '.list-item a.item-link').getAttribute('href')).toBe(
-      '/restaurant/r3',
-    );
-
-    rate.click();
-    await harness.fixture.whenStable();
-
-    expect(TestBed.inject(Router).url).toBe('/review/r3');
-  });
-
-  it('locks the "+" of a restaurant I never rated once I reviewed a restaurant today', async () => {
-    fetchRatingAllowance.mockReturnValue(of(alreadyReviewed()));
-    await open('/user/u2');
-
-    const locked = queryAll(harness.fixture, '.list-item')[0]!.querySelector<HTMLElement>(
-      '.my-score-rate',
-    )!;
-    expect(locked.tagName).toBe('SPAN');
-    expect(locked.getAttribute('aria-label')).toBe('Rate this restaurant: locked');
-    expect(locked.title).toBe(REVIEW_LOCKED_REASON);
-    expect(locked.querySelector('app-lock-icon')).not.toBeNull();
+    // Never rated r3: a "?" in the bubble of my score, inside the link to the restaurant page; no link to rate it
+    const unrated = items[0]!.querySelector<HTMLElement>('.my-score')!;
+    expect(unrated.classList).toContain('my-score-unrated');
+    expect(textOf(unrated)).toBe('?');
+    expect(unrated.title).toBe("You haven't rated it yet");
+    expect(unrated.closest('a')!.getAttribute('href')).toBe('/restaurant/r3');
     expect(queryAll(harness.fixture, 'a[href="/review/r3"]')).toHaveLength(0);
+    // Rated r1 twice (7, then 8 before): my active rating
+    const myScore = items[1]!.querySelector('.my-score')!;
+    expect(textOf(myScore)).toBe('7');
+    expect(myScore.classList).not.toContain('my-score-unrated');
   });
 
   it('shows the tierlists pinned by the user shown, opening them', async () => {
@@ -358,9 +335,8 @@ describe('ProfileView', () => {
 
     expect(TestBed.inject(Router).url).toBe('/profile');
     expect(textOf(query(harness.fixture, '.winner-name'))).toBe('Alexis Melo');
-    // My own profile: no "my score", no rate button, and only my ratings are requested
+    // My own profile: no "my score" nor "?", and only my ratings are requested
     expect(queryAll(harness.fixture, '.my-score')).toHaveLength(0);
-    expect(queryAll(harness.fixture, '.my-score-rate')).toHaveLength(0);
     expect(fetchUserProfile.mock.calls).toEqual([['me']]);
     expect(fetchUserRatings.mock.calls).toEqual([['me']]);
   });

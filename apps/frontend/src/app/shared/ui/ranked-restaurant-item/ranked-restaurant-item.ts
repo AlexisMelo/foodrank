@@ -1,19 +1,17 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DailyReviewStore, REVIEW_LOCKED_REASON } from '@/core/review/daily-review-store';
 import { roundScore, scoreColor } from '@/core/utils/rating';
 import { ScorePipe } from '@/shared/pipes/score-pipe';
 import { type Action, Actions } from '../actions/actions';
-import { LockIcon } from '../lock-icon/lock-icon';
 import { RatingScores } from '../rating-scores/rating-scores';
 
 /**
  * A restaurant of a ranking (favorites, profile, tierlist): its address under its name, its criteria scores, its
- * overall score and, optionally, the logged-in user's own score or a link to rate it (a padlock instead once they
- * reviewed a restaurant today), and a menu of actions at the right of the score. Opens the restaurant page.
+ * overall score and, optionally, the logged-in user's own score in a small bubble on it ("?" when they did not rate
+ * it), and a menu of actions at the right of the score. Opens the restaurant page.
  */
 @Component({
-  imports: [Actions, LockIcon, RouterLink, RatingScores, ScorePipe],
+  imports: [Actions, RouterLink, RatingScores, ScorePipe],
   selector: 'app-ranked-restaurant-item',
   styleUrl: './ranked-restaurant-item.scss',
   templateUrl: './ranked-restaurant-item.html',
@@ -66,26 +64,16 @@ export class RankedRestaurantItem {
   readonly myScore = input<number>();
 
   /**
-   * Route of the rating page, linked from a "+" bubble next to the restaurant link when there is no myScore;
-   * undefined for no bubble. The bubble shows a padlock instead, not linked, once the user reviewed a restaurant today
+   * True to show a "?" in the small bubble when there is no myScore, as the restaurants nobody rated in Explore: on
+   * someone else's ranking, the restaurants the logged-in user did not rate. False for no bubble without myScore
    */
-  readonly rateLink = input<string>();
+  readonly showUnrated = input(false);
 
   /**
    * Actions of the 3 dots menu at the right of the score (e.g. remove the restaurant from a tierlist); empty for no
    * menu
    */
   readonly actions = input<readonly Action[]>([]);
-
-  /**
-   * Locks the "+" bubble once the user reviewed a restaurant today
-   */
-  protected readonly dailyReview = inject(DailyReviewStore);
-
-  /**
-   * Tooltip of the locked bubble
-   */
-  protected readonly lockedReason = REVIEW_LOCKED_REASON;
 
   /**
    * Overall score rounded to one decimal, shown and colored in the bubble

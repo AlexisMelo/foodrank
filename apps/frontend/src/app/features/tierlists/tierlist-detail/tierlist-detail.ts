@@ -61,7 +61,7 @@ interface TierlistPage {
  * ratings, the best score first by default, or the most recently rated first, or by name. Its owner can pin it to their
  * profile, and add the restaurants they rated from a popup, or remove them. Each restaurant has
  * a menu of actions: see its page, share it, and for the owner, remove it from the tierlist after confirming. On
- * someone else's tierlist, the restaurants I never rated have a "+" opening their rating page, as on someone else's
+ * someone else's tierlist, each restaurant shows my own score, or a "?" when I never rated it, as on someone else's
  * profile.
  */
 @Component({

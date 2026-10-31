@@ -12,7 +12,6 @@ import { AuthStore } from '@/core/auth/auth-store';
 import type { UserRating } from '@/core/models/rating.model';
 import type { Tierlist } from '@/core/models/tierlist.model';
 import type { UserProfile } from '@/core/models/user.model';
-import { CAN_REVIEW } from '@/core/review/daily-review-testing';
 import { SHARE_NAVIGATOR } from '@/core/share/web-share';
 import { ToastStore } from '@/core/toast/toast-store';
 import { query, queryAll, stubDialogs, stubPopovers, textOf } from '@/testing/dom-testing';
@@ -127,11 +126,8 @@ describe('TierlistDetailView', () => {
           },
         },
         { provide: UserApi, useValue: { fetchUserProfile: (id: string) => of(profiles[id]) } },
-        // The rating allowance locks the "+" of the restaurants of a ranking
-        {
-          provide: RatingApi,
-          useValue: { fetchUserRatings, fetchRatingAllowance: () => of(CAN_REVIEW) },
-        },
+        // Ratings of the owner of the tierlist and of the logged-in user
+        { provide: RatingApi, useValue: { fetchUserRatings } },
         // The restaurant page, opened from the actions of a restaurant, cannot load it
         {
           provide: RestaurantApi,
@@ -290,7 +286,7 @@ describe('TierlistDetailView', () => {
     expect(fetchUserRatings.mock.calls).toEqual([['u2'], ['me']]);
   });
 
-  it("links the restaurants I never rated on someone else's tierlist to their rating page, as on a profile", async () => {
+  it('shows a "?" on the restaurants I never rated on someone else\'s tierlist, as on a profile', async () => {
     fetchTierlistById.mockReturnValue(of(tierlistOf('u2')));
     await openTierlist();
 
@@ -299,18 +295,17 @@ describe('TierlistDetailView', () => {
      */
     const item = (name: string) =>
       queryAll(harness.fixture, '.list-item').find((i) => textOf(i).includes(name))!;
-    expect(item('Restaurant r2').querySelector('.my-score-rate')!.getAttribute('href')).toBe(
-      '/review/r2',
-    );
+    expect(textOf(item('Restaurant r2').querySelector('.my-score-unrated')!)).toBe('?');
+    expect(queryAll(harness.fixture, 'a[href="/review/r2"]')).toHaveLength(0);
     // Rated by me: my score instead
-    expect(item('Restaurant r1').querySelector('.my-score-rate')).toBeNull();
+    expect(item('Restaurant r1').querySelector('.my-score-unrated')).toBeNull();
   });
 
-  it('offers no "+" on my own tierlist, every restaurant of it being rated by me', async () => {
+  it('shows no "?" on my own tierlist, every restaurant of it being rated by me', async () => {
     fetchTierlistById.mockReturnValue(of(tierlistOf('u1')));
     await openTierlist();
 
-    expect(queryAll(harness.fixture, '.my-score-rate')).toHaveLength(0);
+    expect(queryAll(harness.fixture, '.my-score-unrated')).toHaveLength(0);
   });
 
   it('lets the owner pin their tierlist, without showing their score twice', async () => {
