@@ -288,6 +288,28 @@ public class RatingService(Supabase.Client supabase, IRestaurantService restaura
             .Limit(count);
 
     /// <summary>
+    /// Query of the active ratings (each one's current score) given by any of <paramref name="userIds"/>, every
+    /// restaurant included. Sent by <see cref="RestaurantService"/> for the recommendations of the Explore page.
+    /// </summary>
+    /// <param name="ratings">Query on the "rating" table to filter.</param>
+    /// <param name="userIds">Supabase Auth ids of the authors (not empty: PostgREST refuses an empty list).</param>
+    /// <returns>The filtered query, ready to send.</returns>
+    public static IPostgrestTable<Rating> UsersActiveRatingsQuery(IPostgrestTable<Rating> ratings, IReadOnlyList<string> userIds)
+        => ratings
+            .Filter("id_user", Constants.Operator.In, userIds.Cast<object>().ToList())
+            .Where(IsActive);
+
+    /// <summary>
+    /// Query of every rating, active or not, of the restaurants <paramref name="restaurantIds"/>. Sent by
+    /// <see cref="RestaurantService"/> for the global score and the followed raters of the Explore page's restaurants.
+    /// </summary>
+    /// <param name="ratings">Query on the "rating" table to filter.</param>
+    /// <param name="restaurantIds">Database ids of the restaurants (not empty: PostgREST refuses an empty list).</param>
+    /// <returns>The filtered query, ready to send.</returns>
+    public static IPostgrestTable<Rating> RestaurantsRatingsQuery(IPostgrestTable<Rating> ratings, IReadOnlyList<string> restaurantIds)
+        => ratings.Filter("id_restaurant", Constants.Operator.In, restaurantIds.Cast<object>().ToList());
+
+    /// <summary>
     /// Loads the ids of the users <paramref name="userId"/> follows.
     /// </summary>
     /// <param name="userId">Supabase Auth id of the follower.</param>

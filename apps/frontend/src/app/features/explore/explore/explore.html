@@ -12,25 +12,46 @@
     }
   </header>
 
-  <section class="section">
+  <section class="section near-you">
     <div class="section-header">
       <h2 class="section-title">Near you</h2>
     </div>
-    @if (!loading() && locationDenied()) {
+    @if (!nearYou.loading() && locationDenied()) {
       <p class="location-notice">📍 Enable location to sort by distance</p>
     }
-    <div class="cards-row suggestions-row" [attr.aria-busy]="loading()">
-      @if (loading()) {
+    <div class="cards-row suggestions-row" [attr.aria-busy]="nearYou.loading()">
+      @if (nearYou.loading()) {
         @for (i of [1, 2, 3, 4, 5]; track i) {
           <div class="card-skeleton"></div>
         }
-      } @else if (loadError()) {
+      } @else if (nearYou.loadError()) {
         <p class="empty">Couldn't load the restaurants</p>
       } @else {
-        @for (suggestion of suggestions(); track suggestion.restaurant.id) {
+        @for (suggestion of nearYou.restaurants(); track suggestion.restaurant.id) {
           <app-suggestion-card [suggestion]="suggestion" />
         } @empty {
           <p class="empty">No restaurant left to try around here 🍽️</p>
+        }
+      }
+    </div>
+  </section>
+
+  <section class="section recommendations">
+    <div class="section-header">
+      <h2 class="section-title">Recommendations</h2>
+    </div>
+    <div class="cards-row suggestions-row" [attr.aria-busy]="recommendations.loading()">
+      @if (recommendations.loading()) {
+        @for (i of [1, 2, 3, 4, 5]; track i) {
+          <div class="card-skeleton"></div>
+        }
+      } @else if (recommendations.loadError()) {
+        <p class="empty">Couldn't load the recommendations</p>
+      } @else {
+        @for (suggestion of recommendations.restaurants(); track suggestion.restaurant.id) {
+          <app-suggestion-card [suggestion]="suggestion" />
+        } @empty {
+          <p class="empty">Follow more people in your area to enable recommendations</p>
         }
       }
     </div>

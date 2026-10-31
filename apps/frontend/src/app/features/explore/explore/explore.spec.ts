@@ -62,6 +62,7 @@ describe('Explore', () => {
   let city: WritableSignal<string | null>;
   let cityIsDefault: WritableSignal<boolean>;
   let fetchSuggestions: ReturnType<typeof vi.fn>;
+  let fetchRecommendations: ReturnType<typeof vi.fn>;
   let harness: RouterTestingHarness;
 
   beforeEach(() => {
@@ -92,13 +93,15 @@ describe('Explore', () => {
             ],
       ),
     );
+    // Nothing recommended unless a test says otherwise
+    fetchRecommendations = vi.fn(() => of([]));
     TestBed.configureTestingModule({
       providers: [
         provideRouter([
           { path: 'explore', component: Explore },
           { path: '**', component: StubPage },
         ]),
-        { provide: RestaurantApi, useValue: { fetchSuggestions } },
+        { provide: RestaurantApi, useValue: { fetchSuggestions, fetchRecommendations } },
         {
           provide: LocationStore,
           useValue: { location, status, requestLocation, city, cityIsDefault },
@@ -120,17 +123,17 @@ describe('Explore', () => {
   }
 
   /**
-   * Names of the restaurants suggested, in order.
+   * Names of the restaurants suggested near the user, in order.
    */
   function names(): string[] {
-    return queryAll(harness.fixture, '.restaurant-name').map(textOf);
+    return queryAll(harness.fixture, '.near-you .restaurant-name').map(textOf);
   }
 
   /**
-   * Placeholder cards shown while the page loads.
+   * Placeholder cards shown while the restaurants near the user load.
    */
   function skeletons(): HTMLElement[] {
-    return queryAll(harness.fixture, '.card-skeleton');
+    return queryAll(harness.fixture, '.near-you .card-skeleton');
   }
 
   it('asks the API for the suggestions near the user once the location is allowed', async () => {
@@ -256,7 +259,9 @@ describe('Explore', () => {
 
     expect(skeletons()).toHaveLength(0);
     expect(names()).toEqual([]);
-    expect(textOf(query(harness.fixture, '.empty'))).toBe("Couldn't load the restaurants");
+    expect(textOf(query(harness.fixture, '.near-you .empty'))).toBe(
+      "Couldn't load the restaurants",
+    );
   });
 
   it('explains when there is no restaurant left to try', async () => {
@@ -265,15 +270,20 @@ describe('Explore', () => {
     await openExplore();
 
     expect(names()).toEqual([]);
-    expect(textOf(query(harness.fixture, '.empty'))).toContain('No restaurant left to try');
+    expect(textOf(query(harness.fixture, '.near-you .empty'))).toContain(
+      'No restaurant left to try',
+    );
   });
 
-  it('shows the suggestions in a section titled "Near you"', async () => {
+  it('shows the suggestions in a section titled "Near you", then the recommendations', async () => {
     status.set('blocked');
     await openExplore();
 
-    expect(queryAll(harness.fixture, '.section-title').map(textOf)).toEqual(['Near you']);
-    expect(queryAll(harness.fixture, '.section .suggestion-card')).toHaveLength(5);
+    expect(queryAll(harness.fixture, '.section-title').map(textOf)).toEqual([
+      'Near you',
+      'Recommendations',
+    ]);
+    expect(queryAll(harness.fixture, '.near-you .suggestion-card')).toHaveLength(5);
   });
 
   describe('city of the results', () => {
@@ -441,16 +451,115 @@ describe('Explore', () => {
 
     expect(fetchSuggestions).toHaveBeenCalledWith(CAEN, 5);
     // Told to screen readers as loading, under the title of the section
-    expect(query(harness.fixture, '.suggestions-row').getAttribute('aria-busy')).toBe('true');
-    expect(queryAll(harness.fixture, '.section-title').map(textOf)).toEqual(['Near you']);
+    expect(query(harness.fixture, '.near-you .suggestions-row').getAttribute('aria-busy')).toBe(
+      'true',
+    );
+    expect(textOf(query(harness.fixture, '.near-you .section-title'))).toBe('Near you');
     expect(skeletons()).toHaveLength(5);
     expect(names()).toEqual([]);
 
     answer.next([suggestion('near', 0.556)]);
     await harness.fixture.whenStable();
 
-    expect(query(harness.fixture, '.suggestions-row').getAttribute('aria-busy')).toBe('false');
+    expect(query(harness.fixture, '.near-you .suggestions-row').getAttribute('aria-busy')).toBe(
+      'false',
+    );
     expect(skeletons()).toHaveLength(0);
     expect(names()).toEqual(['Restaurant near']);
+  });
+
+  describe('recommendations', () => {
+    /**
+     * Names of the restaurants recommended, in order.
+     */
+    function recommended(): string[] {
+      return queryAll(harness.fixture, '.recommendations .restaurant-name').map(textOf);
+    }
+
+    it('asks the API for the recommendations once the location is allowed, and shows them in their section', async () => {
+      fetchRecommendations.mockReturnValue(
+        of([
+          suggestion('pick', 1.2, 8, [user('camille', 'Camille')]),
+          suggestion('other', 4.5, 6, [user('hugo')]),
+        ]),
+      );
+      await openExplore();
+      // Waits for the location, as the restaurants near the user
+      expect(queryAll(harness.fixture, '.recommendations .card-skeleton')).toHaveLength(5);
+      expect(fetchRecommendations).not.toHaveBeenCalled();
+
+      location.set(CAEN);
+      status.set('granted');
+      await harness.fixture.whenStable();
+
+      expect(fetchRecommendations).toHaveBeenCalledTimes(1);
+      expect(fetchRecommendations).toHaveBeenCalledWith(CAEN, 5);
+      expect(textOf(query(harness.fixture, '.recommendations .section-title'))).toBe(
+        'Recommendations',
+      );
+      expect(recommended()).toEqual(['Restaurant pick', 'Restaurant other']);
+      // The same cards as near the user: distance, global score, and the users followed who recommend it
+      const card = query(harness.fixture, '.recommendations .suggestion-card');
+      expect(card.getAttribute('href')).toBe('/restaurant/pick');
+      expect(textOf(card.querySelector('.card-distance')!)).toBe('📍 1.2 km');
+      expect(textOf(card.querySelector('.score-bubble')!)).toBe('8');
+      expect(card.querySelector('.raters-chip')!.getAttribute('aria-label')).toBe(
+        'Camille ate here',
+      );
+      // The restaurants near the user are not mixed with them
+      expect(names()).not.toContain('Restaurant pick');
+    });
+
+    it('asks without position when the location is denied: the API measures the range from its default city', async () => {
+      fetchRecommendations.mockReturnValue(of([suggestion('pick', null, 8)]));
+      status.set('dismissed');
+      await openExplore();
+
+      expect(fetchRecommendations).toHaveBeenCalledWith(null, 5);
+      expect(recommended()).toEqual(['Restaurant pick']);
+      expect(queryAll(harness.fixture, '.recommendations .card-distance')).toHaveLength(0);
+    });
+
+    it('asks to follow more people in the area when nothing is recommended', async () => {
+      status.set('blocked');
+      await openExplore();
+
+      expect(recommended()).toEqual([]);
+      expect(textOf(query(harness.fixture, '.recommendations .empty'))).toBe(
+        'Follow more people in your area to enable recommendations',
+      );
+    });
+
+    it('explains when the recommendations cannot be loaded, the restaurants near the user still shown', async () => {
+      fetchRecommendations.mockReturnValue(throwError(() => new Error('API down')));
+      status.set('blocked');
+      await openExplore();
+
+      expect(textOf(query(harness.fixture, '.recommendations .empty'))).toBe(
+        "Couldn't load the recommendations",
+      );
+      expect(names()).toHaveLength(5);
+    });
+
+    it('keeps the placeholders while the recommendations load, then shows them', async () => {
+      const answer = new Subject<RestaurantSuggestion[]>();
+      fetchRecommendations.mockReturnValue(answer);
+      status.set('blocked');
+      // Rendered without waiting: the recommendations are not answered, so the page would never be stable
+      harness = await RouterTestingHarness.create('/explore');
+
+      const row = query(harness.fixture, '.recommendations .suggestions-row');
+      expect(row.getAttribute('aria-busy')).toBe('true');
+      expect(queryAll(harness.fixture, '.recommendations .card-skeleton')).toHaveLength(5);
+      // The restaurants near the user do not wait for them
+      expect(names()).toHaveLength(5);
+
+      answer.next([suggestion('pick', null, 8)]);
+      await harness.fixture.whenStable();
+
+      expect(row.getAttribute('aria-busy')).toBe('false');
+      expect(queryAll(harness.fixture, '.recommendations .card-skeleton')).toHaveLength(0);
+      expect(recommended()).toEqual(['Restaurant pick']);
+    });
   });
 });

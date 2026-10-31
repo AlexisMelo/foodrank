@@ -41,7 +41,8 @@ export interface Restaurant {
 }
 
 /**
- * A restaurant the logged-in user has not rated yet, suggested on the Explore page (GET /api/restaurants/suggestions).
+ * A restaurant the logged-in user has not rated yet, suggested on the Explore page: near them
+ * (GET /api/restaurants/suggestions), or recommended by the users they follow (GET /api/restaurants/recommendations).
  */
 export interface RestaurantSuggestion {
   /**

@@ -78,6 +78,34 @@ describe('RestaurantApi', () => {
     });
   });
 
+  describe('fetchRecommendations', () => {
+    it('sends the limit and the user position', async () => {
+      const recommendation = {
+        restaurant: { id: 'r1' },
+        distanceKm: 0.556,
+        globalScore: 8,
+        followedRaters: [{ id: 'u2', username: 'camille', displayName: null, avatarUrl: null }],
+      };
+
+      const result = firstValueFrom(api.fetchRecommendations({ lat: 49.18, lon: -0.37 }, 5));
+      const req = httpTesting.expectOne(
+        'http://api.test/api/restaurants/recommendations?limit=5&lat=49.18&lon=-0.37',
+      );
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush([recommendation]);
+
+      expect(await result).toEqual([recommendation]);
+    });
+
+    it('omits the position when unknown, so the API measures the range from its default city', async () => {
+      const result = firstValueFrom(api.fetchRecommendations(null, 5));
+      httpTesting.expectOne('http://api.test/api/restaurants/recommendations?limit=5').flush([]);
+
+      expect(await result).toEqual([]);
+    });
+  });
+
   describe('searchPlaces', () => {
     it('sends the query, the limit and the user position, encoded', async () => {
       const result = firstValueFrom(api.searchPlaces('pizza & co', { lat: 49.18, lon: -0.37 }, 15));

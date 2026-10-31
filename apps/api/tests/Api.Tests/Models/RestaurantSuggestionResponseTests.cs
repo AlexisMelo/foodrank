@@ -122,6 +122,93 @@ public class RestaurantSuggestionResponseTests
     }
 
     /// <summary>
+    /// With a maximum distance, the farther restaurants are left out (the range of the recommendations: 10 km).
+    /// </summary>
+    [Fact]
+    public void Rank_MaxDistance_LeavesOutTheFartherRestaurants()
+    {
+        // 8.9 km and 11.1 km north of Caen
+        Restaurant[] restaurants = [At("out", 49.28, -0.37), At("in", 49.26, -0.37)];
+
+        IReadOnlyList<RestaurantSuggestionResponse> suggestions = RestaurantSuggestionResponse.Rank(
+            restaurants, Caen, isUserPosition: true, limit: 5, RestaurantSuggestionResponse.MaxRecommendationDistanceKm);
+
+        Assert.Equal(["in"], suggestions.Select(s => s.Restaurant.Id));
+    }
+
+    /// <summary>
+    /// Builds the active rating of <paramref name="restaurantId"/> by <paramref name="userId"/> with the given scores.
+    /// </summary>
+    private static Rating Scored(string restaurantId, string userId, int food, int service, int setting) => new()
+    {
+        RestaurantId = restaurantId,
+        UserId = userId,
+        Date = DateTimeOffset.UtcNow,
+        FoodRating = food,
+        ServiceRating = service,
+        SettingRating = setting,
+        IsActive = true
+    };
+
+    /// <summary>
+    /// A restaurant is recommended by a user followed whose rating averages more than 7; an average of 7 or less, or a
+    /// rating by a user not followed, does not recommend it.
+    /// </summary>
+    [Fact]
+    public void RecommendedIds_KeepsTheRestaurantsAUserFollowedRatesMoreThanSeven()
+    {
+        Rating[] ratings =
+        [
+            Scored("just-above", CamilleId, 8, 7, 7),
+            Scored("just-seven", HugoId, 8, 7, 6),
+            Scored("great", HugoId, 9, 9, 9),
+            Scored("stranger-pick", StrangerId, 10, 10, 10)
+        ];
+
+        IReadOnlyList<string> ids = RestaurantSuggestionResponse.RecommendedIds(ratings, Followed, []);
+
+        Assert.Equal(["just-above", "great"], ids);
+    }
+
+    /// <summary>
+    /// Only the active rating of a user followed, their current opinion, counts: not their previous ratings.
+    /// </summary>
+    [Fact]
+    public void RecommendedIds_OnlyTheActiveRatingCounts()
+    {
+        Rating[] ratings =
+        [
+            RatingOf("changed-mind", CamilleId, 9, daysAgo: 10, isActive: false),
+            RatingOf("changed-mind", CamilleId, 3, daysAgo: 1),
+            RatingOf("came-round", HugoId, 2, daysAgo: 10, isActive: false),
+            RatingOf("came-round", HugoId, 8, daysAgo: 1)
+        ];
+
+        IReadOnlyList<string> ids = RestaurantSuggestionResponse.RecommendedIds(ratings, Followed, []);
+
+        Assert.Equal(["came-round"], ids);
+    }
+
+    /// <summary>
+    /// A restaurant the logged-in user rated, even long ago, is not recommended to them; one recommended by several users
+    /// followed is listed once.
+    /// </summary>
+    [Fact]
+    public void RecommendedIds_LeavesOutTheRestaurantsIRated_AndListsEachOnce()
+    {
+        Rating[] ratings =
+        [
+            RatingOf("tried", CamilleId, 9, daysAgo: 1),
+            RatingOf("loved", CamilleId, 9, daysAgo: 1),
+            RatingOf("loved", HugoId, 8, daysAgo: 2)
+        ];
+
+        IReadOnlyList<string> ids = RestaurantSuggestionResponse.RecommendedIds(ratings, Followed, ["tried"]);
+
+        Assert.Equal(["loved"], ids);
+    }
+
+    /// <summary>
     /// Ranked suggestions have no global score nor followed raters yet: <see cref="RestaurantSuggestionResponse.WithRatings"/>
     /// adds them.
     /// </summary>

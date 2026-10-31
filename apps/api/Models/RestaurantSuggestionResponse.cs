@@ -3,7 +3,8 @@ using api.Services.Places;
 namespace api.Models;
 
 /// <summary>
-/// A restaurant suggested to the logged-in user on the Explore page, returned by GET /api/restaurants/suggestions.
+/// A restaurant suggested to the logged-in user on the Explore page, returned by GET /api/restaurants/suggestions
+/// (restaurants near them) and GET /api/restaurants/recommendations (restaurants the users they follow recommend).
 /// </summary>
 /// <param name="Restaurant">The suggested restaurant, which the user has not rated yet.</param>
 /// <param name="DistanceKm">Distance from the user's position in kilometers; null when the user's position is unknown.</param>
@@ -18,6 +19,17 @@ public record RestaurantSuggestionResponse(
     IReadOnlyList<UserSummaryResponse> FollowedRaters)
 {
     /// <summary>
+    /// Average of the three criteria of the active rating of a user followed that must be exceeded for them to recommend
+    /// a restaurant, from 1 to 10: an average of exactly this value does not recommend it.
+    /// </summary>
+    public const int RecommendingAverageThreshold = 7;
+
+    /// <summary>
+    /// Largest distance of a recommended restaurant from the user's position (or the default city), in kilometers.
+    /// </summary>
+    public const double MaxRecommendationDistanceKm = 10;
+
+    /// <summary>
     /// Picks the suggestions among <paramref name="unrated"/>: nearest to <paramref name="origin"/> first, keeping their
     /// given order when tied. Their ratings are added afterwards by <see cref="WithRatings"/>, only for the restaurants
     /// kept.
@@ -27,14 +39,42 @@ public record RestaurantSuggestionResponse(
     /// <param name="isUserPosition">True when <paramref name="origin"/> is the user's position. When false (default
     /// city), the restaurants are still sorted from it but no distance is returned, as it would not be the user's.</param>
     /// <param name="limit">Maximum number of suggestions.</param>
+    /// <param name="maxDistanceKm">Distance from <paramref name="origin"/> beyond which a restaurant is left out, in
+    /// kilometers (included); no limit by default.</param>
     /// <returns>At most <paramref name="limit"/> suggestions, nearest first, without global score nor followed raters.</returns>
-    public static IReadOnlyList<RestaurantSuggestionResponse> Rank(IEnumerable<Restaurant> unrated, GeoPoint origin, bool isUserPosition, int limit)
+    public static IReadOnlyList<RestaurantSuggestionResponse> Rank(IEnumerable<Restaurant> unrated, GeoPoint origin, bool isUserPosition, int limit,
+        double maxDistanceKm = double.PositiveInfinity)
         => unrated
             .Select(r => (Restaurant: r, DistanceKm: PlaceRanking.DistanceKm(origin, r.Lat, r.Lng)))
+            .Where(s => s.DistanceKm <= maxDistanceKm)
             .OrderBy(s => s.DistanceKm)
             .Take(limit)
             .Select(s => new RestaurantSuggestionResponse(s.Restaurant, isUserPosition ? s.DistanceKm : null, null, []))
             .ToList();
+
+    /// <summary>
+    /// Picks the restaurants recommended to a user: rated by a user they follow whose active rating averages more than
+    /// <see cref="RecommendingAverageThreshold"/>, and never rated by them. Their distance is checked afterwards by
+    /// <see cref="Rank"/>, with <see cref="MaxRecommendationDistanceKm"/>.
+    /// </summary>
+    /// <param name="ratings">Ratings that may recommend a restaurant, active or not; those of users not in
+    /// <paramref name="followedIds"/> are left out.</param>
+    /// <param name="followedIds">Supabase Auth ids of the users the logged-in user follows.</param>
+    /// <param name="ratedIds">Database ids of the restaurants the logged-in user rated, active or not.</param>
+    /// <returns>The ids of the recommended restaurants, each listed once.</returns>
+    public static IReadOnlyList<string> RecommendedIds(IEnumerable<Rating> ratings, IReadOnlySet<string> followedIds, IEnumerable<string> ratedIds)
+    {
+        HashSet<string> rated = ratedIds.ToHashSet();
+        return ratings
+            // A previous rating is no longer the user's opinion. The scores being whole numbers, their sum is compared
+            // to avoid rounding an average
+            .Where(r => r.IsActive && followedIds.Contains(r.UserId))
+            .Where(r => r.FoodRating + r.ServiceRating + r.SettingRating > 3 * RecommendingAverageThreshold)
+            .Select(r => r.RestaurantId)
+            .Where(id => !rated.Contains(id))
+            .Distinct()
+            .ToList();
+    }
 
     /// <summary>
     /// Adds to each of <paramref name="suggestions"/> its global score and the users followed who rated it.

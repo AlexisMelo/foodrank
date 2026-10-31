@@ -134,4 +134,30 @@ public class RatingServiceTests
         Assert.DoesNotContain("id_restaurant", url);
         Assert.DoesNotContain("is_active", url, StringComparison.OrdinalIgnoreCase);
     }
+
+    /// <summary>
+    /// The ratings read for the recommendations are the current ones (active) of the users followed, every restaurant
+    /// included.
+    /// </summary>
+    [Fact]
+    public void UsersActiveRatingsQuery_ReadsTheActiveRatingsOfTheGivenUsers()
+    {
+        string url = Uri.UnescapeDataString(RatingService.UsersActiveRatingsQuery(RatingTable(), ["u1", "u2"]).GenerateUrl());
+
+        Assert.Contains("id_user=in.(\"u1\",\"u2\")", url);
+        Assert.Contains("is_active=eq.true", url, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("id_restaurant", url);
+    }
+
+    /// <summary>
+    /// The ratings read for the restaurants of the Explore page are those of these restaurants only, active or not.
+    /// </summary>
+    [Fact]
+    public void RestaurantsRatingsQuery_ReadsTheRatingsOfTheGivenRestaurants()
+    {
+        string url = Uri.UnescapeDataString(RatingService.RestaurantsRatingsQuery(RatingTable(), ["r1", "r2"]).GenerateUrl());
+
+        Assert.Contains("id_restaurant=in.(\"r1\",\"r2\")", url);
+        Assert.DoesNotContain("is_active", url);
+    }
 }

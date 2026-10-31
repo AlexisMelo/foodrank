@@ -85,11 +85,7 @@ public class RestaurantService(Supabase.Client supabase, IPlaceProvider placePro
     /// <inheritdoc />
     public async Task<IReadOnlyList<RestaurantSuggestionResponse>> GetSuggestionsAsync(string userId, double? lat, double? lon, int limit, CancellationToken cancellationToken)
     {
-        ModeledResponse<Rating> rated = await supabase.From<Rating>()
-            .Select("id_restaurant")
-            .Where(r => r.UserId == userId)
-            .Get(cancellationToken);
-        List<string> ratedIds = rated.Models.Select(r => r.RestaurantId).Distinct().ToList();
+        List<string> ratedIds = await RatedIdsAsync(userId, cancellationToken);
 
         // PostgREST cannot sort by a computed distance: the unrated restaurants are read and ranked here, so only the
         // suggestions are sent to the client.
@@ -99,14 +95,80 @@ public class RestaurantService(Supabase.Client supabase, IPlaceProvider placePro
         if (suggestions.Count == 0)
             return suggestions;
 
-        // The ratings of the suggested restaurants only: their global score, and the users followed who ate there
-        List<string> suggestedIds = suggestions.Select(s => s.Restaurant.Id).ToList();
-        ModeledResponse<Rating> ratings = await RestaurantsRatingsQuery(supabase.From<Rating>(), suggestedIds).Get(cancellationToken);
+        return await WithRatingsAsync(suggestions, await FollowedIdsAsync(userId, cancellationToken), cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<RestaurantSuggestionResponse>> GetRecommendationsAsync(string userId, double? lat, double? lon, int limit, CancellationToken cancellationToken)
+    {
+        HashSet<string> followedIds = await FollowedIdsAsync(userId, cancellationToken);
+        if (followedIds.Count == 0)
+            return [];
+
+        // PostgREST cannot filter on an average of columns: the active ratings of the users followed are read, and the
+        // ones recommending a restaurant picked here
+        ModeledResponse<Rating> followedRatings = await RatingService.UsersActiveRatingsQuery(supabase.From<Rating>(), followedIds.ToList()).Get(cancellationToken);
+        IReadOnlyList<string> recommendedIds = RestaurantSuggestionResponse.RecommendedIds(followedRatings.Models, followedIds, await RatedIdsAsync(userId, cancellationToken));
+        if (recommendedIds.Count == 0)
+            return [];
+
+        ModeledResponse<Restaurant> recommended = await supabase.From<Restaurant>()
+            .Filter("id", Constants.Operator.In, recommendedIds.Cast<object>().ToList())
+            .Get(cancellationToken);
+        GeoPoint? userPosition = SearchPosition.FromQuery(lat, lon);
+        IReadOnlyList<RestaurantSuggestionResponse> recommendations = RestaurantSuggestionResponse.Rank(
+            recommended.Models, userPosition ?? SearchPosition.Default(configuration), userPosition is not null, limit,
+            RestaurantSuggestionResponse.MaxRecommendationDistanceKm);
+        if (recommendations.Count == 0)
+            return recommendations;
+
+        return await WithRatingsAsync(recommendations, followedIds, cancellationToken);
+    }
+
+    /// <summary>
+    /// Loads the ids of the restaurants <paramref name="userId"/> rated, active or not.
+    /// </summary>
+    /// <param name="userId">Supabase Auth id of the user.</param>
+    /// <param name="cancellationToken">Cancels the database query.</param>
+    /// <returns>The ids, each listed once; empty when the user rated nothing.</returns>
+    private async Task<List<string>> RatedIdsAsync(string userId, CancellationToken cancellationToken)
+    {
+        ModeledResponse<Rating> rated = await supabase.From<Rating>()
+            .Select("id_restaurant")
+            .Where(r => r.UserId == userId)
+            .Get(cancellationToken);
+        return rated.Models.Select(r => r.RestaurantId).Distinct().ToList();
+    }
+
+    /// <summary>
+    /// Loads the ids of the users <paramref name="userId"/> follows.
+    /// </summary>
+    /// <param name="userId">Supabase Auth id of the follower.</param>
+    /// <param name="cancellationToken">Cancels the database query.</param>
+    /// <returns>The ids, empty when the user follows nobody.</returns>
+    private async Task<HashSet<string>> FollowedIdsAsync(string userId, CancellationToken cancellationToken)
+    {
+        // Only the ids of the users followed are needed
         ModeledResponse<Follow> follows = await supabase.From<Follow>()
             .Select("id_followed")
             .Where(f => f.FollowerId == userId)
             .Get(cancellationToken);
-        HashSet<string> followedIds = follows.Models.Select(f => f.FollowedId).ToHashSet();
+        return follows.Models.Select(f => f.FollowedId).ToHashSet();
+    }
+
+    /// <summary>
+    /// Adds to each of <paramref name="suggestions"/> its global score and the users followed who rated it (see
+    /// <see cref="RestaurantSuggestionResponse.WithRatings"/>).
+    /// </summary>
+    /// <param name="suggestions">Suggestions picked by <see cref="RestaurantSuggestionResponse.Rank"/>, not empty.</param>
+    /// <param name="followedIds">Supabase Auth ids of the users the logged-in user follows.</param>
+    /// <param name="cancellationToken">Cancels the database queries.</param>
+    /// <returns>The suggestions with their global score and followed raters, in the same order.</returns>
+    private async Task<IReadOnlyList<RestaurantSuggestionResponse>> WithRatingsAsync(IReadOnlyList<RestaurantSuggestionResponse> suggestions, HashSet<string> followedIds, CancellationToken cancellationToken)
+    {
+        // The ratings of the suggested restaurants only: their global score, and the users followed who ate there
+        List<string> suggestedIds = suggestions.Select(s => s.Restaurant.Id).ToList();
+        ModeledResponse<Rating> ratings = await RatingService.RestaurantsRatingsQuery(supabase.From<Rating>(), suggestedIds).Get(cancellationToken);
 
         // "rating.id_user" has no foreign key to "profiles": the profiles of the followed raters are read apart
         List<object> followedRaterIds = ratings.Models.Select(r => r.UserId).Where(followedIds.Contains).Distinct().Cast<object>().ToList();
@@ -121,15 +183,6 @@ public class RestaurantService(Supabase.Client supabase, IPlaceProvider placePro
 
         return RestaurantSuggestionResponse.WithRatings(suggestions, ratings.Models, followedIds, profilesById);
     }
-
-    /// <summary>
-    /// Query of every rating, active or not, of the restaurants <paramref name="restaurantIds"/>.
-    /// </summary>
-    /// <param name="ratings">Query on the "rating" table to filter.</param>
-    /// <param name="restaurantIds">Database ids of the restaurants (not empty: PostgREST refuses an empty list).</param>
-    /// <returns>The filtered query, ready to send.</returns>
-    public static IPostgrestTable<Rating> RestaurantsRatingsQuery(IPostgrestTable<Rating> ratings, IReadOnlyList<string> restaurantIds)
-        => ratings.Filter("id_restaurant", Constants.Operator.In, restaurantIds.Cast<object>().ToList());
 
     /// <summary>
     /// Query of the restaurants whose id is not in <paramref name="ratedIds"/>.

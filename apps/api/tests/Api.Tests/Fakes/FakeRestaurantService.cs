@@ -82,4 +82,18 @@ public class FakeRestaurantService : IRestaurantService
         return Task.FromResult(RestaurantSuggestionResponse.WithRatings(
             suggestions, Ratings(), FollowedUserIds(userId).ToHashSet(), Profiles()));
     }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<RestaurantSuggestionResponse>> GetRecommendationsAsync(string userId, double? lat, double? lon, int limit, CancellationToken cancellationToken)
+    {
+        // Same rules as the real service: the restaurants recommended by the users followed and not rated by the user,
+        // ranked within the range, then given their ratings
+        HashSet<string> followedIds = FollowedUserIds(userId).ToHashSet();
+        HashSet<string> recommendedIds = RestaurantSuggestionResponse.RecommendedIds(Ratings(), followedIds, RatedRestaurantIds(userId)).ToHashSet();
+        GeoPoint? userPosition = SearchPosition.FromQuery(lat, lon);
+        IReadOnlyList<RestaurantSuggestionResponse> recommendations = RestaurantSuggestionResponse.Rank(
+            Restaurants.Where(r => recommendedIds.Contains(r.Id)), userPosition ?? DefaultPosition, userPosition is not null, limit,
+            RestaurantSuggestionResponse.MaxRecommendationDistanceKm);
+        return Task.FromResult(RestaurantSuggestionResponse.WithRatings(recommendations, Ratings(), followedIds, Profiles()));
+    }
 }

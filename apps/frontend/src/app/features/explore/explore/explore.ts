@@ -1,14 +1,21 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, Signal, computed, inject } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
-import { map, timer } from 'rxjs';
+import { Observable, map, timer } from 'rxjs';
 import { RestaurantApi } from '@/core/api/restaurant-api';
 import { LocationStore } from '@/core/location/location-store';
+import type { UserLocation } from '@/core/models/location.model';
+import type { RestaurantSuggestion } from '@/core/models/restaurant.model';
 import { SuggestionCard } from '../suggestion-card/suggestion-card';
 
 /**
- * Number of restaurants suggested.
+ * Number of restaurants suggested near the user.
  */
 const SUGGESTION_COUNT = 5;
+
+/**
+ * Number of restaurants recommended by the users followed.
+ */
+const RECOMMENDATION_COUNT = 5;
 
 /**
  * Longest wait for the user's position before showing the suggestions sorted from the API's default city, in
@@ -18,8 +25,29 @@ const SUGGESTION_COUNT = 5;
 const LOCATION_WAIT_MS = 3000;
 
 /**
- * Explore page (/explore): the section of a few restaurants near the user they have not tried yet, nearest first when
- * the location is allowed, with their global score and the users followed who ate there.
+ * A row of restaurants of the page, loaded from the API once the location is answered.
+ */
+interface RestaurantRow {
+  /**
+   * True while the location or the restaurants load
+   */
+  loading: Signal<boolean>;
+
+  /**
+   * True when the API failed to return the restaurants
+   */
+  loadError: Signal<boolean>;
+
+  /**
+   * Restaurants of the row, in the API order; empty while loading and when the API fails
+   */
+  restaurants: Signal<RestaurantSuggestion[]>;
+}
+
+/**
+ * Explore page (/explore): a few restaurants the user has not tried yet, with their global score and the users followed
+ * who ate there. Near them, nearest first when the location is allowed; and recommended by the users they follow,
+ * within 10 km.
  */
 @Component({
   imports: [SuggestionCard],
@@ -29,7 +57,7 @@ const LOCATION_WAIT_MS = 3000;
 })
 export class Explore {
   /**
-   * Reads the suggestions of the logged-in user
+   * Reads the suggestions and recommendations of the logged-in user
    */
   private readonly restaurantApi = inject(RestaurantApi);
 
@@ -53,25 +81,19 @@ export class Explore {
   );
 
   /**
-   * Suggestions of the API (GET /api/restaurants/suggestions). Idle while locating, so they are asked once with the
-   * position when it is answered in time; asked again, sorted, if the position becomes known later
+   * Restaurants near the user they have not rated (GET /api/restaurants/suggestions), in the "Near you" section
    */
-  private readonly suggestionsResource = rxResource({
-    params: () => (this.locating() ? undefined : { location: this.locationStore.location() }),
-    stream: ({ params }) => this.restaurantApi.fetchSuggestions(params.location, SUGGESTION_COUNT),
-  });
-
-  /**
-   * True while the location or the suggestions are loading
-   */
-  protected readonly loading = computed(
-    () => this.locating() || this.suggestionsResource.isLoading(),
+  protected readonly nearYou = this.loadRow((location) =>
+    this.restaurantApi.fetchSuggestions(location, SUGGESTION_COUNT),
   );
 
   /**
-   * True when the API failed to return the suggestions
+   * Restaurants the users followed recommend, within 10 km (GET /api/restaurants/recommendations), in the
+   * "Recommendations" section
    */
-  protected readonly loadError = computed(() => this.suggestionsResource.status() === 'error');
+  protected readonly recommendations = this.loadRow((location) =>
+    this.restaurantApi.fetchRecommendations(location, RECOMMENDATION_COUNT),
+  );
 
   /**
    * True when the position is not known once the wait is over (refused, blocked, unavailable or still not answered):
@@ -101,14 +123,26 @@ export class Explore {
       : `Your location: ${this.city()}`,
   );
 
-  /**
-   * Restaurants suggested, in the API order; empty while loading and when the API fails
-   */
-  protected readonly suggestions = computed(() =>
-    this.suggestionsResource.hasValue() ? this.suggestionsResource.value() : [],
-  );
-
   constructor() {
     this.locationStore.requestLocation();
+  }
+
+  /**
+   * Loads a row of restaurants with `fetch`. Idle while locating, so the restaurants are asked once with the position
+   * when it is answered in time; asked again, from the position, if it becomes known later. Must run in an injection
+   * context (a field initializer)
+   */
+  private loadRow(
+    fetch: (location: UserLocation | null) => Observable<RestaurantSuggestion[]>,
+  ): RestaurantRow {
+    const resource = rxResource({
+      params: () => (this.locating() ? undefined : { location: this.locationStore.location() }),
+      stream: ({ params }) => fetch(params.location),
+    });
+    return {
+      loading: computed(() => this.locating() || resource.isLoading()),
+      loadError: computed(() => resource.status() === 'error'),
+      restaurants: computed(() => (resource.hasValue() ? resource.value() : [])),
+    };
   }
 }

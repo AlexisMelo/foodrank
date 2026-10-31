@@ -49,6 +49,22 @@ export class RestaurantApi {
   }
 
   /**
+   * Get the restaurants the users the logged-in user follows recommend (rated more than 7 on average by one of them),
+   * which the logged-in user never rated, at most 10 km away, nearest first
+   * @param location user position; when unknown, the API measures the 10 km from its default city and returns no
+   * distance
+   * @param limit maximum number of recommendations, 1 to 50
+   */
+  fetchRecommendations(
+    location: UserLocation | null,
+    limit: number,
+  ): Observable<RestaurantSuggestion[]> {
+    return this.http.get<RestaurantSuggestion[]>('/api/restaurants/recommendations', {
+      params: { limit, ...locationParams(location) },
+    });
+  }
+
+  /**
    * Get a restaurant from its database id
    * @returns undefined when it does not exist
    */
