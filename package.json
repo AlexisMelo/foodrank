@@ -3,9 +3,11 @@
   "private": true,
   "scripts": {
     "start": "concurrently -k -n api,front -c blue,green \"dotnet watch run --project apps/api --launch-profile https\" \"npm start --prefix apps/frontend\"",
+    "start:withmobile": "concurrently -k -n api,front,android -c blue,green,magenta \"dotnet watch run --project apps/api --launch-profile https\" \"npm start --prefix apps/frontend\" \"npm run android:live\"",
     "test": "npm run test:api && npm run test:front",
     "test:api": "dotnet test apps/api -c Release",
-    "test:front": "npm test --prefix apps/frontend"
+    "test:front": "npm test --prefix apps/frontend",
+    "android:live": "cd apps/mobile-android && npx cap run android --live-reload --host localhost --port 4200 --forwardPorts 4200:4200"
   },
   "devDependencies": {
     "concurrently": "^9.2.4"
