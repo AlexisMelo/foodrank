@@ -1,0 +1,9 @@
+{
+  "appId": "foodrank.app",
+  "appName": "FoodRank",
+  "webDir": "../frontend/dist/foodrank/browser",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  }
+}
