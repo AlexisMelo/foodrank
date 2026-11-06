@@ -138,3 +138,6 @@ logs/
 *.temp
 *.swp
 *~
+
+# Mobile android
+apps/mobile-android/node_modules/
